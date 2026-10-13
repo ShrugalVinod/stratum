@@ -139,6 +139,7 @@ def verify_lock(
             "changed keys": ", ".join(res.changed) or "none",
             "changes WITHOUT approved deviation": ", ".join(res.undocumented) or "none",
             "questions settled since lock": ", ".join(res.newly_settled) or "none",
+            "⚑ placeholders filled since lock": ", ".join(res.filled_placeholders) or "none",
         },
     )
     if not res.ok or (strict and not res.identical):

@@ -1,16 +1,18 @@
 ```
 ═══ PHASE 0 GATE REPORT — Setup and guard-rails — 13 Oct 2026 ═══
-Status:          BLOCKED on 2 things only Shrugal can do (Colab smoke test; "approved" on the pre-registration)
+Status:          BLOCKED on 1 thing: Shrugal's "approved" on the pre-registration → lock
 Calendar:        on track (target 27 Oct 2026; 14 days left)
 
 Done-when checklist:
-  [~] make setup && make test on a fresh clone: laptop ✔ (fresh clone from GitHub,
-      33/33 passed, coverage 87 %). Colab ✗ not yet run → colab/00_smoke_test.ipynb
-      (its install/run steps were simulated locally: 33 passed, Drive layout created).
+  [x] make setup && make test on a fresh clone: laptop ✔ (fresh clone from GitHub,
+      33/33 passed, coverage 87 %). Colab ✔ colab/00_smoke_test.ipynb @ 97b5b1a, 13 Oct
+      2026: 33 passed, Python 3.12.3, Drive layout complete, Drive write/read OK, 1.9 min.
   [x] CI green (GitHub Actions run 38425122380, 34 s). Pre-commit blocks a fake key:
       docs/phase_reports/evidence/phase0_secret_block.txt (AWS key + secret keyword caught,
       commit exit code 1, nothing committed).
-  [~] preregistered.yaml populated with paper citations ✔; team review + "approved" ✗;
+  [~] preregistered.yaml populated with paper citations ✔; Shrugal revised it (13 Oct:
+      parallax, segment-label rule, explicit ⚑ null placeholders, monotone keys = feature
+      names) ✔; "approved" ✗;
       lock ✗ (stratum lock-preregistration runs right after "approved").
   [x] docs/data_sources.md: every account, step by step (CDS, EUMETSAT, OpenSky,
       ADS-B Exchange, GitHub token, Colab Secrets).
@@ -32,14 +34,17 @@ What was built:
 Key numbers:     33 tests; coverage 87 % (cli 56 %, config 95 %, lock 86 %, manifest 86 %);
                  corridor polygon 463 vertices, lon 72.16–77.86°E, lat 18.41–29.23°N,
                  every vertex 75 ± 1 km from the great circle (tests/test_config.py).
-Tests:           pytest 33/33, ruff clean, ruff-format clean, mypy --strict clean (18 files),
+Tests:           pytest 37/37, ruff clean, ruff-format clean, mypy --strict clean (18 files),
                  web tests n/a until Phase 4.
-Colab runs:      00_smoke_test: pending (Shrugal).
-Storage:         Drive used: pending (reported by the smoke test). +0 GB this phase.
+Colab runs:      00_smoke_test @ 97b5b1a: PASSED (verified from run summary; tests_ok true,
+                 layout missing [], write/read OK). Its drive_used/total fields measured the
+                 Colab VM disk, not Drive: fixed to report the STRATUM folder size instead.
+Storage:         STRATUM folder on Drive: a few KB (empty layout + 1 test manifest). +0 GB this phase.
 Decisions made:  docs/decisions.md, 19 lines dated 2026-10-13 (incl. Python 3.12, repo
                  location, Colab venv install, dev-month option (b), mass 0.80, η, labelling rules).
 Deviations:      none (lock not yet written).
-Open questions:  ⚑ Q4 Driver et al. 2025 detection thresholds (IK, before Phase 5): need the paper's numbers.
+Open questions:  ⚑ Q3 κ method (IK, before the pilot). ⚑ Q16 labelled-split seed (SV, before scene sampling).
+                 ⚑ Q4 Driver et al. 2025 detection thresholds (IK, before Phase 5): need the paper's numbers.
                  ⚑ Q5 climate-metric factors, 20/100 yr (SV, before Phase 7): need a cited source.
                  ⚑ Q11 "opaque cloud" categories in the IODC cloud mask (IK, Phase 1 reads the product).
                  ⚑ Q12 CoCiP Monte Carlo N (SV, Phase 2, from measured Colab time; start N = 20).

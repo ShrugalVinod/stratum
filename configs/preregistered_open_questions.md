@@ -21,14 +21,16 @@ contrail, so like is compared with like. The efficiency-adjusted ratio depends o
 thresholds, which add their own uncertainty, so it is reported but does not decide H1.
 
 ### 2. Aggregating per-image matches to one label per segment — SETTLED (2026-10-13)
+`preregistered.yaml: matching.segment_label_rule` (`min_observable_slots: 2` is flagged "team to confirm" in the YAML; confirm it before the lock).
 **Answer.** y = 1 if the segment is matched at **any observable** slot time in the 20–120 min
 window. y = 0 if it is observable at **≥ 2** slot times and matched at none. Otherwise
 y = missing. Per-time details are stored so other rules can be run as sensitivity analyses.
 **Why.** One observable match is evidence of a contrail. A single observable "no match" is
 weak evidence of absence, so two are required before calling a segment negative.
 
-### 3. Operationalising "Cohen's κ at object level" (§4.4) — SETTLED (2026-10-13)
-**Answer.** κ is computed on a fixed grid of **16 × 16-px cells** (a cell is positive for a
+### 3. Operationalising "Cohen's κ at object level" (§4.4) — ⚑ OPEN · owner IK · before the 20-scene pilot (Phase 5)
+`preregistered.yaml: detection.agreement_metric` is `null` until this is settled.
+**Recommended answer.** κ is computed on a fixed grid of **16 × 16-px cells** (a cell is positive for a
 labeller if any of their polylines passes through it), with scene-bootstrap 95 % CIs.
 Object-level agreement is reported alongside as **symmetric object F1**. Two polylines match
 if the mean perpendicular distance ≤ 2 px over their overlap, the overlap is ≥ 50 % of the
@@ -36,7 +38,7 @@ shorter, and the orientation difference ≤ 20° (one-to-one, Hungarian assignme
 **Why.** κ needs true negatives. Objects have no natural "negative object", so κ on objects
 alone is undefined; the grid supplies negatives while staying close to the object scale.
 Deviation note: the paper's wording "κ at object level" is honoured by the object F1 and the
-small grid. This was decided before any labels existed.
+small grid. Must be decided before any labels exist.
 
 ### 4. Detection-efficiency thresholds (Driver et al. 2025) — ⚑ OPEN · owner IK · before Phase 5 step 5.5.7
 Needs the actual optical-depth and width thresholds from Driver, Stettler & Gryspeerdt
@@ -98,3 +100,8 @@ VZA band, day/night) cell; otherwise the card says "extrapolating".
 **Answer.** LightGBM, on CPU. XGBoost is not used for the main model.
 **Why.** Native monotone constraints, and trees on ~10⁶ rows train in minutes on CPU. Using a
 single library avoids "we tried both and picked the better one".
+
+### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — ⚑ OPEN · owner SV · before scene sampling (Phase 5)
+`preregistered.yaml: detection.labelled_split.seed` is `null`. Pick any integer **once**, write it
+in the YAML and here, and never change it: re-drawing the split until the detector looks good
+would be leakage. After the lock, filling this `null` is allowed; changing it later is a deviation.

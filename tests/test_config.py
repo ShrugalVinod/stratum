@@ -121,3 +121,11 @@ def test_committed_corridor_geojson_is_current() -> None:
     corridor = cfg.load_domain().corridor
     path = cfg.configs_dir() / f"corridor_{corridor.name}.geojson"
     assert json.loads(path.read_text()) == json.loads(json.dumps(cfg.corridor_geojson(corridor)))
+
+
+def test_monotone_keys_must_be_features() -> None:
+    """A monotone constraint on a misspelt feature name would silently do nothing."""
+    data = cfg.load_yaml(cfg.configs_dir() / "preregistered.yaml")
+    data["correction_model"]["monotone"] = {"rhi": "increasing"}
+    with pytest.raises(ValidationError):
+        cfg.Preregistered.model_validate(data)

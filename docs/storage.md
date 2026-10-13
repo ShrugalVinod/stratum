@@ -15,4 +15,4 @@ measurements in Phase 1.
 
 | Date | Drive used (total) | Change | Job |
 |---|---|---|---|
-| 2026-10-13 | pending (reported by `colab/00_smoke_test.ipynb`) | – | Phase 0 setup |
+| 2026-10-13 | STRATUM folder: a few KB (empty layout + smoke-test manifest) | +0 GB | Phase 0 smoke test (`colab/00_smoke_test.ipynb`) |

@@ -14,10 +14,12 @@ Newest first. What was done, what's next, blockers.
 - Tests, ruff, mypy --strict, pre-commit (detect-secrets, nbstripout), GitHub Actions CI.
 - `colab/00_smoke_test.ipynb`; `docs/data_sources.md` account guide.
 
+- Colab smoke test PASSED (commit 97b5b1a: 33 tests, Drive layout, write/read OK).
+- Shrugal revised `preregistered.yaml` (parallax, segment-label rule, ⚑ null placeholders, monotone keys renamed to feature names); schema + lock updated so filling a ⚑ null later is allowed but changing a set value is not. 37 tests.
+
 **Next**
-- Shrugal: create the `GITHUB_TOKEN` Colab secret, run the Colab smoke test, review `preregistered.yaml` and say "approved" → lock.
+- Shrugal: say "approved" → `stratum lock-preregistration`.
 - Start account requests now (OpenSky approval can take weeks): CDS, EUMETSAT, OpenSky.
 
 **Blockers**
 - Lock waits for the team's "approved" on `preregistered.yaml`.
-- Colab smoke test needs Shrugal to run it.

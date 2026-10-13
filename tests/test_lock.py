@@ -142,3 +142,40 @@ def test_invalid_prereg_cannot_be_locked(files: dict[str, Path]) -> None:
 def test_flatten_and_diff() -> None:
     assert lk.flatten({"a": {"b": 1, "c": [1, 2]}}) == {"a.b": 1, "a.c": [1, 2]}
     assert lk.diff_values({"a": {"b": 1}}, {"a": {"b": 1, "c": None}}) == ["a.c"]
+
+
+def test_filling_a_null_placeholder_is_allowed(files: dict[str, Path]) -> None:
+    _lock(files)
+    data = yaml.safe_load(files["prereg"].read_text())
+    data["detection"]["labelled_split"]["seed"] = 7
+    data["detection"]["agreement_metric"] = {"kappa": "cell_grid_16px", "also": "object_f1"}
+    files["prereg"].write_text(yaml.safe_dump(data))
+    res = _verify(files)
+    assert res.ok and res.identical
+    assert res.filled_placeholders == [
+        "detection.agreement_metric",
+        "detection.agreement_metric.also",
+        "detection.agreement_metric.kappa",
+        "detection.labelled_split.seed",
+    ]
+
+
+def test_changing_a_set_value_next_to_placeholders_still_fails(files: dict[str, Path]) -> None:
+    _lock(files)
+    data = yaml.safe_load(files["prereg"].read_text())
+    data["detection"]["labelled_split"]["tuning"] = 120  # was 100, not a placeholder
+    files["prereg"].write_text(yaml.safe_dump(data))
+    res = _verify(files)
+    assert res.undocumented == ["detection.labelled_split.tuning"] and not res.ok
+
+
+def test_refilling_a_placeholder_after_it_was_locked_filled_is_a_change(
+    files: dict[str, Path],
+) -> None:
+    data = yaml.safe_load(files["prereg"].read_text())
+    data["detection"]["labelled_split"]["seed"] = 7
+    files["prereg"].write_text(yaml.safe_dump(data))
+    _lock(files)
+    data["detection"]["labelled_split"]["seed"] = 8  # seed-shopping must be caught
+    files["prereg"].write_text(yaml.safe_dump(data))
+    assert _verify(files).undocumented == ["detection.labelled_split.seed"]

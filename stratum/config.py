@@ -116,6 +116,14 @@ class PrePeriods(StrictModel):
 
 class PreSpatialSplit(StrictModel):
     boundary_lon: float
+    train_side: Literal["west", "east"]
+    test_side: Literal["west", "east"]
+
+    @model_validator(mode="after")
+    def _sides_differ(self) -> PreSpatialSplit:
+        if self.train_side == self.test_side:
+            raise ValueError("spatial_split train_side and test_side must differ")
+        return self
 
 
 class PreCoverageRule(StrictModel):
@@ -155,6 +163,13 @@ class PreMetInterpolation(StrictModel):
     horizontal: str
 
 
+class PreLabelledSplit(StrictModel):
+    tuning: int
+    heldout: int
+    stratified_by: str
+    seed: int | None
+
+
 class PreDetection(StrictModel):
     btd: str
     labelled_scenes: int
@@ -163,6 +178,9 @@ class PreDetection(StrictModel):
     labellers_per_scene: int
     scene_strata: list[str]
     disagreement_resolution: str
+    # ⚑ placeholders (null until settled): see lock.py on how filling a null is treated.
+    agreement_metric: dict[str, str] | None
+    labelled_split: PreLabelledSplit
 
 
 class PreLabellingRules(StrictModel):
@@ -173,17 +191,28 @@ class PreLabellingRules(StrictModel):
     labellers_blind_to_tracks_and_predictions: bool
 
 
+class PreSegmentLabelRule(StrictModel):
+    observed_if: str
+    not_observed_if: str
+    min_observable_slots: int = Field(ge=1)
+    otherwise: Literal["missing"]
+
+
 class PreMatching(StrictModel):
     min_age_min: float
     max_age_min: float
     max_distance_px: float
     max_angle_deg: float
     advection_winds: str
+    parallax_correction: str
+    segment_label_rule: PreSegmentLabelRule
     candidate_segments: str
 
 
 class PreObservability(StrictModel):
     max_high_cloud_fraction: float
+    high_cloud_levels: str
+    opaque_cloud_mask_classes: list[str] | list[int] | None
     require_no_opaque_cloud_in_window: bool
     max_viewing_zenith_deg: float
     unobservable_label: Literal["missing"]
@@ -223,27 +252,39 @@ class PreHypothesis(StrictModel):
     primary_definition: str | None = None
     secondary_definition: str | None = None
     night_lst: tuple[int, int] | None = None
+    detection_efficiency_thresholds: dict[str, float] | None = None
 
 
 class PreMinLabels(StrictModel):
     matched_observed_contrails: int
 
 
-class PreMonotone(StrictModel):
-    rhi: Literal["increasing"]
-    temp_margin_above_TLM: Literal["decreasing"]
-
-
 class PreCorrectionModel(StrictModel):
     type: str
     library: str
     training_segments: str
-    monotone: PreMonotone
+    monotone: dict[str, Literal["increasing", "decreasing"]]
     calibration: str
     sanity_baseline: str
     feedback_preference: str
     latitude_bands_deg: list[tuple[float, float]]
     features: list[str]
+
+    @model_validator(mode="after")
+    def _monotone_keys_are_features(self) -> PreCorrectionModel:
+        # A constraint on a name that isn't a feature would silently do nothing.
+        unknown = sorted(set(self.monotone) - set(self.features))
+        if unknown:
+            raise ValueError(f"monotone keys not in features: {unknown}")
+        if len(set(self.features)) != len(self.features):
+            raise ValueError("features contains duplicates")
+        return self
+
+
+class PreMetricConversion(StrictModel):
+    source: str | None
+    factor_h20: float | None
+    factor_h100: float | None
 
 
 class PreAvoidance(StrictModel):
@@ -254,6 +295,7 @@ class PreAvoidance(StrictModel):
     rank_by: str
     alert_if: str
     alert_requires_all_horizons: bool
+    metric_conversion: PreMetricConversion
     confidence_note_min_examples: int
 
 

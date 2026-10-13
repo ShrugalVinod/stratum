@@ -38,6 +38,8 @@ periods:
 # §6.2 "trains on segments west of 80°E and tests on segments east of it".
 spatial_split:
   boundary_lon: 80.0
+  train_side: west                     # §6.2 train west of 80°E …
+  test_side: east                      # … test east of it
 
 # §3.3 Coverage audit and decision rule: OpenSky if it captures at least half of
 # scheduled corridor flights with continuous cruise tracks (no gap > 10 min);
@@ -91,6 +93,10 @@ detection:
   scene_strata: [month, time_of_day, predicted_contrail_density]
   # §4.4 "settle disagreements by discussion" (open question 10, settled).
   disagreement_resolution: discussion_between_labellers
+  # Open question 3: "object-level κ" needs true negatives to be defined.
+  agreement_metric: null                 # ⚑ e.g. {kappa: cell_grid_16px, also: object_f1}; set before the pilot
+  # Detector threshold is tuned on half the labelled scenes and reported on the other half.
+  labelled_split: {tuning: 100, heldout: 100, stratified_by: scene_strata, seed: null}   # ⚑ seed
 
 # Appendix B, labelling guide v0.1 (the parts that affect scoring). The guide text
 # itself may be revised after the pilot (§4.4); these scoring rules may not.
@@ -108,11 +114,23 @@ matching:
   max_distance_px: 2           # §4.5 "within two pixels"
   max_angle_deg: 20            # §4.5 "within 20° of the segment's heading"
   advection_winds: era5_at_segment_pressure_level   # §4.5
+  # Geometry, not a tolerance change: Meteosat-9 at 45.5°E sees an ~11 km contrail
+  # displaced ~9 km (Mumbai) to ~18 km (Guwahati), more than the 2 px tolerance.
+  parallax_correction: line_of_sight_at_segment_altitude
+  # Open question 2: how per-image matches become ONE label per segment.
+  # Must be fixed before any segment labels are scored.
+  segment_label_rule:
+    observed_if: matched_at_any_observable_slot_in_age_window
+    not_observed_if: observable_at_min_slots_and_never_matched
+    min_observable_slots: 2            # ⚑ team to confirm
+    otherwise: missing
   candidate_segments: sac_formation                 # §4.6 "segments that satisfy the formation criterion"
 
 # §4.5 Observability: a scene is observable only if ALL hold. Otherwise label missing.
 observability:
   max_high_cloud_fraction: 0.5           # ERA5 high cloud at and above segment level < 0.5
+  high_cloud_levels: at_and_above_segment_level
+  opaque_cloud_mask_classes: null        # ⚑ which EUMETSAT cloud-mask classes count as opaque; set before matching
   require_no_opaque_cloud_in_window: true
   max_viewing_zenith_deg: 60             # VZA < 60°
   unobservable_label: missing            # §4.5 excluded from training and scoring
@@ -146,6 +164,8 @@ hypotheses:
     supported_if: "upper_ci < 1"
     primary_definition: raw_detectable          # open question 1 (settled)
     secondary_definition: detection_efficiency_adjusted
+    # Open question 4: Driver et al. (2025) thresholds, from the paper itself, not guessed.
+    detection_efficiency_thresholds: null       # ⚑ fill from Driver et al. 2025 before Phase 6
   H2:
     test: mean_bss_vs_B3
     supported_if: "mean >= 0.10 and lower_ci > 0"
@@ -166,9 +186,11 @@ correction_model:
   type: gradient_boosted_trees
   library: lightgbm                       # open question 15 (settled)
   training_segments: sac_formation
+  # Keys MUST be names from `features` below, or the constraint is silently not applied.
+  # temp_minus_TLM = T − T_LM (K): positive = warmer than the threshold → lower probability (§4.6).
   monotone:
-    rhi: increasing
-    temp_margin_above_TLM: decreasing
+    rhi_at_level: increasing
+    temp_minus_TLM: decreasing
   calibration: isotonic                   # fitted on a validation fold
   sanity_baseline: logistic_on_rhi
   feedback_preference: scaling_factor_by_season_latband   # option (b), unless (a) clearly better
@@ -179,7 +201,7 @@ correction_model:
     - rhi_level_below
     - rhi_vertical_gradient
     - temperature
-    - temp_margin_TLM
+    - temp_minus_TLM                    # T − T_LM in K (sign fixed above)
     - pressure
     - cloud_ice_water_content
     - high_cloud_fraction
@@ -201,5 +223,7 @@ avoidance:
   metric_horizons_years: [20, 100]
   rank_by: lower_bound_net_warming_avoided
   alert_if: "lower_bound > 0"
-  alert_requires_all_horizons: true        # build prompt §7.6: p5 > 0 under both 20 and 100 yr
+  alert_requires_all_horizons: true        # §4.7: lower bound taken across metric horizons too
+  # Open question 5: contrail-EF → CO2-equivalent factors per horizon, with a citation.
+  metric_conversion: {source: null, factor_h20: null, factor_h100: null}   # ⚑ set before Phase 7
   confidence_note_min_examples: 50         # open question 14 (settled)

@@ -14,9 +14,10 @@ are seen (paper "Read this first", §6). This module makes that promise checkabl
   be listed in ``docs/deviations.md`` with a team OK, or verification fails.
 
 Questions that were still OPEN at lock time may be settled later without a deviation (they
-are reported as "newly settled"), but a question that was SETTLED at lock time may not
-change silently. Editing comments or formatting is not a change: only parsed values and
-answer text count.
+are reported as "newly settled"), and the same goes for a ⚑ ``null`` placeholder in the YAML
+that is later filled in. But a question that was SETTLED, or a value that was already set,
+at lock time may not change silently. Editing comments or formatting is not a change: only
+parsed values and answer text count.
 
 Deviation entry format (``docs/deviations.md``)::
 
@@ -230,6 +231,26 @@ def diff_values(locked: dict[str, Any], current: dict[str, Any]) -> list[str]:
     )
 
 
+def is_filled_placeholder(
+    key: str, locked_flat: dict[str, Any], current_flat: dict[str, Any]
+) -> bool:
+    """True if ``key`` was a ⚑ ``null`` placeholder at lock time and now holds a value.
+
+    Filling a placeholder means settling an open question, which is allowed (before results
+    are seen) without a deviation. A placeholder can be filled with a scalar
+    (``seed: null`` → ``seed: 7``) or a mapping (``agreement_metric: null`` →
+    ``{kappa: …}``), so ``key`` or any of its parents must have been ``null`` in the lock.
+    Changing or deleting a value that was already set is NOT a fill.
+    """
+    if key not in current_flat:
+        # The null itself disappears when it is replaced by a mapping of sub-keys.
+        replaced_by_mapping = any(k.startswith(key + ".") for k in current_flat)
+        return replaced_by_mapping and locked_flat.get(key, 0) is None
+    parts = key.split(".")
+    prefixes = [".".join(parts[: i + 1]) for i in range(len(parts))]
+    return any(p in locked_flat and locked_flat[p] is None for p in prefixes)
+
+
 _DEV_RE = re.compile(r"^##\s+D-\d+", re.MULTILINE)
 
 
@@ -264,6 +285,7 @@ class VerifyResult:
     changed: list[str] = field(default_factory=list)
     undocumented: list[str] = field(default_factory=list)
     newly_settled: list[str] = field(default_factory=list)
+    filled_placeholders: list[str] = field(default_factory=list)
     lock: LockRecord | None = None
 
     @property
@@ -284,7 +306,10 @@ def verify_lock(
         return VerifyResult(lock_found=False)
     lock = read_lock(lock_path)
     values, oq_text = current_state(prereg_path, oq_path)
-    changed = diff_values(lock.prereg_values, values)
+    diffs = diff_values(lock.prereg_values, values)
+    locked_flat, current_flat = flatten(lock.prereg_values), flatten(values)
+    filled = [k for k in diffs if is_filled_placeholder(k, locked_flat, current_flat)]
+    changed = [k for k in diffs if k not in filled]
 
     now_settled = settled_answers(oq_text)
     for q, h in lock.settled_questions_sha256.items():
@@ -295,4 +320,4 @@ def verify_lock(
     dev_text = deviations_path.read_text(encoding="utf-8") if deviations_path.exists() else ""
     approved = approved_deviation_keys(dev_text)
     undocumented = [k for k in changed if not _covered(k, approved)]
-    return VerifyResult(True, sorted(changed), sorted(undocumented), newly, lock)
+    return VerifyResult(True, sorted(changed), sorted(undocumented), newly, sorted(filled), lock)
