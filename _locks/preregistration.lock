@@ -1,0 +1,299 @@
+{
+  "kind": "stratum-preregistration-lock",
+  "format_version": 1,
+  "created_at": "2026-10-13T16:11:30.743157Z",
+  "git_commit": "1e1c17e740c0b2a85becf98d1e482573e5c7c3f0",
+  "git_dirty": false,
+  "prereg_sha256": "d399acb2d3f26903ed4a155d5674539782ebe3c38ccb395dc419f799caa5e88e",
+  "settled_questions_sha256": {
+    "Q1": "b2f1dfbbb4e54beab5569d5bc5889d1e6d38d3dc9da25947fa1a0981026fb064",
+    "Q2": "6aeef2948d1bc5d3eace3c99cf602f0769921012313045428a37b463dab8e8de",
+    "Q6": "de91378d5f43214161db72f6bad4a2ca404ff2160a91c19a2c57259663d07765",
+    "Q7": "240a1df33ab15660db0ba16bd5547d9bb738872b218dbe3887bed6d31a1899d1",
+    "Q8": "810c7aca7e3047f97574c5647b037c5b6386a1515b57e3457879544c49d850ec",
+    "Q9": "7f5b5e0eaa09bbe44c4998b30fd4a6f08c488d640f105cac096d7c116ee77ecf",
+    "Q10": "f75a8ad2fc9a8cc84d70b3cd3779a6cefa7c9b566d901a80bd98143b218516c5",
+    "Q13": "3c17bc3f9a84e0884cace99d251399b789172ef7e4f19facc8b6255b3e41aa8c",
+    "Q14": "25b294364c6629b34ce9fcea76f13605b7bc2f0ee7bbf4039abd7ba30796b6b2",
+    "Q15": "1ee5e2df5bc1a5b1376bdd598e39745974ee364c52a4a77e91b6e7eb5bdbc5e9"
+  },
+  "combined_sha256": "ebd71ed91f63a6df414139f0d3a2db458e13b1da54cc64f42ca7d92bbe7e0a95",
+  "open_at_lock": [
+    "Q11",
+    "Q12",
+    "Q16",
+    "Q3",
+    "Q4",
+    "Q5"
+  ],
+  "prereg_values": {
+    "schema_version": 1,
+    "domain": {
+      "lat": [
+        6,
+        37
+      ],
+      "lon": [
+        68,
+        98
+      ],
+      "min_flight_level": 250,
+      "development_corridor": "DEL-BOM"
+    },
+    "periods": {
+      "development_month": "2026-01",
+      "evaluation": [
+        "2025-03-01",
+        "2026-02-28"
+      ],
+      "seasonal_folds": {
+        "pre_monsoon": [
+          3,
+          4,
+          5
+        ],
+        "monsoon": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "post_monsoon": [
+          10,
+          11
+        ],
+        "winter": [
+          12,
+          1,
+          2
+        ]
+      },
+      "dev_month_policy": "report_winter_with_and_without_dev_month"
+    },
+    "spatial_split": {
+      "boundary_lon": 80.0,
+      "train_side": "west",
+      "test_side": "east"
+    },
+    "coverage_rule": {
+      "min_fraction_continuous": 0.5,
+      "max_gap_min": 10,
+      "fallback_source": "adsbx_free_first_of_month"
+    },
+    "trajectory": {
+      "max_vertical_rate_fpm": 6000,
+      "max_groundspeed_jump_kt": 100,
+      "resample_min": 1,
+      "max_fill_gap_min": 10,
+      "fill_method": "great_circle_constant_altitude"
+    },
+    "aircraft": {
+      "mass_fraction_of_mtow": 0.8,
+      "mass_fraction_sensitivity": [
+        0.7,
+        0.9
+      ],
+      "eta_source": "openap_per_type",
+      "eta_default": 0.3,
+      "eta_sensitivity": [
+        0.25,
+        0.4
+      ]
+    },
+    "sac": {
+      "EI_H2O": 1.23,
+      "c_p": 1004.0,
+      "epsilon": 0.622,
+      "Q": "43.2e6",
+      "persistence_rhi": 1.0,
+      "saturation_formulas": "murphy_koop_2005"
+    },
+    "met_interpolation": {
+      "time": "linear",
+      "vertical": "linear_in_log_pressure",
+      "horizontal": "bilinear"
+    },
+    "detection": {
+      "btd": "T108 - T120",
+      "labelled_scenes": 200,
+      "scene_size_px": 256,
+      "pilot_scenes": 20,
+      "labellers_per_scene": 2,
+      "scene_strata": [
+        "month",
+        "time_of_day",
+        "predicted_contrail_density"
+      ],
+      "disagreement_resolution": "discussion_between_labellers",
+      "agreement_metric": null,
+      "labelled_split": {
+        "tuning": 100,
+        "heldout": 100,
+        "stratified_by": "scene_strata",
+        "seed": null
+      }
+    },
+    "labelling_rules": {
+      "min_contrail_length_px": 10,
+      "scene_status": [
+        "clear",
+        "partly_obscured",
+        "obscured"
+      ],
+      "exclude_scene_status_from_scoring": [
+        "obscured"
+      ],
+      "uncertain_lines": "scored_separately",
+      "labellers_blind_to_tracks_and_predictions": true
+    },
+    "matching": {
+      "min_age_min": 20,
+      "max_age_min": 120,
+      "max_distance_px": 2,
+      "max_angle_deg": 20,
+      "advection_winds": "era5_at_segment_pressure_level",
+      "parallax_correction": "line_of_sight_at_segment_altitude",
+      "segment_label_rule": {
+        "observed_if": "matched_at_any_observable_slot_in_age_window",
+        "not_observed_if": "observable_at_min_slots_and_never_matched",
+        "min_observable_slots": 2,
+        "otherwise": "missing"
+      },
+      "candidate_segments": "sac_formation"
+    },
+    "observability": {
+      "max_high_cloud_fraction": 0.5,
+      "high_cloud_levels": "at_and_above_segment_level",
+      "opaque_cloud_mask_classes": null,
+      "require_no_opaque_cloud_in_window": true,
+      "max_viewing_zenith_deg": 60,
+      "unobservable_label": "missing"
+    },
+    "baselines": {
+      "B0": "climatology_monthly_cell_level",
+      "B1": "raw_era5",
+      "B2": {
+        "constant_scaling_divisor": 0.95
+      },
+      "B3": "pycontrails_latitude_correction",
+      "B4": {
+        "optional": true,
+        "method": "wolf2025_bivariate_quantile_mapping"
+      }
+    },
+    "metrics": {
+      "primary": "brier_skill_score_vs_B3_heldout_seasons",
+      "secondary": [
+        "hit_rate",
+        "false_alarm_ratio",
+        "csi",
+        "auroc",
+        "brier",
+        "reliability"
+      ]
+    },
+    "bootstrap": {
+      "unit": "day",
+      "n_resamples": 1000,
+      "ci": 0.95
+    },
+    "hypotheses": {
+      "H1": {
+        "test": "ratio_pred_over_obs_B1",
+        "supported_if": "upper_ci < 1",
+        "primary_definition": "raw_detectable",
+        "secondary_definition": "detection_efficiency_adjusted",
+        "detection_efficiency_thresholds": null
+      },
+      "H2": {
+        "test": "mean_bss_vs_B3",
+        "supported_if": "mean >= 0.10 and lower_ci > 0"
+      },
+      "H3": {
+        "test": "distance_share_for_80pct_positive_EF",
+        "supported_if": "share <= 0.10"
+      },
+      "H4": {
+        "test": "night_EF_share_minus_distance_share",
+        "night_lst": [
+          18,
+          6
+        ],
+        "supported_if": "lower_ci > 0"
+      }
+    },
+    "min_labels": {
+      "matched_observed_contrails": 300
+    },
+    "correction_model": {
+      "type": "gradient_boosted_trees",
+      "library": "lightgbm",
+      "training_segments": "sac_formation",
+      "monotone": {
+        "rhi_at_level": "increasing",
+        "temp_minus_TLM": "decreasing"
+      },
+      "calibration": "isotonic",
+      "sanity_baseline": "logistic_on_rhi",
+      "feedback_preference": "scaling_factor_by_season_latband",
+      "latitude_bands_deg": [
+        [
+          6,
+          15
+        ],
+        [
+          15,
+          25
+        ],
+        [
+          25,
+          37
+        ]
+      ],
+      "features": [
+        "rhi_at_level",
+        "rhi_level_above",
+        "rhi_level_below",
+        "rhi_vertical_gradient",
+        "temperature",
+        "temp_minus_TLM",
+        "pressure",
+        "cloud_ice_water_content",
+        "high_cloud_fraction",
+        "vertical_velocity",
+        "vertical_wind_shear",
+        "distance_to_tropopause_wmo",
+        "latitude",
+        "longitude",
+        "month_sin",
+        "month_cos",
+        "local_solar_time_sin",
+        "local_solar_time_cos"
+      ]
+    },
+    "avoidance": {
+      "alternatives_ft": [
+        -4000,
+        -2000,
+        2000,
+        4000
+      ],
+      "fuel_model": "openap",
+      "co2_per_kg_fuel": 3.16,
+      "metric_horizons_years": [
+        20,
+        100
+      ],
+      "rank_by": "lower_bound_net_warming_avoided",
+      "alert_if": "lower_bound > 0",
+      "alert_requires_all_horizons": true,
+      "metric_conversion": {
+        "source": null,
+        "factor_h20": null,
+        "factor_h100": null
+      },
+      "confidence_note_min_examples": 50
+    }
+  },
+  "open_questions_text": "# Pre-registration: open questions\n\nThese are questions the methods paper (v1.0, 12 Oct 2026) leaves unspecified.\nEach must be **settled before the relevant results are seen**. Settled answers\nare part of the pre-registration: `stratum lock-preregistration` hashes this file\ntogether with `configs/preregistered.yaml`, so editing a settled answer after the\nlock counts as a deviation (log it in `docs/deviations.md`).\n\nOwners: SV Shrugal Vinod · AH Aditya Harsoda · IK Ishaan Kupnur · AS Abeer Shah.\n\nStatus key: **SETTLED** (fixed now) · ⚑ **OPEN** (must be settled before the phase named).\n\n---\n\n### 1. H1: raw detected occurrence, or efficiency-adjusted? — SETTLED (2026-10-13)\n**Answer.** Primary: the **raw detectable-contrail** ratio, i.e. B1-predicted persistent\ncontrails ÷ satellite-detected contrails, over observable labelled segments. Secondary:\nthe same ratio after dividing observed occurrence by the estimated detection efficiency (Q4).\n**Why.** Paper §4.5 says the model predicts the probability of a *detectable* persistent\ncontrail, so like is compared with like. The efficiency-adjusted ratio depends on Q4's\nthresholds, which add their own uncertainty, so it is reported but does not decide H1.\n\n### 2. Aggregating per-image matches to one label per segment — SETTLED (2026-10-13)\n`preregistered.yaml: matching.segment_label_rule` (`min_observable_slots: 2` is flagged \"team to confirm\" in the YAML; confirm it before the lock).\n**Answer.** y = 1 if the segment is matched at **any observable** slot time in the 20–120 min\nwindow. y = 0 if it is observable at **≥ 2** slot times and matched at none. Otherwise\ny = missing. Per-time details are stored so other rules can be run as sensitivity analyses.\n**Why.** One observable match is evidence of a contrail. A single observable \"no match\" is\nweak evidence of absence, so two are required before calling a segment negative.\n\n### 3. Operationalising \"Cohen's κ at object level\" (§4.4) — ⚑ OPEN · owner IK · before the 20-scene pilot (Phase 5)\n`preregistered.yaml: detection.agreement_metric` is `null` until this is settled.\n**Recommended answer.** κ is computed on a fixed grid of **16 × 16-px cells** (a cell is positive for a\nlabeller if any of their polylines passes through it), with scene-bootstrap 95 % CIs.\nObject-level agreement is reported alongside as **symmetric object F1**. Two polylines match\nif the mean perpendicular distance ≤ 2 px over their overlap, the overlap is ≥ 50 % of the\nshorter, and the orientation difference ≤ 20° (one-to-one, Hungarian assignment).\n**Why.** κ needs true negatives. Objects have no natural \"negative object\", so κ on objects\nalone is undefined; the grid supplies negatives while staying close to the object scale.\nDeviation note: the paper's wording \"κ at object level\" is honoured by the object F1 and the\nsmall grid. Must be decided before any labels exist.\n\n### 4. Detection-efficiency thresholds (Driver et al. 2025) — ⚑ OPEN · owner IK · before Phase 5 step 5.5.7\nNeeds the actual optical-depth and width thresholds from Driver, Stettler & Gryspeerdt\n(2025), *AMT* 18, 1115–1134. Do not estimate them; read them from the paper (Ishaan to send\nthe PDF or the table) and write them here with page/table references.\n\n### 5. Climate-metric conversion factors (20- and 100-year horizons) — ⚑ OPEN · owner SV · before Phase 7 step 7.6.4\nNeeds a cited, published method to put contrail energy forcing (J) and CO₂ (kg) on a common\nbasis at 20 and 100 years (for example a GWP- or ATR-based contrail-EF-to-CO₂e factor).\nFactors and citation go here **before** anything is computed. Do not invent factors.\n\n### 6. Aircraft mass fraction — SETTLED (2026-10-13)\n**Answer.** Mass = **0.80 × MTOW**; sensitivity runs at **0.70** and **0.90**.\n**Why.** Paper §4.2 fixes a constant fraction with sensitivity tests but no value. 0.80 is a\nmid-range cruise mass for a domestic narrow-body; the two sensitivity runs bracket light and\nheavy loading.\n\n### 7. January 2026 is both the development month and inside the winter test fold — SETTLED (2026-10-13)\n**Answer.** Option (b): report the winter fold **both with and without January 2026**. Both\nnumbers appear in every winter result. Any tuning done on January 2026 is listed in\n`docs/decisions.md`.\n**Why.** Keeps the paper's development month and evaluation year unchanged, and shows any\nleakage openly instead of hiding it.\n\n### 8. Engine overall propulsion efficiency η — SETTLED (2026-10-13)\n**Answer.** Per aircraft type from OpenAP (primary, paper §4.2); 0.30 where a type has no\nvalue (paper Appendix A); sensitivity runs at 0.25 and 0.40 (Appendix A). Engineering guards,\nnot pre-registered: values clipped to 0.20–0.45 with a logged warning, and pycontrails'\nPoll–Schumann η as a cross-check.\n\n### 9. Labelling rules that affect scoring — SETTLED (2026-10-13)\n**Answer.** Paper Appendix B rules 1, 4, 5 and 6 are frozen in `preregistered.yaml`\n(`labelling_rules`): minimum length 10 px; scene status clear / partly obscured / obscured,\nwith obscured excluded from scoring; uncertain lines scored separately; labellers blind to\ntracks and predictions. The rest of the guide may be revised after the pilot (§4.4).\n\n### 10. How labeller disagreements are resolved — SETTLED (2026-10-13)\n**Answer.** By **discussion between the two labellers** (paper §4.4). The labeller app's\nadjudication mode records the agreed result and who agreed. If they cannot agree, the object\nis kept as \"uncertain\" (scored separately, rule 9).\n\n### 11. What counts as \"opaque cloud\" in the EUMETSAT cloud mask — ⚑ OPEN · owner IK · before Phase 5 step 5.5.5\nDepends on the categories of the Meteosat-9 IODC cloud-mask product, which we will read in\nPhase 1. Must be fixed before any matching results are looked at.\n\n### 12. Number of CoCiP Monte Carlo members for EF ranges — ⚑ OPEN · owner SV · before Phase 2 full-month run\nStart with N = 20 for development. The final N depends on measured Colab run time.\n\n### 13. Latitude bands for the learned RHi scaling factor — SETTLED (2026-10-13)\n**Answer.** 6–15°N, 15–25°N, 25–37°N.\n**Why.** Roughly southern peninsula / central India / north India and the Himalayan\nfoothills; three bands keep enough labels in each band × season cell.\n\n### 14. Minimum labelled examples for a \"well covered by validation data\" note — SETTLED (2026-10-13)\n**Answer.** N = 50 labelled examples in the segment's (season, latitude band, FL band,\nVZA band, day/night) cell; otherwise the card says \"extrapolating\".\n\n### 15. Gradient-boosting library — SETTLED (2026-10-13)\n**Answer.** LightGBM, on CPU. XGBoost is not used for the main model.\n**Why.** Native monotone constraints, and trees on ~10⁶ rows train in minutes on CPU. Using a\nsingle library avoids \"we tried both and picked the better one\".\n\n### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — ⚑ OPEN · owner SV · before scene sampling (Phase 5)\n`preregistered.yaml: detection.labelled_split.seed` is `null`. Pick any integer **once**, write it\nin the YAML and here, and never change it: re-drawing the split until the detector looks good\nwould be leakage. After the lock, filling this `null` is allowed; changing it later is a deviation.\n"
+}

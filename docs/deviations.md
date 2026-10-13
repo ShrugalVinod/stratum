@@ -19,4 +19,4 @@ both runs (build prompt §6.8).
 
 ---
 
-*No deviations yet. The pre-registration lock has not been written yet (awaiting team approval).*
+*No deviations. Pre-registration locked 2026-10-13 (combined SHA-256 ebd71ed91f63…0a95, written 2026-10-13 16:11 UTC at commit 1e1c17e).*

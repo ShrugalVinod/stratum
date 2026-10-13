@@ -17,9 +17,12 @@ Newest first. What was done, what's next, blockers.
 - Colab smoke test PASSED (commit 97b5b1a: 33 tests, Drive layout, write/read OK).
 - Shrugal revised `preregistered.yaml` (parallax, segment-label rule, ⚑ null placeholders, monotone keys renamed to feature names); schema + lock updated so filling a ⚑ null later is allowed but changing a set value is not. 37 tests.
 
-**Next**
-- Shrugal: say "approved" → `stratum lock-preregistration`.
+- Pre-registration **approved** by Shrugal and **locked**: `_locks/preregistration.lock` (combined SHA-256 ebd71ed91f63…0a95, written 2026-10-13 16:11 UTC at commit 1e1c17e). Settled: Q1, Q2, Q6–Q10, Q13–Q15. Open (⚑ nulls, fill before the named phase): Q3, Q4, Q5, Q11, Q12, Q16.
+- **Phase 0 complete; gate report ready for review.**
+
+**Next (Phase 1)**
+- ERA5 downloader + one-day test; ADS-B Exchange adapter on a free day; eumdac collection search + 12-month coverage check.
 - Start account requests now (OpenSky approval can take weeks): CDS, EUMETSAT, OpenSky.
 
 **Blockers**
-- Lock waits for the team's "approved" on `preregistered.yaml`.
+- Phase 1 needs CDS + EUMETSAT keys (in `.env` and Colab Secrets) and the OpenSky request sent.

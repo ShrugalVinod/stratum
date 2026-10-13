@@ -1,6 +1,6 @@
 ```
 ═══ PHASE 0 GATE REPORT — Setup and guard-rails — 13 Oct 2026 ═══
-Status:          BLOCKED on 1 thing: Shrugal's "approved" on the pre-registration → lock
+Status:          READY FOR REVIEW (all done-when items complete)
 Calendar:        on track (target 27 Oct 2026; 14 days left)
 
 Done-when checklist:
@@ -12,8 +12,9 @@ Done-when checklist:
       commit exit code 1, nothing committed).
   [~] preregistered.yaml populated with paper citations ✔; Shrugal revised it (13 Oct:
       parallax, segment-label rule, explicit ⚑ null placeholders, monotone keys = feature
-      names) ✔; "approved" ✗;
-      lock ✗ (stratum lock-preregistration runs right after "approved").
+      names) ✔; "approved" by Shrugal in chat 13 Oct 2026 ✔;
+      lock ✔ _locks/preregistration.lock (combined SHA-256 ebd71ed91f63…0a95, written 2026-10-13 16:11 UTC at commit 1e1c17e); verify-lock --strict OK.
+      Lock copy on Drive: next Colab run copies it automatically.
   [x] docs/data_sources.md: every account, step by step (CDS, EUMETSAT, OpenSky,
       ADS-B Exchange, GitHub token, Colab Secrets).
   [x] Phase Gate Report (this file).
@@ -42,7 +43,7 @@ Colab runs:      00_smoke_test @ 97b5b1a: PASSED (verified from run summary; tes
 Storage:         STRATUM folder on Drive: a few KB (empty layout + 1 test manifest). +0 GB this phase.
 Decisions made:  docs/decisions.md, 19 lines dated 2026-10-13 (incl. Python 3.12, repo
                  location, Colab venv install, dev-month option (b), mass 0.80, η, labelling rules).
-Deviations:      none (lock not yet written).
+Deviations:      none.
 Open questions:  ⚑ Q3 κ method (IK, before the pilot). ⚑ Q16 labelled-split seed (SV, before scene sampling).
                  ⚑ Q4 Driver et al. 2025 detection thresholds (IK, before Phase 5): need the paper's numbers.
                  ⚑ Q5 climate-metric factors, 20/100 yr (SV, before Phase 7): need a cited source.
