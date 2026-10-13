@@ -1,0 +1,205 @@
+# ════════════════════════════════════════════════════════════════════════════
+# STRATUM — PRE-REGISTERED SETTINGS  (FROZEN)
+#
+# Source: Vinod, Harsoda, Kupnur & Shah, "How well can persistent contrails be
+# predicted over India?", methods paper v1.0, 12 Oct 2026
+# (docs/STRATUM_Research_Paper.pdf). "§" = section of that paper.
+#
+# Changing ANY value here needs (a) the team's explicit written OK and (b) an
+# entry in docs/deviations.md (date, reason, whether results had been seen).
+# `stratum verify-lock` compares this file against _locks/preregistration.lock.
+# Comments are documentation only: the lock hashes the parsed values, not the text.
+# Answers to questions the paper left open: configs/preregistered_open_questions.md
+# ════════════════════════════════════════════════════════════════════════════
+
+schema_version: 1
+
+# §3.1 Domain and period: 6–37°N, 68–98°E; cruise segments above FL250 (~376 hPa).
+domain:
+  lat: [6, 37]
+  lon: [68, 98]
+  min_flight_level: 250
+  development_corridor: DEL-BOM        # §3.1 "a single corridor, Delhi–Mumbai"
+
+# §3.1 Development month Jan 2026; evaluation Mar 2025 – Feb 2026, one of each season.
+periods:
+  development_month: "2026-01"
+  evaluation: ["2025-03-01", "2026-02-28"]
+  # §6.2 four seasonal folds (Mar–May, Jun–Sep, Oct–Nov, Dec–Feb).
+  seasonal_folds:
+    pre_monsoon: [3, 4, 5]
+    monsoon: [6, 7, 8, 9]
+    post_monsoon: [10, 11]
+    winter: [12, 1, 2]
+  # Open question 7 (settled): the dev month sits inside the winter fold, so winter
+  # is reported both with and without January 2026.
+  dev_month_policy: report_winter_with_and_without_dev_month
+
+# §6.2 "trains on segments west of 80°E and tests on segments east of it".
+spatial_split:
+  boundary_lon: 80.0
+
+# §3.3 Coverage audit and decision rule: OpenSky if it captures at least half of
+# scheduled corridor flights with continuous cruise tracks (no gap > 10 min);
+# otherwise the 12 free ADS-B Exchange days.
+coverage_rule:
+  min_fraction_continuous: 0.50
+  max_gap_min: 10
+  fallback_source: adsbx_free_first_of_month
+
+# §4.2 Trajectory processing.
+trajectory:
+  max_vertical_rate_fpm: 6000          # §4.2 "vertical rate above 6,000 ft/min"
+  max_groundspeed_jump_kt: 100         # §4.2 "ground-speed jumps above 100 kt"
+  resample_min: 1                      # §4.2 "one-minute segments"
+  max_fill_gap_min: 10                 # §4.2 gaps ≤ 10 min filled along great circle,
+  fill_method: great_circle_constant_altitude   # at constant altitude; longer gaps split
+
+# §4.2 "aircraft mass set to a fixed fraction of maximum take-off mass and varied in
+# sensitivity tests". Fraction not given in the paper → open question 6 (settled).
+aircraft:
+  mass_fraction_of_mtow: 0.80
+  mass_fraction_sensitivity: [0.70, 0.90]
+  # Appendix A: η = 0.3 default, per type from OpenAP, 0.25–0.40 in sensitivity tests.
+  eta_source: openap_per_type
+  eta_default: 0.30
+  eta_sensitivity: [0.25, 0.40]
+
+# §2.1 eq. (1)–(2), Appendix A constants. §4.3 persistence where RHi ≥ 100 %.
+sac:
+  EI_H2O: 1.23          # kg/kg, water vapour emission index of kerosene [Schumann 1996]
+  c_p: 1004.0           # J kg⁻¹ K⁻¹
+  epsilon: 0.622        # ratio of molar masses, water / dry air
+  Q: 43.2e6             # J/kg, specific combustion heat of kerosene [Schumann 1996]
+  persistence_rhi: 1.0  # §2.2, §4.3
+  saturation_formulas: murphy_koop_2005   # §4.3 [Murphy & Koop 2005]
+
+# §4.3 interpolation of ERA5 to segments.
+met_interpolation:
+  time: linear
+  vertical: linear_in_log_pressure
+  horizontal: bilinear
+
+# §4.4 Contrail detection and the hand-labelled validation set.
+detection:
+  btd: "T108 - T120"           # §4.4 BTD = T10.8 − T12.0
+  labelled_scenes: 200         # §4.4
+  scene_size_px: 256           # §4.4 "256 × 256 pixels"
+  pilot_scenes: 20             # §4.4 pilot round of 20 scenes
+  labellers_per_scene: 2       # §4.4 two team members, independently
+  # §4.4 sampled "across months, times of day and predicted contrail density".
+  scene_strata: [month, time_of_day, predicted_contrail_density]
+  # §4.4 "settle disagreements by discussion" (open question 10, settled).
+  disagreement_resolution: discussion_between_labellers
+
+# Appendix B, labelling guide v0.1 (the parts that affect scoring). The guide text
+# itself may be revised after the pilot (§4.4); these scoring rules may not.
+labelling_rules:
+  min_contrail_length_px: 10                                # App. B rule 1
+  scene_status: [clear, partly_obscured, obscured]          # App. B rule 4
+  exclude_scene_status_from_scoring: [obscured]             # App. B rule 4
+  uncertain_lines: scored_separately                        # App. B rule 5
+  labellers_blind_to_tracks_and_predictions: true           # App. B rule 6
+
+# §4.5 Matching predictions to observations.
+matching:
+  min_age_min: 20              # §4.5 contrail age between 20 …
+  max_age_min: 120             # … and 120 minutes
+  max_distance_px: 2           # §4.5 "within two pixels"
+  max_angle_deg: 20            # §4.5 "within 20° of the segment's heading"
+  advection_winds: era5_at_segment_pressure_level   # §4.5
+  candidate_segments: sac_formation                 # §4.6 "segments that satisfy the formation criterion"
+
+# §4.5 Observability: a scene is observable only if ALL hold. Otherwise label missing.
+observability:
+  max_high_cloud_fraction: 0.5           # ERA5 high cloud at and above segment level < 0.5
+  require_no_opaque_cloud_in_window: true
+  max_viewing_zenith_deg: 60             # VZA < 60°
+  unobservable_label: missing            # §4.5 excluded from training and scoring
+
+# §6.1 Table 4 baselines.
+baselines:
+  B0: climatology_monthly_cell_level          # from training months only
+  B1: raw_era5                                # SAC and RHi ≥ 100 %, no correction
+  B2:
+    constant_scaling_divisor: 0.95            # ERA5 RHi divided by 0.95 [Teoh 2024]
+  B3: pycontrails_latitude_correction         # [Teoh 2022, 2024] as implemented in pycontrails
+  B4:
+    optional: true
+    method: wolf2025_bivariate_quantile_mapping   # only if coefficients apply to our domain
+
+# §6.3 Metrics. Primary metric fixed in advance.
+metrics:
+  primary: brier_skill_score_vs_B3_heldout_seasons
+  secondary: [hit_rate, false_alarm_ratio, csi, auroc, brier, reliability]
+
+# §6.3 "a bootstrap that resamples whole days (1,000 resamples)".
+bootstrap:
+  unit: day
+  n_resamples: 1000
+  ci: 0.95
+
+# §6.4 Table 5.
+hypotheses:
+  H1:
+    test: ratio_pred_over_obs_B1
+    supported_if: "upper_ci < 1"
+    primary_definition: raw_detectable          # open question 1 (settled)
+    secondary_definition: detection_efficiency_adjusted
+  H2:
+    test: mean_bss_vs_B3
+    supported_if: "mean >= 0.10 and lower_ci > 0"
+  H3:
+    test: distance_share_for_80pct_positive_EF
+    supported_if: "share <= 0.10"
+  H4:
+    test: night_EF_share_minus_distance_share
+    night_lst: [18, 6]                          # 18:00–06:00 local solar time
+    supported_if: "lower_ci > 0"
+
+# Table 6 "Too few labels": fewer than 300 matched observed contrails in observable scenes.
+min_labels:
+  matched_observed_contrails: 300
+
+# §4.6 Correction model.
+correction_model:
+  type: gradient_boosted_trees
+  library: lightgbm                       # open question 15 (settled)
+  training_segments: sac_formation
+  monotone:
+    rhi: increasing
+    temp_margin_above_TLM: decreasing
+  calibration: isotonic                   # fitted on a validation fold
+  sanity_baseline: logistic_on_rhi
+  feedback_preference: scaling_factor_by_season_latband   # option (b), unless (a) clearly better
+  latitude_bands_deg: [[6, 15], [15, 25], [25, 37]]       # open question 13 (settled)
+  features:                               # §4.6, exactly this set
+    - rhi_at_level
+    - rhi_level_above
+    - rhi_level_below
+    - rhi_vertical_gradient
+    - temperature
+    - temp_margin_TLM
+    - pressure
+    - cloud_ice_water_content
+    - high_cloud_fraction
+    - vertical_velocity
+    - vertical_wind_shear
+    - distance_to_tropopause_wmo
+    - latitude
+    - longitude
+    - month_sin
+    - month_cos
+    - local_solar_time_sin
+    - local_solar_time_cos
+
+# §4.7 Avoidance options and the fuel–warming tradeoff.
+avoidance:
+  alternatives_ft: [-4000, -2000, 2000, 4000]
+  fuel_model: openap
+  co2_per_kg_fuel: 3.16
+  metric_horizons_years: [20, 100]
+  rank_by: lower_bound_net_warming_avoided
+  alert_if: "lower_bound > 0"
+  alert_requires_all_horizons: true        # build prompt §7.6: p5 > 0 under both 20 and 100 yr
+  confidence_note_min_examples: 50         # open question 14 (settled)

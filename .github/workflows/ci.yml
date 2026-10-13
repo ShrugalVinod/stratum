@@ -1,0 +1,43 @@
+# CI: lint, type-check, secret scan, pre-registration lock check and unit tests on every push.
+# Fixtures only, no network (build prompt §0.3). Must finish in < 10 minutes.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install pinned environment
+        run: uv sync --frozen --python 3.12
+
+      - name: Lint (ruff)
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Type-check (mypy --strict)
+        run: uv run mypy
+
+      - name: Secret scan (detect-secrets)
+        run: git ls-files -z | grep -zv -E '^(uv\.lock|docs/.*\.pdf)$' | xargs -0 uv run detect-secrets-hook --baseline .secrets.baseline
+
+      - name: Pre-registration lock unchanged (or deviations approved)
+        run: |
+          if [ -f _locks/preregistration.lock ]; then uv run stratum verify-lock; else echo "No lock yet (Phase 0, before team approval)."; fi
+
+      - name: Tests
+        run: uv run pytest -m "not network" --cov --cov-report=term-missing:skip-covered

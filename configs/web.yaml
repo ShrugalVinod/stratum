@@ -1,0 +1,9 @@
+# Web export settings (build prompt §4.3). Used from Phase 4.
+
+model_version: B1-physics-v0
+budgets:
+  initial_load_mb: 1.5
+  js_gzip_kb: 250
+  per_day_data_mb: 3.0
+flight_simplify_tolerance_m: 200
+colormap: cividis

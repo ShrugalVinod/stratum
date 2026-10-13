@@ -1,0 +1,45 @@
+# Secrets — never commit (build prompt rule 12)
+.env
+.env.*
+!.env.example
+.cdsapirc
+*.pem
+*credentials*.json
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Data never lives in git: it lives on Google Drive (build prompt §2.3)
+data/*
+!data/reference/
+.work/
+*.zarr/
+*.nc
+*.grib
+*.nat
+*.parquet
+!tests/fixtures/**/*.parquet
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Web (Phase 4+)
+node_modules/
+web/dist/

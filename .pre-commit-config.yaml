@@ -1,0 +1,44 @@
+# Runs on every `git commit` once installed with `make setup`.
+# Local hooks use the project's own pinned tools (uv.lock), so versions match CI exactly.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: end-of-file-fixer
+        exclude: ^BUILD_PROMPT\.md$   # the team's own document: never auto-edited
+      - id: trailing-whitespace
+        exclude: ^BUILD_PROMPT\.md$
+      - id: check-merge-conflict
+      - id: check-added-large-files   # data belongs on Drive, not in git
+        args: ["--maxkb=2048"]
+  - repo: local
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets (block API keys and passwords)
+        entry: uv run detect-secrets-hook --baseline .secrets.baseline
+        language: system
+        exclude: ^(uv\.lock|docs/.*\.pdf)$
+      - id: ruff
+        name: ruff (lint)
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff (format)
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+      - id: mypy
+        name: mypy --strict (stratum/)
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        files: ^stratum/
+      - id: nbstripout
+        name: nbstripout (strip notebook outputs)
+        entry: uv run nbstripout
+        language: system
+        files: \.ipynb$

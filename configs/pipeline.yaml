@@ -1,0 +1,18 @@
+# Engineering knobs that are NOT pre-registered (batch sizes, chunking, paths).
+# Changes here do not need a deviation entry, but record meaningful ones in docs/decisions.md.
+
+seed: 20261013
+
+io:
+  parquet_compression: zstd
+  zarr_consolidated: true
+
+storage:
+  drive_warn_fraction: 0.60       # warn at 60 % of the 2 TB Drive (build prompt §2.3)
+  drive_capacity_tb: 2.0
+
+colab:
+  work_dir: /content/work         # fast local disk; copy finished outputs to Drive
+  drive_root: /content/drive/MyDrive/STRATUM
+
+# Sections added by later phases: era5, adsb, cocip, detector, matching, training.

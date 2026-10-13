@@ -1,0 +1,7 @@
+# Typecode → OpenAP type fallbacks for aircraft types OpenAP lacks (build prompt §3.5).
+# Every entry must be hand-checked; every fallback used is listed in run summaries.
+# Populated in Phase 2 from the types actually seen in the ADS-B data.
+
+status: empty
+reviewed_by: null
+fallbacks: {}

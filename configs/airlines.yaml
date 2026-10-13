@@ -1,0 +1,12 @@
+# ICAO airline designators counted as "commercial airline" for public outputs
+# (build prompt §3.6). Status: DRAFT — must be reviewed by a human before Phase 4 export.
+# Phase 1/2 adds foreign carriers seen in the data; each new entry needs `reviewed_by`.
+
+status: draft
+reviewed_by: null
+designators:
+  IGO: {name: IndiGo, country: IN}
+  AIC: {name: Air India, country: IN}
+  AXB: {name: Air India Express, country: IN}
+  AKJ: {name: Akasa Air, country: IN}
+  SEJ: {name: SpiceJet, country: IN}

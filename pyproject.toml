@@ -1,0 +1,116 @@
+[project]
+name = "stratum"
+version = "0.0.1"
+description = "STRATUM: satellite-checked persistent-contrail prediction over Indian airspace (Conrad Challenge 2026-27)."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Shrugal Vinod" },
+    { name = "Aditya Harsoda" },
+    { name = "Ishaan Kupnur" },
+    { name = "Abeer Shah" },
+]
+# 3.12 rather than the build prompt's 3.11: pycontrails >= 0.64 requires Python >= 3.12,
+# and Google Colab runs 3.12. See docs/decisions.md (2026-10-13).
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Core numerics and data
+    "numpy",
+    "scipy",
+    "pandas",
+    "pyarrow",
+    "xarray",
+    "zarr",
+    "dask",
+    "netCDF4",
+    # Contrail physics, aircraft performance
+    "pycontrails[ecmwf,gcp,zarr,pyproj]",
+    "openap",
+    # Data access
+    "cdsapi>=0.7.7",
+    "eumdac",
+    # Satellite and geometry
+    "satpy",
+    "pyresample",
+    "pyproj",
+    "shapely",
+    "scikit-image",
+    "opencv-python-headless",
+    # Machine learning (Phases 6-7)
+    "scikit-learn",
+    "lightgbm",
+    "xgboost",
+    "shap",
+    # Contracts, config, CLI
+    "pandera",
+    "pydantic>=2",
+    "pyyaml",
+    "python-dotenv",
+    "typer",
+    "rich",
+    "matplotlib",
+]
+
+[project.scripts]
+stratum = "stratum.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "hypothesis",
+    "ruff",
+    "mypy",
+    "types-PyYAML",
+    "pre-commit",
+    "detect-secrets",
+    "nbstripout",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["stratum"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["notebooks", "colab"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]
+ignore = [
+    "N803", "N806", "N815",  # physics names such as T, G, T_LM are clearer than snake_case
+    "RUF001", "RUF002", "RUF003",  # allow unicode (°, η, ε) in strings and docstrings
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["stratum"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "pycontrails.*", "openap.*", "satpy.*", "pyresample.*", "eumdac.*", "cdsapi.*",
+    "shapely.*", "skimage.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: tests that take more than a few seconds",
+    "network: tests that need internet (never run in CI)",
+]
+
+[tool.coverage.run]
+source = ["stratum"]
+branch = true

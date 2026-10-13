@@ -1,0 +1,23 @@
+# Which data sources the pipeline uses. Filled in during Phase 1.
+# The ADS-B source is chosen MECHANICALLY by the coverage-audit rule
+# (preregistered.yaml: coverage_rule; paper §3.3). Do not edit by hand.
+
+adsb:
+  chosen_source: pending          # opensky | adsbx — set by `stratum audit-coverage` (Phase 1)
+  decided_on: null
+  audit_report: null
+
+era5:
+  route: pending                  # cds | arco — chosen in Phase 1 after an equivalence check
+  dataset_pressure_levels: reanalysis-era5-pressure-levels
+  dataset_single_levels: reanalysis-era5-single-levels
+  version_recorded: null          # ERA5 vs ERA5T, recorded per month in Phase 1
+
+meteosat:
+  collection_id_l15: pending      # IODC High Rate SEVIRI Level 1.5, found with eumdac in Phase 1
+  collection_id_cloud_mask: pending
+  coverage_confirmed_months: []
+
+aircraft_db:
+  source: opensky_aircraft_database
+  snapshot_date: null
