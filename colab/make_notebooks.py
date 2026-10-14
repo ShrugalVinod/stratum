@@ -340,6 +340,94 @@ print(json.dumps(days_out, indent=1))
 ]
 
 
+# ── 01c · Meteosat-9 IODC, Plan A ────────────────────────────────────────────
+
+METEOSAT = [
+    header(
+        "01c · Meteosat-9 IODC imagery, Plan A (Phase 1, task 1.3.5)",
+        """
+**What this does:** for each chosen day (+2 h past midnight), downloads every 15-minute
+Meteosat-9 Indian Ocean full-disk image and its cloud mask from EUMETSAT, converts to
+brightness temperatures with satpy, crops to the padded India box (native satellite grid)
+and stores 6 infrared channels + the cloud mask on Drive:
+`MyDrive/STRATUM/raw/meteosat/{l15_crop,clm}/YYYY-MM-DD/` plus `static_grid.zarr`
+(lat, lon, viewing angle, pixel area).
+
+**Days (Plan A, approved 14 Oct 2026):** 1 Jan 2026 + the 2 clearest January 2026 days
+(chosen objectively from ERA5 high cloud, step 8) + the 12 ADS-B Exchange days.
+
+* **Runtime:** standard CPU. Needs the ERA5 January 2026 data already on Drive (done).
+* **Secrets** (🔑, Notebook access ON): `GITHUB_TOKEN`, `EUMETSAT_KEY`, `EUMETSAT_SECRET`
+  (the NEW account's key).
+* **Writes to Drive:** ≈ 0.6 GB per day → ≈ 9 GB in total (≈ 280 GB streamed, not stored).
+* **Time:** ≈ 10–20 min per day → ≈ 3–5 h for 14 days.
+* **If it disconnects:** *Runtime → Run all* again: finished days are skipped.
+* **Never re-run while it is still running.** To restart on purpose: *Runtime → Restart
+  session* first, then *Runtime → Run all*.
+* **Licence:** EUMETSAT data; credit EUMETSAT; never redistribute the original data.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings(
+        "01c_meteosat_ingest",
+        'ADSBX_DAYS = ["2025-03-01", "2025-04-01", "2025-05-01", "2025-06-01", "2025-07-01", "2025-08-01",\n'
+        '              "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01"]\n'
+        "EXTEND_HOURS = 2\n",
+    ),
+    *SETUP,
+    code('''
+# ── 7. EUMETSAT key from Colab Secrets (never printed) ─────────────────────
+for name in ("EUMETSAT_KEY", "EUMETSAT_SECRET"):
+    val = userdata.get(name)
+    SECRETS.append(val)
+    run_env[name] = val
+del val
+print("EUMETSAT key loaded.")
+'''),
+    code('''
+# ── 8. Choose the 2 clearest January 2026 days from ERA5 (objective) ────────
+r = subprocess.run(f"{VENV}/bin/stratum select-clear-days --month 2026-01 --n 2 --exclude 2026-01-01",
+                   shell=True, cwd=SRC, env=run_env, capture_output=True, text=True)
+print(r.stdout[-2500:])
+assert r.returncode == 0, r.stderr[-1500:]
+CLEAR_DAYS = next(l.split("=", 1)[1].strip() for l in r.stdout.splitlines() if l.startswith("CLEAR_DAYS=")).split(",")
+DAYS = sorted(set(["2026-01-01", *CLEAR_DAYS, *ADSBX_DAYS]))
+print("Days to ingest:", DAYS)
+'''),
+    code('''
+# ── 9. Ingest each day (long; streams progress; resumable) ─────────────────
+codes = {}
+for d in DAYS:
+    print(f"\\n===== {d} =====")
+    codes[d] = stratum(f"meteosat-day --day {d} --extend-hours {EXTEND_HOURS}", live=True)
+print("exit codes:", codes)
+'''),
+    code('''
+# ── 10. Collect per-day results from the manifests on Drive ────────────────
+days_out, missing = {}, []
+for d in DAYS:
+    p = f"{DRIVE_ROOT}/raw/meteosat/l15_crop/{d}"
+    if not os.path.exists(f"{p}/_SUCCESS"):
+        missing.append(d)
+        continue
+    st = json.load(open(f"{p}/manifest.json"))["stats"]
+    gb = sum(int(sh(f"du -sb '{DRIVE_ROOT}/raw/meteosat/{k}/{d}' | cut -f1")) for k in ("l15_crop", "clm")) / 1e9
+    days_out[d] = {"slots": f"{st['slots_kept']}/{st['slots_expected']}", "n_missing": len(st["missing"]),
+                   "missing_first": st["missing"][:5], "cloudy_frac": st["clm_fraction"].get("cloudy"),
+                   "gb": round(gb, 3)}
+print(json.dumps(days_out, indent=1))
+'''),
+    summary_cell('''    "exit_codes": codes,
+    "clear_days_chosen": CLEAR_DAYS,
+    "days_done": len(days_out),
+    "days_missing": missing,
+    "static_grid_exists": os.path.exists(f"{DRIVE_ROOT}/raw/meteosat/static_grid.zarr"),
+    "gb_written_total": round(sum(v["gb"] for v in days_out.values()), 2),
+    "days": days_out,
+'''),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -358,4 +446,5 @@ if __name__ == "__main__":
     write("00_smoke_test.ipynb", SMOKE)
     write("01a_era5_download.ipynb", ERA5)
     write("01b_adsb_ingest.ipynb", ADSBX)
+    write("01c_meteosat_ingest.ipynb", METEOSAT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

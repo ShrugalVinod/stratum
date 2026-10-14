@@ -84,6 +84,14 @@ is kept as "uncertain" (scored separately, rule 9).
 Depends on the categories of the Meteosat-9 IODC cloud-mask product, which we will read in
 Phase 1. Must be fixed before any matching results are looked at.
 
+*Finding (2026-10-14):* `EO:EUM:DAT:MSG:CLM-IODC` has only four categories: clear sky over
+water, clear sky over land, **cloudy**, no data. It cannot separate opaque from thin cloud,
+and thin contrails/cirrus may themselves be flagged "cloudy". Options to decide in Phase 5:
+(a) treat every "cloudy" pixel near the segment as opaque (simple, very conservative: may
+discard real contrails); (b) use "cloudy" only where T10.8 is also cold and BTD small (an
+opaque-cloud signature), documented thresholds; (c) add the IODC cloud-top-height product
+(`EO:EUM:DAT:MSG:CTH-IODC`) and call cloud opaque if it is a thick layer below the segment.
+
 ### 12. Number of CoCiP Monte Carlo members for EF ranges — ⚑ OPEN · owner SV · before Phase 2 full-month run
 Start with N = 20 for development. The final N depends on measured Colab run time.
 

@@ -51,6 +51,7 @@ dependencies = [
     "rich",
     "matplotlib",
     "orjson>=3.13.0",
+    "eccodeslib",
 ]
 
 [project.scripts]
@@ -120,3 +121,8 @@ markers = [
 [tool.coverage.run]
 source = ["stratum"]
 branch = true
+
+[[tool.mypy.overrides]]
+# satpy and eumdac ship partial type hints that strict mypy can't use; treat them as untyped.
+module = ["satpy", "satpy.*", "eumdac", "eumdac.*", "pyresample", "pyresample.*"]
+follow_imports = "skip"

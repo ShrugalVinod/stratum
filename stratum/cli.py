@@ -225,6 +225,83 @@ def audit_coverage(
     _summary("audit-coverage", {**dec, "report": out / "coverage_audit.md", "recorded": record})
 
 
+@app.command("meteosat-day")
+def meteosat_day(
+    day: Annotated[str, typer.Option(help="UTC day, YYYY-MM-DD")],
+    extend_hours: Annotated[float, typer.Option(help="also take slots after midnight")] = 2.0,
+    max_slots: Annotated[int | None, typer.Option(help="TEST ONLY: first N slots")] = None,
+) -> None:
+    """Download + crop one day of Meteosat-9 IODC (6 IR channels + cloud mask) to Drive."""
+    import os
+    from datetime import date as _date
+
+    from eumdac.datastore import DataStore
+    from eumdac.token import AccessToken
+
+    from stratum.io import meteosat
+
+    tok = AccessToken((os.environ["EUMETSAT_KEY"], os.environ["EUMETSAT_SECRET"]))
+    root = drive_root() / "raw" / "meteosat"
+    res = meteosat.ingest_day(
+        _date.fromisoformat(day),
+        root,
+        work_dir(),
+        DataStore(tok),
+        extend_hours=extend_hours,
+        max_slots=max_slots,
+        config_hash=cfg.config_hash(),
+    )
+    area = res.pop("_area", None)
+    grid_path = root / "static_grid.zarr"
+    if area is not None and not grid_path.exists():
+        meteosat.static_grid(area).to_zarr(grid_path, mode="w", consolidated=True)
+        res["static_grid"] = str(grid_path)
+    _summary(f"meteosat-day {day}", res)
+
+
+@app.command("meteosat-figures")
+def meteosat_figures(
+    day: Annotated[str, typer.Option(help="stored day, YYYY-MM-DD")],
+    time: Annotated[str, typer.Option(help="UTC time HH:MM (nearest slot)")],
+) -> None:
+    """Quick-look PNGs (T10.8 with coastline = geolocation check; BTD) for one slot."""
+    from datetime import date as _date
+
+    from stratum.io import meteosat, meteosat_plots
+
+    d = _date.fromisoformat(day)
+    ds = meteosat.open_day(drive_root() / "raw" / "meteosat", d)
+    t = f"{day}T{time}"
+    out = repo_root() / "reports" / "phase1" / "meteosat"
+    files = [
+        meteosat_plots.slot_figure(
+            ds, t, out / f"ir108_coast_{day}T{time.replace(':', '')}.png", "IR_108"
+        ),
+        meteosat_plots.slot_figure(ds, t, out / f"btd_{day}T{time.replace(':', '')}.png", "BTD"),
+    ]
+    _summary("meteosat-figures", {"files": [str(f) for f in files]})
+
+
+@app.command("select-clear-days")
+def select_clear_days(
+    month: Annotated[str, typer.Option(help="YYYY-MM with ERA5 pl on Drive")] = "2026-01",
+    n: Annotated[int, typer.Option(help="how many days")] = 2,
+    exclude: Annotated[str, typer.Option(help="comma-separated days to skip")] = "2026-01-01",
+) -> None:
+    """Pick the N days with least ERA5 high cloud over the study box (objective choice)."""
+    from stratum.io import era5, meteosat
+
+    y, m = (int(x) for x in month.split("-"))
+    pl = era5.open_month(drive_root() / "raw" / "era5", "pl", y, m)
+    b = cfg.load_domain().study_bbox
+    days = meteosat.select_clear_days(pl, n, exclude.split(","), b.lat, b.lon)
+    hc = meteosat.daily_high_cloud(pl, b.lat, b.lon)
+    _summary(
+        "select-clear-days", {"chosen": ",".join(days), "high-cloud by day": hc.round(3).to_dict()}
+    )
+    console.print(f"CLEAR_DAYS={','.join(days)}")
+
+
 @app.command("ingest-aircraft-db")
 def ingest_aircraft_db(
     snapshot: Annotated[str, typer.Option(help="OpenSky snapshot month, YYYY-MM")] = "2025-08",
