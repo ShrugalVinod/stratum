@@ -1,0 +1,2 @@
+date,direction,airline,flight_number,sched_dep_utc,source_url,checked_by
+2026-01-01,DEL-BOM,6E,2134,2026-01-01T02:30:00Z,https://example-source-you-used,Shrugal

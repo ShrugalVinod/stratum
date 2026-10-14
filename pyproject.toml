@@ -91,6 +91,7 @@ extend-exclude = ["notebooks", "colab"]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]
 ignore = [
     "N802", "N803", "N806", "N815",  # physics names such as T, G, T_LM are clearer than snake_case
+    "PD011",  # xarray uses .values legitimately (ruff mistakes it for pandas)
     "RUF001", "RUF002", "RUF003",  # allow unicode (°, η, ε) in strings and docstrings
 ]
 

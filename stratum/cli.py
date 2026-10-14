@@ -141,6 +141,101 @@ def ingest_adsb(
     _summary(f"ingest-adsb {source} {d}", rows)
 
 
+@app.command("download-era5")
+def download_era5(
+    month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
+    group: Annotated[str, typer.Option(help="pl, sl, tropo_T, or all")] = "all",
+    days: Annotated[str | None, typer.Option(help="TEST ONLY: e.g. '15' or '15-16'")] = None,
+) -> None:
+    """Download ERA5 for the padded domain from CDS into <drive>/raw/era5/ (resumable)."""
+    import pandas as pd
+
+    from stratum.io import era5
+
+    if ":" in month:
+        a, b = month.split(":")
+        months = [(p.year, p.month) for p in pd.period_range(a, b, freq="M")]
+    else:
+        y, m = (int(x) for x in month.split("-"))
+        months = [(y, m)]
+    day_list = None
+    if days:
+        lo, _, hi = days.partition("-")
+        day_list = list(range(int(lo), int(hi or lo) + 1))
+    groups = list(era5.GROUPS) if group == "all" else [group]
+    root = drive_root() / "raw" / "era5"
+    for y, m in months:
+        for g in groups:
+            res = era5.download_month_cds(
+                g, y, m, root, days=day_list, config_hash=cfg.config_hash()
+            )
+            _summary(f"download-era5 {g} {y}-{m:02d}", res)
+
+
+@app.command("audit-coverage")
+def audit_coverage(
+    schedule: Annotated[str, typer.Option(help="human-filled schedule CSV")] = (
+        "data/reference/scheduled_flights.csv"
+    ),
+    record: Annotated[
+        bool, typer.Option(help="write the decision to configs + decision log")
+    ] = False,
+) -> None:
+    """Coverage audit (paper §3.3): apply the pre-registered rule to every audit day on disk."""
+    import datetime as _dt
+
+    import yaml
+
+    from stratum.flights import coverage
+    from stratum.io import adsb_adsbx
+
+    sched_path = repo_root() / schedule
+    if not sched_path.exists():
+        console.print(f"[red]{sched_path} not found.[/red] Fill in the template first.")
+        raise typer.Exit(1)
+    sched = coverage.load_schedule(sched_path)
+    days: dict[tuple[str, str], object] = {}
+    for d in sorted({str(x) for x in sched["date"]}):
+        p = drive_root() / "raw" / "adsb" / "adsbx" / d
+        if p.exists():
+            days[("adsbx", d)] = adsb_adsbx.read_day(p)
+    corridor = cfg.corridor_polygon(cfg.load_domain().corridor)
+    out = repo_root() / "reports" / "coverage_audit"
+    res = coverage.run_audit(sched_path, days, corridor, out)
+    dec = res["decision"]
+    if record:
+        ds_path = cfg.configs_dir() / "data_sources.yaml"
+        text = ds_path.read_text()
+        data = yaml.safe_load(text)
+        today = _dt.date.today().isoformat()
+        old = f"  chosen_source: {data['adsb']['chosen_source']}"
+        text = text.replace(old, f"  chosen_source: {dec['chosen_source']}", 1)
+        text = text.replace("  decided_on: null", f'  decided_on: "{today}"', 1)
+        text = text.replace(
+            "  audit_report: null", "  audit_report: reports/coverage_audit/coverage_audit.md", 1
+        )
+        ds_path.write_text(text)
+        log_path = repo_root() / "docs" / "decisions.md"
+        log_path.write_text(
+            log_path.read_text().rstrip("\n")
+            + f"\n| {today} | ADS-B source = **{dec['chosen_source']}** (coverage audit) | "
+            f"{dec['reason']}; applied mechanically by `stratum audit-coverage` | "
+            "rule (paper §3.3) |\n"
+        )
+    _summary("audit-coverage", {**dec, "report": out / "coverage_audit.md", "recorded": record})
+
+
+@app.command("ingest-aircraft-db")
+def ingest_aircraft_db(
+    snapshot: Annotated[str, typer.Option(help="OpenSky snapshot month, YYYY-MM")] = "2025-08",
+) -> None:
+    """Store a dated OpenSky aircraft-database snapshot in <drive>/raw/aircraft_db/."""
+    from stratum.io import aircraft_db
+
+    meta = aircraft_db.ingest(snapshot, drive_root() / "raw" / "aircraft_db")
+    _summary(f"ingest-aircraft-db {snapshot}", meta)
+
+
 @app.command("figure-sac")
 def figure_sac() -> None:
     """Reproduce paper Figure 1 (SAC diagram) into reports/figures/."""
