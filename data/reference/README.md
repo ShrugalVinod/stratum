@@ -15,6 +15,8 @@ scheduled Delhi ↔ Mumbai flight** on each audit day. Delete the example row.
 | `source_url` | the page you took it from | |
 | `checked_by` | your name | `Ishaan` |
 
+**Audit days (decided 2026-10-14): 1–7 November 2026.** Free trackers (e.g. FlightStats route pages) only show ±3 days around today, so look up in two sittings: on **2 Nov** (covers 1–5 Nov) and on **5 Nov** (covers 6–7 Nov). Optional extra column `notes` (e.g. `cancelled`).
+
 Rules: count **every** scheduled flight that day (not only ones you think were tracked);
 include codeshares only once (the operating airline's number); write down where each number
 came from. The code checks the columns and refuses bad directions.
