@@ -93,6 +93,22 @@ def write_corridor() -> None:
     )
 
 
+@app.command("figure-sac")
+def figure_sac() -> None:
+    """Reproduce paper Figure 1 (SAC diagram) into reports/figures/."""
+    from stratum.physics.sac_figure import save_figure
+
+    out = repo_root() / "reports" / "figures"
+    numbers = save_figure(out)
+    rows: dict[str, object] = {"files": f"{out}/fig1_sac.png, .svg"}
+    rows.update({k: v for k, v in numbers.items() if k != "points"})
+    points = numbers["points"]
+    assert isinstance(points, dict)
+    for name, d in points.items():
+        rows[f"point {name}"] = d
+    _summary("figure-sac", rows)
+
+
 @app.command("lock-preregistration")
 def lock_preregistration() -> None:
     """Freeze preregistered.yaml + settled open questions into _locks/preregistration.lock."""

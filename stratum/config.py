@@ -63,7 +63,8 @@ def canonical_json(data: Any) -> str:
     Two YAML files that differ only in comments, key order or formatting give the same
     string, so their hashes match.
     """
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    # default=str: YAML turns unquoted 2026-10-14 into a date object; hash its ISO text.
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
 
 
 def hash_data(data: Any) -> str:

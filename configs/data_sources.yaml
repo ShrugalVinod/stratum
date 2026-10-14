@@ -9,14 +9,19 @@ adsb:
 
 era5:
   route: pending                  # cds | arco — chosen in Phase 1 after an equivalence check
+  cds_access_verified: "2026-10-14" # tiny test download OK (T 250 hPa near Delhi, 2026-01-15 06 UTC)
   dataset_pressure_levels: reanalysis-era5-pressure-levels
   dataset_single_levels: reanalysis-era5-single-levels
   version_recorded: null          # ERA5 vs ERA5T, recorded per month in Phase 1
 
 meteosat:
-  collection_id_l15: pending      # IODC High Rate SEVIRI Level 1.5, found with eumdac in Phase 1
-  collection_id_cloud_mask: pending
-  coverage_confirmed_months: []
+  # Found with eumdac 3.1.1 on 2026-10-14 (see docs/data_sources.md, Meteosat section).
+  collection_id_l15: "EO:EUM:DAT:MSG:HRSEVIRI-IODC"   # High Rate SEVIRI Level 1.5 Image Data - MSG - Indian Ocean
+  collection_id_cloud_mask: "EO:EUM:DAT:MSG:CLM-IODC"  # Cloud Mask - MSG - Indian Ocean
+  satellite: MSG2                 # = Meteosat-9; same satellite in every month sampled
+  full_disk_product_size_mb: 176  # native full-disk slot (2026-01-15 06:12 UTC example)
+  coverage_confirmed_months: ["2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08",
+                              "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02"]
 
 aircraft_db:
   source: opensky_aircraft_database

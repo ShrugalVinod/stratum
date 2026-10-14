@@ -86,7 +86,7 @@ extend-exclude = ["notebooks", "colab"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]
 ignore = [
-    "N803", "N806", "N815",  # physics names such as T, G, T_LM are clearer than snake_case
+    "N802", "N803", "N806", "N815",  # physics names such as T, G, T_LM are clearer than snake_case
     "RUF001", "RUF002", "RUF003",  # allow unicode (°, η, ε) in strings and docstrings
 ]
 
@@ -99,7 +99,7 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = [
     "pycontrails.*", "openap.*", "satpy.*", "pyresample.*", "eumdac.*", "cdsapi.*",
-    "shapely.*", "skimage.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*",
+    "shapely.*", "skimage.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*", "scipy.*",
 ]
 ignore_missing_imports = true
 
