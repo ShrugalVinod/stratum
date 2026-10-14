@@ -428,6 +428,43 @@ print(json.dumps(days_out, indent=1))
 ]
 
 
+# ── 01a2 · ERA5 via ARCO (Google's identical copy; no queue) ─────────────────
+
+ERA5_ARCO = [
+    header(
+        "01a2 · ERA5 download via ARCO (Phase 1, task 1.1.4, fast route)",
+        """
+**What this does:** the same ERA5 download as `01a`, but from **Google's ARCO-ERA5 copy**
+instead of the CDS queue. ARCO was checked to be **identical** to CDS (differences at GRIB
+rounding level, `reports/phase1/era5_cds_vs_arco.csv`). Colab reads Google's whole-globe
+chunks over Google's own network, keeps only the India box, and writes exactly the same files
+as `01a`: `MyDrive/STRATUM/raw/era5/{pl,sl,tropo_T}/YYYY-MM/data.zarr`.
+
+**Skips everything already done** (by CDS or ARCO). Works **newest month first** so it can run
+**at the same time as the `01a` CDS tab** (which works oldest first); a per-month lock stops
+them ever writing the same month. Each finished day is saved, so a disconnect loses ≤ 1 day.
+
+* **Runtime:** CPU, **High-RAM** if offered (*Runtime → Change runtime type → CPU, High-RAM on*).
+* **Secrets** (🔑): `GITHUB_TOKEN` only (ARCO needs no key).
+* **Writes to Drive:** ≈ 3.3 GB per month. Streams ≈ 0.2–0.5 TB per month through Colab
+  (Google network, not stored, not your home internet).
+* **Time:** estimated 20–40 min per month in Colab (not yet measured) → a few hours.
+* **If it disconnects:** *Runtime → Restart session*, then *Runtime → Run all*.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings("01a2_era5_arco", 'MONTHS = "2025-03:2026-02"   # whole evaluation year; finished months are skipped\n'),
+    *SETUP,
+    code('''
+# ── 7. Download from ARCO, newest month first (long; streams progress; resumable) ─
+rc = stratum(f"download-era5 --month {MONTHS} --route arco --reverse", live=True)
+print("exit code:", rc)
+'''),
+    ERA5[-2],   # same per-month collection cell as 01a
+    ERA5[-1],   # same summary cell as 01a
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -445,6 +482,7 @@ def write(name: str, cells: list[dict]) -> None:
 if __name__ == "__main__":
     write("00_smoke_test.ipynb", SMOKE)
     write("01a_era5_download.ipynb", ERA5)
+    write("01a2_era5_arco.ipynb", ERA5_ARCO)
     write("01b_adsb_ingest.ipynb", ADSBX)
     write("01c_meteosat_ingest.ipynb", METEOSAT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

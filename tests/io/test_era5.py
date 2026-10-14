@@ -185,3 +185,46 @@ def test_compare_routes_identical_and_mismatch() -> None:
     shifted = b.assign_coords(latitude=b["latitude"] + 0.25)
     with pytest.raises(ValueError, match="latitude"):
         era5.compare_routes(a, shifted)
+
+
+def test_arco_month_resumes_by_day_and_marks_done(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Days saved in an interrupted run are not fetched again; a full month is marked done."""
+    calls: list[str] = []
+
+    def fake(group_name: str, times: slice, area: Any = None, *, lazy: bool = False) -> xr.Dataset:
+        calls.append(str(times.start)[:10])
+        t = pd.date_range(str(times.start), str(times.stop), freq="h")
+        ds = xr.Dataset(
+            {
+                "top_net_solar_radiation": (
+                    ("longitude", "latitude", "level", "time"),
+                    np.ones((2, 2, 1, len(t))),
+                )
+            },
+            coords={
+                "longitude": [66.0, 66.25],
+                "latitude": [38.5, 38.75],
+                "level": [-1.0],
+                "time": t,
+            },
+        )
+        return ds
+
+    monkeypatch.setattr(era5, "open_arco_subset", fake)
+    month = tmp_path / "sl" / "2026-02"
+    (month / "_arco_days").mkdir(parents=True)
+    # Pretend day 1 was finished before a disconnect.
+    fake(
+        "sl", slice(np.datetime64("2026-02-01T00:00"), np.datetime64("2026-02-01T23:00"))
+    ).to_netcdf(month / "_arco_days" / "01.nc")
+    calls.clear()
+    res = era5.download_month_arco(
+        "sl", 2026, 2, tmp_path, area=era5.Area((38.5, 38.75), (66.0, 66.25))
+    )
+    assert res["status"] == "downloaded" and res["dims"]["time"] == 28 * 24
+    assert "2026-02-01" not in calls and len(calls) == 27  # day 1 reused
+    assert (month / "_SUCCESS").exists() and not (month / "_arco_days").exists()
+    again = era5.download_month_arco("sl", 2026, 2, tmp_path)
+    assert again["status"] == "already done"

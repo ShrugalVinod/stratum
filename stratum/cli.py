@@ -145,9 +145,16 @@ def ingest_adsb(
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
     group: Annotated[str, typer.Option(help="pl, sl, tropo_T, or all")] = "all",
-    days: Annotated[str | None, typer.Option(help="TEST ONLY: e.g. '15' or '15-16'")] = None,
+    days: Annotated[str | None, typer.Option(help="TEST ONLY (cds): e.g. '15' or '15-16'")] = None,
+    route: Annotated[str, typer.Option(help="cds (official queue) or arco (Google copy)")] = "cds",
+    reverse: Annotated[bool, typer.Option(help="newest month first")] = False,
+    max_hours: Annotated[int | None, typer.Option(help="TEST ONLY (arco): first N hours")] = None,
 ) -> None:
-    """Download ERA5 for the padded domain from CDS into <drive>/raw/era5/ (resumable)."""
+    """Download ERA5 for the padded domain into <drive>/raw/era5/ (resumable, skips done months).
+
+    Both routes write identical files; a month finished by either route is skipped by both,
+    and a per-month lock stops two runs writing the same month.
+    """
     import pandas as pd
 
     from stratum.io import era5
@@ -158,6 +165,8 @@ def download_era5(
     else:
         y, m = (int(x) for x in month.split("-"))
         months = [(y, m)]
+    if reverse:
+        months = months[::-1]
     day_list = None
     if days:
         lo, _, hi = days.partition("-")
@@ -166,10 +175,15 @@ def download_era5(
     root = drive_root() / "raw" / "era5"
     for y, m in months:
         for g in groups:
-            res = era5.download_month_cds(
-                g, y, m, root, days=day_list, config_hash=cfg.config_hash()
-            )
-            _summary(f"download-era5 {g} {y}-{m:02d}", res)
+            if route == "arco":
+                res = era5.download_month_arco(
+                    g, y, m, root, max_hours=max_hours, config_hash=cfg.config_hash()
+                )
+            else:
+                res = era5.download_month_cds(
+                    g, y, m, root, days=day_list, config_hash=cfg.config_hash()
+                )
+            _summary(f"download-era5 [{route}] {g} {y}-{m:02d}", res)
 
 
 @app.command("audit-coverage")

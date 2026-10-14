@@ -43,6 +43,7 @@ import shutil
 import time as _time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -380,18 +381,33 @@ def open_month(root: Path, group: str, year: int, month: int) -> xr.Dataset:
 ARCO_PATH = "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
 
 
+@lru_cache(maxsize=2)
+def _arco_store(lazy: bool) -> xr.Dataset:
+    """Open the ARCO Zarr once (metadata only). ``lazy=True`` gives dask arrays (parallel)."""
+    ds: xr.Dataset = xr.open_zarr(
+        ARCO_PATH, chunks={} if lazy else None, storage_options={"token": "anon"}
+    )
+    return ds
+
+
 def open_arco_subset(
-    group_name: str, times: list[str] | list[np.datetime64] | slice, area: Area | None = None
+    group_name: str,
+    times: list[str] | list[np.datetime64] | slice,
+    area: Area | None = None,
+    *,
+    lazy: bool = False,
 ) -> xr.Dataset:
     """Read the same fields from Google's ARCO-ERA5 Zarr (anonymous) and standardise them.
 
     ARCO uses long variable names (``temperature``) and descending latitude; this maps them
-    onto the same layout as the CDS route so the two can be compared value by value.
+    onto exactly the same layout, names and attributes as the CDS route (verified equal to
+    GRIB-packing precision: ``reports/phase1/era5_cds_vs_arco.csv``). ``lazy=True`` returns
+    dask-backed arrays so many whole-globe chunks can be fetched in parallel.
     """
     group = GROUPS[group_name]
     variables = cocip_variables()[group_name]
     area = area or Area.padded_domain()
-    full = xr.open_zarr(ARCO_PATH, chunks=None, storage_options={"token": "anon"})
+    full = _arco_store(lazy)
     names = {v.standard_name: _arco_name(v) for v in variables}
     sub = full[list(names.values())].sel(
         time=times,
@@ -407,9 +423,122 @@ def open_arco_subset(
     sub = sub.sortby(["latitude", "longitude", "level", "time"]).transpose(
         "longitude", "latitude", "level", "time"
     )
+    for v in variables:  # same attributes as the CDS route (CoCiP needs the units)
+        sub[v.standard_name].attrs = {"units": v.units, "short_name": v.short_name}
     sub.attrs = {"provider": "ECMWF", "dataset": "ERA5", "product": "reanalysis", "route": "arco"}
     out: xr.Dataset = sub
     return out
+
+
+def download_month_arco(
+    group_name: str,
+    year: int,
+    month: int,
+    root: Path,
+    *,
+    area: Area | None = None,
+    max_hours: int | None = None,
+    workers: int = 24,
+    config_hash: str | None = None,
+) -> dict[str, Any]:
+    """Download one month of one group from ARCO-ERA5 → the same Zarr layout as CDS.
+
+    Skips months already marked done (by either route) and months another process holds the
+    lock on. Works day by day: each finished day is saved under ``<month>/_arco_days/`` so a
+    disconnect loses at most one day. ``max_hours`` is for tests only (never marks done).
+    """
+    month_s = f"{year}-{month:02d}"
+    out_dir = month_dir(root, group_name, year, month)
+    if is_done(out_dir) and max_hours is None:
+        return {"group": group_name, "month": month_s, "status": "already done"}
+    try:
+        lock = UnitLock(out_dir)
+        lock.acquire()
+    except UnitLockedError as e:
+        log.warning("%s; skipping", e)
+        return {"group": group_name, "month": month_s, "status": "locked by another run"}
+    try:
+        if is_done(out_dir) and max_hours is None:
+            return {"group": group_name, "month": month_s, "status": "already done"}
+        return _arco_month_locked(
+            group_name,
+            year,
+            month,
+            out_dir,
+            area or Area.padded_domain(),
+            max_hours,
+            workers,
+            config_hash,
+        )
+    finally:
+        lock.release()
+
+
+def _arco_month_locked(
+    group_name: str,
+    year: int,
+    month: int,
+    out_dir: Path,
+    area: Area,
+    max_hours: int | None,
+    workers: int,
+    config_hash: str | None,
+) -> dict[str, Any]:
+    import dask
+
+    t0 = _time.time()
+    days_dir = out_dir / "_arco_days"
+    days_dir.mkdir(parents=True, exist_ok=True)
+    ndays = calendar.monthrange(year, month)[1]
+    day_files: list[Path] = []
+    for d in range(1, ndays + 1):
+        f = days_dir / f"{d:02d}.nc"
+        day_files.append(f)
+        if f.exists() and max_hours is None:
+            continue  # finished in an earlier (interrupted) run
+        start = np.datetime64(f"{year}-{month:02d}-{d:02d}T00:00")
+        stop = start + np.timedelta64((max_hours or 24) - 1, "h")
+        sub = open_arco_subset(group_name, slice(start, stop), area, lazy=True)
+        with dask.config.set(scheduler="threads", num_workers=workers):
+            day = sub.load()
+        tmp = f.with_suffix(".nc.part")
+        day.to_netcdf(tmp)
+        tmp.rename(f)
+        log.info("ARCO %s %04d-%02d-%02d done", group_name, year, month, d)
+        if max_hours is not None:
+            day_files = [f]
+            break
+    ds = xr.open_mfdataset(day_files, combine="by_coords").load()
+    ds.attrs = {"provider": "ECMWF", "dataset": "ERA5", "product": "reanalysis", "route": "arco"}
+    zpath = out_dir / "data.zarr"
+    tmp_z = out_dir / "data.zarr.tmp"
+    shutil.rmtree(tmp_z, ignore_errors=True)
+    ds.to_zarr(tmp_z, mode="w", consolidated=True)
+    shutil.rmtree(zpath, ignore_errors=True)
+    tmp_z.rename(zpath)
+    stats = summarise(ds)
+    stats.update(expver=["arco"], route="arco", wall_time_s=round(_time.time() - t0, 1))
+    if max_hours is None:
+        expected = ndays * 24
+        if ds.sizes["time"] != expected:
+            raise RuntimeError(
+                f"{group_name} {year}-{month:02d}: {ds.sizes['time']} of {expected} hours"
+            )
+        m = RunManifest.start(
+            "download-era5",
+            unit=f"{group_name}/{year}-{month:02d}",
+            config_hash=config_hash,
+            params={
+                "route": "arco",
+                "source": ARCO_PATH,
+                "area": area.cds(),
+                "levels": GROUPS[group_name].levels,
+            },
+        )
+        m.stats = stats
+        mark_success(out_dir, m)
+        shutil.rmtree(days_dir, ignore_errors=True)
+    return {"group": group_name, "month": f"{year}-{month:02d}", "status": "downloaded", **stats}
 
 
 # ARCO names = ECMWF parameter long names in snake case.
