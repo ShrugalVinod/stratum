@@ -4,23 +4,22 @@ Newest first. What was done, what's next, blockers.
 
 ## 2026-10-14 — Phase 1 (data access, ingestion, coverage audit) — in progress
 
-**Done**
-- Accounts: CDS ✔ (test download OK), EUMETSAT ✔ (login OK), OpenSky historical access **requested** (waiting), `STRATUM_ID_SALT` generated into `.env`.
-- Physics (1.4) ✔: `thermo.py` (Murphy & Koop), `sac.py` (vectorised SAC, 10⁷ segments in 8.5 s), `units.py` (ISA); all §4.3 known answers pass; **paper Fig. 1 reproduced** (`reports/figures/fig1_sac.png`); pycontrails differences measured and documented.
-- Meteosat (1.3.1) ✔: collections `EO:EUM:DAT:MSG:HRSEVIRI-IODC` + `EO:EUM:DAT:MSG:CLM-IODC`; **all 12 evaluation months present, all MSG2 = Meteosat-9** (`reports/phase1/meteosat_iodc_archive_coverage.csv`). Full-disk slot = 176 MB → cropping required.
-- ADS-B (1.2) ✔: schema (pandera), ADS-B Exchange streaming adapter, flight reconstruction, `stratum ingest-adsb`; real 2026-01-01 06:00–06:05 UTC slice: 360 aircraft ≥ FL200 in the box, 34 cruising in the DEL–BOM corridor.
-- Aircraft DB (1.2.4) ✔: OpenSky snapshot 2025-08 (616,648 rows) with URL/date/SHA-256.
-- ERA5 (1.1) ✔ code + one-day test: CDS route with server-side crop; final ERA5, 0 NaN; T(250 hPa) 218–235 K, 1.7 % ISSR; 102 MB/day → ≈ 38 GB/year. Notebook `notebooks/01_era5_look.ipynb` + sanity plot. Colab launcher `colab/01a_era5_download.ipynb`.
-- Coverage audit (1.5) ✔ code: matching, continuity, mechanical decision, reports; schedule template + instructions in `data/reference/`.
+**Done (all tested, pushed)**
+- Accounts: CDS ✔, EUMETSAT ✔ (second account; first account's API blocked by licence sync — helpdesk ticket sent), OpenSky historical access requested (pending), salt generated.
+- **Physics (1.4)** ✔: Murphy & Koop thermo, vectorised SAC (all §4.3 known answers), ISA units; **paper Fig. 1 reproduced**; **CoCiP runs end to end on our ERA5 files** (`reports/phase1/cocip_end_to_end.md`): STRATUM SAC = pycontrails SAC at 100 % of waypoints.
+- **ERA5 (1.1)** ✔: CDS downloader (server-side crop, pycontrails layout, resumable, queue-limit retries, per-month lock). **January 2026 on Drive** (3.5 GB, final ERA5, 0 NaN). **CDS = ARCO** to GRIB-packing precision (`reports/phase1/era5_cds_vs_arco.csv`). Full year running in Colab (01a).
+- **ADS-B (1.2)** ✔ code: schema, ADS-B Exchange streaming adapter, flight reconstruction, aircraft DB snapshot 2025-08. 12 free days running in Colab (01b). Sanity plot `reports/phase1/adsb_sanity_2026-02-01T00.png`.
+- **Meteosat (1.3)** ✔ code: all 12 months present (MSG2); native download + satpy calibration/crop (5.5 MB/slot); cloud mask on the same grid; static lat/lon/VZA/area grid (VZA matches prompt values); **geolocation verified** (`reports/phase1/meteosat/ir108_coast_2026-01-15T0000.png`); **Plan A approved** and running in Colab (01c).
+- **Coverage audit (1.5)** ✔ code: matching, continuity, mechanical decision, reports, **auto-drafted memo**; schedule template in `data/reference/`.
+- Notebooks: `01_era5_look`, `01b_adsb_look`, `01c_meteosat_look`, `01d_cocip_end_to_end` (each ends with a sanity plot/result).
+- Docs: data sources (endpoints, versions, licences), storage (measured), methods page P1, ADS-B Exchange permission email draft (`docs/memos/`).
 
 **Next**
-- Shrugal: run `colab/01a_era5_download.ipynb` (MONTHS = "2026-01") and paste the summary; fix EUMETSAT licence (see blockers).
-- Claude: Meteosat reader/crop/BTD/VZA (needs licence); ADS-B Exchange Colab launcher (12 free days); OpenSky adapter (when approved); ARCO equivalence check; coverage memo draft; ADS-B Exchange permission email draft.
+- Shrugal: paste the 3 Colab summaries (01a, 01b, 01c) when they finish; team: fill `data/reference/scheduled_flights.csv` (≥ 7 days); decide whether to send the ADS-B Exchange permission email.
+- Claude: verify the 3 runs; run the coverage audit → memo; Phase 1 gate report.
 
 **Blockers**
-- **EUMETSAT SEVIRI images: HTTP 403 "GeneralLicense required to access this collection".** Licence form was filled 2026-10-14 but is not active yet (maybe not submitted, or pending approval). Cloud mask downloads fine.
-- OpenSky historical access: request submitted 2026-10-14, awaiting reply.
-- Scheduled-flights CSV for the audit: needs humans (`data/reference/README.md`).
+- Scheduled-flights CSV (humans only). OpenSky reply (external). EUMETSAT helpdesk (old account; no longer blocking).
 
 ## 2026-10-13 — Phase 0 (setup and guard-rails)
 

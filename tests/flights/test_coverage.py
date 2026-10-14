@@ -124,5 +124,20 @@ def test_run_audit_writes_reports(tmp_path: Path) -> None:
     _schedule(tmp_path)  # writes tmp_path / "s.csv"
     res = cv.run_audit(sched_path, {("adsbx", "2026-01-01"): _adsb()}, POLY, tmp_path / "out", P)
     assert res["decision"]["chosen_source"] == "adsbx"  # OpenSky not audited
-    for f in ["coverage_audit.csv", "coverage_audit.md", "track_density.png", "gap_histogram.png"]:
+    for f in [
+        "coverage_audit.csv",
+        "coverage_audit.md",
+        "track_density.png",
+        "gap_histogram.png",
+        "coverage_audit_memo.md",
+    ]:
         assert (tmp_path / "out" / f).exists()
+
+
+def test_memo_numbers_come_from_results(tmp_path: Path) -> None:
+    sched_path = tmp_path / "s.csv"
+    _schedule(tmp_path)
+    cv.run_audit(sched_path, {("adsbx", "2026-01-01"): _adsb()}, POLY, tmp_path / "out", P)
+    memo = (tmp_path / "out" / "coverage_audit_memo.md").read_text()
+    assert "| adsbx | 4 | 3 | 2 | 0.50 |" in memo  # 4 scheduled, 3 observed, 2 continuous
+    assert "Chosen source: adsbx" in memo

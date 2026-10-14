@@ -144,7 +144,23 @@ Use exactly these names (they match `.env.example`). Turn on *Notebook access* f
 | OpenAP | Aircraft performance and fuel flow | Python package (pinned) |
 | OurAirports | Airport coordinates (VIDP, VABB) for the corridor | `davidmegginson.github.io/ourairports-data`, retrieved 13 Oct 2026; public domain |
 
-## Versions and endpoints in use
+## Versions and endpoints in use (checked 2026-10-14)
 
-Filled in during Phase 1 for every source: library version, dataset/collection ID, URL,
-date checked, licence text. Library versions are always in `uv.lock` and in every run manifest.
+Library versions are pinned in `uv.lock` and recorded in every run manifest.
+
+| Source | What we use | Client / version | Notes |
+|---|---|---|---|
+| **ERA5** (Copernicus CDS) | `reanalysis-era5-pressure-levels` (t, q, u, v, w, ciwc, z, cc at 100–500 hPa; t at 50, 70 hPa) and `reanalysis-era5-single-levels` (tsr, ttr), padded box 4–39°N 66–100°E, hourly | `cdsapi` (pinned), endpoint `https://cds.climate.copernicus.eu/api` | Final ERA5 (`expver 0001`) for all of 2025-03 → 2026-02. CDS limits queued requests per user; the downloader waits and retries. Licence: CC-BY 4.0 (Copernicus). |
+| ERA5 (ARCO, Google Cloud) | `gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3` | `xarray` + `gcsfs` (anonymous) | **Only for the equivalence check**: identical to CDS to GRIB-packing precision (`reports/phase1/era5_cds_vs_arco.csv`). Whole-globe chunks → not used for bulk. |
+| **Meteosat-9 IODC** (EUMETSAT) | `EO:EUM:DAT:MSG:HRSEVIRI-IODC` (native Level 1.5, ~180 MB/slot) and `EO:EUM:DAT:MSG:CLM-IODC` (cloud mask, GRIB, ~3.5 MB/slot) | `eumdac` + `satpy` readers `seviri_l1b_native`, `seviri_l2_grib` (needs `eccodeslib`) | Satellite MSG2 = Meteosat-9 at 45.5°E in all 12 evaluation months. Requires the **"Meteosat > 1 hr latency & Metop" (General) licence**. Licence terms: credit EUMETSAT; **do not redistribute the original data**; non-operational, non-commercial use. Files are stored rotated 180° (south up); figures rotate them north-up. |
+| **ADS-B Exchange** | `https://samples.adsbexchange.com/readsb-hist/YYYY/MM/01/HHMMSSZ.json.gz` (free 1st-of-month days) | `requests` + `orjson` | Free for "testing and evaluation". ADS-B Exchange is owned by **JETNET**, whose terms forbid publishing their data or derived data without written permission → permission email drafted (`docs/memos/adsbx_permission_email.md`). |
+| OpenSky Network | historical state vectors (Trino) | `pyopensky` (added once access is granted) | Access requested 2026-10-14; pending. |
+| OpenSky aircraft DB | `https://s3.opensky-network.org/data-samples/metadata/aircraft-database-complete-2025-08.csv` | `requests`, `pandas` | Newest snapshot available; 616,648 rows; SHA-256 in `raw/aircraft_db/aircraft_db_2025-08.json`. |
+| Natural Earth | 1:50m coastline, clipped (`configs/geo/coastline_ne50m_padded.geojson`) | — | Public domain. Used for the geolocation check. |
+| OurAirports | VIDP, VABB coordinates | — | Public domain. |
+
+### EUMETSAT account note
+The first EUMETSAT account accepted the General Licence on 2026-10-14 and could download in
+the browser, but its API key kept returning `403 "GeneralLicense required"` (helpdesk ticket
+sent to ops@eumetsat.int). A second account, where the licence was accepted **before** the
+API key was created, works. Its key is the one in `.env` and Colab Secrets.
