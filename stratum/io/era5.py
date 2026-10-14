@@ -504,7 +504,14 @@ def _arco_month_locked(
         tmp = f.with_suffix(".nc.part")
         day.to_netcdf(tmp)
         tmp.rename(f)
-        log.info("ARCO %s %04d-%02d-%02d done", group_name, year, month, d)
+        log.info(
+            "ARCO %s %04d-%02d-%02d done (%.0f s since month start)",
+            group_name,
+            year,
+            month,
+            d,
+            _time.time() - t0,
+        )
         if max_hours is not None:
             day_files = [f]
             break

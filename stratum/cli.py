@@ -40,6 +40,15 @@ def _load_env() -> None:
     """STRATUM pipeline commands. Secrets are read from ``.env`` (never printed)."""
     # Existing environment variables (e.g. Colab Secrets exported by a launcher) win over .env.
     load_dotenv(repo_root() / ".env", override=False)
+    # Show STRATUM's own progress messages (e.g. "ARCO pl 2026-02-03 done"), not other libraries'.
+    import logging
+
+    lg = logging.getLogger("stratum")
+    if not lg.handlers:
+        h = logging.StreamHandler()
+        h.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%H:%M:%S"))
+        lg.addHandler(h)
+        lg.setLevel(logging.INFO)
 
 
 def _summary(title: str, rows: dict[str, object]) -> None:
