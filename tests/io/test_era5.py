@@ -144,3 +144,30 @@ def test_interrupted_month_reuses_finished_parts(tmp_path: Path) -> None:
     assert [r[1]["variable"][0] for r in second.requests] == ["ttr"]  # tsr reused
     assert res["status"] == "downloaded"
     assert not (tmp_path / "sl" / "2026-01" / "_parts").exists()
+
+
+def test_retry_on_cds_queue_limit(tmp_path: Path) -> None:
+    calls: list[int] = []
+
+    class Busy:
+        def retrieve(self, dataset: str, req: dict[str, Any], target: str) -> None:
+            calls.append(1)
+            if len(calls) < 3:
+                raise RuntimeError(
+                    "Number queued requests for this dataset is temporarily limited."
+                )
+            Path(target).write_text("ok")
+
+    era5.retrieve_with_retry(Busy(), "d", {"variable": ["t"]}, tmp_path / "x.nc", retry_wait_s=0.0)
+    assert len(calls) == 3 and (tmp_path / "x.nc").read_text() == "ok"
+
+
+def test_non_transient_error_is_raised_immediately(tmp_path: Path) -> None:
+    class Bad:
+        def retrieve(self, dataset: str, req: dict[str, Any], target: str) -> None:
+            raise RuntimeError("403 Forbidden: required licences not accepted")
+
+    with pytest.raises(RuntimeError, match="licences"):
+        era5.retrieve_with_retry(
+            Bad(), "d", {"variable": ["t"]}, tmp_path / "x.nc", retry_wait_s=0.0
+        )

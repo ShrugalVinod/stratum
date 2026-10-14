@@ -168,6 +168,47 @@ def standardise(
     return ds, info
 
 
+# CDS limits how many requests one user may have queued per dataset. When it rejects a
+# request for that reason ("Number queued requests ... temporarily limited"), we wait and
+# resubmit instead of failing the whole month.
+_RETRYABLE = ("temporarily limited", "rejected", "queued requests", "429", "502", "503", "504")
+
+
+def retrieve_with_retry(
+    client: Any,
+    dataset: str,
+    request: dict[str, Any],
+    target: Path,
+    *,
+    retry_wait_s: float = 120.0,
+    max_attempts: int = 8,
+) -> None:
+    """``client.retrieve`` with waits between attempts for CDS's transient refusals.
+
+    Waits grow linearly (2, 4, 6 … min by default), ~1 h in total before giving up.
+    Non-transient errors (bad request, licence not accepted) are raised immediately.
+    """
+    for attempt in range(1, max_attempts + 1):
+        try:
+            client.retrieve(dataset, request, str(target))
+            return
+        except Exception as e:  # cdsapi raises plain Exception/HTTPError subclasses
+            msg = str(e).lower()
+            transient = any(k in msg for k in _RETRYABLE)
+            if not transient or attempt == max_attempts:
+                raise
+            wait = retry_wait_s * attempt
+            log.warning(
+                "CDS refused %s (attempt %d/%d: %s); retrying in %.0f s",
+                request.get("variable"),
+                attempt,
+                max_attempts,
+                str(e)[:120],
+                wait,
+            )
+            _time.sleep(wait)
+
+
 def month_dir(root: Path, group: str, year: int, month: int) -> Path:
     return root / group / f"{year:04d}-{month:02d}"
 
@@ -182,7 +223,8 @@ def download_month_cds(
     days: list[int] | None = None,
     client: Any = None,
     config_hash: str | None = None,
-    parallel_requests: int = 4,
+    parallel_requests: int = 2,
+    retry_wait_s: float = 120.0,
 ) -> dict[str, Any]:
     """Download one month (or ``days`` of it) of one group from CDS → Zarr (resumable).
 
@@ -223,7 +265,7 @@ def download_month_cds(
         req = cds_request(group, v.short_name, year, month, area, days)
         log.info("CDS request %s %s %04d-%02d", group.dataset, v.short_name, year, month)
         tmp_nc = parts_dir / f"{v.short_name}.nc.part"
-        client.retrieve(group.dataset, req, str(tmp_nc))
+        retrieve_with_retry(client, group.dataset, req, tmp_nc, retry_wait_s=retry_wait_s)
         tmp_nc.rename(nc)
         return nc
 
