@@ -381,7 +381,7 @@ ARCO_PATH = "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v
 
 
 def open_arco_subset(
-    group_name: str, times: list[np.datetime64] | slice, area: Area | None = None
+    group_name: str, times: list[str] | list[np.datetime64] | slice, area: Area | None = None
 ) -> xr.Dataset:
     """Read the same fields from Google's ARCO-ERA5 Zarr (anonymous) and standardise them.
 
@@ -429,3 +429,32 @@ _ARCO_NAMES = {
 
 def _arco_name(v: Any) -> str:
     return _ARCO_NAMES[v.short_name]
+
+
+def compare_routes(cds: xr.Dataset, arco: xr.Dataset) -> list[dict[str, Any]]:
+    """Variable-by-variable differences between the CDS and ARCO copies (same times/grid).
+
+    Both routes come from the same ECMWF archive but are packed differently (GRIB→NetCDF
+    vs. ARCO's own encoding), so differences should be at storage-rounding level only.
+    """
+    for c in ("latitude", "longitude", "level", "time"):
+        if not np.array_equal(cds[c].values, arco[c].values):
+            raise ValueError(f"routes differ in coordinate {c}")
+    rows = []
+    for v in cds.data_vars:
+        a = cds[v].values.astype(np.float64)
+        b = arco[v].transpose(*cds[v].dims).values.astype(np.float64)
+        d = np.abs(a - b)
+        scale = float(np.nanmax(np.abs(a))) or 1.0
+        rows.append(
+            {
+                "variable": str(v),
+                "max_abs_diff": float(np.nanmax(d)),
+                "max_abs_diff_relative_to_max": float(np.nanmax(d)) / scale,
+                "mean_abs_diff": float(np.nanmean(d)),
+                "value_min": float(np.nanmin(a)),
+                "value_max": float(np.nanmax(a)),
+                "n_values": int(a.size),
+            }
+        )
+    return rows

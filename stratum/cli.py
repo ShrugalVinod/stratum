@@ -302,6 +302,44 @@ def select_clear_days(
     console.print(f"CLEAR_DAYS={','.join(days)}")
 
 
+@app.command("era5-equivalence")
+def era5_equivalence(
+    day: Annotated[
+        str, typer.Option(help="day downloaded with --days (YYYY-MM-DD)")
+    ] = "2026-01-15",
+    pl_hours: Annotated[str, typer.Option(help="hours checked for pl, e.g. 0,6,18")] = "0,6,18",
+) -> None:
+    """Prove the CDS and ARCO routes give the same ERA5 values (build prompt §1.1.3)."""
+    import pandas as pd
+    import xarray as xr
+
+    from stratum.io import era5
+
+    y, m, d = day.split("-")
+    rows: list[dict[str, object]] = []
+    hours = {"pl": [int(h) for h in pl_hours.split(",")], "sl": list(range(24)), "tropo_T": [6]}
+    for g, hs in hours.items():
+        path = drive_root() / "raw" / "era5" / g / f"{y}-{m}_days-{d}-{d}" / "data.zarr"
+        times = [f"{day}T{h:02d}:00" for h in hs]
+        cds = xr.open_zarr(path).sel(time=times).load()
+        arco = era5.open_arco_subset(g, times).load()
+        for r in era5.compare_routes(cds, arco):
+            rows.append({"group": g, "hours_utc": " ".join(map(str, hs)), **r})
+    df = pd.DataFrame(rows)
+    out = repo_root() / "reports" / "phase1" / "era5_cds_vs_arco.csv"
+    df.to_csv(out, index=False)
+    worst = float(df["max_abs_diff_relative_to_max"].max())
+    _summary(
+        "era5-equivalence",
+        {
+            "day": day,
+            "variables": len(df),
+            "worst relative difference": f"{worst:.1e}",
+            "report": out,
+        },
+    )
+
+
 @app.command("ingest-aircraft-db")
 def ingest_aircraft_db(
     snapshot: Annotated[str, typer.Option(help="OpenSky snapshot month, YYYY-MM")] = "2025-08",
