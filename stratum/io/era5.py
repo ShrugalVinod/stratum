@@ -40,8 +40,8 @@ from __future__ import annotations
 import calendar
 import logging
 import shutil
-import tempfile
 import time as _time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -182,6 +182,7 @@ def download_month_cds(
     days: list[int] | None = None,
     client: Any = None,
     config_hash: str | None = None,
+    parallel_requests: int = 4,
 ) -> dict[str, Any]:
     """Download one month (or ``days`` of it) of one group from CDS → Zarr (resumable).
 
@@ -210,23 +211,38 @@ def download_month_cds(
     t0 = _time.time()
     out_dir.mkdir(parents=True, exist_ok=True)
     infos: dict[str, Any] = {}
-    with tempfile.TemporaryDirectory() as tmp:
-        parts = []
-        for v in variables:
-            nc = Path(tmp) / f"{v.short_name}.nc"
-            req = cds_request(group, v.short_name, year, month, area, days)
-            log.info("CDS request %s %s %04d-%02d", group.dataset, v.short_name, year, month)
-            client.retrieve(group.dataset, req, str(nc))
-            ds_v, info = standardise(xr.open_dataset(nc), group, variables)
+    # Each variable is downloaded to <month>/_parts/<var>.nc and kept until the month is
+    # merged, so a Colab disconnect loses at most the requests still in flight.
+    parts_dir = out_dir / "_parts"
+    parts_dir.mkdir(exist_ok=True)
+
+    def fetch(v: Any) -> Path:
+        nc = parts_dir / f"{v.short_name}.nc"
+        if nc.exists():
+            return nc
+        req = cds_request(group, v.short_name, year, month, area, days)
+        log.info("CDS request %s %s %04d-%02d", group.dataset, v.short_name, year, month)
+        tmp_nc = parts_dir / f"{v.short_name}.nc.part"
+        client.retrieve(group.dataset, req, str(tmp_nc))
+        tmp_nc.rename(nc)
+        return nc
+
+    with ThreadPoolExecutor(max_workers=min(parallel_requests, len(variables))) as pool:
+        files = list(pool.map(fetch, variables))
+    parts = []
+    for v, nc in zip(variables, files, strict=True):
+        with xr.open_dataset(nc) as raw:
+            ds_v, info = standardise(raw, group, variables)
             infos[v.short_name] = info
             parts.append(ds_v.load())
-        ds = xr.merge(parts, compat="override", join="exact")
-        zpath = out_dir / "data.zarr"
-        tmp_z = out_dir / "data.zarr.tmp"
-        shutil.rmtree(tmp_z, ignore_errors=True)
-        ds.to_zarr(tmp_z, mode="w", consolidated=True)
-        shutil.rmtree(zpath, ignore_errors=True)
-        tmp_z.rename(zpath)
+    ds = xr.merge(parts, compat="override", join="exact")
+    zpath = out_dir / "data.zarr"
+    tmp_z = out_dir / "data.zarr.tmp"
+    shutil.rmtree(tmp_z, ignore_errors=True)
+    ds.to_zarr(tmp_z, mode="w", consolidated=True)
+    shutil.rmtree(zpath, ignore_errors=True)
+    tmp_z.rename(zpath)
+    shutil.rmtree(parts_dir, ignore_errors=True)
     stats = summarise(ds)
     expvers = sorted({e for i in infos.values() for e in i.get("expver", [])})
     stats.update(expver=expvers, wall_time_s=round(_time.time() - t0, 1))

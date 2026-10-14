@@ -117,3 +117,30 @@ def test_download_month_writes_zarr_and_marks_done(tmp_path: Path) -> None:
 def test_arco_opens() -> None:  # pragma: no cover - needs internet
     ds = era5.open_arco_subset("sl", slice("2026-01-15T00", "2026-01-15T00"))
     assert "top_net_solar_radiation" in ds
+
+
+def test_interrupted_month_reuses_finished_parts(tmp_path: Path) -> None:
+    """Simulate a Colab disconnect after the first variable: the rerun must not re-request it."""
+
+    class Flaky(_FakeClient):
+        def __init__(self, fail_on: str | None) -> None:
+            super().__init__()
+            self.fail_on = fail_on
+
+        def retrieve(self, dataset: str, req: dict[str, Any], target: str) -> None:
+            if req["variable"][0] == self.fail_on:
+                raise RuntimeError("connection lost")
+            super().retrieve(dataset, req, target)
+
+    area = era5.Area(lat=(38.5, 39.0), lon=(66.0, 66.25))
+    first = Flaky(fail_on="ttr")
+    with pytest.raises(RuntimeError):
+        era5.download_month_cds(
+            "sl", 2026, 1, tmp_path, area=area, client=first, parallel_requests=1
+        )
+    assert (tmp_path / "sl" / "2026-01" / "_parts" / "tsr.nc").exists()
+    second = Flaky(fail_on=None)
+    res = era5.download_month_cds("sl", 2026, 1, tmp_path, area=area, client=second)
+    assert [r[1]["variable"][0] for r in second.requests] == ["ttr"]  # tsr reused
+    assert res["status"] == "downloaded"
+    assert not (tmp_path / "sl" / "2026-01" / "_parts").exists()

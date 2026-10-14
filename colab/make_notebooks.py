@@ -1,0 +1,293 @@
+"""Generate the Colab launcher notebooks in this folder.
+
+Every launcher shares the same tested setup cells (runtime report → mount Drive → clone repo
+at REF → install pinned env → `stratum info`) and ends with a JSON run summary
+(build prompt §2.2, §2.5). Notebooks contain NO pipeline logic: they only call `stratum`
+CLI commands. Edit this file, then run:  python colab/make_notebooks.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+HERE = Path(__file__).parent
+
+
+def md(s: str) -> dict:
+    return {"cell_type": "markdown", "metadata": {}, "source": s.strip("\n").splitlines(True)}
+
+
+def code(s: str) -> dict:
+    return {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": s.strip("\n").splitlines(True),
+    }
+
+
+def settings(job: str, extra: str = "") -> dict:
+    return code(f'''
+# ── 1. Settings ─────────────────────────────────────────────────────────────
+REPO = "ShrugalVinod/stratum"
+REF = "main"          # branch or exact commit SHA (Claude's handoff block says which)
+JOB = "{job}"
+{extra}''')
+
+
+SETUP = [
+    code("""
+# ── 2. Runtime report: GPU, RAM, disk ───────────────────────────────────────
+import hashlib, json, os, shutil, subprocess, sys, time
+t0 = time.time()
+SECRETS = []  # strings that must never be printed
+def _redact(text):
+    for s in SECRETS:
+        text = text.replace(s, "***")
+    return text
+def sh(cmd, check=True):
+    r = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if check and r.returncode != 0:
+        print(_redact(r.stdout[-3000:]), _redact(r.stderr[-3000:]))
+        raise RuntimeError("command failed: " + _redact(cmd)[:120])
+    return r.stdout.strip()
+
+gpu = sh("nvidia-smi --query-gpu=name,memory.total --format=csv,noheader", check=False) or "none (CPU runtime)"
+ram_gb = round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1e9, 1)
+disk_free_gb = round(shutil.disk_usage("/content").free / 1e9, 1)
+print(f"GPU: {gpu}\\nRAM: {ram_gb} GB\\nLocal disk free: {disk_free_gb} GB")
+"""),
+    code("""
+# ── 3. Mount Google Drive ───────────────────────────────────────────────────
+from google.colab import drive
+drive.mount("/content/drive")
+DRIVE_ROOT = "/content/drive/MyDrive/STRATUM"
+os.makedirs(DRIVE_ROOT, exist_ok=True)
+print("Drive root:", DRIVE_ROOT)
+"""),
+    code("""
+# ── 4. Clone (or update) the private repo at REF ───────────────────────────
+# The token comes from Colab Secrets, is passed only on the command line, and is never printed
+# or stored in .git/config.
+from google.colab import userdata
+token = userdata.get("GITHUB_TOKEN")
+SECRETS.append(token)
+auth_url = f"https://x-access-token:{token}@github.com/{REPO}.git"
+SRC = "/content/stratum"
+if not os.path.isdir(f"{SRC}/.git"):
+    sh(f"git clone --quiet {auth_url} {SRC}")
+    sh(f"git -C {SRC} remote set-url origin https://github.com/{REPO}.git")
+sh(f"git -C {SRC} fetch --quiet {auth_url} {REF}")
+sh(f"git -C {SRC} checkout --quiet --force FETCH_HEAD")
+del token, auth_url
+COMMIT = sh(f"git -C {SRC} rev-parse HEAD")
+print("Repo commit:", COMMIT)
+"""),
+    code("""
+# ── 5. Install the pinned environment (uv.lock) into its own virtualenv ─────
+# A separate venv avoids clashes with Colab's preinstalled packages. Python 3.12 is
+# downloaded by uv if Colab's default differs.
+sh("pip install --quiet uv")
+VENV = "/content/venv"
+env = {**os.environ, "UV_PROJECT_ENVIRONMENT": VENV}
+r = subprocess.run(f"cd {SRC} && uv sync --frozen --python 3.12", shell=True, env=env, capture_output=True, text=True)
+print(r.stderr[-1500:])
+assert r.returncode == 0, "uv sync failed — paste the output above to Claude"
+FREEZE_SHA = hashlib.sha256(sh(f"uv pip freeze --python {VENV}/bin/python").encode()).hexdigest()[:16]
+PY = f"{VENV}/bin/python"
+print("Python:", sh(f"{PY} --version"), "| pip-freeze hash:", FREEZE_SHA)
+"""),
+    code('''
+# ── 6. `stratum` helpers; print environment; make sure the Drive layout exists ─
+run_env = {**os.environ, "STRATUM_DRIVE_ROOT": DRIVE_ROOT, "STRATUM_WORK_DIR": "/content/work",
+           "COLUMNS": "120", "PYTHONUNBUFFERED": "1"}
+def stratum(args, live=False):
+    """Run a stratum CLI command. live=True streams output (for long jobs)."""
+    if not live:
+        r = subprocess.run(f"{VENV}/bin/stratum {args}", shell=True, cwd=SRC, env=run_env,
+                           capture_output=True, text=True)
+        print(_redact(r.stdout[-4000:]), _redact(r.stderr[-2000:]))
+        return r.returncode
+    p = subprocess.Popen(f"{VENV}/bin/stratum {args}", shell=True, cwd=SRC, env=run_env,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    for line in p.stdout:
+        if "ecCodes" in line or "cfgrib" in line or "external_backend" in line:
+            continue
+        print(_redact(line), end="")
+    return p.wait()
+assert stratum("info") == 0
+assert stratum("init-drive") == 0
+'''),
+]
+
+
+def summary_cell(fields: str) -> dict:
+    return code(f"""
+# ── Run summary — copy everything between the === lines back to Claude ──────
+stratum_gb = round(int(sh(f"du -sb '{{DRIVE_ROOT}}' | cut -f1")) / 1e9, 3)
+summary = {{
+    "job": JOB,
+    "commit": COMMIT,
+    "ref_requested": REF,
+    "pip_freeze_hash": FREEZE_SHA,
+    "runtime": {{"gpu": gpu, "ram_gb": ram_gb}},
+    "drive_stratum_folder_gb": stratum_gb,
+    "wall_time_min": round((time.time() - t0) / 60, 1),
+{fields}}}
+print("=== STRATUM RUN SUMMARY ===")
+print(json.dumps(summary, indent=2, default=str))
+print("=== END SUMMARY ===")
+""")
+
+
+def header(title: str, body: str) -> dict:
+    return md(
+        f"# STRATUM · {title}\n\n{body.strip()}\n\nNo pipeline logic lives here: every step calls the `stratum` package."
+    )
+
+
+# ── 00 · smoke test ──────────────────────────────────────────────────────────
+
+SMOKE = [
+    header(
+        "00 · Colab smoke test (Phase 0)",
+        """
+**What this does:** checks that the STRATUM code runs on Colab exactly as on a laptop. Mounts
+Google Drive, creates the folder layout, clones the repo, installs the pinned environment, runs
+the tests, and writes + reads back a test file on Drive.
+
+* **Runtime:** standard CPU (*Runtime → Change runtime type → CPU*).
+* **Secrets** (🔑, Notebook access ON): `GITHUB_TOKEN`
+* **Writes to Drive:** folder layout + `MyDrive/STRATUM/manifests/smoke_test_*.json` (KB).
+* **Time:** 3–5 min. Safe to re-run.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings("00_smoke_test"),
+    *SETUP,
+    code("""
+# ── 7. Run the test suite (same as `make test` on a laptop) ────────────────
+r = subprocess.run(f"cd {SRC} && {PY} -m pytest -q -m 'not network' -p no:cacheprovider", shell=True, env=run_env, capture_output=True, text=True)
+print(r.stdout[-2500:])
+TESTS_LINE = [l for l in r.stdout.splitlines() if " passed" in l or " failed" in l or " error" in l][-1:]
+TESTS_OK = r.returncode == 0
+"""),
+    code("""
+# ── 8. Write a test file to Drive, read it back; copy the pre-registration lock ─
+probe = subprocess.run(
+    f"{PY} -c \\"from stratum.manifest import RunManifest; import sys; m = RunManifest.start('{JOB}'); m.finish(); sys.stdout.write(m.model_dump_json())\\"",
+    shell=True, cwd=SRC, env=run_env, capture_output=True, text=True)
+assert probe.returncode == 0, probe.stderr
+payload = probe.stdout
+path = f"{DRIVE_ROOT}/manifests/smoke_test_{time.strftime('%Y%m%dT%H%M%S')}.json"
+with open(path, "w") as f:
+    f.write(payload)
+with open(path) as f:
+    roundtrip_ok = f.read() == payload
+lock_src = f"{SRC}/_locks/preregistration.lock"
+lock_copied = os.path.exists(lock_src)
+if lock_copied:
+    shutil.copy2(lock_src, f"{DRIVE_ROOT}/_locks/preregistration.lock")
+print("Drive write/read OK:", roundtrip_ok, "->", path)
+"""),
+    summary_cell("""    "drive_write_read_ok": roundtrip_ok,
+    "drive_test_file": path,
+    "lock_copied_to_drive": lock_copied,
+    "tests_ok": TESTS_OK,
+    "tests": TESTS_LINE,
+"""),
+]
+
+
+# ── 01a · ERA5 download ──────────────────────────────────────────────────────
+
+ERA5 = [
+    header(
+        "01a · ERA5 download (Phase 1, task 1.1.4)",
+        """
+**What this does:** downloads hourly ERA5 for the padded study box (4–39°N, 66–100°E) from the
+Copernicus CDS, cropped on CDS's server, into
+`MyDrive/STRATUM/raw/era5/{pl,sl,tropo_T}/YYYY-MM/data.zarr`. Each month gets a manifest and
+a `_SUCCESS` marker; finished months are skipped; a half-finished month keeps the variables
+it already has. **Run 1:** `MONTHS = "2026-01"`. **Run 2** (after Claude checks run 1):
+`MONTHS = "2025-03:2026-02"`.
+
+* **Runtime:** standard CPU (no GPU, no High-RAM). Most of the time is waiting in CDS's queue.
+* **Secrets** (🔑, Notebook access ON): `GITHUB_TOKEN`, `CDSAPI_KEY`
+* **Writes to Drive:** ≈ 3.2 GB per month (≈ 3.1 GB `pl` + 0.06 GB `sl` + 0.08 GB `tropo_T`).
+* **Time:** CDS queue dependent: roughly 0.5–2 h per month. Keep this tab open (Colab Pro
+  keeps running a while if you close it, but don't rely on it).
+* **If it disconnects:** *Runtime → Run all* again: it resumes.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings("01a_era5_download", 'MONTHS = "2026-01"     # run 2: "2025-03:2026-02"\n'),
+    *SETUP,
+    code("""
+# ── 7. CDS key from Colab Secrets (never printed) ──────────────────────────
+cds_key = userdata.get("CDSAPI_KEY")
+SECRETS.append(cds_key)
+run_env["CDSAPI_URL"] = "https://cds.climate.copernicus.eu/api"
+run_env["CDSAPI_KEY"] = cds_key
+del cds_key
+print("CDS key loaded.")
+"""),
+    code("""
+# ── 8. Download (long; streams progress; resumable) ────────────────────────
+rc = stratum(f"download-era5 --month {MONTHS}", live=True)
+print("exit code:", rc)
+"""),
+    code("""
+# ── 9. Collect per-month results from the manifests on Drive ───────────────
+import pandas as pd
+a, _, b = MONTHS.partition(":")
+months = [str(p) for p in pd.period_range(a, b or a, freq="M")]
+units, done, missing, sizes = {}, 0, [], {}
+for g in ["pl", "sl", "tropo_T"]:
+    for m in months:
+        d = f"{DRIVE_ROOT}/raw/era5/{g}/{m}"
+        ok = os.path.exists(f"{d}/_SUCCESS")
+        if not ok:
+            missing.append(f"{g}/{m}")
+            continue
+        done += 1
+        st = json.load(open(f"{d}/manifest.json"))["stats"]
+        sizes[f"{g}/{m}"] = round(int(sh(f"du -sb '{d}' | cut -f1")) / 1e9, 3)
+        keep = {k: v for k, v in st.items() if k.endswith(":nan_frac") and v} or {}
+        units[f"{g}/{m}"] = {
+            "expver": st.get("expver"), "dims": st.get("dims"), "time_range": st.get("time_range"),
+            "T_min_max": [st.get("air_temperature:min"), st.get("air_temperature:max")] if "air_temperature:min" in st else None,
+            "nonzero_nan_fractions": keep, "gb": sizes[f"{g}/{m}"],
+        }
+print(json.dumps(units, indent=1)[:3000])
+"""),
+    summary_cell("""    "exit_code": rc,
+    "months_requested": MONTHS,
+    "units_done": done,
+    "units_missing": missing,
+    "gb_written_total": round(sum(sizes.values()), 2),
+    "units": units,
+"""),
+]
+
+
+def write(name: str, cells: list[dict]) -> None:
+    nb = {
+        "cells": cells,
+        "metadata": {
+            "colab": {"provenance": []},
+            "kernelspec": {"display_name": "Python 3", "name": "python3"},
+            "language_info": {"name": "python"},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 0,
+    }
+    (HERE / name).write_text(json.dumps(nb, indent=1) + "\n")
+
+
+if __name__ == "__main__":
+    write("00_smoke_test.ipynb", SMOKE)
+    write("01a_era5_download.ipynb", ERA5)
+    print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

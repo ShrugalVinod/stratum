@@ -6,13 +6,14 @@ measurements in Phase 1.
 
 | Item | Period | Size | Status |
 |---|---|---|---|
-| ERA5 pressure levels, padded domain | Mar 2025 – Feb 2026 + Jan 2026 | 30–60 GB | estimate (build prompt §3.2) |
-| ERA5 single levels + T-only upper levels | same | a few GB | estimate |
-| Meteosat-9 IODC, cropped, 2–6 channels | 12 months | 100–300 GB | estimate (build prompt §3.4). Must be measured on 1 day and approved before bulk download |
-| ADS-B (OpenSky or 12 ADS-B Exchange days), bbox-filtered Parquet | sample days / year | pending | Phase 1 |
+| ERA5 pressure levels (`pl`), padded domain | Mar 2025 – Feb 2026 | **≈ 3.1 GB/month → ≈ 37 GB** | **measured** 2026-10-14: 102 MB for 1 day (Zarr, compressed) |
+| ERA5 single levels (`sl`) + T-only upper levels (`tropo_T`) | same | ≈ 0.14 GB/month → ≈ 1.7 GB | **measured**: 1.9 + 2.6 MB per day |
+| Meteosat-9 IODC, cropped, 2–6 channels | 12 months | 100–300 GB | estimate (build prompt §3.4). Full-disk slot measured: 176 MB (uncropped year ≈ 6 TB, does not fit). Cropped size to be measured once the SEVIRI licence works |
+| ADS-B Exchange days, ≥ FL200 in padded box, Parquet | 12 days + audit days | ≈ 0.1 GB/day (estimate from a measured 5-min slice: 18.8 k rows) | download ≈ 12 GB/day over the network (not stored) |
 | Interim (segments, CoCiP × 3 scalings, detections, matches) | year | pending | Phases 2–5 |
 | Models, reports, web exports | – | < 10 GB | estimate |
 
 | Date | Drive used (total) | Change | Job |
 |---|---|---|---|
+| 2026-10-14 | aircraft DB parquet ≈ 15 MB (laptop copy) | +0.02 GB | Phase 1 |
 | 2026-10-13 | STRATUM folder: a few KB (empty layout + smoke-test manifest) | +0 GB | Phase 0 smoke test (`colab/00_smoke_test.ipynb`) |

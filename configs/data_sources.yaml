@@ -8,7 +8,7 @@ adsb:
   audit_report: null
 
 era5:
-  route: pending                  # cds | arco — chosen in Phase 1 after an equivalence check
+  route: cds                      # CDS crops server-side (~3.2 GB/month); ARCO is whole-globe chunks (~0.5 TB read/month) → equivalence check only
   cds_access_verified: "2026-10-14" # tiny test download OK (T 250 hPa near Delhi, 2026-01-15 06 UTC)
   dataset_pressure_levels: reanalysis-era5-pressure-levels
   dataset_single_levels: reanalysis-era5-single-levels
