@@ -228,7 +228,7 @@ def _session(pool: int) -> requests.Session:
 def _fetch_and_parse(
     session: requests.Session, day: date, name: str, flt: Filter, attempts: int = 3
 ) -> tuple[pd.DataFrame, SnapshotStats]:
-    """Download + parse one snapshot; a dropped connection mid-download is retried.
+    """Download + parse one snapshot; a connection dropped mid-download is retried.
 
     (Seen in Colab on 2025-03-01: "Connection broken: IncompleteRead" on 16 of 17,280
     snapshots. HTTP-level retries don't cover a body cut off half-way, so we retry here.)

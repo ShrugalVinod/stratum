@@ -97,3 +97,19 @@ def test_area_roundtrip_from_attrs() -> None:
     )
     a = area_from_attrs(ds)
     assert (a.height, a.width) == (4, 5)
+
+
+def test_download_retried_after_protocol_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+) -> None:
+    calls = {"n": 0}
+
+    def flaky(product: object, suffix: str, dest_dir: object) -> str:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise ConnectionError("ProtocolError")
+        return "ok"
+
+    monkeypatch.setattr(ms, "_download_entry_once", flaky)
+    monkeypatch.setattr(ms._time, "sleep", lambda s: None)
+    assert ms._download_entry(object(), ".nat", tmp_path) == "ok" and calls["n"] == 3  # type: ignore[arg-type]

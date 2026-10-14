@@ -209,7 +209,19 @@ def day_window(day: date, extend_hours: float) -> tuple[datetime, datetime]:
 # ── Day ingest ───────────────────────────────────────────────────────────────
 
 
-def _download_entry(product: Any, suffix: str, dest_dir: Path) -> Path:
+def _download_entry(product: Any, suffix: str, dest_dir: Path, attempts: int = 3) -> Path:
+    """Download one file of a product, retrying a dropped connection (seen: ProtocolError)."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return _download_entry_once(product, suffix, dest_dir)
+        except Exception:
+            if attempt == attempts:
+                raise
+            _time.sleep(5.0 * attempt)
+    raise AssertionError("unreachable")
+
+
+def _download_entry_once(product: Any, suffix: str, dest_dir: Path) -> Path:
     """Download one file of a product (e.g. the .nat inside the zip) to ``dest_dir``."""
     entry = next(e for e in product.entries if e.endswith(suffix))
     dest = dest_dir / Path(entry).name
