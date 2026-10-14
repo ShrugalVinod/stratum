@@ -50,6 +50,7 @@ dependencies = [
     "typer",
     "rich",
     "matplotlib",
+    "orjson>=3.13.0",
 ]
 
 [project.scripts]
@@ -83,6 +84,9 @@ line-length = 100
 target-version = "py312"
 extend-exclude = ["notebooks", "colab"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]  # long literal test fixtures read better on one line
+
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]
 ignore = [
@@ -100,6 +104,7 @@ plugins = ["pydantic.mypy"]
 module = [
     "pycontrails.*", "openap.*", "satpy.*", "pyresample.*", "eumdac.*", "cdsapi.*",
     "shapely.*", "skimage.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*", "scipy.*",
+    "pandas.*", "pandera.*", "requests.*", "urllib3.*", "orjson.*",
 ]
 ignore_missing_imports = true
 

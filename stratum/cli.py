@@ -93,6 +93,54 @@ def write_corridor() -> None:
     )
 
 
+@app.command("ingest-adsb")
+def ingest_adsb(
+    day: Annotated[str, typer.Option(help="UTC day, YYYY-MM-DD (ADS-B Exchange: a 1st of month)")],
+    source: Annotated[
+        str, typer.Option(help="adsbx (opensky arrives when access is granted)")
+    ] = "adsbx",
+    hours: Annotated[str, typer.Option(help="e.g. '0-23' or '6' or '0,6,12'")] = "0-23",
+    max_snapshots: Annotated[
+        int | None, typer.Option(help="TEST ONLY: first N snapshots per hour")
+    ] = None,
+    workers: Annotated[int, typer.Option(help="parallel downloads")] = 16,
+) -> None:
+    """Ingest one day of ADS-B into <drive>/raw/adsb/<source>/YYYY-MM-DD/ (resumable)."""
+    from datetime import date as _date
+
+    from stratum.flights.clean import daily_summary
+    from stratum.io import adsb_adsbx
+
+    if source != "adsbx":
+        console.print(
+            "[red]Only --source adsbx exists so far (OpenSky: when access is granted).[/red]"
+        )
+        raise typer.Exit(2)
+    d = _date.fromisoformat(day)
+    if "-" in hours:
+        a, b = (int(x) for x in hours.split("-"))
+        hour_list = list(range(a, b + 1))
+    else:
+        hour_list = [int(x) for x in hours.split(",")]
+    out_root = drive_root() / "raw" / "adsb" / "adsbx"
+    s = adsb_adsbx.ingest_day(
+        d,
+        out_root,
+        hours=hour_list,
+        workers=workers,
+        max_snapshots_per_hour=max_snapshots,
+        config_hash=cfg.config_hash(),
+    )
+    df = adsb_adsbx.read_day(out_root / f"{d:%Y-%m-%d}")
+    rows: dict[str, object] = {
+        k: v for k, v in s.items() if k not in ("hours_done", "hours_skipped")
+    }
+    rows["hours written now"] = s["hours_done"]
+    rows["hours already on disk"] = s["hours_skipped"]
+    rows.update({f"day: {k}": v for k, v in daily_summary(df).items()})
+    _summary(f"ingest-adsb {source} {d}", rows)
+
+
 @app.command("figure-sac")
 def figure_sac() -> None:
     """Reproduce paper Figure 1 (SAC diagram) into reports/figures/."""
