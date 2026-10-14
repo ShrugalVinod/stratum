@@ -171,3 +171,17 @@ def test_non_transient_error_is_raised_immediately(tmp_path: Path) -> None:
         era5.retrieve_with_retry(
             Bad(), "d", {"variable": ["t"]}, tmp_path / "x.nc", retry_wait_s=0.0
         )
+
+
+def test_compare_routes_identical_and_mismatch() -> None:
+    a, _ = era5.standardise(
+        _fake_cds_nc("t", [500, 250]), era5.GROUPS["pl"], era5.cocip_variables()["pl"]
+    )
+    b = a.copy(deep=True)
+    b["air_temperature"] = b["air_temperature"] + 0.001
+    rows = era5.compare_routes(a, b)
+    assert rows[0]["variable"] == "air_temperature"
+    assert rows[0]["max_abs_diff"] == pytest.approx(0.001, abs=1e-6)
+    shifted = b.assign_coords(latitude=b["latitude"] + 0.25)
+    with pytest.raises(ValueError, match="latitude"):
+        era5.compare_routes(a, shifted)
