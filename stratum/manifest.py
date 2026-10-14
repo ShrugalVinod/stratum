@@ -204,3 +204,77 @@ def split_done_pending(
             raise ValueError("give either unit_dir_of or base")
         (done if is_done(d) else pending).append(name)
     return done, pending
+
+
+# ── Unit locks: one writer per unit, even across restarted Colab sessions ─────
+
+LOCK_NAME = ".lock"
+LOCK_STALE_S = 600.0  # a lock whose heartbeat is older than 10 min is abandoned
+LOCK_HEARTBEAT_S = 60.0
+
+
+class UnitLockedError(RuntimeError):
+    """Another live process is already working on this unit."""
+
+
+class UnitLock:
+    """Exclusive lock on a unit folder, kept alive by a heartbeat.
+
+    Why: when a Colab cell is stopped and re-run, the old download process can keep running
+    in the background, so two processes would write the same files. The first process
+    creates ``<unit>/.lock`` atomically (O_EXCL) and touches it every minute. A second
+    process that finds a *fresh* lock gives up on that unit (``UnitLockedError``); a lock whose
+    heartbeat is older than 10 minutes belongs to a dead process and is taken over.
+    Works on Google Drive, where process IDs from other machines can't be checked.
+    """
+
+    def __init__(self, unit_dir: Path, stale_s: float = LOCK_STALE_S) -> None:
+        self.path = unit_dir / LOCK_NAME
+        self.stale_s = stale_s
+        self._stop: Any = None
+        self._thread: Any = None
+
+    def _try_create(self) -> bool:
+        try:
+            fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return False
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps({"host": platform.node(), "pid": os.getpid(), "since": utc_now()}))
+        return True
+
+    def acquire(self) -> None:
+        import threading
+        import time
+
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not self._try_create():
+            age = time.time() - self.path.stat().st_mtime
+            if age < self.stale_s:
+                raise UnitLockedError(f"{self.path.parent} is being written by another process")
+            self.path.unlink(missing_ok=True)  # abandoned by a dead process
+            if not self._try_create():
+                raise UnitLockedError(f"{self.path.parent} was taken by another process")
+        self._stop = threading.Event()
+
+        def beat() -> None:
+            while not self._stop.wait(LOCK_HEARTBEAT_S):
+                try:
+                    os.utime(self.path)
+                except OSError:
+                    return
+
+        self._thread = threading.Thread(target=beat, daemon=True)
+        self._thread.start()
+
+    def release(self) -> None:
+        if self._stop is not None:
+            self._stop.set()
+        self.path.unlink(missing_ok=True)
+
+    def __enter__(self) -> UnitLock:
+        self.acquire()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.release()

@@ -47,3 +47,28 @@ def test_atomic_write_leaves_no_temp_files(tmp_path: Path) -> None:
     mf.atomic_write_text(target, "{}")
     assert target.read_text() == "{}"
     assert [p.name for p in target.parent.iterdir()] == ["m.json"]
+
+
+def test_unit_lock_blocks_second_writer_and_releases(tmp_path: Path) -> None:
+    import pytest
+
+    unit = tmp_path / "2026-01"
+    with mf.UnitLock(unit), pytest.raises(mf.UnitLockedError):
+        mf.UnitLock(unit).acquire()
+    assert not (unit / mf.LOCK_NAME).exists()
+    with mf.UnitLock(unit):  # free again after release
+        pass
+
+
+def test_stale_lock_is_taken_over(tmp_path: Path) -> None:
+    import os
+    import time
+
+    unit = tmp_path / "u"
+    unit.mkdir()
+    lock = unit / mf.LOCK_NAME
+    lock.write_text("{}")
+    old = time.time() - 3600
+    os.utime(lock, (old, old))  # heartbeat an hour old → dead process
+    with mf.UnitLock(unit):
+        assert lock.exists()

@@ -211,8 +211,8 @@ ERA5 = [
 Copernicus CDS, cropped on CDS's server, into
 `MyDrive/STRATUM/raw/era5/{pl,sl,tropo_T}/YYYY-MM/data.zarr`. Each month gets a manifest and
 a `_SUCCESS` marker; finished months are skipped; a half-finished month keeps the variables
-it already has. **Run 1:** `MONTHS = "2026-01"`. **Run 2** (after Claude checks run 1):
-`MONTHS = "2025-03:2026-02"`.
+it already has. January 2026 was run and checked first; this run does the whole
+evaluation year (`MONTHS = "2025-03:2026-02"`; months already done are skipped).
 
 * **Runtime:** standard CPU (no GPU, no High-RAM). Most of the time is waiting in CDS's queue.
 * **Secrets** (🔑, Notebook access ON): `GITHUB_TOKEN`, `CDSAPI_KEY`
@@ -220,10 +220,12 @@ it already has. **Run 1:** `MONTHS = "2026-01"`. **Run 2** (after Claude checks 
 * **Time:** CDS queue dependent: roughly 0.5–2 h per month. Keep this tab open (Colab Pro
   keeps running a while if you close it, but don't rely on it).
 * **If it disconnects:** *Runtime → Run all* again: it resumes.
+* **Never re-run while it is still running.** To restart on purpose: *Runtime → Restart
+  session* first (this stops the old process), then *Runtime → Run all*.
 * **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
 """,
     ),
-    settings("01a_era5_download", 'MONTHS = "2026-01"     # run 2: "2025-03:2026-02"\n'),
+    settings("01a_era5_download", 'MONTHS = "2025-03:2026-02"   # whole evaluation year; finished months are skipped\n'),
     *SETUP,
     code("""
 # ── 7. CDS key from Colab Secrets (never printed) ──────────────────────────
@@ -273,6 +275,71 @@ print(json.dumps(units, indent=1)[:3000])
 ]
 
 
+# ── 01b · ADS-B Exchange free days ───────────────────────────────────────────
+
+ADSBX = [
+    header(
+        "01b · ADS-B Exchange free sample days (Phase 1, task 1.2.1)",
+        """
+**What this does:** streams the free ADS-B Exchange "readsb-hist" snapshots (one every 5 s,
+the 1st of each month) and keeps only aircraft over the padded India box at or above FL200.
+Writes `MyDrive/STRATUM/raw/adsb/adsbx/YYYY-MM-DD/hour=HH.parquet` (+ manifest, `_SUCCESS`).
+Also stores the dated OpenSky aircraft-database snapshot in `raw/aircraft_db/`.
+
+* **Runtime:** standard CPU. The work is downloading (~12 GB per day over the network,
+  nothing large is stored) and parsing JSON.
+* **Secrets** (🔑, Notebook access ON): `GITHUB_TOKEN`
+* **Writes to Drive:** ≈ 0.1 GB per day → ≈ 1.2 GB for the 12 days.
+* **Time:** ≈ 10–25 min per day → ≈ 2–5 h for all 12. Finished hours/days are skipped on re-run.
+* **If it disconnects:** *Runtime → Run all* again: it resumes at the first missing hour.
+* **Never re-run while it is still running.** To restart on purpose: *Runtime → Restart
+  session* first (this stops the old process), then *Runtime → Run all*.
+* **Terms:** free samples are for testing/evaluation; raw data are never redistributed.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings(
+        "01b_adsb_ingest",
+        '# The 1st of every month of the evaluation year (Mar 2025 – Feb 2026).\n'
+        'DAYS = ["2025-03-01", "2025-04-01", "2025-05-01", "2025-06-01", "2025-07-01", "2025-08-01",\n'
+        '        "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01"]\n'
+        "WORKERS = 32\n",
+    ),
+    *SETUP,
+    code('''
+# ── 7. Aircraft database snapshot (once; skipped if already on Drive) ──────
+assert stratum("ingest-aircraft-db --snapshot 2025-08") == 0
+'''),
+    code('''
+# ── 8. Ingest each day (long; streams progress; resumable) ─────────────────
+codes = {}
+for d in DAYS:
+    print(f"\\n===== {d} =====")
+    codes[d] = stratum(f"ingest-adsb --day {d} --workers {WORKERS}", live=True)
+print("exit codes:", codes)
+'''),
+    code('''
+# ── 9. Collect per-day results from the manifests on Drive ─────────────────
+days_out, missing = {}, []
+for d in DAYS:
+    p = f"{DRIVE_ROOT}/raw/adsb/adsbx/{d}"
+    if not os.path.exists(f"{p}/_SUCCESS"):
+        missing.append(d)
+        continue
+    st = json.load(open(f"{p}/manifest.json"))["stats"]
+    days_out[d] = {k: st.get(k) for k in ("snapshots_ok", "snapshots_missing", "rows_kept", "dropped_non_icao")}
+    days_out[d]["gb"] = round(int(sh(f"du -sb '{p}' | cut -f1")) / 1e9, 3)
+print(json.dumps(days_out, indent=1))
+'''),
+    summary_cell('''    "exit_codes": codes,
+    "days_done": len(days_out),
+    "days_missing": missing,
+    "gb_written_total": round(sum(v["gb"] for v in days_out.values()), 3),
+    "days": days_out,
+'''),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -290,4 +357,5 @@ def write(name: str, cells: list[dict]) -> None:
 if __name__ == "__main__":
     write("00_smoke_test.ipynb", SMOKE)
     write("01a_era5_download.ipynb", ERA5)
+    write("01b_adsb_ingest.ipynb", ADSBX)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

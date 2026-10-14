@@ -49,7 +49,7 @@ from typing import Any
 import numpy as np
 import xarray as xr
 
-from stratum.manifest import RunManifest, is_done, mark_success
+from stratum.manifest import RunManifest, UnitLock, UnitLockedError, is_done, mark_success
 
 log = logging.getLogger(__name__)
 
@@ -252,6 +252,54 @@ def download_month_cds(
         )
     t0 = _time.time()
     out_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        lock = UnitLock(out_dir)
+        lock.acquire()
+    except UnitLockedError as e:
+        log.warning("%s; skipping", e)
+        return {
+            "group": group_name,
+            "month": f"{year}-{month:02d}",
+            "status": "locked by another run",
+        }
+    try:
+        return _download_locked(
+            group,
+            group_name,
+            variables,
+            year,
+            month,
+            area,
+            days,
+            client,
+            config_hash,
+            parallel_requests,
+            retry_wait_s,
+            out_dir,
+            t0,
+        )
+    finally:
+        lock.release()
+
+
+def _download_locked(
+    group: Group,
+    group_name: str,
+    variables: list[Any],
+    year: int,
+    month: int,
+    area: Area,
+    days: list[int] | None,
+    client: Any,
+    config_hash: str | None,
+    parallel_requests: int,
+    retry_wait_s: float,
+    out_dir: Path,
+    t0: float,
+) -> dict[str, Any]:
+    """Body of :func:`download_month_cds`, run while holding the month's lock."""
+    if is_done(out_dir):  # finished by another process while we waited
+        return {"group": group_name, "month": f"{year}-{month:02d}", "status": "already done"}
     infos: dict[str, Any] = {}
     # Each variable is downloaded to <month>/_parts/<var>.nc and kept until the month is
     # merged, so a Colab disconnect loses at most the requests still in flight.
