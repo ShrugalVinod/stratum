@@ -2,7 +2,7 @@
 
 **To:** ADS-B Exchange / JETNET via the contact form at <https://www.adsbexchange.com/data-products/sample-data/>
 (or the "Contact" page). **From:** Shrugal Vinod, with Dr. Varsha Pant in CC.
-**Status:** draft — not sent. Send only after the team agrees.
+**Status:** SENT by Shrugal on 2026-10-14 to media@adsbexchange.com (cc support@). Awaiting reply.
 
 ---
 
