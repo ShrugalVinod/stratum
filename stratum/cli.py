@@ -158,6 +158,9 @@ def download_era5(
     route: Annotated[str, typer.Option(help="cds (official queue) or arco (Google copy)")] = "cds",
     reverse: Annotated[bool, typer.Option(help="newest month first")] = False,
     max_hours: Annotated[int | None, typer.Option(help="TEST ONLY (arco): first N hours")] = None,
+    workers: Annotated[
+        int, typer.Option(help="arco: hours fetched in parallel (~0.3 GB each)")
+    ] = 6,
 ) -> None:
     """Download ERA5 for the padded domain into <drive>/raw/era5/ (resumable, skips done months).
 
@@ -186,7 +189,13 @@ def download_era5(
         for g in groups:
             if route == "arco":
                 res = era5.download_month_arco(
-                    g, y, m, root, max_hours=max_hours, config_hash=cfg.config_hash()
+                    g,
+                    y,
+                    m,
+                    root,
+                    max_hours=max_hours,
+                    workers=workers,
+                    config_hash=cfg.config_hash(),
                 )
             else:
                 res = era5.download_month_cds(

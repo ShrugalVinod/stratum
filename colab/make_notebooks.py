@@ -448,16 +448,20 @@ them ever writing the same month. Each finished day is saved, so a disconnect lo
 * **Secrets** (🔑): `GITHUB_TOKEN` only (ARCO needs no key).
 * **Writes to Drive:** ≈ 3.3 GB per month. Streams ≈ 0.2–0.5 TB per month through Colab
   (Google network, not stored, not your home internet).
-* **Time:** estimated 20–40 min per month in Colab (not yet measured) → a few hours.
+* **Time:** measured 134 s per day with 6 workers (~80 min/month); 16 workers ≈ 2× faster.
 * **If it disconnects:** *Runtime → Restart session*, then *Runtime → Run all*.
 * **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
 """,
     ),
-    settings("01a2_era5_arco", 'MONTHS = "2025-03:2026-02"   # whole evaluation year; finished months are skipped\n'),
+    settings(
+        "01a2_era5_arco",
+        'MONTHS = "2025-03:2026-02"   # whole evaluation year; finished months are skipped\n'
+        "WORKERS = 16                 # hours fetched in parallel (~0.3 GB RAM each)\n",
+    ),
     *SETUP,
     code('''
 # ── 7. Download from ARCO, newest month first (long; streams progress; resumable) ─
-rc = stratum(f"download-era5 --month {MONTHS} --route arco --reverse", live=True)
+rc = stratum(f"download-era5 --month {MONTHS} --route arco --reverse --workers {WORKERS}", live=True)
 print("exit code:", rc)
 '''),
     ERA5[-2],   # same per-month collection cell as 01a
