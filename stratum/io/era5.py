@@ -379,6 +379,7 @@ def open_month(root: Path, group: str, year: int, month: int) -> xr.Dataset:
 # ── ARCO route (equivalence check only) ───────────────────────────────────────
 
 ARCO_PATH = "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
+ARCO_ATTRS = {"provider": "ECMWF", "dataset": "ERA5", "product": "reanalysis", "route": "arco"}
 
 
 @lru_cache(maxsize=2)
@@ -438,7 +439,7 @@ def download_month_arco(
     *,
     area: Area | None = None,
     max_hours: int | None = None,
-    workers: int = 24,
+    workers: int = 6,
     config_hash: str | None = None,
 ) -> dict[str, Any]:
     """Download one month of one group from ARCO-ERA5 → the same Zarr layout as CDS.
@@ -474,6 +475,41 @@ def download_month_arco(
         lock.release()
 
 
+def _arco_day(
+    group_name: str, day_start: np.datetime64, hours: int, area: Area, workers: int
+) -> xr.Dataset:
+    """Fetch one day hour by hour, ``workers`` hours in parallel, keeping memory small.
+
+    Each hour of each variable is one whole-globe ARCO chunk (~150 MB in memory); it is cut to
+    the India box straight away and the globe is freed, so peak memory ≈ workers × ~0.5 GB.
+    """
+    times = [day_start + np.timedelta64(h, "h") for h in range(hours)]
+
+    def one(t: np.datetime64) -> xr.Dataset:
+        return open_arco_subset(group_name, [t], area, lazy=False).load()
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        parts = list(pool.map(one, times))
+    day = xr.concat(parts, dim="time").sortby("time")
+    day.attrs = parts[0].attrs
+    return day
+
+
+def _partial_stats(ds: xr.Dataset) -> dict[str, list[float]]:
+    """Per variable: [min, max, n_nan, n_values] — combinable across days without reloading."""
+    out = {}
+    for name, da in ds.data_vars.items():
+        a = np.asarray(da.values, dtype=np.float64)
+        fin = np.isfinite(a)
+        out[str(name)] = [
+            float(a[fin].min()) if fin.any() else np.inf,
+            float(a[fin].max()) if fin.any() else -np.inf,
+            float((~fin).sum()),
+            float(a.size),
+        ]
+    return out
+
+
 def _arco_month_locked(
     group_name: str,
     year: int,
@@ -484,12 +520,10 @@ def _arco_month_locked(
     workers: int,
     config_hash: str | None,
 ) -> dict[str, Any]:
-    import dask
-
     t0 = _time.time()
     days_dir = out_dir / "_arco_days"
     days_dir.mkdir(parents=True, exist_ok=True)
-    ndays = calendar.monthrange(year, month)[1]
+    ndays = 1 if max_hours is not None else calendar.monthrange(year, month)[1]
     day_files: list[Path] = []
     for d in range(1, ndays + 1):
         f = days_dir / f"{d:02d}.nc"
@@ -497,13 +531,11 @@ def _arco_month_locked(
         if f.exists() and max_hours is None:
             continue  # finished in an earlier (interrupted) run
         start = np.datetime64(f"{year}-{month:02d}-{d:02d}T00:00")
-        stop = start + np.timedelta64((max_hours or 24) - 1, "h")
-        sub = open_arco_subset(group_name, slice(start, stop), area, lazy=True)
-        with dask.config.set(scheduler="threads", num_workers=workers):
-            day = sub.load()
+        day = _arco_day(group_name, start, max_hours or 24, area, workers)
         tmp = f.with_suffix(".nc.part")
         day.to_netcdf(tmp)
         tmp.rename(f)
+        del day
         log.info(
             "ARCO %s %04d-%02d-%02d done (%.0f s since month start)",
             group_name,
@@ -512,25 +544,51 @@ def _arco_month_locked(
             d,
             _time.time() - t0,
         )
-        if max_hours is not None:
-            day_files = [f]
-            break
-    ds = xr.open_mfdataset(day_files, combine="by_coords").load()
-    ds.attrs = {"provider": "ECMWF", "dataset": "ERA5", "product": "reanalysis", "route": "arco"}
+
+    # Build the month Zarr by appending day by day (never the whole month in memory).
     zpath = out_dir / "data.zarr"
     tmp_z = out_dir / "data.zarr.tmp"
     shutil.rmtree(tmp_z, ignore_errors=True)
-    ds.to_zarr(tmp_z, mode="w", consolidated=True)
+    totals: dict[str, list[float]] = {}
+    n_time = 0
+    first_t = last_t = ""
+    for i, f in enumerate(day_files):
+        with xr.open_dataset(f) as raw:
+            day = raw.load()
+        day.attrs = {
+            "provider": "ECMWF",
+            "dataset": "ERA5",
+            "product": "reanalysis",
+            "route": "arco",
+        }
+        if i == 0:
+            day.to_zarr(tmp_z, mode="w", consolidated=True)
+            first_t = str(day.time.values[0])[:16]
+        else:
+            day.to_zarr(tmp_z, append_dim="time", consolidated=True)
+        last_t = str(day.time.values[-1])[:16]
+        n_time += day.sizes["time"]
+        for k, (mn, mx, nn, n) in _partial_stats(day).items():
+            t = totals.setdefault(k, [np.inf, -np.inf, 0.0, 0.0])
+            totals[k] = [min(t[0], mn), max(t[1], mx), t[2] + nn, t[3] + n]
+        sizes = {str(k): int(v) for k, v in day.sizes.items()}
     shutil.rmtree(zpath, ignore_errors=True)
     tmp_z.rename(zpath)
-    stats = summarise(ds)
+    sizes["time"] = n_time
+    stats: dict[str, Any] = {
+        "variables": sorted(totals),
+        "dims": sizes,
+        "time_range": [first_t, last_t],
+    }
+    for k, (mn, mx, nn, n) in totals.items():
+        stats[f"{k}:nan_frac"] = round(nn / n, 6) if n else None
+        stats[f"{k}:min"] = mn if np.isfinite(mn) else None
+        stats[f"{k}:max"] = mx if np.isfinite(mx) else None
     stats.update(expver=["arco"], route="arco", wall_time_s=round(_time.time() - t0, 1))
     if max_hours is None:
-        expected = ndays * 24
-        if ds.sizes["time"] != expected:
-            raise RuntimeError(
-                f"{group_name} {year}-{month:02d}: {ds.sizes['time']} of {expected} hours"
-            )
+        expected = calendar.monthrange(year, month)[1] * 24
+        if n_time != expected:
+            raise RuntimeError(f"{group_name} {year}-{month:02d}: {n_time} of {expected} hours")
         m = RunManifest.start(
             "download-era5",
             unit=f"{group_name}/{year}-{month:02d}",

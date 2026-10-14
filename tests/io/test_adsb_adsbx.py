@@ -190,3 +190,27 @@ def test_failed_hour_does_not_kill_the_day(monkeypatch: pytest.MonkeyPatch, tmp_
     monkeypatch.setattr(ax, "ingest_snapshots", boom)
     s = ax.ingest_day(date(2026, 1, 1), tmp_path, hours=[0, 1, 2], flt=FLT, workers=1)
     assert s["hours_done"] == [0, 2] and 1 in s["hours_failed"] and not s["day_complete"]
+
+
+def test_dropped_connection_is_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    import requests
+
+    calls = {"n": 0}
+
+    class Resp:
+        status_code = 200
+        content = _snapshot(AIRCRAFT)
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class Sess:
+        def get(self, url: str, timeout: int) -> Resp:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise requests.exceptions.ChunkedEncodingError("Connection broken: IncompleteRead")
+            return Resp()
+
+    monkeypatch.setattr(ax._time, "sleep", lambda s: None)
+    df, st = ax._fetch_and_parse(Sess(), date(2026, 1, 1), "000000Z", FLT)  # type: ignore[arg-type]
+    assert calls["n"] == 2 and len(df) == 2 and st.snapshots_ok == 1

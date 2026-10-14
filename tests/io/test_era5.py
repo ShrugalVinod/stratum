@@ -193,10 +193,14 @@ def test_arco_month_resumes_by_day_and_marks_done(
     """Days saved in an interrupted run are not fetched again; a full month is marked done."""
     calls: list[str] = []
 
-    def fake(group_name: str, times: slice, area: Any = None, *, lazy: bool = False) -> xr.Dataset:
-        calls.append(str(times.start)[:10])
-        t = pd.date_range(str(times.start), str(times.stop), freq="h")
-        ds = xr.Dataset(
+    def fake(group_name: str, times: Any, area: Any = None, *, lazy: bool = False) -> xr.Dataset:
+        t = pd.DatetimeIndex(
+            times
+            if isinstance(times, list)
+            else pd.date_range(str(times.start), str(times.stop), freq="h")
+        )
+        calls.extend(str(x)[:10] for x in t)
+        return xr.Dataset(
             {
                 "top_net_solar_radiation": (
                     ("longitude", "latitude", "level", "time"),
@@ -210,7 +214,6 @@ def test_arco_month_resumes_by_day_and_marks_done(
                 "time": t,
             },
         )
-        return ds
 
     monkeypatch.setattr(era5, "open_arco_subset", fake)
     month = tmp_path / "sl" / "2026-02"
@@ -221,10 +224,16 @@ def test_arco_month_resumes_by_day_and_marks_done(
     ).to_netcdf(month / "_arco_days" / "01.nc")
     calls.clear()
     res = era5.download_month_arco(
-        "sl", 2026, 2, tmp_path, area=era5.Area((38.5, 38.75), (66.0, 66.25))
+        "sl", 2026, 2, tmp_path, area=era5.Area((38.5, 38.75), (66.0, 66.25)), workers=2
     )
     assert res["status"] == "downloaded" and res["dims"]["time"] == 28 * 24
-    assert "2026-02-01" not in calls and len(calls) == 27  # day 1 reused
+    assert (
+        "2026-02-01" not in calls and len(set(calls)) == 27 and len(calls) == 27 * 24
+    )  # day 1 reused
+    assert (
+        res["top_net_solar_radiation:min"] == 1.0 and res["top_net_solar_radiation:nan_frac"] == 0.0
+    )
     assert (month / "_SUCCESS").exists() and not (month / "_arco_days").exists()
+    assert xr.open_zarr(month / "data.zarr").sizes["time"] == 28 * 24
     again = era5.download_month_arco("sl", 2026, 2, tmp_path)
     assert again["status"] == "already done"
