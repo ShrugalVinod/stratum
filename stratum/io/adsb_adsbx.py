@@ -59,6 +59,8 @@ log = logging.getLogger(__name__)
 BASE_URL = "https://samples.adsbexchange.com/readsb-hist"
 SNAPSHOT_INTERVAL_S = 5
 SNAPSHOTS_PER_HOUR = 3600 // SNAPSHOT_INTERVAL_S  # 720
+SANE_ALT_FT = (-2000.0, 70000.0)  # same limits as the schema
+SANE_GS_KT = 1000.0
 
 
 @dataclass(frozen=True)
@@ -92,6 +94,8 @@ class SnapshotStats:
     kept: int = 0
     dropped_non_icao: int = 0
     dropped_no_position: int = 0
+    dropped_bad_altitude: int = 0
+    blanked_values: int = 0  # impossible speeds/tracks set to missing (never crash)
     failed_names: list[str] = field(default_factory=list)
 
     def add(self, other: SnapshotStats) -> None:
@@ -101,6 +105,8 @@ class SnapshotStats:
         self.kept += other.kept
         self.dropped_non_icao += other.dropped_non_icao
         self.dropped_no_position += other.dropped_no_position
+        self.dropped_bad_altitude += other.dropped_bad_altitude
+        self.blanked_values += other.blanked_values
         self.failed_names.extend(other.failed_names)
 
 
@@ -174,6 +180,25 @@ def parse_snapshot(raw: bytes, flt: Filter) -> tuple[pd.DataFrame, SnapshotStats
                 "registration": _str_or_none(a.get("r")),
             }
         )
+    stats.kept = len(rows)
+    # Broadcast glitches happen (e.g. 1,152 kt seen on 2026-01-01). Physically impossible
+    # values are blanked (speed, track) or the report dropped (altitude, which is required),
+    # and counted. Real implausibility filtering of tracks is Phase 2, step 3.
+    clean_rows = []
+    for r in rows:
+        if not (SANE_ALT_FT[0] <= r["baro_alt_ft"] <= SANE_ALT_FT[1]):
+            stats.dropped_bad_altitude += 1
+            continue
+        if not (0.0 <= r["gs_kt"] <= SANE_GS_KT):  # NaN fails the test too
+            if r["gs_kt"] == r["gs_kt"]:  # count only real (non-NaN) values
+                stats.blanked_values += 1
+            r["gs_kt"] = np.nan
+        if not (0.0 <= r["track_deg"] <= 360.0):
+            if r["track_deg"] == r["track_deg"]:
+                stats.blanked_values += 1
+            r["track_deg"] = np.nan
+        clean_rows.append(r)
+    rows = clean_rows
     stats.kept = len(rows)
     return _to_frame(rows), stats
 
@@ -266,7 +291,12 @@ def ingest_day(
             summary["hours_skipped"].append(h)
             continue
         names = snapshot_names(h)[:max_snapshots_per_hour]
-        df, st = ingest_snapshots(day, names, flt, workers)
+        try:
+            df, st = ingest_snapshots(day, names, flt, workers)
+        except Exception as e:  # one bad hour must not kill the day; it is listed and retried
+            log.error("%s hour %02d failed: %s", day, h, e)
+            summary.setdefault("hours_failed", {})[h] = f"{type(e).__name__}: {str(e)[:200]}"
+            continue
         total.add(st)
         tmp = target.with_suffix(".parquet.tmp")
         df.to_parquet(tmp, index=False, compression="zstd")
@@ -281,6 +311,8 @@ def ingest_day(
         snapshots_missing=total.snapshots_missing,
         rows_kept=total.kept,
         dropped_non_icao=total.dropped_non_icao,
+        dropped_bad_altitude=total.dropped_bad_altitude,
+        blanked_values=total.blanked_values,
         wall_time_s=round(_time.time() - t0, 1),
         day_complete=complete and max_snapshots_per_hour is None,
     )

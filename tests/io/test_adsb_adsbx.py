@@ -147,3 +147,46 @@ def test_ingest_day_offline_is_resumable(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert len(calls) == n_calls + ax.SNAPSHOTS_PER_HOUR
     df = ax.read_day(tmp_path / "2026-01-01")
     assert len(df) == 2  # the same two fixes in every snapshot and hour collapse to 2 rows
+
+
+def test_glitched_values_are_blanked_not_fatal() -> None:
+    """Real case 2026-01-01: an aircraft reported 1,152 kt. Must not crash the hour."""
+    glitch = [
+        {
+            "hex": "800aaa",
+            "flight": "IGO9",
+            "lat": 22.0,
+            "lon": 76.0,
+            "alt_baro": 35000,
+            "gs": 1152.1,
+            "track": 361.0,
+            "seen_pos": 0,
+        },
+        {
+            "hex": "800bbb",
+            "flight": "IGO8",
+            "lat": 22.0,
+            "lon": 77.0,
+            "alt_baro": 99999,
+            "gs": 450.0,
+            "seen_pos": 0,
+        },
+    ]
+    df, st = ax.parse_snapshot(_snapshot(glitch), FLT)
+    validate(df)
+    assert list(df["icao24"]) == ["800aaa"]  # impossible altitude → report dropped
+    assert pd.isna(df.loc[0, "gs_kt"]) and pd.isna(df.loc[0, "track_deg"])
+    assert st.blanked_values == 2 and st.dropped_bad_altitude == 1
+
+
+def test_failed_hour_does_not_kill_the_day(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def boom(
+        day: date, names: list[str], flt: ax.Filter, workers: int
+    ) -> tuple[pd.DataFrame, ax.SnapshotStats]:
+        if names[0].startswith("01"):
+            raise RuntimeError("simulated failure")
+        return ax.parse_snapshot(_snapshot(AIRCRAFT), flt)[0], ax.SnapshotStats(snapshots_ok=1)
+
+    monkeypatch.setattr(ax, "ingest_snapshots", boom)
+    s = ax.ingest_day(date(2026, 1, 1), tmp_path, hours=[0, 1, 2], flt=FLT, workers=1)
+    assert s["hours_done"] == [0, 2] and 1 in s["hours_failed"] and not s["day_complete"]
