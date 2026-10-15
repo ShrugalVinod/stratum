@@ -2,6 +2,20 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-15 — Phase 1 data complete
+
+**Done**
+- **ERA5 full year on Drive: 36/36** month-blocks (pl, sl, tropo_T × Mar 2025 – Feb 2026), verified by `_SUCCESS` markers via the Drive connector. Bulk via ARCO (01a2).
+- **ADS-B Exchange: 12/12** first-of-month days on Drive (01b).
+- **Meteosat-9 IODC: 14 days**, 1,451/1,456 slots (01c). 5 failed slots accepted (decisions.md).
+- **Callsign-flicker fix** in flight reconstruction (decisions.md; flights on 2025-03-01 00–12 UTC 8,713 → 4,628).
+- Phase 1 gate report finalised (`docs/phase_reports/phase1_gate_report.md`); only the November coverage audit remains.
+- Reviewed the team's 15 Oct paper drafts; wrote a self-contained revision prompt (team folder, `PAPER_FIX_PROMPT_v2.md`). The 78-page technical edition conflicts with the lock (H1–H6 vs H1–H4, 3 annotators, 30 s / 5 min / 0–120 min) — flagged to Shrugal.
+
+**Next**
+- Shrugal: accept Phase 1 → start Phase 2. Decide Q12 (CoCiP Monte Carlo N) before the full-month run.
+- Claude: 2 Nov / 5 Nov schedule lookups + coverage audit.
+
 ## 2026-10-14 — Phase 1 (data access, ingestion, coverage audit) — in progress
 
 **Done (all tested, pushed)**
