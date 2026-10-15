@@ -6,7 +6,9 @@ What it does
   the segment start points plus the last end point, carrying OpenAP **fuel flow**, **η**
   (``engine_efficiency``), **aircraft mass** (0.80 MTOW) and wingspan, and the ICAO type as
   ``aircraft_type`` so pycontrails' emissions model can look up the engine's **nvPM number
-  emission index** (ICAO engine databank).
+  emission index** (ICAO engine databank). The engine count comes from OpenAP; when the
+  databank has no engine for the type, pycontrails uses its constant default nvPM EI
+  (10¹⁵ kg⁻¹) and ``engine_uid_used`` is empty for that flight (counted in the summary).
 * Runs CoCiP with one of the pre-registered humidity scalings (library implementations; not
   re-implemented):
 
@@ -46,6 +48,7 @@ SEGMENT_OUT_COLS = [
     "rf_net_mean",
     "ef",
     "nvpm_ei_n",
+    "engine_uid_used",
 ]
 
 
@@ -97,6 +100,7 @@ def segments_to_flights(seg: pd.DataFrame) -> list[Any]:
             flight_id=str(fid),
             aircraft_type=str(g["typecode"].iloc[0]),
             wingspan=float(g["wingspan_m"].iloc[0]),
+            n_engine=int(g["n_engines"].iloc[0]) if "n_engines" in g else 2,
         )
         flights.append(fl)
     return flights
@@ -108,6 +112,8 @@ def _frames(out: Any) -> pd.DataFrame:
         d = o.dataframe.copy()
         d.attrs = {}
         d["flight_id"] = o.attrs["flight_id"]
+        # None → pycontrails used its constant default nvPM EI (engine not in the ICAO EDB)
+        d["engine_uid_used"] = o.attrs.get("engine_uid_used")
         parts.append(d)
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
@@ -175,6 +181,11 @@ def _summary(seg: pd.DataFrame, contrail: pd.DataFrame, met: Any) -> dict[str, A
         "ef_positive_J": float(ef[ef > 0].sum()),
         "ef_negative_J": float(ef[ef < 0].sum()),
         "contrail_rows": len(contrail),
+        "flights_default_nvpm_no_engine": int(
+            seg.groupby("flight_id")["engine_uid_used"].first().isna().sum()
+        )
+        if "engine_uid_used" in seg
+        else None,
     }
     if len(contrail):
         # contrails that end up at the edge of the met box (build prompt Phase 1 note)

@@ -150,6 +150,63 @@ def ingest_adsb(
     _summary(f"ingest-adsb {source} {d}", rows)
 
 
+@app.command("build-segments")
+def build_segments(
+    month: Annotated[str, typer.Option(help="YYYY-MM (every complete ADS-B day in it)")],
+    corridor: Annotated[
+        str, typer.Option(help="DEL-BOM, or 'none' for the full domain")
+    ] = "DEL-BOM",
+    source: Annotated[str, typer.Option(help="adsbx (opensky when granted)")] = "adsbx",
+    days: Annotated[str | None, typer.Option(help="only these days, e.g. '1' or '1,15'")] = None,
+) -> None:
+    """Phase 2: ADS-B → cleaned 1-min segments + ERA5 features + η + SAC flags (per day)."""
+    from datetime import date as _date
+
+    from stratum import phase2
+
+    root = drive_root()
+    poly = None if corridor.lower() == "none" else cfg.corridor_polygon(cfg.load_domain().corridor)
+    day_list = phase2.days_with_adsb(root, month, source)
+    if days:
+        y, m = (int(x) for x in month.split("-"))
+        day_list = [_date(y, m, int(d)) for d in days.split(",")]
+    if not day_list:
+        console.print(f"[red]No complete {source} days in {month}.[/red]")
+        raise typer.Exit(1)
+    for d in day_list:
+        res = phase2.build_segments_day(root, d, source, poly, config_hash=cfg.config_hash())
+        _summary(f"build-segments {d}", res)
+
+
+@app.command("run-cocip")
+def run_cocip(
+    month: Annotated[str, typer.Option(help="YYYY-MM")],
+    scaling: Annotated[str, typer.Option(help="B1, B2, B3 or all")] = "all",
+    members: Annotated[int, typer.Option(help="Monte Carlo members (Q12: 20)")] = 20,
+    max_age_h: Annotated[float, typer.Option(help="CoCiP max contrail age, hours")] = 24.0,
+    days: Annotated[str | None, typer.Option(help="only these days, e.g. '1'")] = None,
+    source: Annotated[str, typer.Option(help="adsbx (opensky when granted)")] = "adsbx",
+) -> None:
+    """Phase 2: CoCiP on each day's corridor flights for B1/B2/B3 (resumable per day)."""
+    from datetime import date as _date
+
+    from stratum import phase2
+    from stratum.physics.cocip_runner import SCALINGS
+
+    root = drive_root()
+    scalings = list(SCALINGS) if scaling == "all" else [scaling]
+    day_list = phase2.days_with_adsb(root, month, source)
+    if days:
+        y, m = (int(x) for x in month.split("-"))
+        day_list = [_date(y, m, int(d)) for d in days.split(",")]
+    for d in day_list:
+        for sc in scalings:
+            res = phase2.cocip_day(
+                root, d, sc, members=members, max_age_h=max_age_h, config_hash=cfg.config_hash()
+            )
+            _summary(f"run-cocip {sc} {d}", res)
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
