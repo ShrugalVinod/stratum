@@ -4,7 +4,10 @@ What it does
 ------------
 The tropopause is the lowest level at which the lapse rate Γ = −dT/dz falls to **≤ 2 K/km**,
 provided the average lapse rate between that level and every point within the next **2 km**
-above also stays ≤ 2 K/km (WMO 1957). Only levels at or above 500 hPa are searched.
+above also stays ≤ 2 K/km (WMO 1957). Only levels at or above 500 hPa are searched. When the
+2-km window would run past the top ERA5 level (50 hPa), the rule is applied to the available
+depth if it is at least 1.5 km (boundary clarification logged 2026-10-15; without it ~10 % of
+segments on 2026-01-01 had no tropopause although the air above was warming strongly).
 
 Inputs are temperatures on pressure levels (ERA5 100–500 hPa plus the T-only 50 and 70 hPa
 levels). Heights come from the hypsometric equation, integrated upward from the lowest level
@@ -26,6 +29,7 @@ R_D = 287.05  # J kg⁻¹ K⁻¹
 G0 = 9.80665
 GAMMA_MAX = 2.0  # K/km
 DEPTH_KM = 2.0
+MIN_DEPTH_KM = 1.5  # profile-top boundary: accept if ≥ 1.5 km of the 2-km window is available
 P_MAX_PA = 500e2
 
 
@@ -92,15 +96,18 @@ def wmo_tropopause(
         zb, tb = z[..., k], t[..., k]
         tc = tb
         ok = cand.copy()
-        top = zb + DEPTH_KM * 1000.0
+        # The 2-km window may run past the top ERA5 level (50 hPa) when the tropopause is high;
+        # then the rule is applied to the available depth, if it is at least 1.5 km.
+        depth = np.minimum(DEPTH_KM * 1000.0, z[..., -1] - zb)
+        top = zb + depth
         for j in range(z.shape[-1]):
             inside = (z[..., j] > zb) & (z[..., j] <= top)
             with np.errstate(invalid="ignore", divide="ignore"):
                 avg = (tc - t[..., j]) / ((z[..., j] - zb) / 1000.0)
             ok &= ~inside | (avg <= GAMMA_MAX)
-        t_top = _interp_along(z, t, np.minimum(top, z[..., -1]))
-        reach = top <= z[..., -1]
-        ok &= reach & ((tc - t_top) / DEPTH_KM <= GAMMA_MAX)
+        t_top = _interp_along(z, t, top)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            ok &= (depth >= MIN_DEPTH_KM * 1000.0) & ((tc - t_top) / (depth / 1000.0) <= GAMMA_MAX)
         z_tp = np.where(ok, zc, z_tp)
         found |= ok
     lnp = np.broadcast_to(np.log(p), z.shape)

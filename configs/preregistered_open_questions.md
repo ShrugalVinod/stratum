@@ -95,6 +95,8 @@ opaque-cloud signature), documented thresholds; (c) add the IODC cloud-top-heigh
 ### 12. Number of CoCiP Monte Carlo members for EF ranges — SETTLED (2026-10-15)
 **N = 20** Monte Carlo members (approved by Shrugal, 15 Oct 2026). A convergence check (N = 20 vs N = 40 on one corridor day: change in EF p5/p50/p95) is reported in the Phase 2 sanity report. If the ranges are not stable, a larger N is adopted only through the deviation log, before any evaluation run.
 
+**Amended 2026-10-15 by deviation D-001: N = 100.** The N = 20 vs 40 check moved p05 by 27.8 %; N = 100 is used for all CoCiP runs, with an N = 100 vs 200 check reported.
+
 ### 13. Latitude bands for the learned RHi scaling factor — SETTLED (2026-10-13)
 **Answer.** 6–15°N, 15–25°N, 25–37°N.
 **Why.** Roughly southern peninsula / central India / north India and the Himalayan

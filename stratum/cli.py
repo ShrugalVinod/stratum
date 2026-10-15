@@ -165,6 +165,7 @@ def build_segments(
     ] = "DEL-BOM",
     source: Annotated[str, typer.Option(help="adsbx (opensky when granted)")] = "adsbx",
     days: Annotated[str | None, typer.Option(help="only these days, e.g. '1' or '1,15'")] = None,
+    force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
 ) -> None:
     """Phase 2: ADS-B → cleaned 1-min segments + ERA5 features + η + SAC flags (per day)."""
     from datetime import date as _date
@@ -181,7 +182,9 @@ def build_segments(
         console.print(f"[red]No complete {source} days in {month}.[/red]")
         raise typer.Exit(1)
     for d in day_list:
-        res = phase2.build_segments_day(root, d, source, poly, config_hash=cfg.config_hash())
+        res = phase2.build_segments_day(
+            root, d, source, poly, config_hash=cfg.config_hash(), force=force
+        )
         _summary(f"build-segments {d}", res)
 
 
@@ -189,10 +192,11 @@ def build_segments(
 def run_cocip(
     month: Annotated[str, typer.Option(help="YYYY-MM")],
     scaling: Annotated[str, typer.Option(help="B1, B2, B3 or all")] = "all",
-    members: Annotated[int, typer.Option(help="Monte Carlo members (Q12: 20)")] = 20,
+    members: Annotated[int, typer.Option(help="Monte Carlo members (Q12/D-001: 100)")] = 100,
     max_age_h: Annotated[float, typer.Option(help="CoCiP max contrail age, hours")] = 24.0,
     days: Annotated[str | None, typer.Option(help="only these days, e.g. '1'")] = None,
     source: Annotated[str, typer.Option(help="adsbx (opensky when granted)")] = "adsbx",
+    force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
 ) -> None:
     """Phase 2: CoCiP on each day's corridor flights for B1/B2/B3 (resumable per day)."""
     from datetime import date as _date
@@ -209,7 +213,13 @@ def run_cocip(
     for d in day_list:
         for sc in scalings:
             res = phase2.cocip_day(
-                root, d, sc, members=members, max_age_h=max_age_h, config_hash=cfg.config_hash()
+                root,
+                d,
+                sc,
+                members=members,
+                max_age_h=max_age_h,
+                config_hash=cfg.config_hash(),
+                force=force,
             )
             _summary(f"run-cocip {sc} {d}", res)
 
@@ -219,14 +229,16 @@ def cocip_convergence(
     day: Annotated[str, typer.Option(help="YYYY-MM-DD (a day already run by build-segments)")],
     scaling: Annotated[str, typer.Option(help="B1, B2 or B3")] = "B1",
     max_age_h: Annotated[float, typer.Option(help="CoCiP max contrail age, hours")] = 24.0,
+    n_small: Annotated[int, typer.Option(help="members in the smaller ensemble")] = 100,
+    n_large: Annotated[int, typer.Option(help="members in the larger ensemble")] = 200,
 ) -> None:
-    """Q12 check: EF percentiles with 20 vs 40 Monte Carlo members (one day)."""
+    """Q12/D-001 check: EF percentiles with N = n_small vs n_large Monte Carlo members."""
     from datetime import date as _date
 
     from stratum import phase2
 
     res = phase2.cocip_convergence(
-        drive_root(), _date.fromisoformat(day), scaling, max_age_h=max_age_h
+        drive_root(), _date.fromisoformat(day), scaling, n_small, n_large, max_age_h=max_age_h
     )
     _summary(f"cocip-convergence {scaling} {day}", res)
 

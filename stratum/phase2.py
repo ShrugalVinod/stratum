@@ -19,7 +19,14 @@ from typing import Any
 import pandas as pd
 import xarray as xr
 
-from stratum.manifest import RunManifest, UnitLock, UnitLockedError, is_done, mark_success
+from stratum.manifest import (
+    SUCCESS_MARKER,
+    RunManifest,
+    UnitLock,
+    UnitLockedError,
+    is_done,
+    mark_success,
+)
 
 
 def era5_window(root: Path, group: str, start: pd.Timestamp, end: pd.Timestamp) -> xr.Dataset:
@@ -48,8 +55,12 @@ def build_segments_day(
     corridor: Any = None,
     aircraft_db_snapshot: str = "2025-08",
     config_hash: str | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
-    """Raw ADS-B day → segments_met for that day (flights, met features, η, SAC flags)."""
+    """Raw ADS-B day → segments_met for that day (flights, met features, η, SAC flags).
+
+    ``force`` recomputes a finished day (its ``_SUCCESS`` marker is removed first, so a crash
+    mid-way leaves the day marked not done)."""
     from stratum.flights.pipeline import build_flight_segments
     from stratum.io import aircraft_db
     from stratum.io.adsb_adsbx import read_day
@@ -57,6 +68,8 @@ def build_segments_day(
     from stratum.met.interp import MetGrid
 
     out_dir = _day_dir(root, "segments_met", day)
+    if force:
+        (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)
     if is_done(out_dir):
         return {"day": str(day), "status": "already done"}
     adsb_dir = root / "raw" / "adsb" / source / f"{day:%Y-%m-%d}"
@@ -96,19 +109,24 @@ def cocip_day(
     root: Path,
     day: date,
     scaling: str,
-    members: int = 20,
+    members: int = 100,
     max_age_h: float = 24.0,
     seed: int = 20261013,
     corridor_only: bool = True,
     config_hash: str | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
-    """CoCiP for one day's flights with one humidity scaling (needs build_segments_day)."""
+    """CoCiP for one day's flights with one humidity scaling (needs build_segments_day).
+
+    N = 100 Monte Carlo members (open question 12 as amended by deviation D-001)."""
     from pycontrails import MetDataset
 
     from stratum.physics import cocip_runner as cr
 
     src = _day_dir(root, "segments_met", day)
     out_dir = _day_dir(root, f"cocip/{scaling}", day)
+    if force:
+        (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)
     if is_done(out_dir):
         return {"day": str(day), "scaling": scaling, "status": "already done"}
     if not is_done(src):
@@ -168,7 +186,7 @@ def cocip_convergence(
     max_age_h: float = 24.0,
     seed: int = 20261013,
 ) -> dict[str, Any]:
-    """Q12 check: do EF percentiles change between N = 20 and N = 40 Monte Carlo members?"""
+    """Q12/D-001 check: do EF percentiles change between N = n_small and N = n_large?"""
     from pycontrails import MetDataset
 
     from stratum.physics import cocip_runner as cr
@@ -183,14 +201,20 @@ def cocip_convergence(
     rad = MetDataset(era5_window(root, "sl", t0, t1).load())
     a = cr.run(flights, met, rad, scaling, n_small, seed, max_age_h).segments
     b = cr.run(flights, met, rad, scaling, n_large, seed, max_age_h).segments
-    m = a.merge(b, on="segment_id", suffixes=("_n20", "_n40"))
-    m = m[(m["ef_p50_n40"].abs() > 0) | (m["ef_p95_n40"].abs() > 0)]
-    rows = {"day": str(day), "scaling": scaling, "segments_with_ef": len(m)}
+    m = a.merge(b, on="segment_id", suffixes=("_small", "_large"))
+    m = m[(m["ef_p50_large"].abs() > 0) | (m["ef_p95_large"].abs() > 0)]
+    rows: dict[str, Any] = {
+        "day": str(day),
+        "scaling": scaling,
+        "n_small": n_small,
+        "n_large": n_large,
+        "segments_with_ef": len(m),
+    }
     for q in ("p05", "p50", "p95"):
-        tot20, tot40 = m[f"ef_{q}_n20"].sum(), m[f"ef_{q}_n40"].sum()
-        rows[f"sum_ef_{q}_n20"] = float(tot20)
-        rows[f"sum_ef_{q}_n40"] = float(tot40)
-        rows[f"rel_change_{q}"] = float(abs(tot20 - tot40) / abs(tot40)) if tot40 else None
+        ts, tl = m[f"ef_{q}_small"].sum(), m[f"ef_{q}_large"].sum()
+        rows[f"sum_ef_{q}_n{n_small}"] = float(ts)
+        rows[f"sum_ef_{q}_n{n_large}"] = float(tl)
+        rows[f"rel_change_{q}"] = float(abs(ts - tl) / abs(tl)) if tl else None
     out = root / "interim" / "cocip" / "convergence"
     out.mkdir(parents=True, exist_ok=True)
     pd.DataFrame([rows]).to_csv(out / f"{day:%Y-%m}.csv", index=False)

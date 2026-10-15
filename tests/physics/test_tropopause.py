@@ -61,3 +61,29 @@ def test_no_tropopause_gives_nan_and_vectorises() -> None:
     t_none = 300.0 - 7.0 * tp.heights_m(lev[::-1] * 100, np.full(lev.size, 250.0))[::-1] / 1000
     p, z, _ = tp.wmo_tropopause(lev * 100, np.stack([t_good, t_none]))
     assert np.isfinite(p[0]) and np.isnan(p[1]) and np.isnan(z[1])
+
+
+def test_high_tropopause_near_profile_top_is_found() -> None:
+    """Real ERA5 column (22.25°N 97.75°E, 15 Jan 2026): stable layer starts at 70 hPa, only
+    1.95 km below the 50 hPa top. The 2-km rule is applied to the available depth (≥ 1.5 km)."""
+    lev = np.array([500, 450, 400, 350, 300, 250, 225, 200, 175, 150, 125, 100, 70, 50.0])
+    t = np.array(
+        [
+            268.0,
+            262.8,
+            256.8,
+            249.5,
+            240.8,
+            230.9,
+            226.2,
+            221.2,
+            216.0,
+            209.9,
+            202.1,
+            194.4,
+            190.3,
+            205.0,
+        ]
+    )
+    p, _z, _ = tp.wmo_tropopause(lev * 100, t)
+    assert 70e2 <= p <= 100e2
