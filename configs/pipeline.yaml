@@ -16,3 +16,35 @@ colab:
   drive_root: /content/drive/MyDrive/STRATUM
 
 # Sections added by later phases: era5, adsb, cocip, detector, matching, training.
+
+# Phase 3 contrail detector (build prompt §3.1). Not pre-registered: tuned on the development
+# month (Jan 2026) and, from Phase 5, on the labelled tuning half only. Every change of a value
+# here is recorded in docs/decisions.md with its reason.
+detector:
+  background_px: 21          # median-filter window for the local background (≈ 70–90 km)
+  noise_px: 41               # window for the local robust noise (scaled mean |anomaly|)
+  orientations: 16           # line-filter orientations over 180° (11.25° apart)
+  lengths_px: [11, 21]       # kernel lengths along the line
+  core_sigma_px: 0.7         # Gaussian half-width of the bright core (contrails are 1–2 px wide)
+  flank_px: 2.5              # distance of the negative flanks from the core
+  t120_weight: 0.5           # weight of the cold T12.0 anomaly added to the BTD response
+  hysteresis: [4.5, 7.0]     # low/high thresholds on the ridge response (noise: median 1.8, 99.9 % ≈ 8 before thinning)
+  trim_field_min: 1.5        # object ends trimmed where the along-line image falls below this
+  min_length_px: 10          # = labelling rule 1 (pre-registered min_contrail_length_px)
+  max_width_px: 3.0          # mean object width (area / length)
+  max_line_residual_px: 1.2  # RMS distance of object pixels from their fitted line / curve
+  max_orientation_spread_deg: 15.0  # circular spread of per-pixel filter orientations
+  coast_buffer_px: 2         # objects with > coast_max_fraction of pixels this close to a
+  coast_max_fraction: 0.5    #   coastline are rejected (land–sea BTD edges look like lines)
+  max_flank_asymmetry: 1.5   # |BTD left − right flank| / core excess; above = a cloud edge
+  max_vza_deg: 65.0          # no detection beyond this (Phase 5 observability uses 60°)
+  # Provisional confidence weights (logistic). Refitted on the labelled tuning half in Phase 5.
+  confidence:
+    intercept: -8.0
+    response: 0.7            # per unit of mean normalised response
+    length: 0.08             # per pixel of length
+    linearity: -1.0          # per pixel of line-fit residual
+    btd_contrast: 1.5        # per K of mean BTD anomaly
+    cold: 0.3                # per K that the object is colder (T10.8) than its background (±5 K)
+    edge: -2.0               # per unit of flank asymmetry
+  operating_threshold: 0.5   # provisional; chosen on the tuning half in Phase 5

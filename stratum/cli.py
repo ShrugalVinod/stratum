@@ -253,6 +253,22 @@ def phase2_report(month: Annotated[str, typer.Option(help="YYYY-MM")]) -> None:
     _summary(f"phase2-report {month}", res)
 
 
+@app.command("detect")
+def detect(
+    days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD days")],
+    force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
+) -> None:
+    """Phase 3: contrail detector on every slot of each stored Meteosat day (resumable per day)."""
+    from datetime import date as _date
+
+    from stratum.detect.run import detect_day
+
+    root = drive_root()
+    for d in days.split(","):
+        res = detect_day(root, _date.fromisoformat(d.strip()), None, cfg.config_hash(), force)
+        _summary(f"detect {d}", res)
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

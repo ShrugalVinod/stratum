@@ -1,6 +1,7 @@
 ```
 ═══ PHASE 2 GATE REPORT — Physics baseline (B1–B3), Delhi–Mumbai corridor, Jan 2026 — 15 Oct 2026 ═══
-Status:          READY FOR TEAM ACCEPTANCE (final Colab run 15 Oct, commit 3a208d3, N = 100, 79 min)
+Status:          ACCEPTED by Shrugal Vinod, 15 Oct 2026 (chat: "ok p05 phase 2 accepted")
+                 Final Colab run 15 Oct, commit 3a208d3, N = 100, 79 min
 Calendar:        ahead (Phase 2 window 23 Nov – 20 Dec in the team plan)
 
 Done-when checklist:
@@ -46,7 +47,7 @@ Monte Carlo convergence (B1, nested members, 73 segments with EF):
   when a few members switch. Larger N will not fix this (N = 1000 would cost ≈ 60 h of Colab
   for the 12 days). Measured on the p50 scale, the p05 change is 5.1 %.
 
-Decision proposed (needs Team OK — no locked value changes):
+Decision (Team OK, S. Vinod, 15 Oct 2026 — no locked value changes):
   Keep N = 100 (D-001). Report per-segment p05 with a "lower tail unstable" note. Before Phase 7,
   the team settles how the decision layer's lower bound is computed (e.g. probability of a
   persistent contrail across members × conditional EF percentiles, instead of raw p05).
