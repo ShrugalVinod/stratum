@@ -171,7 +171,7 @@ def showcase_day(root: Path, day: date, per_day: int = 2, dpi: int = 200) -> dic
                 pd.DataFrame(),
                 at_t,
                 attrs,
-                out_dir / f"{d}_{t:%H%M}.png",
+                out_dir / f"{t:%Y-%m-%d_%H%M}.png",
                 win,
                 None,
                 coast,
