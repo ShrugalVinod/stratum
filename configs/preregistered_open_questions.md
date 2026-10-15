@@ -92,8 +92,8 @@ discard real contrails); (b) use "cloudy" only where T10.8 is also cold and BTD 
 opaque-cloud signature), documented thresholds; (c) add the IODC cloud-top-height product
 (`EO:EUM:DAT:MSG:CTH-IODC`) and call cloud opaque if it is a thick layer below the segment.
 
-### 12. Number of CoCiP Monte Carlo members for EF ranges — ⚑ OPEN · owner SV · before Phase 2 full-month run
-Start with N = 20 for development. The final N depends on measured Colab run time.
+### 12. Number of CoCiP Monte Carlo members for EF ranges — SETTLED (2026-10-15)
+**N = 20** Monte Carlo members (approved by Shrugal, 15 Oct 2026). A convergence check (N = 20 vs N = 40 on one corridor day: change in EF p5/p50/p95) is reported in the Phase 2 sanity report. If the ranges are not stable, a larger N is adopted only through the deviation log, before any evaluation run.
 
 ### 13. Latitude bands for the learned RHi scaling factor — SETTLED (2026-10-13)
 **Answer.** 6–15°N, 15–25°N, 25–37°N.
