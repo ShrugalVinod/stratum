@@ -17,6 +17,13 @@ Every command ends by printing a summary table.
 
 from __future__ import annotations
 
+import os
+
+# Colab exports MPLBACKEND=module://matplotlib_inline…, which a plain subprocess cannot use;
+# all STRATUM figures are written to files, so force the file backend before matplotlib loads.
+if os.environ.get("MPLBACKEND", "").startswith("module://"):
+    os.environ["MPLBACKEND"] = "agg"
+
 import json
 import shutil
 from typing import Annotated

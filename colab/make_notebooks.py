@@ -102,7 +102,7 @@ print("Python:", sh(f"{PY} --version"), "| pip-freeze hash:", FREEZE_SHA)
     code('''
 # ── 6. `stratum` helpers; print environment; make sure the Drive layout exists ─
 run_env = {**os.environ, "STRATUM_DRIVE_ROOT": DRIVE_ROOT, "STRATUM_WORK_DIR": "/content/work",
-           "COLUMNS": "120", "PYTHONUNBUFFERED": "1"}
+           "COLUMNS": "120", "PYTHONUNBUFFERED": "1", "MPLBACKEND": "agg"}
 def stratum(args, live=False):
     """Run a stratum CLI command. live=True streams output (for long jobs)."""
     if not live:
@@ -126,14 +126,13 @@ assert stratum("init-drive") == 0
 def summary_cell(fields: str) -> dict:
     return code(f"""
 # ── Run summary — copy everything between the === lines back to Claude ──────
-stratum_gb = round(int(sh(f"du -sb '{{DRIVE_ROOT}}' | cut -f1")) / 1e9, 3)
+# (no `du` over the whole Drive folder: on Drive FUSE it takes many minutes)
 summary = {{
     "job": JOB,
     "commit": COMMIT,
     "ref_requested": REF,
     "pip_freeze_hash": FREEZE_SHA,
     "runtime": {{"gpu": gpu, "ram_gb": ram_gb}},
-    "drive_stratum_folder_gb": stratum_gb,
     "wall_time_min": round((time.time() - t0) / 60, 1),
 {fields}}}
 print("=== STRATUM RUN SUMMARY ===")
