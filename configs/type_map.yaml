@@ -1,7 +1,14 @@
-# Typecode → OpenAP type fallbacks for aircraft types OpenAP lacks (build prompt §3.5).
-# Every entry must be hand-checked; every fallback used is listed in run summaries.
-# Populated in Phase 2 from the types actually seen in the ADS-B data.
-
-status: empty
+# ICAO type designator → OpenAP type, for types OpenAP 2.6 does not model directly.
+# Hand-checked list (build prompt §3.5). Every use of this map is logged as a fallback.
+# Only jets that cruise at or above FL250 are mapped; anything else stays unmapped (flagged).
+# Status: DRAFT — to be reviewed by a team member (initials + date below).
 reviewed_by: null
-fallbacks: {}
+map:
+  A339: a333   # A330-900neo → A330-300 airframe (engine differs; flagged)
+  A35K: a359   # A350-1000 → A350-900
+  B78X: b789   # 787-10 → 787-9
+  B736: b737   # 737-600 → 737-700
+  B753: b752   # 757-300 → 757-200
+  A332: a332
+  B77L: b77l
+  E75S: e75l   # E175 short-wing → E175 long-wing

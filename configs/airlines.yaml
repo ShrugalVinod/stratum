@@ -1,12 +1,54 @@
-# ICAO airline designators counted as "commercial airline" for public outputs
-# (build prompt §3.6). Status: DRAFT — must be reviewed by a human before Phase 4 export.
-# Phase 1/2 adds foreign carriers seen in the data; each new entry needs `reviewed_by`.
-
-status: draft
+# ICAO airline designators treated as commercial airlines (build prompt §3.6).
+# Used ONLY to decide what may appear in public outputs. Not pre-registered.
+# Status: DRAFT — built from well-known carriers; a team member must review it against the
+# prefixes actually seen in the data (`stratum airline-prefixes` lists them with counts).
 reviewed_by: null
-designators:
-  IGO: {name: IndiGo, country: IN}
-  AIC: {name: Air India, country: IN}
-  AXB: {name: Air India Express, country: IN}
-  AKJ: {name: Akasa Air, country: IN}
-  SEJ: {name: SpiceJet, country: IN}
+indian:
+  IGO: IndiGo
+  AIC: Air India
+  AXB: Air India Express
+  AKJ: Akasa Air
+  SEJ: SpiceJet
+  LLR: Alliance Air
+  BDA: Blue Dart Aviation (cargo)
+foreign:
+  UAE: Emirates
+  ETD: Etihad
+  QTR: Qatar Airways
+  FDB: flydubai
+  ABY: Air Arabia
+  OMA: Oman Air
+  GFA: Gulf Air
+  KAC: Kuwait Airways
+  SVA: Saudia
+  SIA: Singapore Airlines
+  THA: Thai Airways
+  MAS: Malaysia Airlines
+  AXM: AirAsia
+  AIQ: Thai AirAsia
+  CPA: Cathay Pacific
+  ALK: SriLankan Airlines
+  BBC: Biman Bangladesh
+  RNA: Nepal Airlines
+  DRK: Druk Air
+  ETH: Ethiopian Airlines
+  KQA: Kenya Airways
+  MSR: EgyptAir
+  THY: Turkish Airlines
+  DLH: Lufthansa
+  BAW: British Airways
+  AFR: Air France
+  KLM: KLM
+  SWR: Swiss
+  AUA: Austrian
+  VIR: Virgin Atlantic
+  UAL: United Airlines
+  AAL: American Airlines
+  ACA: Air Canada
+  CES: China Eastern
+  CSN: China Southern
+  CCA: Air China
+  FDX: FedEx (cargo)
+  UPS: UPS (cargo)
+  GTI: Atlas Air (cargo)
+  CLX: Cargolux (cargo)
