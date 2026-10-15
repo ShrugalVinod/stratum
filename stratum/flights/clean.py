@@ -10,9 +10,17 @@ filling) in this module.
    exact duplicates; sort by (icao24, time).
 2. **Flight reconstruction**: one aircraft (icao24) flies many flights a day. A new flight
    starts when the gap since the aircraft's previous report is **> 30 minutes** or the
-   **callsign changes**. Reports with no callsign inherit the aircraft's last known callsign,
-   so a missing callsign alone never splits a flight. Each flight gets
-   ``flight_id = "<icao24>_<YYYYmmddTHHMM of first report>"``.
+   **callsign changes**. Reports with no callsign take the callsign of the aircraft's nearest
+   report in the same track, so a missing callsign alone never splits a flight. Each flight
+   gets ``flight_id = "<icao24>_<YYYYmmddTHHMM of first report>"``.
+
+   *Callsign flicker.* ADS-B Exchange merges many receivers, and some aircraft alternate
+   between two callsigns every few seconds (seen: ETH606 ↔ ETH873, KQA204 ↔ KQA205). On
+   2025-03-01 00–12 UTC there were ~4,500 such A→B→A flips, which split flights into fragments
+   of a minute or less. So a callsign change counts only when it is **final within the
+   track**: the flight is cut between two reports only if no callsign seen before the cut
+   appears again after it (before the next > 30 min gap). Alternating callsigns therefore stay
+   one flight; a real change (A … A, then B … B) still splits. Decision logged 2026-10-15.
 
 Every step returns how many rows it removed, so each run can log it (build prompt §2.1).
 """
@@ -47,14 +55,20 @@ def assign_flights(df: pd.DataFrame, max_gap_min: float = FLIGHT_SPLIT_GAP_MIN) 
     """Step 2: add a ``flight_id`` column. Input must be sorted by (icao24, time)."""
     if df.empty:
         return df.assign(flight_id=pd.Series(dtype=str))
-    out = df.copy()
-    # Fill missing callsigns from the same aircraft's previous report (never across aircraft).
-    cs = out.groupby("icao24", sort=False)["callsign"].ffill()
+    out = df.copy().reset_index(drop=True)
     same_ac = out["icao24"].eq(out["icao24"].shift())
     gap = out["time"].diff().dt.total_seconds().div(60.0)
-    cs_prev = cs.shift()
-    cs_changed = same_ac & cs.notna() & cs_prev.notna() & cs.ne(cs_prev)
-    new_flight = ~same_ac | (gap > max_gap_min) | cs_changed
+    new_track = ~same_ac | (gap > max_gap_min)
+    track = new_track.cumsum()
+    # Missing callsigns take the nearest known one in the same track (never across tracks).
+    cs = out.groupby(track, sort=False)["callsign"].transform(lambda s: s.ffill().bfill())
+    pos = pd.Series(np.arange(len(out)), index=out.index)
+    # Last row at which each (track, callsign) occurs; a track with no callsign at all is one
+    # flight. Cut after row i when every callsign seen up to i is finished by i.
+    last = pos.groupby([track, cs.fillna("")], sort=False).transform("max")
+    reach = last.groupby(track, sort=False).cummax()
+    cut_before = (reach.shift() == pos.shift()) & ~new_track
+    new_flight = new_track | cut_before
     flight_no = new_flight.cumsum()
     first_time = out["time"].groupby(flight_no).transform("min")
     out["flight_id"] = out["icao24"] + "_" + first_time.dt.strftime("%Y%m%dT%H%M")

@@ -127,7 +127,8 @@ def corridor_tracks(adsb: pd.DataFrame, corridor: Polygon, p: AuditParams) -> pd
     gaps = g["time"].diff().dt.total_seconds().div(60.0)
     out = pd.DataFrame(
         {
-            "callsign": g["callsign"].agg(lambda s: s.dropna().iloc[0] if s.notna().any() else ""),
+            # Most frequent callsign: a flight can carry a flickering second callsign.
+            "callsign": g["callsign"].agg(lambda s: s.mode().iloc[0] if s.notna().any() else ""),
             "t_first": g["time"].min(),
             "t_last": g["time"].max(),
             "lat_first": g["lat"].first(),

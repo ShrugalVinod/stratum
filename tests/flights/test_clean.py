@@ -77,3 +77,30 @@ def test_daily_summary() -> None:
     assert s["messages"] == 3 and s["unique_icao24"] == 2 and s["unique_callsigns"] == 2
     assert s["flights"] == 2 and s["flights_reaching_FL250"] == 1
     assert s["median_report_interval_s"] == 10.0
+
+
+def test_callsign_flicker_stays_one_flight() -> None:
+    """Real case 2025-03-01: ETH606 ↔ ETH873 alternating every few seconds is one flight."""
+    df = _rows(
+        [
+            ("040001", None, "2026-01-01T00:00:00", 37000, False),  # leading missing callsign
+            ("040001", "ETH606", "2026-01-01T00:00:30", 37000, False),
+            ("040001", "ETH873", "2026-01-01T00:01:00", 37000, False),
+            ("040001", "ETH606", "2026-01-01T00:01:30", 37000, False),
+            ("040001", "ETH873", "2026-01-01T00:02:00", 37000, False),
+            ("040001", "ETH606", "2026-01-01T00:02:30", 37000, False),
+            ("040001", "ETH606", "2026-01-01T00:03:00", 37000, False),
+            # real change after the old callsign is gone for good → new flight
+            ("040001", "ETH999", "2026-01-01T00:04:00", 37000, False),
+            ("040001", "ETH999", "2026-01-01T00:05:00", 37000, False),
+        ]
+    )
+    ids = assign_flights(basic_clean(df)[0])["flight_id"].tolist()
+    assert ids[:7] == ["040001_20260101T0000"] * 7
+    assert ids[7:] == ["040001_20260101T0004"] * 2
+
+
+def test_aircraft_without_any_callsign_is_one_flight() -> None:
+    df = _rows([("800009", None, f"2026-01-01T00:0{m}:00", 35000, False) for m in range(4)])
+    ids = assign_flights(basic_clean(df)[0])["flight_id"]
+    assert (ids == ids.iloc[0]).all()

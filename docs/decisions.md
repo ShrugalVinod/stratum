@@ -51,3 +51,9 @@ build prompt's recommendations, and can be revisited by the team **before the lo
 14 days ingested (12 first-of-month days + 2026-01-13/14 clear days). 1,451 of 1,456 slots (99.66 %) are present.
 Missing (EUMETSAT download ProtocolError after 3 retries): 2025-04-01 16:15 and 17:15, 2025-05-01 07:15, 2025-06-01 01:30, 2025-07-01 21:15.
 Days with gaps are marked complete, so a re-run does not fill them. Accepted as-is for Phase 1. Every gap is recorded in the day manifest's `missing` list, and later phases treat those slots as no data. If Phase 3 needs any of these slots, we will add a refill option and fetch them then.
+
+## 2026-10-15 — Callsign flicker no longer splits flights
+**Found:** On the 1 March 2025 day, 2,165 aircraft gave 17,098 "flights". A local re-check of 00–12 UTC (30 s sampling) showed why. About 4,500 A→B→A callsign flips (ETH606 ↔ ETH873, KQA204 ↔ KQA205, DQA395 ↔ DQA2706) cut flights into pieces a minute long. ADS-B Exchange merges many receivers, and some carry a second, stale flight ID.
+**Decision:** A callsign change (build prompt §2.1 step 2) now counts only when it is final within the track: no callsign seen before the cut reappears after it, before the next > 30 min gap. Missing callsigns take the nearest known callsign in the same track. The coverage audit labels each flight with its most frequent callsign.
+**Effect (same 12 h):** flights 8,713 → 4,628; fragments under 5 min 3,469 → 411; median flight 34 min in the box. The > 30 min gap rule is unchanged. preregistered.yaml has no callsign rule, so this is not a deviation; flagged to the team because the build prompt wording is "callsign change".
+**Note:** the per-day "flights" numbers printed by the running 01b Colab job use the old rule. Raw data are unaffected, and the numbers are recomputed from Parquet in Phase 2.
