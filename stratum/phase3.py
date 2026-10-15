@@ -128,6 +128,63 @@ def overlays_day(
     return summary
 
 
+def showcase_day(root: Path, day: date, per_day: int = 2, dpi: int = 200) -> dict[str, Any]:
+    """Detector-only figures for a satellite day without flights (e.g. 13/14 Jan 2026).
+
+    Picks the ``per_day`` image times (≥ 2 h apart) holding the strongest isolated long lines:
+    confidence ≥ 0.8, VZA < 60°, length ≥ 30 px, flank asymmetry < 0.5 (not a cloud edge),
+    ranked by length × confidence. The team checks that they look like contrails.
+    """
+    from stratum.detect.overlay import overlay_figure, showcase_window
+    from stratum.io.meteosat_plots import area_from_attrs, coastline_pixels
+
+    d = f"{day:%Y-%m-%d}"
+    det_path = root / "interim" / "detections" / d / "objects.parquet"
+    l15 = root / "raw" / "meteosat" / "l15_crop" / d / "data.zarr"
+    if not det_path.exists() or not l15.exists():
+        return {"day": d, "status": "missing detections or Meteosat day"}
+    det = pd.read_parquet(det_path)
+    strong = det[
+        (det["confidence"] >= 0.8)
+        & (det["vza_deg"] < 60)
+        & (det["length_px"] >= 30)
+        & (det["flank_asymmetry"] < 0.5)
+    ]
+    strong = strong.assign(score=strong["length_px"] * strong["confidence"])
+    ds = xr.open_zarr(l15)
+    attrs = dict(ds.attrs)
+    coast = coastline_pixels(area_from_attrs(ds))
+    out_dir = root / "reports" / "phase3_overlays" / "showcase"
+    picked: list[pd.Timestamp] = []
+    figures = []
+    for t in strong.sort_values("score", ascending=False)["image_time"]:
+        t = pd.Timestamp(t)
+        if any(abs(t - p) < pd.Timedelta(hours=2) for p in picked):
+            continue
+        picked.append(t)
+        at_t = det[det["image_time"] == t]
+        win = showcase_window(strong[strong["image_time"] == t], (len(ds["y"]), len(ds["x"])))
+        figures.append(
+            overlay_figure(
+                _btd(ds, t),
+                t,
+                pd.DataFrame(),
+                at_t,
+                attrs,
+                out_dir / f"{d}_{t:%H%M}.png",
+                win,
+                None,
+                coast,
+                0.5,
+                dpi,
+                showcase=True,
+            )
+        )
+        if len(picked) == per_day:
+            break
+    return {"day": d, "status": "done", "strong_lines": len(strong), "figures": figures}
+
+
 def _btd(ds: xr.Dataset, t: pd.Timestamp) -> np.ndarray[Any, np.dtype[np.float64]]:
     s = ds.sel(time=np.datetime64(t.tz_localize(None)))[["IR_108", "IR_120"]].load()
     out: np.ndarray[Any, np.dtype[np.float64]] = (s["IR_108"] - s["IR_120"]).values.astype(float)

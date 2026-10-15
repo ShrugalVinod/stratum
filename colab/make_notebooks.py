@@ -554,7 +554,8 @@ DETECT = [
 the January 2026 satellite days already on Drive (1, 13 and 14 Jan), then draws the CoCiP
 predicted contrails (B1, from Phase 2) and the detected lines on the satellite images for the
 only January day that has flights (1 Jan). It ranks every image time by how many predicted
-contrails are visible in clear sky and makes the top 3 overlay figures plus a time-lapse.
+contrails are visible in clear sky and makes the top 3 overlay figures plus a time-lapse, and
+detector-only "showcase" figures for 13 and 14 Jan (no flights on those days).
 These are **illustrations for the brief, video and website, not results**.
 
 Reads (already on Drive): `raw/meteosat/{l15_crop,clm}/2026-01-{01,13,14}`,
@@ -565,7 +566,8 @@ Writes: `interim/detections/<day>/objects.parquet`, `reports/phase3_overlays/202
 * **Runtime:** CPU (default is fine). No GPU needed.
 * **Secrets** (🔑): `GITHUB_TOKEN` only.
 * **Writes to Drive:** under 100 MB.
-* **Time:** about 10–20 minutes (≈ 1–2 s per image, ~104 images per day).
+* **Time:** first run ≈ 25 min (≈ 6–7 min per detection day). A re-run skips finished
+  detection days and only redraws the figures: ≈ 8–10 min.
 * **If it disconnects:** *Runtime → Run all* again. Finished days are skipped.
 * **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
 """,
@@ -576,6 +578,7 @@ Writes: `interim/detections/<day>/objects.parquet`, `reports/phase3_overlays/202
         'OVERLAY_DAY = "2026-01-01"   # the January day with flights (ADS-B Exchange free day)\n'
         "TOP = 3                      # candidate overlay times (at least 1 h apart)\n"
         "LAPSE_HOURS = 4              # time-lapse length around the best time\n"
+        'SHOWCASE_DAYS = "2026-01-13,2026-01-14"   # detector-only figures (no flights)\n'
         "FORCE = False                # recompute detection days already done\n",
     ),
     *SETUP,
@@ -588,6 +591,11 @@ print("exit code:", rc_det)
 # ── 8. Overlay figures + time-lapse for the flight day ──────────────────────
 rc_ov = stratum(f"phase3-overlays --day {OVERLAY_DAY} --top {TOP} --lapse-hours {LAPSE_HOURS}", live=True)
 print("exit code:", rc_ov)
+'''),
+    code('''
+# ── 8b. Detector showcase figures for the satellite days without flights ─────
+rc_sc = stratum(f"phase3-showcase --days {SHOWCASE_DAYS} --per-day 2", live=True)
+print("exit code:", rc_sc)
 '''),
     code('''
 # ── 9. Collect manifests and the overlay summary ─────────────────────────────
@@ -604,7 +612,8 @@ if overlay:
         "figures": [{k: v for k, v in f.items() if k != "png"} for f in overlay.get("figures", [])]
     }
 '''),
-    summary_cell("""    "exit_codes": {"detect": rc_det, "overlays": rc_ov},
+    summary_cell("""    "exit_codes": {"detect": rc_det, "overlays": rc_ov, "showcase": rc_sc},
+    "showcase_pngs": sorted(os.path.basename(p) for p in glob.glob(f"{DRIVE_ROOT}/reports/phase3_overlays/showcase/*.png")),
     "detections": det_stats,
     "overlay": overlay,
 """),

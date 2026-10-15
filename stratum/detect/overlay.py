@@ -12,11 +12,13 @@ For an image time ``t``:
 3. **Detected lines.** Detector objects at ``t`` with confidence ≥ the operating threshold.
 4. **Figure.** Two panels, north-up: the plain BTD image (so viewers can see the contrails
    themselves) and the same image with predictions and detections drawn on it, coastline, the
-   Delhi–Mumbai corridor outline, a timestamp (UTC and IST), a legend and the caption
-   "Computational prediction vs satellite observation — illustration, not a result". By
-   default the display shows BTD minus its 21-px median background, lightly smoothed
-   (σ 0.7 px; −0.4 to 0.8 K), the enhancement the detector uses, so thin contrails are
-   visible. EUMETSAT is credited.
+   Delhi–Mumbai corridor outline (when in view), a timestamp (UTC and IST), a legend and the
+   caption "Computational prediction vs satellite observation — illustration, not a result".
+   The display stretch is the window's 1st–99.5th BTD percentile. (A background-removed
+   display, ``enhance=True``, suits night scenes over sea but turns daytime land and broken
+   cloud into black-and-white noise; first Colab run, 1 Jan 2026.) EUMETSAT is credited.
+
+``showcase`` mode draws detections only, for days without flight data.
 
 These figures are illustrations for the brief, video and website. No scoring happens here.
 """
@@ -45,6 +47,10 @@ PRED_COLOUR = "#ff8c1a"  # orange: CoCiP prediction
 DET_COLOUR = "#29d3ff"  # light blue: satellite detection (orange/blue is colour-blind safe)
 CAPTION = "Computational prediction vs satellite observation — illustration, not a result"
 CREDIT = "Meteosat-9 BTD: © EUMETSAT 2026 · Predictions: STRATUM (CoCiP/pycontrails, ERA5)"
+SHOWCASE_CAPTION = (
+    "STRATUM contrail detector output — illustration, not a result (no flight data for this day)"
+)
+SHOWCASE_CREDIT = "Meteosat-9 BTD: © EUMETSAT 2026 · Detection: STRATUM line-filter detector"
 
 
 def contrails_at(contrail: pd.DataFrame, t: pd.Timestamp) -> pd.DataFrame:
@@ -103,7 +109,8 @@ def overlay_figure(
     coast_pixels: Sequence[tuple[Array, Array]] | None = None,
     threshold: float = 0.5,
     dpi: int = 200,
-    enhance: bool = True,
+    enhance: bool = False,
+    showcase: bool = False,
 ) -> dict[str, Any]:
     """One overlay frame. ``window`` = (row0, row1, col0, col1) in *display* (north-up) pixels."""
     proj4, extent = area_attrs["area_proj4"], area_attrs["area_extent"]
@@ -114,7 +121,7 @@ def overlay_figure(
     img = np.flip(btd)
     r0, r1, c0, c1 = window or (0, shape[0], 0, shape[1])
     if not enhance:
-        vmin, vmax = (float(v) for v in np.nanpercentile(img[r0:r1, c0:c1], [2, 99.7]))
+        vmin, vmax = (float(v) for v in np.nanpercentile(img[r0:r1, c0:c1], [1, 99.5]))
     aspect = (r1 - r0) / max(c1 - c0, 1)
     fig, axes = plt.subplots(1, 2, figsize=(13, 6.5 * aspect + 1.1))
     for ax in axes:
@@ -130,9 +137,11 @@ def overlay_figure(
     left, ax = axes
     what = "BTD 10.8 − 12.0 µm" + (", local background removed" if enhance else "")
     left.set_title(f"What the satellite sees ({what})", fontsize=10, loc="left")
+    corridor_in_view = False
     if corridor_lonlat:
         lon, lat = np.asarray(corridor_lonlat, float).T
         rr, cc = _display(*lonlat_to_pixel(lon, lat, proj4, extent, shape), shape)
+        corridor_in_view = bool(((rr >= r0) & (rr < r1) & (cc >= c0) & (cc < c1)).any())
         ax.plot(cc, rr, color="#c9a3ff", lw=1.0, ls="--")
     alive = contrails_at(contrail, t)
     n_pred = 0
@@ -148,22 +157,39 @@ def overlay_figure(
         dr, dc = _display(np.asarray(d.poly_row), np.asarray(d.poly_col), shape)
         ax.plot(dc, dr, color=DET_COLOUR, lw=1.1, alpha=0.95)
     ist = pd.Timestamp(t) + pd.Timedelta(hours=5, minutes=30)
+    what_right = "detected contrail-like lines" if showcase else "prediction and detection"
     ax.set_title(
-        f"{pd.Timestamp(t):%Y-%m-%d %H:%M} UTC ({ist:%H:%M} IST): prediction and detection",
+        f"{pd.Timestamp(t):%Y-%m-%d %H:%M} UTC ({ist:%H:%M} IST): {what_right}",
         fontsize=10,
         loc="left",
     )
-    ax.plot([], [], color=PRED_COLOUR, lw=2.2, label="Predicted persistent contrail (CoCiP, B1)")
+    if not showcase:
+        ax.plot(
+            [], [], color=PRED_COLOUR, lw=2.2, label="Predicted persistent contrail (CoCiP, B1)"
+        )
     ax.plot([], [], color=DET_COLOUR, lw=1.1, label="Line detected in the satellite image")
-    if corridor_lonlat:
+    if corridor_in_view:
         ax.plot([], [], color="#c9a3ff", lw=1.0, ls="--", label="Delhi–Mumbai corridor")
     ax.legend(loc="lower left", fontsize=7, framealpha=0.75)
-    fig.text(0.01, 0.01, f"{CAPTION}\n{CREDIT}", fontsize=7, color="#444444", va="bottom")
+    caption, credit = (SHOWCASE_CAPTION, SHOWCASE_CREDIT) if showcase else (CAPTION, CREDIT)
+    fig.text(0.01, 0.01, f"{caption}\n{credit}", fontsize=7, color="#444444", va="bottom")
     fig.tight_layout(rect=(0, 0.05, 1, 1))
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=dpi)
     plt.close(fig)
     return {"time": str(t), "predicted_lines": n_pred, "detected_lines": len(det), "png": str(out)}
+
+
+def showcase_window(
+    det: pd.DataFrame, shape: tuple[int, int], size_px: int = 256
+) -> tuple[int, int, int, int]:
+    """Display window centred on the detection with the largest length × confidence."""
+    best = det.assign(score=det["length_px"] * det["confidence"]).sort_values("score").iloc[-1]
+    dr, dc = _display(np.asarray(best["poly_row"]), np.asarray(best["poly_col"]), shape)
+    rm, cm = float(np.mean(dr)), float(np.mean(dc))
+    r0 = int(np.clip(rm - size_px / 2, 0, shape[0] - size_px))
+    c0 = int(np.clip(cm - size_px / 2, 0, shape[1] - size_px))
+    return r0, r0 + size_px, c0, c0 + size_px
 
 
 def window_around(

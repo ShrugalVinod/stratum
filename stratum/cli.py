@@ -285,6 +285,21 @@ def phase3_overlays(
     _summary(f"phase3-overlays {day}", {k: v for k, v in res.items() if k != "figures"})
 
 
+@app.command("phase3-showcase")
+def phase3_showcase(
+    days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD satellite days")],
+    per_day: Annotated[int, typer.Option(help="figures per day")] = 2,
+) -> None:
+    """Phase 3: detector-only figures (strongest isolated long lines) for days without flights."""
+    from datetime import date as _date
+
+    from stratum.phase3 import showcase_day
+
+    for d in days.split(","):
+        res = showcase_day(drive_root(), _date.fromisoformat(d.strip()), per_day)
+        _summary(f"phase3-showcase {d}", {**res, "figures": len(res.get("figures", []))})
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
