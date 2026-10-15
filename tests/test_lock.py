@@ -124,13 +124,13 @@ def test_settling_an_open_question_later_is_allowed(files: dict[str, Path]) -> N
         files["open_questions"]
         .read_text()
         .replace(
-            "### 12. Number of CoCiP Monte Carlo members for EF ranges — ⚑ OPEN",
-            "### 12. Number of CoCiP Monte Carlo members for EF ranges — SETTLED (2026-12-01)",
+            "### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — ⚑ OPEN",
+            "### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — SETTLED (2026-12-01)",
         )
     )
     files["open_questions"].write_text(text)
     res = _verify(files)
-    assert res.ok and res.newly_settled == ["Q12"]
+    assert res.ok and res.newly_settled == ["Q12", "Q16"]
 
 
 def test_invalid_prereg_cannot_be_locked(files: dict[str, Path]) -> None:
