@@ -46,3 +46,8 @@ build prompt's recommendations, and can be revisited by the team **before the lo
 | 2026-10-14 | Labelling (Phase 5): **rotating pairs among all 4 team members** (each scene labelled independently by 2 of the 4, assigned at random; ≈100 scenes each). Replaces the provisional "Ishaan + Abeer" plan. Shrugal may label provided he labels before seeing any model results (the app hides predictions) | Paper §4.4 requires two independent team members per scene, not the same two; halves the load per person (~8 h). Claude explains the full procedure at the start of Phase 5 | Shrugal |
 | 2026-10-14 | Jan-2026 Meteosat test days = **1 Jan** (has ADS-B flights) + **14 Jan** and **13 Jan** (lowest ERA5 high-cloud fraction over the study box: 0.056 and 0.063; month range 0.056–0.237), chosen by `stratum select-clear-days` | Objective, reproducible choice of clear days for detector development (build prompt §1.3.5), made before any detection was run | rule (Plan A) |
 | 2026-10-13 | Web hosting deferred to Phase 4 (GitHub Pages recommended) | Not needed until Phase 4; ask before first public deploy | – |
+
+## 2026-10-15 — Meteosat Phase 1 ingest accepted with 5 missing slots
+14 days ingested (12 first-of-month days + 2026-01-13/14 clear days). 1,451 of 1,456 slots (99.66 %) are present.
+Missing (EUMETSAT download ProtocolError after 3 retries): 2025-04-01 16:15 and 17:15, 2025-05-01 07:15, 2025-06-01 01:30, 2025-07-01 21:15.
+Days with gaps are marked complete, so a re-run does not fill them. Accepted as-is for Phase 1. Every gap is recorded in the day manifest's `missing` list, and later phases treat those slots as no data. If Phase 3 needs any of these slots, we will add a refill option and fetch them then.
