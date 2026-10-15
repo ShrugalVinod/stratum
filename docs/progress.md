@@ -2,6 +2,18 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
+
+**Done (tested, pushed)**
+- Phase 2 accepted (p05 decision OK).
+- Detector (`stratum/detect/`): line filters, ridge thinning, end trimming, coastline + cloud-edge checks, provisional confidence. Synthetic recall 100 % at SNR ≥ 2, 0 false objects on noise. On real 15 Jan slots it tracks two Arabian Sea contrails across 3 slots; ~1 s per slot.
+- Parallax geometry (`stratum/match/geometry.py`), checked against independent satellite geometry.
+- Overlay figures (two panels) + MP4/GIF time-lapse; `stratum detect`, `stratum phase3-overlays`; Colab `03_detector_overlays`.
+
+**Next**
+- Shrugal: run Colab `03_detector_overlays`, paste the summary.
+- Team: pick the overlay figures for brief/video/website; decide on the optional CNN (§3.4).
+
 ## 2026-10-15 (night) — Phase 2 final run; gate report ready
 
 **Done**
