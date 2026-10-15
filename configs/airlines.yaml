@@ -1,8 +1,15 @@
 # ICAO airline designators treated as commercial airlines (build prompt §3.6).
-# Used ONLY to decide what may appear in public outputs. Not pre-registered.
-# Status: DRAFT — built from well-known carriers; a team member must review it against the
-# prefixes actually seen in the data (`stratum airline-prefixes` lists them with counts).
-reviewed_by: null
+# Used ONLY to decide what may appear in public outputs (privacy). Not pre-registered.
+#
+# Built 2026-10-15 from every airline-pattern callsign seen on the 2026-01-01 ADS-B Exchange day
+# (191 prefixes), cross-checked against the OpenSky aircraft database's operator name for the
+# aircraft flying each prefix. Rule: scheduled, charter and cargo airlines are listed; VIP,
+# government, military, private and business-jet operators are excluded; codes whose operator
+# could not be confirmed are NOT listed (hidden by default: when unsure, do not publish).
+# Compiled by Claude at the request of Shrugal Vinod (team lead), who delegated the review, 2026-10-15. Re-check when new data arrive:
+# unlisted prefixes are counted in every run summary (step9_reasons).
+reviewed_by: "Claude (data + OpenSky DB operator names), delegated by S. Vinod, 2026-10-15"
+
 indian:
   IGO: IndiGo
   AIC: Air India
@@ -10,45 +17,185 @@ indian:
   AKJ: Akasa Air
   SEJ: SpiceJet
   LLR: Alliance Air
+  SDG: Star Air
+  GOA: Fly91
   BDA: Blue Dart Aviation (cargo)
+
 foreign:
+  # Middle East
   UAE: Emirates
   ETD: Etihad
   QTR: Qatar Airways
   FDB: flydubai
   ABY: Air Arabia
+  ADY: Air Arabia Abu Dhabi
+  VYU: Fly Vaayu
   OMA: Oman Air
+  OMS: SalamAir
   GFA: Gulf Air
   KAC: Kuwait Airways
+  JZR: Jazeera Airways
   SVA: Saudia
-  SIA: Singapore Airlines
-  THA: Thai Airways
-  MAS: Malaysia Airlines
-  AXM: AirAsia
-  AIQ: Thai AirAsia
-  CPA: Cathay Pacific
+  KNE: flynas
+  FAD: flyadeal
+  IAW: Iraqi Airways
+  IRM: Mahan Air
+  VRH: Varesh Airlines
+  RJA: Royal Jordanian
+  ELY: El Al
+  DHX: DHL International Aviation ME (cargo)
+  # South Asia
   ALK: SriLankan Airlines
+  EXV: FitsAir
   BBC: Biman Bangladesh
+  UBG: US-Bangla Airlines
+  PIA: Pakistan International Airlines
+  ABQ: Airblue
+  FJL: Fly Jinnah
+  SIF: AirSial
   RNA: Nepal Airlines
+  HIM: Himalaya Airlines
+  SHA: Shree Airlines
+  BHA: Buddha Air
   DRK: Druk Air
-  ETH: Ethiopian Airlines
-  KQA: Kenya Airways
-  MSR: EgyptAir
+  BTN: Bhutan Airlines
+  DQA: Maldivian
+  # South-East and East Asia
+  SIA: Singapore Airlines
+  TGW: Scoot
+  THA: Thai Airways
+  TLM: Thai Lion Air
+  TVJ: Thai Vietjet Air
+  NOK: Nok Air
+  BKP: Bangkok Airways
+  AIQ: Thai AirAsia
+  TAX: Thai AirAsia X
+  MAS: Malaysia Airlines
+  FFM: Firefly
+  MXD: Batik Air Malaysia
+  AXM: AirAsia
+  AWQ: Indonesia AirAsia
+  XAX: AirAsia X
+  GIA: Garuda Indonesia
+  LNI: Lion Air
+  SJV: Super Air Jet
+  RBA: Royal Brunei Airlines
+  MMA: Myanmar Airways International
+  UBA: Myanmar National Airlines
+  MYP: Mann Yadanarpon Airlines
+  SWM: Sky Angkor Airlines
+  HVN: Vietnam Airlines
+  VJC: VietJet Air
+  PAL: Philippine Airlines
+  CEB: Cebu Pacific
+  CPA: Cathay Pacific
+  CRK: Hong Kong Airlines
+  HKE: HK Express
+  HKC: Hong Kong Air Cargo
+  CAL: China Airlines
+  EVA: EVA Air
+  SJX: STARLUX Airlines
+  CCA: Air China
+  CAO: Air China Cargo
+  CES: China Eastern
+  CSH: Shanghai Airlines
+  CSN: China Southern
+  CSC: Sichuan Airlines
+  CSZ: Shenzhen Airlines
+  CHH: Hainan Airlines
+  CXA: Xiamen Airlines
+  CQH: Spring Airlines
+  DKH: Juneyao Air
+  CDC: Loong Air
+  UEA: Chengdu Airlines
+  CSS: SF Airlines (cargo)
+  HYT: YTO Cargo Airlines
+  KAL: Korean Air
+  JNA: Jin Air
+  ESR: Eastar Jet
+  TWB: T'way Air
+  JAL: Japan Airlines
+  ANA: All Nippon Airways
+  MGL: MIAT Mongolian Airlines
+  # Central Asia, Caucasus, Russia
+  KZR: Air Astana
+  VSV: SCAT Airlines
+  SMR: Somon Air
+  QNT: Qanot Sharq
+  UZB: Uzbekistan Airways
+  USA: Silkavia
+  MFX: My Freighter (cargo)
+  AHY: Azerbaijan Airlines
+  IGT: Georgian Airlines
+  AFL: Aeroflot
+  SBI: S7 Airlines
+  SVR: Ural Airlines
+  AZV: Azur Air
+  RWZ: Red Wings
+  KAR: Pegas Fly
+  # Europe
   THY: Turkish Airlines
   DLH: Lufthansa
   BAW: British Airways
+  VIR: Virgin Atlantic
   AFR: Air France
   KLM: KLM
   SWR: Swiss
+  EDW: Edelweiss Air
   AUA: Austrian
-  VIR: Virgin Atlantic
+  FIN: Finnair
+  SAS: Scandinavian Airlines
+  LOT: LOT Polish Airlines
+  ITY: ITA Airways
+  CFG: Condor
+  TOM: TUI Airways
+  BLX: TUIfly Nordic
+  NBT: Norse Atlantic Airways
+  ENT: Enter Air
+  VKG: Sunclass Airlines
+  HYS: HiSky
+  ABD: Air Atlanta Icelandic
+  MNB: MNG Airlines (cargo)
+  BOX: AeroLogic (cargo)
+  BCS: European Air Transport (DHL, cargo)
+  DHK: DHL Air (cargo)
+  CLX: Cargolux (cargo)
+  # Africa
+  ETH: Ethiopian Airlines
+  KQA: Kenya Airways
+  MSR: EgyptAir
+  ATC: Air Tanzania
+  UGD: Uganda Airlines
+  MAU: Air Mauritius
+  REU: Air Austral
+  # Americas and Oceania
   UAL: United Airlines
   AAL: American Airlines
   ACA: Air Canada
-  CES: China Eastern
-  CSN: China Southern
-  CCA: Air China
   FDX: FedEx (cargo)
   UPS: UPS (cargo)
   GTI: Atlas Air (cargo)
-  CLX: Cargolux (cargo)
+  CKS: Kalitta Air (cargo)
+  QFA: Qantas
+  JST: Jetstar
+  VOZ: Virgin Australia
+  ACI: Air Calédonie International
+
+# Seen on 2026-01-01 but NOT commercial airlines: never shown publicly.
+excluded:
+  VJT: VistaJet (business jets)
+  ROJ: Royal Jet (VIP charter)
+  AUH: Abu Dhabi Amiri Flight (government/VIP)
+  JTC: Jetica (business jets)
+  FJK: Fly Jet.kz (business jets)
+  GCK: ABC Bedarfsflug (business jets)
+  MJJ: private operator (business jets)
+  DWC: private operator (business jet)
+  VCG: private operator (business jet)
+  SIO: private operator (business jet)
+  ICL: private operator (business jet)
+  PAF: business jet / state operator
+  HTT: helicopter operator
+
+# Seen on 2026-01-01 but the operator could not be confirmed: hidden until verified.
+unverified: [IOG, FQA, UBT, CSG, HLF, TLH, RLH, CTJ, NWS, KMI, LXE, VJI, VTJ, TXC, TVR, AAE, CGS, NCR]
