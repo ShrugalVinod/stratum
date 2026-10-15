@@ -6,8 +6,10 @@ What it does
    (pre-registered source). If the snapshot has no type for that aircraft, ADS-B Exchange's own
    type field (``typecode`` in our schema) is used and the fallback is logged. When both exist
    and disagree, the database wins and the disagreement is logged.
-2. **OpenAP type.** The designator itself if OpenAP models it; else the hand-checked
-   ``configs/type_map.yaml`` (logged as a fallback); else unmapped — flagged, no guessing.
+2. **OpenAP type.** The designator itself if OpenAP models it; else OpenAP's own synonym
+   table (a close sibling, logged as ``openap_synonym``); else the hand-checked
+   ``configs/type_map.yaml`` (logged); else unmapped — flagged, no guessing. Performance calls
+   always allow OpenAP synonyms, because some native types (e.g. A21N) lack a drag polar.
 3. **Mass** = 0.80 × MTOW (pre-registered; 0.70 / 0.90 in sensitivity runs). Wingspan and the
    default engine come from OpenAP.
 4. **Performance per segment** (needs true airspeed, added once ERA5 winds are attached):
@@ -40,9 +42,18 @@ TYPE_MAP_FILE = repo_root() / "configs" / "type_map.yaml"
 
 @lru_cache(maxsize=1)
 def openap_types() -> frozenset[str]:
+    """Types OpenAP models natively."""
     from openap import prop
 
     return frozenset(t.lower() for t in prop.available_aircraft())
+
+
+@lru_cache(maxsize=1)
+def openap_synonym_types() -> frozenset[str]:
+    """Types OpenAP accepts through its own synonym table (a close sibling is used)."""
+    from openap import prop
+
+    return frozenset(t.lower() for t in prop.available_aircraft(use_synonym=True))
 
 
 @lru_cache(maxsize=1)
@@ -52,14 +63,16 @@ def type_map(path: Path = TYPE_MAP_FILE) -> dict[str, str]:
 
 
 def to_openap(typecode: str | None) -> tuple[str | None, str]:
-    """(OpenAP type or None, how it was found: direct | type_map | unmapped | no_type)."""
+    """(OpenAP type or None, how: direct | openap_synonym | type_map | unmapped | no_type)."""
     if not isinstance(typecode, str) or not typecode.strip():
         return None, "no_type"
     t = typecode.strip().upper()
     if t.lower() in openap_types():
         return t.lower(), "direct"
+    if t.lower() in openap_synonym_types():
+        return t.lower(), "openap_synonym"
     mapped = type_map().get(t)
-    if mapped and mapped in openap_types():
+    if mapped and mapped in openap_synonym_types():
         return mapped, "type_map"
     return None, "unmapped"
 
@@ -69,7 +82,7 @@ def props(openap_type: str) -> dict[str, Any]:
     """MTOW (kg), wingspan (m), engine count and default engine name from OpenAP."""
     from openap import prop
 
-    a = prop.aircraft(openap_type)
+    a = prop.aircraft(openap_type, use_synonym=True)
     return {
         "mtow_kg": float(a["mtow"]),
         "wingspan_m": float(a["wing"]["span"]),
@@ -162,10 +175,14 @@ def performance(
 
     tas_kt = np.asarray(tas_ms) / KT
     ff = np.asarray(
-        FuelFlow(openap_type).enroute(mass=mass_kg, tas=tas_kt, alt=alt_ft, vs=vs_fpm), dtype=float
+        FuelFlow(openap_type, use_synonym=True).enroute(
+            mass=mass_kg, tas=tas_kt, alt=alt_ft, vs=vs_fpm
+        ),
+        dtype=float,
     )
     drag = np.asarray(
-        Drag(openap_type).clean(mass=mass_kg, tas=tas_kt, alt=alt_ft, vs=vs_fpm), dtype=float
+        Drag(openap_type, use_synonym=True).clean(mass=mass_kg, tas=tas_kt, alt=alt_ft, vs=vs_fpm),
+        dtype=float,
     )
     with np.errstate(invalid="ignore", divide="ignore"):
         climb = np.asarray(mass_kg) * G0 * (np.asarray(vs_fpm) * FT / 60.0) / np.asarray(tas_ms)

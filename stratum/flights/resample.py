@@ -30,6 +30,8 @@ which is ample for 1-minute (~15 km) steps.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -37,6 +39,8 @@ EARTH_RADIUS_KM = 6371.0
 STEP_S = 60  # preregistered.yaml trajectory.resample_min = 1
 GAP_S = 60  # an interval longer than one step counts as a gap
 MAX_FILL_S = 600  # preregistered.yaml trajectory.max_fill_gap_min = 10
+MAX_IMPLIED_KT = 750.0  # an interval implying a faster ground speed is a position jump
+JUMP_SLACK_KM = 3.0
 
 WAYPOINT_COLUMNS = [
     "flight_id",
@@ -96,7 +100,11 @@ def initial_bearing_deg(
 
 
 def resample_flight(
-    g: pd.DataFrame, step_s: int = STEP_S, gap_s: int = GAP_S, max_fill_s: int = MAX_FILL_S
+    g: pd.DataFrame,
+    step_s: int = STEP_S,
+    gap_s: int = GAP_S,
+    max_fill_s: int = MAX_FILL_S,
+    max_implied_kt: float = MAX_IMPLIED_KT,
 ) -> pd.DataFrame:
     """Steps 5–6 for one flight (rows sorted by time, one ``flight_id``)."""
     g = g.sort_values("time")
@@ -113,14 +121,21 @@ def resample_flight(
     prv = np.where(exact, nxt, nxt - 1)
     span = (t[nxt] - t[prv]).astype(float)
     in_gap = span > gap_s
-    keep = span <= max_fill_s
+    dt_rep = np.diff(t).astype(float)
+    # A jump: further than 750 kt could carry the aircraft, plus 3 km for position noise
+    # (reports ~1 s apart with ~0.3 km jitter would otherwise look supersonic).
+    dist_km = haversine_km(lat[:-1], lon[:-1], lat[1:], lon[1:])
+    jump = dist_km > max_implied_kt * 1.852 / 3600.0 * dt_rep + JUMP_SLACK_KM
+    breaks = (dt_rep > max_fill_s) | jump  # interval index i = between report i and i+1
+    keep = (span <= max_fill_s) & ~np.where(
+        prv < nxt, breaks[np.minimum(prv, len(breaks) - 1)], False
+    )
     with np.errstate(invalid="ignore", divide="ignore"):
         f = np.where(span > 0, (grid - t[prv]) / span, 0.0)
     wlat, wlon = slerp(lat[prv], lon[prv], lat[nxt], lon[nxt], f)
     walt = np.where(in_gap, alt[prv], alt[prv] + f * (alt[nxt] - alt[prv]))
     # A new piece starts after every unfilled (> max_fill_s) gap.
-    report_gap = np.diff(t) > max_fill_s
-    piece_of_report = np.concatenate([[0], np.cumsum(report_gap)])
+    piece_of_report = np.concatenate([[0], np.cumsum(breaks)])
     piece = piece_of_report[prv]
     base = str(g["flight_id"].iloc[0])
     ids = np.array([base if k == 0 else f"{base}.{k}" for k in piece], dtype=object)
@@ -141,7 +156,7 @@ def resample_flight(
     return out[keep].reset_index(drop=True)
 
 
-def resample_flights(df: pd.DataFrame, **kw: int) -> pd.DataFrame:
+def resample_flights(df: pd.DataFrame, **kw: Any) -> pd.DataFrame:
     """Steps 5–6 for every flight in ``df`` (needs ``flight_id``)."""
     parts = [resample_flight(g, **kw) for _, g in df.groupby("flight_id", sort=False)]
     parts = [p for p in parts if len(p)]

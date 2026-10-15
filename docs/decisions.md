@@ -63,3 +63,13 @@ Days with gaps are marked complete, so a re-run does not fill them. Accepted as-
 - **What counts as a gap (step 6).** Any interval between reports longer than one resample step (60 s) is a gap. A gap of ≤ 10 min is filled along the great circle at the pre-gap altitude (`filled=True`). A gap of > 10 min splits the flight into pieces `<flight_id>.1`, `.2` … The 10-min value is the locked one.
 - **Waypoints on whole UTC minutes**; a segment joins two consecutive waypoints of one piece. Spherical Earth, R = 6371 km.
 - **Phase 2 flight sample.** The January 2026 development month has one free ADS-B Exchange day (2026-01-01), so the "January corridor month" for Phase 2 means that day's flights with January ERA5.
+
+## 2026-10-15 — Phase 2 physics and aircraft details
+- **Position jumps.** An interval between reports whose distance exceeds 750 kt × Δt + 3 km is a position jump. It is never gap-filled, and the flight is split there. On 2026-01-01 this changes flight pieces from 8,501 to 8,750 and removes impossible > 1,000 kt segments.
+- **TAS QC flag.** `qc_tas_ok` marks 100–320 m/s. It is flagged, not filtered, and counted in the run summary.
+- **OpenAP synonyms.** Types OpenAP models only via its synonym table (e.g. B77L) and performance calls for types lacking a native drag polar (e.g. A21N) use `use_synonym=True`. This is logged as `openap_synonym` per flight.
+- **Type source.** OpenSky DB snapshot first. The ADS-B Exchange type field is the logged fallback (2026-01-01: 1,583 DB, 120 ADS-B, 4 none; 16 DB/ADS-B disagreements, DB wins).
+- **Tropopause.** WMO criterion. The 2-km test starts at the bottom of the first layer with Γ ≤ 2 K/km; the reported height is the interpolated Γ = 2 K/km crossing (Reichler et al. 2003). Synthetic ERA5-level profiles: within 0.3 km and 6 % in pressure.
+- **Interpolation.** STRATUM features and SAC flags use log-p interpolation (pre-registered). CoCiP uses pycontrails' internal interpolation, which is not changed.
+- **B3 behaviour (checked).** The pycontrails latitude correction lowers sub-saturated RHi slightly (≤ 3 % at 10–37°N) and boosts supersaturated RHi strongly (1.12 → 1.16–1.33). B2 divides RHi by 0.95 (+5.26 %).
+- **Corridor flights.** A flight is in the corridor sample if any cruise segment midpoint lies inside the 75 km DEL–BOM polygon. The whole flight is kept for CoCiP. On 2026-01-01: 1,706 flights, many crossing the corridor rather than flying DEL↔BOM.

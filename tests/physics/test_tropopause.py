@@ -32,10 +32,13 @@ def test_dense_levels_recover_kink_exactly() -> None:
 
 
 def test_era5_levels_tropical_profile() -> None:
-    t, z500, _ = _profile(ERA5_LEVELS_HPA.astype(float), 17.0, 7.0, -2.5)
-    p, z, _ = tp.wmo_tropopause(ERA5_LEVELS_HPA * 100.0, t)
-    assert 85e2 <= p <= 115e2  # tropical tropopause near 100 hPa (build prompt §4.4: ~95–110)
-    assert abs((z + z500) / 1000 - 17.0) < 1.0
+    """On ERA5's coarse levels a tropical tropopause near 100 hPa is found within 0.3 km."""
+    for z_true in (16.0, 16.5, 17.0):
+        t, z500, p_true = _profile(ERA5_LEVELS_HPA.astype(float), z_true, 7.0, -2.5)
+        p, z, _ = tp.wmo_tropopause(ERA5_LEVELS_HPA * 100.0, t)
+        assert abs((z + z500) / 1000 - z_true) < 0.3
+        assert abs(p - p_true) / p_true < 0.06
+        assert 80e2 <= p <= 110e2
 
 
 def test_thin_stable_layer_is_not_a_tropopause() -> None:

@@ -114,3 +114,23 @@ def test_slerp_endpoints_and_midpoint() -> None:
     )
     assert np.allclose([lat[0], lon[0]], [0.0, 45.0])
     assert np.isclose(rs.haversine_km(0, 0, 0, 1), 111.195, rtol=1e-4)
+
+
+def test_position_jump_is_split_not_filled() -> None:
+    """A 2-min gap across a 100-km position jump (≈1,600 kt) must split, never fill."""
+    t = [0, 10, 20, 30, 150, 160, 170, 180]
+    lon = [70.0, 70.0347, 70.0694, 70.1041, 71.2, 71.2347, 71.2694, 71.3041]
+    g = pd.DataFrame(
+        {
+            "flight_id": "800abc_20260101T0000",
+            "icao24": "800abc",
+            "callsign": "IGO1",
+            "time": T0 + pd.to_timedelta(t, unit="s"),
+            "lat": 20.0,
+            "lon": lon,
+            "baro_alt_ft": 35000.0,
+        }
+    )
+    wp = rs.resample_flight(g)
+    assert not wp["filled"].any()
+    assert set(wp["flight_id"]) == {"800abc_20260101T0000", "800abc_20260101T0000.1"}

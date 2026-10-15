@@ -90,7 +90,6 @@ def wmo_tropopause(
         # starting at the interpolated crossing would put it inside a mixed layer whose
         # linear lapse rate is still > 2 K/km. The reported height is the crossing.
         zb, tb = z[..., k], t[..., k]
-        zc = np.minimum(zc, zb)
         tc = tb
         ok = cand.copy()
         top = zb + DEPTH_KM * 1000.0
