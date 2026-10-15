@@ -1,18 +1,18 @@
 ```
 ═══ PHASE 3 GATE REPORT — Satellite contrail detector and overlays — DRAFT 15 Oct 2026 ═══
-Status:          DRAFT — figures approved and CNN skipped (S. Vinod, 15 Oct); waiting for the
-                 time-lapse check and "Phase 3 is accepted"
+Status:          READY FOR ACCEPTANCE — figures + time-lapse approved, CNN skipped
+                 (S. Vinod, 15 Oct); waiting for "Phase 3 is accepted"
 Calendar:        ahead (Phase 3 window in the team plan is after Phase 2, 20 Dec)
 
 Done-when checklist:
   [x] Detector tests pass (7 detector, 3 overlay, 5 parallax; 140 in the suite). It ran on
       the 3 January 2026 satellite days (1, 13, 14 Jan; 104 slots each); per-day object counts
       and confidence histograms are below.
-  [~] Figures approved by the team (15 Oct): Arabian Sea showcase + overlay_1300 (and the
-      other overlays as candidates); time-lapse check pending.
+  [x] Figures approved by the team (15 Oct): Arabian Sea showcase + overlay_1300 (other
+      overlays as candidates) + timelapse.mp4 ("moves smoothly, it's good").
   [x] Detector parameters documented with reasons (configs/pipeline.yaml → detector;
       docs/decisions.md, 15 Oct entries).
-  [ ] Phase Gate Report — this draft.
+  [x] Phase Gate Report — this file.
 
 Detector (classical, provisional confidence; build prompt §3.1):
   Synthetic: recall 100 % at SNR ≥ 2 (97 % at 1.5); 0 false objects in 30 noise-only scenes;
