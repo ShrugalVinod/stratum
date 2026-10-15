@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>STRATUM Research Protocol v1.2</title>
+<style>
+@page {
+  size: 210mm 297mm;
+  margin: 15mm 15mm 15mm 15mm;
+  background: #000;
+  @top-left { content: "STRATUM · Research protocol v1.2"; font: 7pt "Helvetica Neue", Helvetica, sans-serif; color: #8c8c8c; }
+  @top-right { content: "15 October 2026 · protocol — no results reported"; font: 7pt "Helvetica Neue", Helvetica, sans-serif; color: #8c8c8c; }
+  @bottom-left { content: "Vinod · Harsoda · Kupnur · Shah — Indus International School, Bengaluru"; font: 7pt "Helvetica Neue", Helvetica, sans-serif; color: #6c6c6c; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 7pt "Helvetica Neue", Helvetica, sans-serif; color: #8c8c8c; }
+}
+@page :first {
+  @top-left { content: none; } @top-right { content: none; } @bottom-left { content: none; } @bottom-right { content: none; }
+}
+:root { --fg: #e6e6e6; --muted: #a3a3a3; --dim: #6f6f6f; --line: #2a2a2a; --panel: #0d0d0d; --amber: #e8b04b; --cyan: #5ec8d8; --coral: #ff7b72; --green: #7ee08a; --violet: #b9a3ff; }
+html, body { background: #000; color: var(--fg); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 9.4pt/1.47 Charter, "Iowan Old Style", Georgia, serif; }
+.sans, h1, h2, h3, h4, th, td, figcaption, .tile, .meta, .kicker { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+p { margin: 0 0 5.5pt; text-align: justify; hyphens: auto; }
+b, strong { color: #fff; }
+a { color: var(--cyan); text-decoration: none; }
+h2 { font-size: 14pt; font-weight: 700; color: #fff; margin: 13pt 0 5pt; padding-top: 7pt; border-top: 1px solid var(--line); break-after: avoid; }
+h3 { font-size: 10.2pt; font-weight: 700; color: #fff; margin: 9pt 0 3pt; break-after: avoid; }
+h4 { font-size: 7.4pt; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--amber); margin: 0 0 3pt; }
+ul, ol { margin: 0 0 6pt 15pt; padding: 0; } li { margin: 0 0 2.5pt; }
+table { width: 100%; border-collapse: collapse; margin: 5pt 0 8pt; font-size: 7.7pt; line-height: 1.34; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { background: #1b1b1b; color: #fff; text-align: left; padding: 3.5pt 5pt; font-weight: 700; border-bottom: 1px solid #3a3a3a; vertical-align: bottom; }
+td { padding: 3pt 5pt; border-bottom: 1px solid #222; vertical-align: top; color: #dcdcdc; }
+tbody tr:nth-child(even) td { background: #0a0a0a; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.box { border-left: 3px solid var(--amber); background: var(--panel); padding: 6pt 9pt 3pt; margin: 7pt 0 8pt; break-inside: avoid; }
+.box.cyan { border-left-color: var(--cyan); } .box.cyan h4 { color: var(--cyan); }
+.box.green { border-left-color: var(--green); } .box.green h4 { color: var(--green); }
+.box.coral { border-left-color: var(--coral); } .box.coral h4 { color: var(--coral); }
+.box p { font-size: 9pt; }
+figure { margin: 7pt 0 9pt; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; }
+figcaption { text-align: left; font-size: 7.7pt; line-height: 1.38; color: var(--muted); margin-top: 4pt; }
+figcaption b { color: #fff; }
+.eq { display: flex; align-items: center; justify-content: center; margin: 5pt 0 6pt; break-inside: avoid; position: relative; }
+.eq img { max-width: 92%; }
+.eq .n { position: absolute; right: 0; font: 8pt "Helvetica Neue", Helvetica, sans-serif; color: var(--dim); }
+.team { color: var(--amber); font-weight: 700; font-family: "Helvetica Neue", Helvetica, sans-serif; font-size: .92em; }
+.flag { color: var(--coral); font-family: "Helvetica Neue", Helvetica, sans-serif; font-weight: 700; }
+.mono { font-family: "SF Mono", Menlo, monospace; font-size: .88em; color: #cfd8dc; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; }
+.small { font-size: 8.4pt; }
+.pb { break-before: page; }
+/* cover */
+.cover { height: 263mm; display: flex; flex-direction: column; }
+.kicker { font-size: 8pt; font-weight: 700; letter-spacing: .14em; color: var(--cyan); margin-top: 8mm; }
+.cover h1 { font-size: 30pt; line-height: 1.08; font-weight: 800; color: #fff; margin: 8pt 0 6pt; letter-spacing: -.01em; }
+.cover .sub { font: 400 12.5pt/1.35 "Helvetica Neue", Helvetica, sans-serif; color: #bcbcbc; margin-bottom: 12pt; }
+.cover .authors { font: 600 10.5pt "Helvetica Neue", Helvetica, sans-serif; color: #fff; }
+.cover .aff { font: 9pt "Helvetica Neue", Helvetica, sans-serif; color: var(--muted); margin: 2pt 0 12pt; }
+.meta { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 4pt 0 10pt; }
+.meta td { border-bottom: 1px solid #1f1f1f; padding: 3.2pt 6pt; }
+.meta td:first-child { width: 33%; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; font-size: 7pt; }
+.meta tr:nth-child(even) td { background: #080808; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7pt; margin: 4pt 0 10pt; }
+.tile { border: 1px solid #262626; background: #0b0b0b; padding: 7pt 8pt; }
+.tile .v { font-size: 15pt; font-weight: 800; color: #fff; line-height: 1.1; }
+.tile .l { font-size: 7pt; color: var(--muted); margin-top: 3pt; line-height: 1.3; }
+.toc { columns: 2; column-gap: 16pt; font: 8.3pt/1.55 "Helvetica Neue", Helvetica, sans-serif; color: #cfcfcf; }
+.toc div { break-inside: avoid; }
+.refs { font-size: 7.6pt; line-height: 1.38; columns: 2; column-gap: 14pt; }
+.refs p { text-align: left; margin: 0 0 3.2pt; padding-left: 14pt; text-indent: -14pt; break-inside: avoid; }
+.refs .doi { color: var(--cyan); word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────────── COVER ───────────────────────────── -->
+<section class="cover">
+  <div class="kicker">STRATUM · RESEARCH PROTOCOL · VERSION 1.2</div>
+  <h1>Satellite-validated prediction of persistent contrails and conservative altitude-avoidance ranking over India</h1>
+  <div class="sub">A pre-registered protocol for an observation-conditioned evaluation of ERA5 contrail physics with Meteosat-9 imagery, developed on the Delhi–Mumbai corridor</div>
+  <div class="authors">Shrugal Vinod · Aditya Harsoda · Ishaan Kupnur · Abeer Shah</div>
+  <div class="aff">Indus International School, Bengaluru, India · Supervisor: Dr. Varsha Pant · Conrad Challenge 2026–27, Aerospace &amp; Aviation</div>
+
+  <table class="meta">
+    <tr><td>Version / date</td><td>1.2 — protocol revision, 15 October 2026 (supersedes the 15 October v1.1 draft; analysis plan unchanged)</td></tr>
+    <tr><td>Pre-registration lock</td><td>13 October 2026, 16:11 UTC (21:41 IST), before any study data were downloaded</td></tr>
+    <tr><td>Combined SHA-256</td><td class="mono">ebd71ed91f63a6df414139f0d3a2db458e13b1da54cc64f42ca7d92bbe7e0a95</td></tr>
+    <tr><td>Evaluation period</td><td>1 March 2025 – 28 February 2026; four seasonal folds; development month January 2026</td></tr>
+    <tr><td>Study domain</td><td>6–37°N, 68–98°E; cruise segments at or above FL250 (≈ 376 hPa)</td></tr>
+    <tr><td>Data sources</td><td>ECMWF ERA5 · EUMETSAT Meteosat-9 IODC SEVIRI and cloud mask · ADS-B Exchange first-of-month samples · OpenSky aircraft database · OpenAP · pycontrails/CoCiP</td></tr>
+    <tr><td>Primary endpoint</td><td>Mean held-out-season Brier skill score of STRATUM versus the pycontrails latitude correction (B3)</td></tr>
+    <tr><td>Status</td><td>Data acquisition complete (Phase 1); physics pipeline implemented and unit-tested (Phase 2). <b>No labels, detections, matches, model scores or hypothesis outcomes exist.</b></td></tr>
+  </table>
+
+  <div class="tiles">
+    <div class="tile"><div class="v">36 / 36</div><div class="l">ERA5 month-blocks on Drive (pressure levels, radiation, upper-level T)</div></div>
+    <div class="tile"><div class="v">12 / 12</div><div class="l">ADS-B Exchange first-of-month days, 5-s snapshots, 0 missing</div></div>
+    <div class="tile"><div class="v">1,451</div><div class="l">of 1,456 Meteosat-9 IODC slots on 14 sample days (99.66 %)</div></div>
+    <div class="tile"><div class="v">H1–H4</div><div class="l">hypotheses locked with numeric thresholds before data access</div></div>
+  </div>
+
+  <div class="box">
+    <h4>Scientific-status statement</h4>
+    <p>This document fixes what will be measured, how, and what each outcome would mean, before any outcome exists. Every number in it is either a cited literature value, a physical constant, a pre-registered design value, or a data-acquisition/quality-control fact. It reports no contrail detections, labels, forecast scores, fuel savings or climate benefits. Items marked <span class="team">[TEAM]</span> require an author decision; items marked <span class="flag">⚑</span> are deliberately open pre-registered questions with an owner and a deadline.</p>
+  </div>
+
+  <div class="toc">
+    <div>Plain-language summary · Abstract</div>
+    <div>1. Introduction</div>
+    <div>2. Related work and rationale</div>
+    <div>3. Research questions, estimands and hypotheses</div>
+    <div>4. Study design, geography and data</div>
+    <div>5. Data processing and physical model</div>
+    <div>6. Satellite observation, matching and labels</div>
+    <div>7. Correction model, splits and evaluation</div>
+    <div>8. Counterfactual altitude decision layer</div>
+    <div>9. Data governance and privacy</div>
+    <div>10. Reproducibility and implementation status</div>
+    <div>11. Limitations and threats to validity</div>
+    <div>12. Pre-committed interpretation rules</div>
+    <div>13. Document history and claim verification</div>
+    <div>Declarations</div>
+    <div>Appendices A–E · References</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── SUMMARY + ABSTRACT ───────────────────────────── -->
+<section class="pb">
+<h2 style="border-top:none;padding-top:0;margin-top:0">Plain-language summary</h2>
+<p>When a jet flies through cold, humid air, the water vapour in its exhaust can freeze into a line of ice cloud — a contrail. Most fade within minutes, but in air that is already supersaturated with respect to ice they can spread into cirrus sheets that last for hours and trap outgoing heat. Contrails can often be avoided by flying a couple of thousand feet higher or lower, and a small share of flights causes most of the effect. The difficulty is prediction: weather models are least reliable for humidity exactly at cruise altitude, and nearly every study that has checked contrail forecasts against satellites has worked over Europe, the North Atlantic or the United States.</p>
+<p>STRATUM asks whether standard contrail physics driven by ERA5 weather data predicts the contrails that the Meteosat-9 satellite can actually see over India, and whether a correction learned from those satellite observations predicts them better than the best openly available correction. A separate, offline analysis then compares small altitude changes by their modelled contrail effect and their extra fuel and CO₂, keeping the two side by side until a cited climate metric allows them to be combined. All four hypotheses and their pass/fail thresholds were locked on 13 October 2026, before any data were downloaded. A satellite non-detection is treated as “not seen”, never as “no contrail”, and the study commits to publishing null and negative results.</p>
+
+<h2>Abstract</h2>
+<p><b>Background.</b> Persistent contrails can evolve into contrail cirrus whose net radiative effect depends on lifetime, optical properties, illumination and background. Ice-relative humidity (RHi) at cruise levels is the most influential and least certain input to contrail forecasts, and published humidity corrections and satellite validations are largely based on observations outside South Asia [1–5].</p>
+<p><b>Objective.</b> (i) Quantify how raw ERA5 Schmidt–Appleman/persistence predictions compare with satellite-detectable, flight-attributed contrails over India; (ii) test whether a monotone, satellite-supervised correction improves probabilistic prediction over the pycontrails latitude-dependent correction (B3); (iii) quantify how concentrated modelled contrail energy forcing (EF) is across cruise distance and night-time flying; and (iv) define a conservative counterfactual ranking of ±2,000 and ±4,000 ft alternatives that never conflates EF with fuel CO₂.</p>
+<p><b>Design.</b> Retrospective evaluation, 1 March 2025 – 28 February 2026, in four seasonal folds (pre-monsoon, monsoon, post-monsoon, winter) over 6–37°N, 68–98°E, developed on the Delhi–Mumbai corridor (January 2026 development month; winter reported with and without January). Flights come from the twelve free ADS-B Exchange first-of-month days unless a pre-registered coverage audit selects OpenSky. Trajectories are cleaned and resampled to one-minute segments, collocated with ERA5 (linear in time, bilinear horizontally, linear in log-pressure) and assessed with the Schmidt–Appleman criterion (SAC) and CoCiP under three humidity scalings with 20-member Monte Carlo uncertainty.</p>
+<p><b>Outcome.</b> A segment label is 1 if a contrail detected in Meteosat-9 split-window imagery matches the wind-advected, parallax-corrected segment (≤ 2 px, ≤ 20°) at any observable slot 20–120 min after passage; 0 if at least two slots are observable and none matches; otherwise missing. Observability requires ERA5 high-cloud fraction &lt; 0.5, no opaque cloud and viewing zenith angle &lt; 60°.</p>
+<p><b>Analysis.</b> H1: B1-predicted/observed ratio, supported if the upper 95 % CI &lt; 1. H2 (primary): mean held-out-season Brier skill score versus B3 ≥ 0.10 with lower 95 % CI &gt; 0. H3: ≤ 10 % of cruise distance carries 80 % of positive EF. H4: night-time excess share of positive EF, lower 95 % CI &gt; 0. Whole-day bootstrap (1,000 resamples). At least 300 matched observed contrails are required before H1/H2 are interpreted.</p>
+<p><b>Status.</b> All study data for the evaluation year were acquired on 14–15 October 2026, after the lock; the physics pipeline is implemented and unit-tested. No outcome has been produced or seen.</p>
+<p class="small"><b>Keywords:</b> contrail cirrus; ice supersaturation; ERA5; Meteosat-9; SEVIRI; ADS-B; Schmidt–Appleman criterion; CoCiP; satellite observability; humidity correction; pre-registration; India.</p>
+
+<!-- ───────────────────────────── 1 INTRODUCTION ───────────────────────────── -->
+<h2>1. Introduction</h2>
+<h3>1.1 Scientific motivation</h3>
+<p>Contrails form when hot, moist exhaust mixes with cold ambient air and the mixture reaches saturation with respect to liquid water [10]. Whether they then persist depends mainly on the ambient RHi: in ice-supersaturated air, crystals grow and the contrail can spread into cirrus, trapping outgoing longwave radiation and, by day, reflecting some sunlight [9,34]. The most widely used assessment estimated 2018 aviation effective radiative forcing (ERF) at +100.9 mW m⁻², of which contrail cirrus contributed 57.4 mW m⁻² and aviation CO₂ 34.3 mW m⁻² — more than half of the net total [1]. A later flight-by-flight analysis estimated 2019 global contrail net radiative forcing (RF; a related but distinct metric) at 62.1 mW m⁻², with a sensitivity range of 34.8–74.8 mW m⁻² [2]. The spread is itself the motivation: the humidity correction was the single most influential input in that analysis, moving the estimate from 34.8 to 62.1 mW m⁻² [2].</p>
+<p>The effect is concentrated. About 14 % of 2019 flights produced a net-warming contrail and 2 % of flights caused 80 % of global contrail energy forcing [2]; a modelling study over Japan found a similar concentration and showed that diverting about 1.7 % of flights by ±2,000 ft could cut contrail EF by up to 59 % [30]. A randomised airline trial reported 64 % fewer satellite-visible contrails on treatment flights (p = 0.0331) for about 2 % more fuel per adjusted flight [12]. A site study for south-east England found night flights to be about a quarter of traffic but 60–80 % of contrail forcing [47], which motivates H4. None of these results is assumed to transfer to India.</p>
+<h3>1.2 Why India</h3>
+<p>India is the world’s third-largest domestic aviation market; its commercial fleet grew from 395 aircraft in 2014 to 844 in 2025 [37]. The only global estimate covering the region found that India and China together account for 19 % of flight distance but only 6 % of contrail EF, attributing the gap to tropical circulation and lower cruise altitudes [2]. That may be correct, or it may partly reflect humidity corrections fitted on in-situ data collected mainly elsewhere [3,33]. Either answer is worth having. A targeted search found no published study validating contrail forecasts against observed contrails over Indian airspace; because a negative claim cannot be proven, it is stated as a provisional gap to be refreshed before submission.</p>
+<h3>1.3 The satellite is a measurement process, not ground truth</h3>
+<p>A satellite non-detection does not show that no contrail existed. Thin or young contrails, overlying cloud, viewing geometry, advection and pixel size all limit detection. In an idealised experiment with a 2 km imager, only 46 ± 2 % of modelled contrail segments were observable, although these carried 72 ± 2 % of the instantaneous longwave forcing [5]. Meteosat-9’s infrared pixels are about 3 km at nadir and larger over India [16,17], whereas young contrails are typically well under a pixel wide; only aged, spread contrails are expected to be detectable, which is why the matching window starts at 20 minutes. STRATUM therefore defines its target as a <b>satellite-detectable, flight-attributed contrail during an observable opportunity</b>, treats unobservable cases as missing, and never applies the idealised efficiencies of [5] as an India correction factor.</p>
+<h3>1.4 Contribution and scope</h3>
+<p>The study will produce: (i) a reproducible ERA5/SAC/CoCiP physics baseline for Indian airspace; (ii) a small, blinded, double-labelled Meteosat-9 contrail set and an explicit segment-level observation process; (iii) a seasonally held-out comparison of locked baselines against a satellite-supervised correction; and (iv) an offline counterfactual ranking that reports EF, fuel and CO₂ separately until a cited common metric is approved (Figure 1). It is an offline research analysis: it changes no real flight, does not model air-traffic-control acceptance and claims no verified emissions reduction.</p>
+
+
+<!-- ───────────────────────────── 2 RELATED WORK ───────────────────────────── -->
+<h2>2. Related work and rationale</h2>
+<h3>2.1 Formation, persistence and forcing models</h3>
+<p>The Schmidt–Appleman criterion in its modern form relates the slope of the exhaust mixing line to pressure, the water-vapour emission index, the fuel’s combustion heat, the specific heat of air and the aircraft’s overall propulsion efficiency η [10]. RHi ≥ 1 is a persistence-condition screen, not a guarantee of hours-long survival. CoCiP simulates the subsequent evolution, optical properties and radiative forcing of each contrail segment [9], subject to meteorological, aircraft and parameter uncertainty; Gierens et al. and Hofer et al. review how well persistence can be predicted [8,29], and Platt et al. quantify how humidity and parameter uncertainty propagate into predicted EF [46]. STRATUM therefore treats CoCiP EF as model output, never as observed truth.</p>
+
+<h3>2.2 Humidity corrections</h3>
+<p>Against five years of IAGOS aircraft measurements over the North Atlantic, ERA5 showed an RHi bias of up to −5.5 percentage points at 250 hPa and flagged persistent-contrail conditions at 7.9 % of waypoints versus 12.1 % in the measurements [3]. Corrections include constant scaling, the latitude-dependent exponential-boost fit of Teoh et al. as implemented in pycontrails [2,22,33], bivariate quantile mapping [3] and supervised machine learning against IAGOS [4]. None has been evaluated over India. In this protocol, B3 is called the <i>pycontrails latitude-dependent reference implementation</i>, not “the best published correction”, and its exact release is pinned and tested (Section 5.7).</p>
+<h3>2.3 Satellite detection and labelled data</h3>
+<p>Split-window brightness-temperature differences with line filters have a long history in contrail detection [6]. COCOS demonstrates an adaptive segmentation approach on Meteosat Second Generation imagery [7], a manually labelled MSG/SEVIRI contrail dataset now exists for Europe and the North Atlantic [24], and OpenContrails provides a GOES-16 benchmark [36]. These establish methodological precedent but are not Indian validation. STRATUM’s primary detector is a transparent, normalised BTD oriented-line detector whose threshold is tuned only on its own tuning scenes; COCOS may be run as an optional secondary benchmark on the same held-out scenes if code and licence permit.</p>
+<h3>2.4 Operational avoidance evidence</h3>
+<p>Beyond the peer-reviewed trial [12], Google reports operator results: a 2023 trial of 70 American Airlines flights with 54 % fewer contrails at about 2 % more fuel on adjusted flights [38], and a 2025 campaign of about 2,400 flights with a 62 % lower contrail-formation rate on flights that followed avoidance plans [39]. These are operator-reported, not peer-reviewed, and neither validates STRATUM nor sets expected effects over India.</p>
+<figure><img src="fig/fig6_pipeline.png" style="width:88%"><figcaption><b>Figure 1. STRATUM analysis chain.</b> Inputs (left) are kept in separate roles: the weather model, the satellite observation, the learned correction and the operational counterfactual are never substituted for one another. Colours group the physics (cyan), observation (amber), learning/evaluation (green) and decision/release (violet) layers.</figcaption></figure>
+
+<!-- ───────────────────────────── 3 RQ / HYPOTHESES ───────────────────────────── -->
+<h2>3. Research questions, estimands and hypotheses</h2>
+<h3>3.1 Research questions and target</h3>
+<ol>
+<li><b>RQ1.</b> How does raw ERA5 (B1) persistent-contrail occurrence compare with satellite-detected, flight-attributed contrails under the locked observability rule?</li>
+<li><b>RQ2.</b> Does a satellite-supervised, monotone correction improve held-out probabilistic prediction of the same observation-conditioned event relative to B3?</li>
+<li><b>RQ3.</b> How concentrated is positive modelled EF across cruise distance and night-time flying, and what are the separate fuel and CO₂ consequences of nearby altitude alternatives?</li>
+</ol>
+<p>The primary label is a <b>satellite-detectable contrail matched to a SAC-forming candidate segment during an observable opportunity</b>. It is not a census of physical contrails. The prediction estimand concerns eligible, observable cases; any efficiency-adjusted estimate of physical incidence is secondary and requires a locally validated observation model.</p>
+<h3>3.2 Locked hypotheses</h3>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:30%">Statistic</th><th style="width:27%">Supported if (locked)</th><th>Interpretation limit</th></tr></thead>
+<tbody>
+<tr><td><b>H1</b></td><td>Ratio of B1-predicted persistence to observed detectable occurrence on the same observable candidate set (Eq. 12). Raw detectable events primary; efficiency-adjusted secondary.</td><td>Upper bound of the 95 % CI &lt; 1</td><td>A ratio below 1 means under-prediction relative to an observed minimum, not an estimate of all physical contrails. Efficiency thresholds open (<span class="flag">⚑ Q4</span>).</td></tr>
+<tr><td><b>H2</b></td><td>Mean held-out-season Brier skill score of STRATUM versus B3 on the common target y (Eq. 11). <b>Primary endpoint.</b></td><td>Mean BSS ≥ 0.10 and lower 95 % CI &gt; 0</td><td>Confirmatory only if every forecast targets the same y with the locked calibration procedure (Section 7.3). 0.10 is a project threshold, not a WMO standard.</td></tr>
+<tr><td><b>H3</b></td><td>Smallest share of eligible cruise distance that carries 80 % of positive modelled EF (Eq. 13).</td><td>Share ≤ 0.10</td><td>EF is modelled and corridor/sample-specific; not an observed climate benefit.</td></tr>
+<tr><td><b>H4</b></td><td>Night-time share of positive EF minus night-time share of cruise distance; night = 18:00–06:00 local solar time (Eq. 13).</td><td>Lower 95 % CI &gt; 0</td><td>Describes the sampled, modelled EF; does not imply every night diversion is beneficial.</td></tr>
+</tbody></table>
+<div class="box coral"><h4>Minimum-sample rule (locked)</h4><p>At least <b>300 matched observed contrails in observable scenes</b> are required before H1 and H2 are interpreted. A design-specific power/precision simulation is run before full labelling (Section 7.5). Below 300, H1/H2 are reported as underpowered or inconclusive. Additional scenes may be labelled only before outcomes are examined, under a logged decision; no threshold is relaxed after outcomes are seen.</p></div>
+
+<!-- ───────────────────────────── 4 DESIGN + DATA ───────────────────────────── -->
+<h2>4. Study design, geography and data</h2>
+<h3>4.1 Periods, domain and scoring scope</h3>
+<p>Evaluation dates are 1 March 2025 to 28 February 2026 inclusive, in four seasonal folds: pre-monsoon (Mar–May), monsoon (Jun–Sep), post-monsoon (Oct–Nov) and winter (Dec–Feb). January 2026 is the development month; because it lies inside the winter fold, winter is reported both with and without January (settled before the lock). The study domain is 6–37°N, 68–98°E; ERA5 and satellite data use a 2° padded box (4–39°N, 66–100°E) so that contrails can drift. The development corridor is a polygon 75 km either side of the great circle Delhi (VIDP)–Mumbai (VABB) (Figure 2). A flight belongs to the corridor sample when at least one cruise-segment midpoint lies inside the polygon; the whole flight is then kept, because CoCiP needs complete trajectories. Such flights are described as <i>flights through the Delhi–Mumbai corridor</i>, not Delhi–Mumbai flights, and a route/direction filter is kept for DEL↔BOM-only displays.</p>
+<div class="box"><h4>Open scope decision <span class="team">[TEAM: confirm before Phase 5]</span></h4><p>The lock fixes the domain and a train-west/test-east split at 80°E, but does not state in words whether H1–H4 are scored on the full domain or on the corridor. Because the corridor lies entirely west of 80°E and is unlikely to reach 300 matched contrails from twelve flight days, the authors’ recommended reading is <b>full-domain confirmatory scoring with the corridor as the development and demonstration area</b>. This manuscript does not adopt either reading until the team confirms it in writing.</p></div>
+
+
+<h3>4.2 Data inventory and source-selection rule</h3>
+<table>
+<thead><tr><th style="width:17%">Source</th><th style="width:27%">Role and resolution</th><th style="width:27%">Status (15 Oct 2026)</th><th>Controls and limitations</th></tr></thead>
+<tbody>
+<tr><td><b>ERA5</b> pressure and single levels [13,14,32,40]</td><td>T, q, u, v, ω, cloud ice, cloud fraction, geopotential on 12 levels (100–500 hPa); T at 50/70 hPa; top-of-atmosphere net solar/thermal radiation. Hourly, 0.25°.</td><td>Full evaluation year acquired (36/36 month-blocks). Jan 2026 via CDS; other months via ARCO-ERA5; one-day route comparison: worst relative difference 2.2 × 10⁻⁴ (GRIB packing).</td><td>Reanalysis, not in-situ humidity; 25–50 hPa spacing smooths thin ice-supersaturated layers. ERA5/ERA5T status per month <span class="team">[TEAM: record]</span>.</td></tr>
+<tr><td><b>Meteosat-9 IODC</b> SEVIRI L1.5 [16,17]</td><td>15-min imagery from 45.5°E; IR_108, IR_120 primary. Collection <span class="mono">EO:EUM:DAT:MSG:HRSEVIRI-IODC</span>.</td><td>All 12 months present in the archive (MSG2). 14 sample days acquired (12 first-of-month + 13/14 Jan 2026): 1,451/1,456 slots; 5 failed after 3 retries.</td><td>Best-effort service, no in-flight backup; pixels enlarge off-nadir; parallax correction mandatory.</td></tr>
+<tr><td><b>IODC cloud mask</b> [18,44]</td><td>Scene/obscuration context. Collection <span class="mono">EO:EUM:DAT:MSG:CLM-IODC</span>.</td><td>Acquired with the imagery on the same grid.</td><td>Categories: clear water, clear land, cloud, no data — <b>no “opaque” class</b> (<span class="flag">⚑ Q11</span>).</td></tr>
+<tr><td><b>ADS-B Exchange</b> [19]</td><td>readsb-hist global snapshots every 5 s; free first day of each month.</td><td>12/12 days acquired, filtered to the padded box and ≥ FL200; ≈ 3.4–3.6 M reports and 2,000–2,165 aircraft per day; 0 missing snapshots.</td><td>Not a continuous year; twelve days must not be extrapolated to daily coverage. Sample attribution/redistribution wording <span class="team">[TEAM: verify]</span>.</td></tr>
+<tr><td><b>OpenSky</b> [15,35]</td><td>Historical state vectors (if granted); aircraft database (ICAO24 → type).</td><td>Historical access pending. Aircraft database snapshot 2025-08 stored (616,648 rows, SHA-256 recorded).</td><td>Registration is not authorisation; database is incomplete and stale, so type fallbacks are logged.</td></tr>
+<tr><td><b>OpenAP</b> [21]; <b>pycontrails</b> [22,41]</td><td>Aircraft properties, fuel flow, drag; CoCiP, humidity scalings, emissions.</td><td>OpenAP 2.6.2 and pycontrails 0.64.0 pinned.</td><td>Model estimates, not flight-recorder data.</td></tr>
+</tbody></table>
+<p>The source rule is locked: use OpenSky for all months if it captures ≥ 50 % of scheduled corridor flights with continuous cruise tracks (no gap &gt; 10 min); otherwise use the twelve ADS-B Exchange days and say so in every result. The team decided on 14 October that if OpenSky access is never granted, OpenSky coverage counts as 0 % and ADS-B Exchange is used; no paid flight data will be bought.</p>
+<figure><img src="fig/fig1_domain.png" style="width:50%"><figcaption><b>Figure 2. Study geometry.</b> Study domain (solid), padded ERA5/satellite box (dotted), Delhi–Mumbai corridor (±75 km, cyan), the 80°E spatial split (violet) and Meteosat-9 viewing-zenith-angle contours computed from the native IODC grid (40°, 50°, 60°). 9.1 % of the study box lies beyond VZA 60° and can never be observable under the locked rule. Coastline: Natural Earth 1:50m [20]; no political boundaries are drawn. Airports: [43].</figcaption></figure>
+<p><b>Coverage-audit design.</b> Audit days are 1–7 November 2026. The denominator is the set of scheduled Delhi–Mumbai flights read manually from publicly visible timetable pages on 2 and 5 November and cross-checked against airline websites (no paid flight-status API [23], no automated scraping); the numerator is ADS-B Exchange on 1 November 2026 (plus OpenSky if granted), matched by airline and flight number with an airline–direction–time-window fallback. Because the audit measures coverage in November 2026, its transfer to the 2025–26 evaluation year is an assumption, stated as a limitation.</p>
+
+<h3>4.3 Phase-1 acquisition record</h3>
+<p>The protocol was locked at 16:11 UTC on 13 October 2026; the first study data were downloaded on 14 October; all inputs in Figure 3 were complete by 09:14 UTC on 15 October. Software checks used only the development month: ERA5 sanity maps (Figure 5), one CoCiP end-to-end run, satellite geolocation checks (Figure 7) and the traffic-density map in Figure 4. These are acquisition and quality-control facts; no label, detection, match, model score or hypothesis outcome was produced or examined.</p>
+<figure><img src="fig/fig9_calendar.png" style="width:100%"><figcaption><b>Figure 3. Phase-1 acquisition against the evaluation calendar.</b> Season shading: pre-monsoon (amber), monsoon (cyan), post-monsoon (violet), winter (grey). ERA5 is complete for every hour; flights exist only on the first day of each month; Meteosat-9 sample days are the twelve flight days plus two clear development days (13 and 14 January 2026).</figcaption></figure>
+<figure><img src="fig/fig5_adsb.png" style="width:54%"><figcaption><b>Figure 4. Cruise traffic on the development day.</b> Density of ADS-B Exchange position reports at or above FL250 on 1 January 2026 (0.25° cells, logarithmic colour scale), with the study domain and the Delhi–Mumbai corridor. The trunk routes of Indian airspace and the international corridors across the Arabian Sea and Bay of Bengal are visible. Only aggregated counts are shown.</figcaption></figure>
+
+<!-- ───────────────────────────── 5 PROCESSING ───────────────────────────── -->
+<h2>5. Data processing and physical model</h2>
+<h3>5.1 Provenance and units</h3>
+<p>Raw inputs are immutable. Each processing unit (a day or a month) is written completely, then receives a manifest (code commit, configuration hash, parameters, input and output SHA-256, software versions, counts and warnings) and finally a <span class="mono">_SUCCESS</span> marker; a unit without the marker counts as not done, and a heartbeat lock prevents two runs writing the same unit. All times are stored in UTC; IST (UTC+05:30) and local solar time (UTC + longitude/15 h) are derived fields. Calculations use SI units internally.</p>
+<h3>5.2 Trajectory processing (locked steps)</h3>
+<ol>
+<li>Drop on-ground reports, rows missing time, position or barometric altitude, and exact duplicates; sort by aircraft and time.</li>
+<li>Reconstruct flights: split at a gap &gt; 30 min or a callsign change; <span class="mono">flight_id = icao24_YYYYmmddTHHMM</span>.</li>
+<li>Implausibility filter: drop a report when the vertical rate from the previous report exceeds <b>6,000 ft/min</b> or the ground speed jumps by more than <b>100 kt</b>; recompute after dropping, at most <b>3 passes</b>.</li>
+<li>Keep barometric altitude ≥ <b>FL250</b>.</li>
+<li>Resample to <b>1-minute</b> waypoints on whole UTC minutes: position along the great circle, altitude linear.</li>
+<li>Fill gaps ≤ <b>10 min</b> along the great circle at constant pre-gap altitude (flagged); split the flight at longer gaps.</li>
+<li>Build segments between consecutive waypoints with start/end position, midpoint, heading, length, duration and ground speed; <span class="mono">segment_id = flight_id_NNNN</span>.</li>
+<li>Join aircraft type, OpenAP properties, mass, η, fuel flow and engine identity (Section 5.3).</li>
+<li>Classify commercial versus non-commercial flights for public release (Section 9).</li>
+</ol>
+<div class="box cyan"><h4>Implementation clarifications logged on 15 October 2026 (before any outcome analysis)</h4>
+<p><b>Callsign flicker.</b> ADS-B Exchange merges many receivers, and some aircraft alternate between two callsigns every few seconds (observed: ETH606 ↔ ETH873, KQA204 ↔ KQA205). A literal reading of step 2 fragmented flights; a change now counts only when the old callsign never reappears within the track before the next &gt; 30-min gap. On 1 March 2025, 00–12 UTC, this changed 8,713 “flights” to 4,628 and fragments shorter than 5 min from 3,469 to 411. <b>Gap definition.</b> Any interval between reports longer than one resample step (60 s) is a gap for step 6. <b>Position jumps.</b> An interval whose distance exceeds what 750 kt could cover plus 3 km of position noise is a position jump: it is never filled and the flight is split there. <b>Spike attribution.</b> In step 3, a report with both adjacent transitions out of limits is a spike; a lone bad transition removes whichever end lies further from the 9-report running median. Pairs &lt; 2 s apart are not rate-checked (altitude is quantised to 25 ft). None of these changes a locked threshold; each is logged in the project decision record.</p></div>
+<h3>5.3 Aircraft parameters</h3>
+<p>Aircraft type comes from the OpenSky aircraft database snapshot (ICAO24 → ICAO designator); where the snapshot has no type, the ADS-B Exchange type field is used and logged, and the database wins any disagreement (logged). The designator is mapped to OpenAP directly, through OpenAP’s own synonym table, or through a hand-checked type map; unmapped types are flagged, never guessed. Aircraft mass is <b>0.80 × MTOW</b> (sensitivity 0.70 and 0.90). Fuel flow comes from OpenAP; overall propulsion efficiency is derived per segment (Eq. 1) — the pre-registered OpenAP-based η, default 0.30 where no type is known, sensitivity 0.25–0.40 — and clipped to 0.20–0.45 with a flag. The engine count is taken from OpenAP, and pycontrails’ emissions model looks up the nvPM number emission index from the ICAO engine databank by aircraft type; where no engine is found it uses its constant default (10¹⁵ kg⁻¹) and the flight is counted.</p>
+<div class="eq"><img src="eq/e7.png" style="width:5.0in"><span class="n">(1)</span></div>
+<h3>5.4 ERA5 variables and interpolation</h3>
+<p>ERA5 is interpolated to each segment midpoint linearly in time, bilinearly in latitude/longitude and linearly in log-pressure between the two bracketing levels; points outside the grid in time, space or pressure are counted and left missing, never extrapolated. The segment pressure is the ISA pressure of its barometric altitude (Eq. 3; FL250 → 376.0 hPa, FL340 → 250.0 hPa). Each segment also receives T, q, u, v and geopotential on the native levels immediately above and below it, from which the vertical RHi gradient and vertical wind shear per kilometre are computed; high-cloud fraction is the maximum over the segment and every level above it. True airspeed is the ground velocity of the segment minus the ERA5 wind (a quality flag marks values outside 100–320 m s⁻¹). CoCiP itself uses pycontrails’ internal interpolation, which is not modified.</p>
+<div class="eq"><img src="eq/e1.png" style="width:4.6in"><span class="n">(2)</span></div>
+<div class="eq"><img src="eq/e8.png" style="width:5.6in"><span class="n">(3)</span></div>
+<figure><img src="fig/fig4_era5.png" style="width:78%"><figcaption><b>Figure 5. ERA5 on a development-month day.</b> 250 hPa temperature and RHi at 06:00 UTC on 15 January 2026; the red contour marks RHi = 1. In this winter case the air over peninsular India is very dry at cruise level, while ice-supersaturated pockets lie at the northern and south-eastern edges of the padded box. Software check only.</figcaption></figure>
+<h3>5.5 Tropopause</h3>
+<p>The WMO lapse-rate tropopause [27] is computed for every grid cell and hour from the 14-level temperature profile (500–50 hPa): the lowest level at which the lapse rate falls to ≤ 2 K km⁻¹, provided the average lapse rate from that level to every point within the next 2 km stays ≤ 2 K km⁻¹. Heights follow from the hypsometric equation; the reported height is the interpolated crossing of 2 K km⁻¹ between half-levels (as in Reichler et al. [27]) and its absolute value is anchored to ERA5 geopotential at 500 hPa. On synthetic profiles sampled on the ERA5 levels the method recovers a tropical tropopause within 0.3 km and 6 % in pressure, and rejects a 1-km stable slab below the true tropopause. The feature is the signed segment-height minus tropopause-height distance.</p>
+<h3>5.6 Schmidt–Appleman criterion</h3>
+<p>Saturation vapour pressures follow Murphy and Koop [11] (Eqs. 4–5; T in K, e in Pa). The mixing-line slope and threshold temperatures follow Eqs. 6–7, with the locked constants EI<sub>H₂O</sub> = 1.23 kg kg⁻¹, c<sub>p</sub> = 1004 J kg⁻¹ K⁻¹, ε = 0.622 and Q = 43.2 × 10⁶ J kg⁻¹. Formation and the raw persistence flag follow Eq. 8. At 250 hPa and η = 0.30, G = 1.6414 Pa K⁻¹ and T<sub>LM</sub> = −41.913 °C (Figure 6, Appendix A). The implementation is vectorised (10⁷ segments without Python loops) and agreed with pycontrails’ SAC at 59/59 test waypoints. pycontrails uses Sonntag [45] for ice saturation; the difference from Murphy–Koop is ≤ 0.16 % over the relevant range, and the locked Murphy–Koop formula is retained.</p>
+<div class="eq"><img src="eq/e2.png" style="width:4.2in"><span class="n">(4)</span></div>
+<div class="eq"><img src="eq/e3a.png" style="width:3.95in"><span class="n">(5)</span></div>
+<div class="eq"><img src="eq/e3b.png" style="width:5.8in"></div>
+<div class="eq"><img src="eq/e4.png" style="width:2.45in"><span class="n">(6)</span></div>
+<div class="eq"><img src="eq/e5.png" style="width:5.8in"><span class="n">(7)</span></div>
+<div class="eq"><img src="eq/e6.png" style="width:3.7in"><span class="n">(8)</span></div>
+<figure><img src="fig/fig2_sac.png" style="width:66%"><figcaption><b>Figure 6. Schmidt–Appleman diagram</b> at 250 hPa and η = 0.30, recomputed from Eqs. 4–7. The shaded band is ice-supersaturated but below water saturation. Point A forms a contrail that does not persist; B forms and persists; C does not form. These are thermodynamic known-answer checks, not observations.</figcaption></figure>
+<h3>5.7 CoCiP and the locked physics baselines</h3>
+<p>CoCiP runs on whole trajectories through pycontrails 0.64.0, carrying each waypoint’s fuel flow, η, mass, wingspan, engine count and aircraft type, with a maximum contrail age of 24 h. Per segment it stores formation, initial persistence, contrail age, width, ice water content, shortwave/longwave/net RF and EF, plus the contrail evolution table used later to check advection. Uncertainty comes from <b>N = 20 Monte Carlo members</b> (open question 12, settled 15 October 2026) drawn from pycontrails’ CoCiP uncertainty parameters (wake-vortex depth, sedimentation, nvPM factor, radiative factors, ice habits) — never from the humidity scaling under test; each segment keeps the central EF and its 5th/50th/95th percentiles. A convergence check (N = 20 versus 40 on one corridor day) is reported; a larger N would be adopted only through the deviation log and before any evaluation run.</p>
+<table>
+<thead><tr><th style="width:8%">ID</th><th style="width:36%">Locked definition</th><th>Implementation and verified behaviour</th></tr></thead>
+<tbody>
+<tr><td><b>B0</b></td><td>Monthly cell-level climatology of the target from training months only</td><td>Estimated inside each outer training fold.</td></tr>
+<tr><td><b>B1</b></td><td>Raw ERA5: SAC formation and RHi ≥ 1, no humidity scaling</td><td><span class="mono">ConstantHumidityScaling(rhi_adj = 1.0)</span>; RHi equals Eq. 2 to within the Sonntag/Murphy–Koop difference.</td></tr>
+<tr><td><b>B2</b></td><td>Constant scaling: RHi divided by 0.95</td><td><span class="mono">rhi_adj = 0.95</span>; verified to raise RHi by exactly 1/0.95 (+5.26 %).</td></tr>
+<tr><td><b>B3</b></td><td>pycontrails latitude-dependent correction (Teoh et al.)</td><td><span class="mono">ExponentialBoostLatitudeCorrectionHumidityScaling</span>; verified to change sub-saturated RHi by ≤ 3 % at 10–37°N and to boost supersaturated RHi strongly (1.12 → 1.16–1.33).</td></tr>
+<tr><td><b>B4</b></td><td>Optional Wolf et al. bivariate quantile mapping [3]</td><td>Run only if published coefficients and input definitions apply without test-fold fitting; otherwise reported as not run, with the reason.</td></tr>
+</tbody></table>
+
+<!-- ───────────────────────────── 6 SATELLITE ───────────────────────────── -->
+<h2>6. Satellite observation, matching and labels</h2>
+<h3>6.1 Imagery, detector and human labels</h3>
+<p>Native SEVIRI Level 1.5 files are read with satpy 0.60.0 [42], calibrated to brightness temperature and cropped on the native geostationary grid without reprojection, so thin lines are not smeared (IODC files are stored rotated by 180°; figures are turned north-up, data are not). Geolocation was verified by overlaying the Natural Earth coastline on IR_108 on a clear night (Figure 7). The primary detector normalises BTD = T<sub>10.8</sub> − T<sub>12.0</sub> against a local background, applies a bank of oriented line filters, keeps elongated objects of at least 10 px and scores each with a confidence; its threshold is tuned only on the tuning half of the labelled set.</p>
+<figure><img src="fig/fig3_meteosat.png" style="width:82%"><figcaption><b>Figure 7. Meteosat-9 IODC over the study region,</b> 15 January 2026, 00:00 UTC (development month). Left: 10.8 µm brightness temperature with the Natural Earth coastline in red, confirming that the native-grid geolocation places the coastline on the land–sea contrast. Right: the split-window BTD that the contrail detector uses. Contains EUMETSAT Meteosat-9 data (2026). Illustration of the input only; no contrail labels or detections are shown.</figcaption></figure>
+<p>The human-labelled set comprises <b>200 scenes of 256 × 256 px</b>, sampled across month, time of day and predicted contrail density, after a separate <b>20-scene pilot</b>. Each scene is labelled independently by <b>two</b> team members, blind to flight tracks, model predictions and detector output; disagreements are settled by discussion and documented. The scenes are split <b>100 tuning / 100 held-out</b>, stratified by the same variables (seed <span class="flag">⚑ Q16</span>, owner SV, before sampling). The agreement metric is open (<span class="flag">⚑ Q3</span>, owner IK, before the pilot); “object-level Cohen’s κ” needs a defined set of true negatives, so the candidate is κ on a fixed cell grid alongside object-level precision, recall and F1. The scoring rules are locked:</p>
+<ol class="small">
+<li>A contrail line must be at least 10 pixels long to count.</li>
+<li>Each scene is marked clear, partly obscured or obscured; obscured scenes are excluded from scoring.</li>
+<li>Uncertain lines are recorded and scored separately.</li>
+<li>Labellers never see flight tracks or predictions. The guide’s wording may be revised after the pilot; these rules may not.</li>
+</ol>
+<h3>6.2 Advection and parallax</h3>
+<p>Every SAC-forming segment — independent of any persistence prediction — is advected with ERA5 winds at its pressure level to each Meteosat slot 20–120 min after passage (Eq. 9, second-order Heun scheme, time steps ≤ 5 min). The advected line is then projected along the satellite line of sight from 45.5°E at the segment altitude, so that it is compared with the image where a high cloud actually appears. A match requires a detected object within <b>2 pixels</b> and <b>20°</b> of the projected segment. Without the projection, the displacement of a contrail at about 11 km (≈ 9 km at Mumbai to ≈ 18 km at Guwahati; Eq. 10, Figure 8) would exceed the tolerance almost everywhere; the projection is geometry, not a change of tolerance. The ground distance equivalent of 2 px is recorded because native pixels enlarge with viewing angle.</p>
+<div class="eq"><img src="eq/e9.png" style="width:5.0in"><span class="n">(9)</span></div>
+<div class="eq"><img src="eq/e10.png" style="width:1.25in"><span class="n">(10)</span></div>
+
+<h3>6.3 Observability and the segment label</h3>
+<p>A slot is observable only if all hold: ERA5 high-cloud fraction at and above the segment level &lt; 0.5; no opaque cloud in the matching window; VZA &lt; 60°; and valid satellite data covering the projected line. Because the IODC cloud mask has only clear-water, clear-land, cloud and no-data categories, how “opaque” is operationalised is the open question <span class="flag">⚑ Q11</span> (owner IK, before Phase 5 matching); candidate readings are (a) treat “cloud” as opaque, (b) define opacity from brightness-temperature thresholds, or (c) rely on ERA5 cloud fields. The generic cloud class is not relabelled as opaque without team approval. The locked aggregation turns per-slot matches into one label per segment (Figure 9); every slot’s image, distance, angle, cloud status, VZA and quality are retained for sensitivity analyses.</p>
+<figure><img src="fig/fig8_parallax.png" style="width:56%"><figcaption><b>Figure 8. Apparent parallax displacement</b> of a high cloud seen from Meteosat-9 (Eq. 10) against the viewing zenith angle, with the computed angles of five Indian cities. The shaded band is the 2-pixel matching tolerance at nadir; beyond VZA 60° (dashed) scenes are unobservable by rule.</figcaption></figure>
+<figure><img src="fig/fig7_labels.png" style="width:86%"><figcaption><b>Figure 9. Observation-conditioned segment label.</b> y = 1 if a qualifying match occurs at any observable slot in the 20–120-min window; y = 0 if at least two slots are observable and none matches; otherwise the label is missing and is never coerced to zero.</figcaption></figure>
+
+<!-- ───────────────────────────── 7 MODEL + EVAL ───────────────────────────── -->
+<h2>7. Correction model, splits and evaluation</h2>
+<h3>7.1 Model and locked features</h3>
+<p>The model is gradient-boosted trees (LightGBM) trained only on SAC-forming segments with y ∈ {0, 1}. Monotone constraints make the prediction non-decreasing in segment RHi and non-increasing in T − T<sub>LM</sub>. Probabilities are calibrated with isotonic regression on a validation fold carved from the training seasons, and logistic regression on RHi alone is the sanity baseline. The eighteen features are fixed (Appendix D): RHi at the segment level and at the levels above and below, vertical RHi gradient, temperature, T − T<sub>LM</sub>, pressure, cloud ice water content, high-cloud fraction, vertical velocity, vertical wind shear, distance to the WMO tropopause, latitude, longitude, and the sine and cosine of month and of local solar time. No detector output, held-out label or CoCiP output computed with learned humidity is a predictor. The correction is fed back to CoCiP preferably as a season × latitude-band RHi scaling (6–15°, 15–25°, 25–37°N) unless direct probability ranking is clearly better on validation data; the choice is recorded before outer-test evaluation.</p>
+<h3>7.2 Splits and leakage control</h3>
+<p>The primary evaluation is leave-one-season-out. Segments and images are grouped as connected components of the segment–image graph, so no flight or satellite image appears on both sides of a split; tuning, thresholds and calibration live only in validation data carved from training seasons. The secondary spatial test trains west of 80°E and tests east of it, assigning whole flight/image groups; it needs full-domain data. January 2026 was used only for software checks; the residual leakage risk is handled by reporting winter with and without January.</p>
+<h3>7.3 Metrics and calibration alignment</h3>
+<p>The primary metric is the BSS of STRATUM versus B3 on held-out seasons (Eq. 11). For a like-for-like comparison every baseline must forecast the same event y: B1–B4 are converted to probabilities by an isotonic map from each baseline’s score (corrected segment RHi where continuous, otherwise its binary persistence flag) to y, fitted only on the outer-training seasons with the same procedure; B0 comes from training-month frequencies. This specifies, and does not change, the locked comparison. Secondary metrics are hit rate, false-alarm ratio, critical success index, AUROC, Brier score and reliability diagrams [25].</p>
+<div class="eq"><img src="eq/e11.png" style="width:3.55in"><span class="n">(11)</span></div>
+<div class="eq"><img src="eq/e12.png" style="width:4.9in"><span class="n">(12)</span></div>
+<div class="eq"><img src="eq/e13a.png" style="width:4.3in"><span class="n">(13)</span></div>
+<div class="eq"><img src="eq/e13b.png" style="width:4.6in"></div>
+<h3>7.4 Uncertainty with only twelve flight days</h3>
+<p>Twelve flight days give folds of 3 (pre-monsoon), 4 (monsoon), 2 (post-monsoon) and 3 (winter; 2 without January) days, and a day-cluster bootstrap inside a two-day fold would be meaningless. The locked whole-day bootstrap (1,000 resamples, 95 %) is therefore applied to the pooled held-out predictions of the four outer folds, resampling days stratified by season; each replicate computes the BSS within each season and then the mean across seasons. Seasons with fewer than three evaluation days are reported as descriptive only. Sensitivity analyses (age window, distance/angle tolerances, minimum observable slots, mass fraction, η) are run after the primary analysis and reported only as sensitivity.</p>
+<h3>7.5 Sample-size planning</h3>
+<p>Whether 300 matched positives can be reached depends on the number of SAC-forming candidates N<sub>cand</sub> in the confirmed scope, the fraction f<sub>obs</sub> with at least two observable slots and the positive fraction p<sub>+</sub> among them (Eq. 14). These are estimated from pre-outcome counts and stated assumptions in a low/central/high grid for corridor and full-domain scopes before labelling <span class="team">[TEAM: populate before Phase 5]</span>; a scenario below 300 is a warning, not a reason to change the lock.</p>
+<div class="eq"><img src="eq/e14.png" style="width:5.0in"><span class="n">(14)</span></div>
+
+<!-- ───────────────────────────── 8 DECISION LAYER ───────────────────────────── -->
+<h2>8. Counterfactual altitude decision layer</h2>
+<p>For each flagged segment the locked alternatives are <b>−4,000, −2,000, +2,000 and +4,000 ft</b>, subject to aircraft limits and the FL250 floor. Each alternative re-runs SAC, the selected humidity treatment and CoCiP over the affected route portion, allowing the aircraft to enter a different supersaturated layer. Extra fuel comes from OpenAP including a climb/descent approximation; direct combustion CO₂ uses <b>3.16 kg CO₂ per kg</b> of Jet-A/Jet-A1 [28]. Contrail EF (J) and CO₂ mass cannot be subtracted without a cited climate metric: the conversion source and factors for the 20- and 100-year horizons are open (<span class="flag">⚑ Q5</span>, owner SV, before Phase 7). Until then EF and fuel/CO₂ are reported side by side and no net-warming number is published. Once a metric is approved, candidates are ranked by the lower bound of net benefit (Eq. 15) across humidity, detection, aircraft-performance and metric uncertainty, and an alert is eligible only if that lower bound is positive under <b>both</b> horizons. A per-segment card reports the flight, time (UTC and IST), planned level, calibrated probability, EF range (5th–95th percentile), best alternative, extra fuel and CO₂ and a confidence note; the note says “well covered” only if at least 50 labelled examples exist in the segment’s (season, latitude band, FL band, VZA band, day/night) cell, and “extrapolating” otherwise. ATC clearance, conflicts, capacity and dispatch practice are outside scope.</p>
+<div class="eq"><img src="eq/e15.png" style="width:6.4in"><span class="n">(15)</span></div>
+
+<!-- ───────────────────────────── 9 GOVERNANCE ───────────────────────────── -->
+<h2>9. Data governance, privacy and responsible release</h2>
+<p>ADS-B broadcasts identify aircraft. Public products show <b>commercial airline flights only</b>: a flight qualifies if its callsign matches <span class="mono">^[A-Z]{3}\d{1,4}[A-Z]{0,2}$</span>, its three-letter prefix is on a human-reviewed airline allowlist <span class="team">[TEAM: review the draft list against the prefixes observed]</span>, and its type is a transport-category type (modelled by OpenAP and not a business jet). Private, state, military and unidentified tracks are never exported; public flight identifiers are salted hashes. India’s ICAO24 block (0x800000–0x83FFFF) is used only to report the share of Indian-registered aircraft. Raw ERA5, EUMETSAT and ADS-B files are not presumed redistributable; releases contain code, manifests, derived labels and predictions and re-download instructions where upstream terms allow [15,19,26,31,32]. Every public output states that results are computational, that no real flight was changed, that ATC feasibility is not modelled and what the flight-data coverage is.</p>
+
+<!-- ───────────────────────────── 10 REPRODUCIBILITY ───────────────────────────── -->
+<h2>10. Reproducibility and implementation status</h2>
+<p>The code is a single pinned Python 3.12 package (dependency lock file; pycontrails 0.64.0, satpy 0.60.0, OpenAP 2.6.2) with thin Colab launcher notebooks; no pipeline logic lives in notebooks. Every change passes linting, strict type checking and the test suite in continuous integration, and <span class="mono">stratum verify-lock</span> compares the pre-registration file and settled answers against the lock on every run; a run cannot be called final unless the lock verifies or the deviation log records an approved change. As of 15 October 2026 the suite contains 124 tests, including the thermodynamic known answers (Appendix A), exact interpolation on analytic fields, synthetic trajectories with injected spikes, 5- and 15-minute gaps, a ground point, a callsign change and a position jump, tropopause profiles with known answers, and humidity-scaling direction checks. The Phase 2 pipeline (segments, ERA5 features, η, SAC flags and CoCiP for B1–B3 with Monte Carlo ranges, plus the required sanity report) is implemented; its first development-month run is pending.</p>
+<table>
+<thead><tr><th style="width:4%">#</th><th>Planned order of work</th><th style="width:30%">Gate</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Lock the analysis plan; acquire and audit data; reproduce SAC and CoCiP on known examples</td><td>Done (Phases 0–1), except the November coverage audit</td></tr>
+<tr><td>2</td><td>Physics baseline B1–B3 for the development month; sanity report reviewed by the team</td><td>Phase 2</td></tr>
+<tr><td>3</td><td>Detector and overlays on clear January days</td><td>Phase 3</td></tr>
+<tr><td>4</td><td>Pilot labels, frozen guide, 200 scenes, segment labels with parallax and observability; ≥ 300 check</td><td>Phase 5; Q3, Q4, Q11, Q16 settled first</td></tr>
+<tr><td>5</td><td>One locked outer seasonal evaluation of B0–B4 and STRATUM; all final-run logs preserved</td><td>Phases 6–7</td></tr>
+<tr><td>6</td><td>Counterfactual ranking only after a cited climate metric is approved</td><td>Phase 7; Q5 settled first</td></tr>
+</tbody></table>
+
+<!-- ───────────────────────────── 11 LIMITATIONS ───────────────────────────── -->
+<h2>11. Limitations and threats to validity</h2>
+<ol>
+<li><b>Flight sample.</b> Twelve first-of-month days are not a continuous year; folds are small, and confidence intervals will be wide. The coverage audit measures November 2026, not the evaluation year.</li>
+<li><b>Satellite observability.</b> The detector preferentially sees wide, aged, optically thick contrails in clear scenes; monsoon cloud, high viewing angles in the east and north-east and sensor outages reduce observability. Labels are observation-conditioned, not a census.</li>
+<li><b>Reanalysis.</b> ERA5 is hourly and gridded; thin supersaturated layers and humidity extremes are smoothed by 25–50 hPa level spacing. North Atlantic bias values are not assumed to hold over India.</li>
+<li><b>Regional transfer.</b> Corrections and detectors developed elsewhere may not transfer; a local correction may in turn overfit one year.</li>
+<li><b>Aircraft performance.</b> Type, engine, mass, fuel flow, η and nvPM emissions are mapped or modelled, with logged fallbacks; OpenAP is a model, not flight-recorder data.</li>
+<li><b>Label noise.</b> Human and automated detections disagree; double labelling, adjudication records and held-out detector metrics reduce but do not remove this.</li>
+<li><b>Forecast–observation confounding.</b> Scores against detected objects depend on both the atmosphere and the observation process; the common-target calibration (Section 7.3) is required for a fair comparison.</li>
+<li><b>Radiative uncertainty.</b> CoCiP EF combines warming and cooling terms and depends on parameters; a horizon-specific metric is needed before any comparison with CO₂.</li>
+<li><b>Operational feasibility and external validity.</b> ATC acceptance, conflicts, capacity, turbulence and dispatch behaviour are not modelled; one year and one development corridor cannot establish long-term or national mitigation potential.</li>
+</ol>
+
+<!-- ───────────────────────────── 12 INTERPRETATION ───────────────────────────── -->
+<h2>12. Pre-committed interpretation rules</h2>
+<table>
+<thead><tr><th style="width:24%">Outcome</th><th style="width:40%">Meaning</th><th>Next step</th></tr></thead>
+<tbody>
+<tr><td><b>H1 and H2 supported</b></td><td>Raw ERA5 flags fewer events than the satellite-detected minimum, and the local correction improves observation-conditioned skill.</td><td>Further validation; recompute EF with the correction and report it with uncertainty. Not by itself evidence of total Indian contrail prevalence or realised mitigation.</td></tr>
+<tr><td><b>H1 supported, H2 not</b></td><td>Under-prediction relative to detections is visible, but the features do not correct it on held-out seasons.</td><td>Publish the comparison and its limits without tuning on test seasons; look for better humidity information on Indian routes.</td></tr>
+<tr><td><b>H1 not supported</b></td><td>No under-count relative to detections is shown. This does not prove ERA5 unbiased, because the satellite misses events.</td><td>Examine observability and uncertainty; focus on H3/H4 to find the few flights and night routes where avoidance still matters.</td></tr>
+<tr><td><b>H2 not supported or negative</b></td><td>The model is not demonstrably better than B3 under the locked criterion.</td><td>Retain B3 as the reference and report the result; never change the threshold after the fact.</td></tr>
+<tr><td><b>Fewer than 300 matched positives, or unresolved coverage/licence/observability definitions</b></td><td>The confirmatory analysis is not run, or is reported as inconclusive.</td><td>The remedy is more valid data (more scenes before outcomes are seen, a second satellite), never a weaker label or an unreported substitution.</td></tr>
+</tbody></table>
+
+<!-- ───────────────────────────── 13 HISTORY ───────────────────────────── -->
+<h2>13. Document history and claim verification</h2>
+<p>Version 1.0 (12 October 2026) is the methods paper on which the analysis plan was locked on 13 October. A companion comprehensive edition (v2.0, 15 October) consolidates the project synopsis, phase plan and Lean Canvas with a claim ledger. A protocol rewrite of 15 October (v1.1) was reviewed by the authors against the lock; this version 1.2 corrects the remaining inconsistencies with it (open-question status, the confidence-note rule, an unrendered equation), corrects two reference author lists, adds the Phase-1 acquisition record and figures from the team’s own data, and records the implementation clarifications of Section 5.2. No locked value changed (Appendix E). Every DOI in the reference list was resolved on 15 October 2026 and its title, authors, journal, volume and pages compared with the citation; physical constants and known answers were recomputed from the printed equations; dataset facts were checked against the providers’ documentation and the team’s own download manifests. Items that cannot be verified now — coverage percentages, agreement statistics, detections, scores and benefits — are future results and are not quoted anywhere in this document.</p>
+
+<!-- ───────────────────────────── DECLARATIONS ───────────────────────────── -->
+<h2>Declarations</h2>
+<p><b>Data availability.</b> No labels, detections, matches, model scores or hypothesis results exist at this stage. Phase-1 inputs are held by the team and are not redistributed with this manuscript: ERA5 and Copernicus-derived information are used under the Copernicus licence (“Contains modified Copernicus Climate Change Service information 2026”; neither the European Commission nor ECMWF is responsible for any use of this information); EUMETSAT Meteosat-9 data are used under the applicable EUMETSAT data policy with credit to EUMETSAT [26,31]; ADS-B Exchange and OpenSky data remain subject to their own terms <span class="team">[TEAM: verify exact ADS-B Exchange sample attribution]</span>. Derived outputs and re-download instructions will be released where upstream terms and the privacy rules of Section 9 permit.</p>
+<p><b>Code availability.</b> The analysis code, configuration, pre-registration lock and tests are held in a version-controlled repository; a public release and archive DOI are planned <span class="team">[TEAM: repository link and release date]</span>.</p>
+<p><b>Author contributions (CRediT, proposed).</b> S.V.: conceptualisation, methodology, software, formal analysis, writing — original draft. A.H.: data curation (flight data), software, investigation, validation. I.K.: data curation (satellite), investigation, methodology (detection and labelling), validation. A.S.: visualisation, project administration, communication. V.P.: supervision, scientific review, writing — review and editing. <span class="team">[TEAM: all authors confirm]</span></p>
+<p><b>Use of AI tools.</b> The authors used AI assistants (Anthropic Claude) to find and summarise literature, explain physics, check calculations, write and test analysis code, generate figures from the team’s data and draft and cross-check this manuscript. All references were opened and checked, every pre-registered value and design decision was made and approved by the authors, and no AI-generated labels, observations, scores or results are reported.</p>
+<p><b>Acknowledgements.</b> We thank our supervisor Dr. Varsha Pant. ERA5 is provided by the Copernicus Climate Change Service and ECMWF; Meteosat-9 data by EUMETSAT; flight data by ADS-B Exchange; aircraft metadata by the OpenSky Network; and open-source software by the pycontrails, OpenAP, satpy and Natural Earth communities. <span class="team">[TEAM: add any further acknowledgements and funding (none received to date)]</span></p>
+<p><b>Competing interests.</b> <span class="team">[TEAM: each author confirms individually before submission — proposed wording “The authors declare no competing interests.”]</span></p>
+<p><b>Ethics.</b> The study involves no human participants beyond the authors, who are the labellers. ADS-B data are handled under Section 9.</p>
+
+<!-- ───────────────────────────── APPENDICES ───────────────────────────── -->
+<h2>Appendix A. Thermodynamic known-answer checks</h2>
+<table>
+<thead><tr><th style="width:18%">Check</th><th style="width:32%">Input</th><th style="width:30%">Recomputed value</th><th>Use</th></tr></thead>
+<tbody>
+<tr><td>Mixing-line slope</td><td>p = 250 hPa, η = 0.30, locked constants</td><td class="mono">G = 1.64137 Pa K⁻¹</td><td>SAC unit test</td></tr>
+<tr><td>Threshold temperature</td><td>same; Murphy–Koop liquid water, Brent root</td><td class="mono">T_LM = 231.237 K = −41.913 °C</td><td>SAC unit test</td></tr>
+<tr><td>Point A</td><td>T = −52 °C, RHi = 0.60</td><td class="mono">RHw 0.368, T_LC −49.90 °C</td><td>forms, not persistent</td></tr>
+<tr><td>Point B</td><td>T = −50 °C, RHi = 1.12</td><td class="mono">RHw 0.698, T_LC −47.93 °C</td><td>forms and persists</td></tr>
+<tr><td>Point C</td><td>T = −38 °C, RHi = 0.58</td><td class="mono">RHw 0.401, T_LC −49.75 °C</td><td>does not form</td></tr>
+<tr><td>Monotonicity</td><td>η 0.28 → 0.32</td><td class="mono">G and T_LM increase</td><td>newer engines form contrails at warmer T</td></tr>
+<tr><td>Limit</td><td>RHw = 1</td><td class="mono">T_LC = T_LM exactly</td><td>boundary test</td></tr>
+<tr><td>ISA</td><td>FL250, FL340</td><td class="mono">376.0 hPa, 250.0 hPa</td><td>flight-level conversion</td></tr>
+<tr><td>Calendar</td><td>1 Mar 2025 – 28 Feb 2026</td><td class="mono">365 d, 8,760 h, 35,040 nominal slots</td><td>denominators only, not completeness</td></tr>
+</tbody></table>
+
+<h2>Appendix B. Open questions (deliberately unfixed at lock time)</h2>
+<table>
+<thead><tr><th style="width:7%">ID</th><th style="width:28%">Question</th><th style="width:12%">Owner / deadline</th><th>Status and recommended disposition</th></tr></thead>
+<tbody>
+<tr><td>Q3</td><td>Label-agreement metric</td><td>IK · before pilot</td><td>Open. Recommend κ on a fixed cell grid plus object-level precision/recall/F1 with one-to-one matching and scene-bootstrap intervals.</td></tr>
+<tr><td>Q4</td><td>Detection-efficiency thresholds (Driver et al.)</td><td>IK · before Phase 5</td><td>Open. Take thresholds from the paper itself; use only for the secondary, efficiency-adjusted H1.</td></tr>
+<tr><td>Q5</td><td>EF → CO₂-equivalent factors (20/100 yr)</td><td>SV · before Phase 7</td><td>Open. No net-benefit number until a cited method, sign convention, units and uncertainty are approved.</td></tr>
+<tr><td>Q11</td><td>Which cloud-mask classes count as opaque</td><td>IK · before matching</td><td>Open. IODC CLM has no opaque class; options (a)–(c) in Section 6.3.</td></tr>
+<tr><td>Q12</td><td>CoCiP Monte Carlo size</td><td>SV</td><td><b>Settled 15 Oct 2026: N = 20</b>, with the N = 20 vs 40 convergence check reported.</td></tr>
+<tr><td>Q16</td><td>Seed for the 100/100 scene split</td><td>SV · before sampling</td><td>Open. Record before any scene is sampled.</td></tr>
+<tr><td>Scope</td><td>Full domain vs corridor for confirmatory H1–H4</td><td>Team · before Phase 5</td><td>Recommend full domain (Section 4.1).</td></tr>
+</tbody></table>
+
+<h2>Appendix C. Claim and evidence ledger (principal external claims)</h2>
+<table>
+<thead><tr><th style="width:42%">Claim as used</th><th style="width:30%">Source checked</th><th>Disposition</th></tr></thead>
+<tbody>
+<tr><td>2018 aviation ERF +100.9 mW m⁻²; contrail cirrus 57.4; CO₂ 34.3</td><td>Lee et al. 2021 [1]</td><td>Verified; ERF, not RF</td></tr>
+<tr><td>2019 contrail RF 62.1 (34.8–74.8) mW m⁻²; 14 % net-warming flights; 2 % → 80 % of EF; India + China 19 % distance, 6 % EF; humidity correction most influential</td><td>Teoh et al. 2024 [2]</td><td>Verified; global and regional (India + China) statistics</td></tr>
+<tr><td>ERA5 RHi bias up to −5.5 pp at 250 hPa; 7.9 % vs 12.1 % persistence flags</td><td>Wolf et al. 2025 [3]</td><td>Verified; North Atlantic, not India</td></tr>
+<tr><td>2 km imager: 46 ± 2 % of segments observable; 72 ± 2 % of LW forcing</td><td>Driver et al. 2025 [5]</td><td>Verified; idealised, not an India efficiency</td></tr>
+<tr><td>Randomised trial: 64 % fewer contrails, p = 0.0331, ~2 % fuel</td><td>Sonabend-W et al. 2024 [12]</td><td>Verified; US trial, not STRATUM evidence</td></tr>
+<tr><td>Japan: ±2,000 ft on 1.7 % of flights cuts EF up to 59 %</td><td>Teoh et al. 2020 [30]</td><td>Verified</td></tr>
+<tr><td>Night ≈ 25 % of traffic, 60–80 % of contrail forcing</td><td>Stuber et al. 2006 [47]</td><td>Verified; south-east England site</td></tr>
+<tr><td>India third-largest domestic market; fleet 395 → 844</td><td>News on AIR 2025 [37]</td><td>Verified against the cited report</td></tr>
+<tr><td>Operator trials (54 %, 62 %)</td><td>Google [38,39]</td><td>Operator-reported, not peer-reviewed</td></tr>
+<tr><td>ESSD MSG/SEVIRI labelled dataset authorship</td><td>DOI record [24]</td><td>Santos Gabriel, Bugliaro, Montag et al. (not “Voigt et al.”)</td></tr>
+<tr><td>Teoh et al. 2022 authorship</td><td>DOI record [33]</td><td>Teoh, Schumann, Gryspeerdt et al. (corrected in v1.2)</td></tr>
+<tr><td>“No India validation study exists”</td><td>Targeted search</td><td>Not stated as fact; provisional gap</td></tr>
+</tbody></table>
+
+<h2>Appendix D. Locked feature dictionary</h2>
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:30%">Feature (configuration name)</th><th style="width:14%">Unit</th><th>Source / derivation</th></tr></thead>
+<tbody>
+<tr><td>1</td><td class="mono">rhi_at_level</td><td>fraction</td><td>ERA5 q, T at segment p (log-p), Murphy–Koop ice; monotone increasing</td></tr>
+<tr><td>2–3</td><td class="mono">rhi_level_above / rhi_level_below</td><td>fraction</td><td>Same on the native levels bracketing the segment</td></tr>
+<tr><td>4</td><td class="mono">rhi_vertical_gradient</td><td>km⁻¹</td><td>(RHi above − RHi below) / geopotential-height difference</td></tr>
+<tr><td>5</td><td class="mono">temperature</td><td>K</td><td>ERA5 at segment p</td></tr>
+<tr><td>6</td><td class="mono">temp_minus_TLM</td><td>K</td><td>T − T<sub>LM</sub> with the segment’s η; monotone decreasing</td></tr>
+<tr><td>7</td><td class="mono">pressure</td><td>Pa</td><td>ISA pressure of barometric altitude</td></tr>
+<tr><td>8</td><td class="mono">cloud_ice_water_content</td><td>kg kg⁻¹</td><td>ERA5 specific cloud ice water content</td></tr>
+<tr><td>9</td><td class="mono">high_cloud_fraction</td><td>0–1</td><td>Maximum ERA5 cloud fraction at and above the segment</td></tr>
+<tr><td>10</td><td class="mono">vertical_velocity</td><td>Pa s⁻¹</td><td>ERA5 ω</td></tr>
+<tr><td>11</td><td class="mono">vertical_wind_shear</td><td>m s⁻¹ km⁻¹</td><td>Wind-vector difference between bracketing levels per km</td></tr>
+<tr><td>12</td><td class="mono">distance_to_tropopause_wmo</td><td>m</td><td>Segment geopotential height − WMO tropopause height (signed)</td></tr>
+<tr><td>13–14</td><td class="mono">latitude / longitude</td><td>degrees</td><td>Segment midpoint; spatial split uses whole groups</td></tr>
+<tr><td>15–16</td><td class="mono">month_sin / month_cos</td><td>—</td><td>Cyclic month</td></tr>
+<tr><td>17–18</td><td class="mono">local_solar_time_sin / _cos</td><td>—</td><td>UTC + longitude/15 h, cyclic</td></tr>
+</tbody></table>
+
+<h2>Appendix E. Concordance with the locked pre-registration</h2>
+<table class="small">
+<thead><tr><th style="width:30%">Locked item</th><th style="width:44%">Locked value</th><th>Section</th></tr></thead>
+<tbody>
+<tr><td>Domain, cruise floor, corridor</td><td>6–37°N, 68–98°E; FL250; DEL–BOM</td><td>4.1</td></tr>
+<tr><td>Periods, folds, January rule</td><td>Mar 2025–Feb 2026; 4 seasons; winter with and without Jan 2026</td><td>4.1, 7.2</td></tr>
+<tr><td>Spatial split</td><td>80°E; train west, test east</td><td>7.2</td></tr>
+<tr><td>Coverage rule</td><td>OpenSky if ≥ 50 % continuous (gap ≤ 10 min), else ADS-B Exchange days</td><td>4.2</td></tr>
+<tr><td>Trajectory thresholds</td><td>6,000 ft/min; 100 kt; 1 min; fill ≤ 10 min at constant altitude</td><td>5.2</td></tr>
+<tr><td>Aircraft</td><td>0.80 MTOW (0.70/0.90); η OpenAP, 0.30 default (0.25–0.40)</td><td>5.3</td></tr>
+<tr><td>SAC constants, persistence, saturation</td><td>1.23; 1004; 0.622; 43.2 MJ kg⁻¹; RHi ≥ 1; Murphy–Koop</td><td>5.6</td></tr>
+<tr><td>Interpolation</td><td>linear time; bilinear; linear in log-p</td><td>5.4</td></tr>
+<tr><td>Detection and labels</td><td>BTD; 200 × 256 px; 20 pilot; 2 labellers; discussion; 100/100; scoring rules</td><td>6.1</td></tr>
+<tr><td>Matching</td><td>20–120 min; 2 px; 20°; ERA5 winds; parallax; y rule with ≥ 2 slots</td><td>6.2, 6.3</td></tr>
+<tr><td>Observability</td><td>high cloud &lt; 0.5; no opaque cloud (⚑ Q11); VZA &lt; 60°; unobservable = missing</td><td>6.3</td></tr>
+<tr><td>Baselines</td><td>B0 climatology; B1 raw; B2 ÷ 0.95; B3 pycontrails latitude; B4 optional</td><td>5.7</td></tr>
+<tr><td>Metrics, bootstrap</td><td>BSS vs B3 primary; secondary set; whole days, 1,000, 95 %</td><td>7.3, 7.4</td></tr>
+<tr><td>Hypotheses, minimum labels</td><td>H1–H4 thresholds as in Section 3.2; 300 matched positives</td><td>3.2, 3.3</td></tr>
+<tr><td>Model</td><td>LightGBM; 18 features; monotone RHi ↑, T − T<sub>LM</sub> ↓; isotonic; logistic sanity; lat bands</td><td>7.1, App. D</td></tr>
+<tr><td>Decision layer</td><td>±2,000/±4,000 ft; OpenAP; 3.16; 20/100 yr; lower bound &gt; 0 for all horizons; ≥ 50 examples</td><td>8</td></tr>
+<tr><td>Open by design</td><td>Q3, Q4, Q5, Q11, Q16 (Q12 settled: N = 20)</td><td>App. B</td></tr>
+</tbody></table>
+
+<!-- ───────────────────────────── REFERENCES ───────────────────────────── -->
+<h2>References</h2>
+<div class="refs">
+<p>[1] Lee, D. S., Fahey, D. W., Skowron, A., et al. (2021). The contribution of global aviation to anthropogenic climate forcing for 2000 to 2018. <i>Atmospheric Environment</i>, 244, 117834. <span class="doi">doi:10.1016/j.atmosenv.2020.117834</span></p>
+<p>[2] Teoh, R., Engberg, Z., Schumann, U., Voigt, C., Shapiro, M., Rohs, S., &amp; Stettler, M. E. J. (2024). Global aviation contrail climate effects from 2019 to 2021. <i>Atmos. Chem. Phys.</i>, 24, 6071–6093. <span class="doi">doi:10.5194/acp-24-6071-2024</span></p>
+<p>[3] Wolf, K., Bellouin, N., Boucher, O., Rohs, S., &amp; Li, Y. (2025). Correction of ERA5 temperature and relative humidity biases by bivariate quantile mapping for contrail formation analysis. <i>Atmos. Chem. Phys.</i>, 25, 157–181. <span class="doi">doi:10.5194/acp-25-157-2025</span></p>
+<p>[4] Antonopoulos, M., Juvin-Quarroz, J., &amp; Boucher, O. (2026). Technical note: Hybrid machine learning model for bias correction of UTLS relative humidity against IAGOS observations in ERA5 reanalysis. <i>Atmos. Chem. Phys.</i>, 26, 4771–4784. <span class="doi">doi:10.5194/acp-26-4771-2026</span></p>
+<p>[5] Driver, O. G. A., Stettler, M. E. J., &amp; Gryspeerdt, E. (2025). Factors limiting contrail detection in satellite imagery. <i>Atmos. Meas. Tech.</i>, 18, 1115–1134. <span class="doi">doi:10.5194/amt-18-1115-2025</span></p>
+<p>[6] Mannstein, H., Meyer, R., &amp; Wendling, P. (1999). Operational detection of contrails from NOAA-AVHRR data. <i>Int. J. Remote Sens.</i>, 20(8), 1641–1660. <span class="doi">doi:10.1080/014311699212650</span></p>
+<p>[7] Santos Gabriel, V., Bugliaro, L., Piontek, D., Ries, S., &amp; Voigt, C. (2026). An adaptive segmentation approach for contrail detection in Meteosat Second Generation satellite imagery. <i>Atmos. Meas. Tech.</i>, 19, 3271–3289. <span class="doi">doi:10.5194/amt-19-3271-2026</span></p>
+<p>[8] Gierens, K., Matthes, S., &amp; Rohs, S. (2020). How well can persistent contrails be predicted? <i>Aerospace</i>, 7(12), 169. <span class="doi">doi:10.3390/aerospace7120169</span></p>
+<p>[9] Schumann, U. (2012). A contrail cirrus prediction model. <i>Geosci. Model Dev.</i>, 5, 543–580. <span class="doi">doi:10.5194/gmd-5-543-2012</span></p>
+<p>[10] Schumann, U. (1996). Über Bedingungen zur Bildung von Kondensstreifen aus Flugzeugabgasen [On conditions for contrail formation from aircraft exhausts]. <i>Meteorol. Z.</i>, 5, 4–23. <span class="doi">doi:10.1127/metz/5/1996/4</span></p>
+<p>[11] Murphy, D. M., &amp; Koop, T. (2005). Review of the vapour pressures of ice and supercooled water for atmospheric applications. <i>Q. J. R. Meteorol. Soc.</i>, 131, 1539–1565. <span class="doi">doi:10.1256/qj.04.94</span></p>
+<p>[12] Sonabend-W, A., Elkin, C., Dean, T., et al. (2024). Feasibility test of per-flight contrail avoidance in commercial aviation. <i>Commun. Eng.</i>, 3, 184. <span class="doi">doi:10.1038/s44172-024-00329-7</span></p>
+<p>[13] Copernicus Climate Change Service (C3S). ERA5 hourly data on pressure levels from 1940 to present; dataset documentation and licence. cds.climate.copernicus.eu (accessed 15 Oct 2026).</p>
+<p>[14] Hersbach, H., Bell, B., Berrisford, P., et al. (2020). The ERA5 global reanalysis. <i>Q. J. R. Meteorol. Soc.</i>, 146, 1999–2049. <span class="doi">doi:10.1002/qj.3803</span></p>
+<p>[15] OpenSky Network. FAQ, historical-data access (Trino), aircraft database and terms. opensky-network.org (accessed 15 Oct 2026).</p>
+<p>[16] EUMETSAT. Meteosat Second Generation services: Indian Ocean Data Coverage (IODC). eumetsat.int/msg-services (accessed 15 Oct 2026).</p>
+<p>[17] EUMETSAT. MSG High Rate SEVIRI Level 1.5 data guide. user.eumetsat.int (accessed 15 Oct 2026).</p>
+<p>[18] EUMETSAT Data Store. Cloud Mask — MSG — Indian Ocean, collection EO:EUM:DAT:MSG:CLM-IODC. data.eumetsat.int (accessed 15 Oct 2026).</p>
+<p>[19] ADS-B Exchange. Sample data (readsb-hist, first day of each month). adsbexchange.com/data-products/sample-data (accessed 15 Oct 2026).</p>
+<p>[20] Natural Earth. 1:50m physical vectors (coastline) and terms of use. naturalearthdata.com (accessed 15 Oct 2026).</p>
+<p>[21] Sun, J., Hoekstra, J. M., &amp; Ellerbroek, J. (2020). OpenAP: An open-source aircraft performance model for air transportation studies and simulations. <i>Aerospace</i>, 7(8), 104. <span class="doi">doi:10.3390/aerospace7080104</span></p>
+<p>[22] pycontrails contributors. Humidity scaling, CoCiP and emissions documentation, v0.64.0. py.contrails.org (accessed 15 Oct 2026).</p>
+<p>[23] Cirium / FlightStats. Historical Flight Status API documentation and licensing. developer.flightstats.com (accessed 15 Oct 2026). Not used: premium service.</p>
+<p>[24] Santos Gabriel, V., Bugliaro, L., Montag, M., Ries, S., Wang, Z., Widmaier, K., Arico, M., Unterstrasser, S., Mayer, J., Menekay, D., Marsing, A., de la Torre Castro, E., Megill, L., Scheibe, M., &amp; Voigt, C. (2026). A manually labeled contrail dataset from MSG/SEVIRI. <i>Earth Syst. Sci. Data</i>, 18, 2397–2412. <span class="doi">doi:10.5194/essd-18-2397-2026</span></p>
+<p>[25] WMO WWRP/WGNE Joint Working Group on Forecast Verification Research. Forecast verification methods: Brier score, Brier skill score and reliability diagrams. wmo.int (accessed 15 Oct 2026).</p>
+<p>[26] EUMETSAT. Data Policy (last amended 27 June 2024). eumetsat.int (accessed 15 Oct 2026).</p>
+<p>[27] WMO (1957). Definition of the lapse-rate tropopause; Reichler, T., Dameris, M., &amp; Sausen, R. (2003). Determining the tropopause height from gridded data. <i>Geophys. Res. Lett.</i>, 30(20), 2042. <span class="doi">doi:10.1029/2003GL018240</span></p>
+<p>[28] ICAO. CORSIA FAQs, fuel conversion factors and Annex 16, Volume IV. icao.int (accessed 15 Oct 2026).</p>
+<p>[29] Hofer, S., Gierens, K., &amp; Rohs, S. (2024). How well can persistent contrails be predicted? An update. <i>Atmos. Chem. Phys.</i>, 24, 7911–7925. <span class="doi">doi:10.5194/acp-24-7911-2024</span></p>
+<p>[30] Teoh, R., Schumann, U., Majumdar, A., &amp; Stettler, M. E. J. (2020). Mitigating the climate forcing of aircraft contrails by small-scale diversions and technology adoption. <i>Environ. Sci. Technol.</i>, 54(5), 2941–2950. <span class="doi">doi:10.1021/acs.est.9b05608</span></p>
+<p>[31] EUMETSAT. Getting started using data: registration and licensing guide. user.eumetsat.int (accessed 15 Oct 2026).</p>
+<p>[32] Copernicus Climate Change Service. ERA5 documentation and data-access guidance. confluence.ecmwf.int (accessed 15 Oct 2026).</p>
+<p>[33] Teoh, R., Schumann, U., Gryspeerdt, E., Shapiro, M., Molloy, J., Koudis, G., Voigt, C., &amp; Stettler, M. E. J. (2022). Aviation contrail climate effects in the North Atlantic from 2016 to 2021. <i>Atmos. Chem. Phys.</i>, 22, 10919–10935. <span class="doi">doi:10.5194/acp-22-10919-2022</span></p>
+<p>[34] Kärcher, B. (2018). Formation and radiative forcing of contrail cirrus. <i>Nat. Commun.</i>, 9, 1824. <span class="doi">doi:10.1038/s41467-018-04068-0</span></p>
+<p>[35] Schäfer, M., Strohmeier, M., Lenders, V., Martinovic, I., &amp; Wilhelm, M. (2014). Bringing up OpenSky: A large-scale ADS-B sensor network for research. <i>Proc. IPSN ’14</i>, 83–94. <span class="doi">doi:10.1109/IPSN.2014.6846743</span></p>
+<p>[36] Ng, J. Y.-H., McCloskey, K., Cui, J., et al. (2024). Contrail detection on GOES-16 ABI with the OpenContrails dataset. <i>IEEE Trans. Geosci. Remote Sens.</i>, 62, 1–14. <span class="doi">doi:10.1109/TGRS.2023.3345226</span></p>
+<p>[37] News on AIR (20 Dec 2025). India emerges as world’s third-largest domestic aviation market. All India Radio, newsonair.gov.in (accessed 15 Oct 2026).</p>
+<p>[38] Google Research. Project Contrails — testing with American Airlines. sites.research.google/gr/contrails (accessed 15 Oct 2026). Operator-reported.</p>
+<p>[39] Google (19 Mar 2026). Google AI helps airplanes avoid contrails in new study. blog.google (accessed 15 Oct 2026). Operator-reported.</p>
+<p>[40] Carver, R. W., &amp; Merose, A. (2023). ARCO-ERA5: An analysis-ready cloud-optimized reanalysis dataset. 103rd AMS Annual Meeting, paper 4A.1. <span class="flag">⚑</span> citation record not independently verified.</p>
+<p>[41] Shapiro, M., Engberg, Z., Teoh, R., Stettler, M., Dean, T., &amp; Abbott, T. pycontrails: Python library for modeling aviation climate impacts, v0.64.0 [software]. Zenodo. <span class="doi">doi:10.5281/zenodo.23065722</span></p>
+<p>[42] Raspaud, M., Hoese, D., Lahtinen, P., et al. (2026). pytroll/satpy v0.60.0 [software]. Zenodo. <span class="doi">doi:10.5281/zenodo.18864547</span></p>
+<p>[43] OurAirports. Airports database: identifiers and coordinates. ourairports.com/data (accessed 15 Oct 2026).</p>
+<p>[44] EUMETSAT. Cloud Mask (CLM) product guide. user.eumetsat.int (accessed 15 Oct 2026).</p>
+<p>[45] Sonntag, D. (1994). Fortschritte in der Hygrometrie [Advancements in the field of hygrometry]. <i>Meteorol. Z.</i>, 3, 51–66. <span class="doi">doi:10.1127/metz/3/1994/51</span></p>
+<p>[46] Platt, J. C., Shapiro, M. L., Engberg, Z., et al. (2024). The effect of uncertainty in humidity and model parameters on the prediction of contrail energy forcing. <i>Environ. Res. Commun.</i>, 6(9), 095015. <span class="doi">doi:10.1088/2515-7620/ad6ee5</span></p>
+<p>[47] Stuber, N., Forster, P., Rädel, G., &amp; Shine, K. P. (2006). The importance of the diurnal and annual cycle of air traffic for contrail radiative forcing. <i>Nature</i>, 441, 864–867. <span class="doi">doi:10.1038/nature04877</span></p>
+</div>
+</section>
+</body>
+</html>

@@ -83,7 +83,7 @@ default-groups = ["dev"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["notebooks", "colab"]
+extend-exclude = ["notebooks", "colab", "docs/paper"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E501"]  # long literal test fixtures read better on one line
