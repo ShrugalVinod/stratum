@@ -1,13 +1,15 @@
 ```
 ═══ PHASE 3 GATE REPORT — Satellite contrail detector and overlays — DRAFT 15 Oct 2026 ═══
-Status:          DRAFT — waiting for team approval of figures + the optional-CNN decision
+Status:          DRAFT — figures approved and CNN skipped (S. Vinod, 15 Oct); waiting for the
+                 time-lapse check and "Phase 3 is accepted"
 Calendar:        ahead (Phase 3 window in the team plan is after Phase 2, 20 Dec)
 
 Done-when checklist:
   [x] Detector tests pass (7 detector, 3 overlay, 5 parallax; 140 in the suite). It ran on
       the 3 January 2026 satellite days (1, 13, 14 Jan; 104 slots each); per-day object counts
       and confidence histograms are below.
-  [ ] 3 overlay figures + 1 time-lapse approved by the team for brief/video/website.
+  [~] Figures approved by the team (15 Oct): Arabian Sea showcase + overlay_1300 (and the
+      other overlays as candidates); time-lapse check pending.
   [x] Detector parameters documented with reasons (configs/pipeline.yaml → detector;
       docs/decisions.md, 15 Oct entries).
   [ ] Phase Gate Report — this draft.
@@ -49,8 +51,9 @@ Deviation from the build-prompt wording (not pre-registered): §3.3 asks for 3 J
 Team decisions needed:
   1. Approve the figures for brief/video/website. Proposed: Arabian Sea showcase
      (2026-01-15 00:00) + overlay_1300 ("physics alone is not enough") + timelapse.mp4.
-  2. Optional CNN detector (§3.4, exploratory, T4 GPU): proposed SKIP for now. It is not part
-     of the pre-registered method and can be revisited after Phase 5.
+  2. Optional CNN detector (§3.4): SKIPPED for now (team, 15 Oct). It is not part of the
+     pre-registered method; OpenContrails (GOES-16) needs fine-tuning on our Phase 5 labels.
+     Revisit after Phase 5 as an exploratory comparison only.
 Decisions made:  docs/decisions.md (15 Oct). Deviations: none new. Lock verifies OK.
 Next:            team approves → "Phase 3 is accepted" → Phase 4 (web app v0, due 18 Dec).
 ════════════════════════════════════════════
