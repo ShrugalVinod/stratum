@@ -207,6 +207,33 @@ def run_cocip(
             _summary(f"run-cocip {sc} {d}", res)
 
 
+@app.command("cocip-convergence")
+def cocip_convergence(
+    day: Annotated[str, typer.Option(help="YYYY-MM-DD (a day already run by build-segments)")],
+    scaling: Annotated[str, typer.Option(help="B1, B2 or B3")] = "B1",
+    max_age_h: Annotated[float, typer.Option(help="CoCiP max contrail age, hours")] = 24.0,
+) -> None:
+    """Q12 check: EF percentiles with 20 vs 40 Monte Carlo members (one day)."""
+    from datetime import date as _date
+
+    from stratum import phase2
+
+    res = phase2.cocip_convergence(
+        drive_root(), _date.fromisoformat(day), scaling, max_age_h=max_age_h
+    )
+    _summary(f"cocip-convergence {scaling} {day}", res)
+
+
+@app.command("phase2-report")
+def phase2_report(month: Annotated[str, typer.Option(help="YYYY-MM")]) -> None:
+    """Write the Phase 2 sanity report to <drive>/reports/phase2_sanity/<month>/."""
+    from stratum.evaluate.phase2_sanity import build_report
+
+    root = drive_root()
+    res = build_report(root, month, root / "reports" / "phase2_sanity" / month)
+    _summary(f"phase2-report {month}", res)
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

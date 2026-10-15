@@ -81,7 +81,8 @@ def build_segments_met(
     seg: pd.DataFrame, per_flight: pd.DataFrame, pl: MetGrid, tropo: MetGrid
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Return ``seg`` with met features, performance and SAC columns, plus a run summary."""
-    s = seg.merge(per_flight, on="flight_id", how="left")
+    extra = [c for c in per_flight.columns if c == "flight_id" or c not in seg.columns]
+    s = seg.merge(per_flight[extra], on="flight_id", how="left")
     t_s = s["time_mid"].dt.as_unit("s").astype("int64").to_numpy().astype(float)
     lat, lon = s["lat_mid"].to_numpy(float), s["lon_mid"].to_numpy(float)
     p = np.asarray(ft_to_pressure(s["alt_ft_mid"].to_numpy(float)))

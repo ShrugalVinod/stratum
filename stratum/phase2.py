@@ -157,3 +157,41 @@ def days_with_adsb(root: Path, month: str, source: str = "adsbx") -> list[date]:
             out.append(d)
         d += timedelta(days=1)
     return out
+
+
+def cocip_convergence(
+    root: Path,
+    day: date,
+    scaling: str = "B1",
+    n_small: int = 20,
+    n_large: int = 40,
+    max_age_h: float = 24.0,
+    seed: int = 20261013,
+) -> dict[str, Any]:
+    """Q12 check: do EF percentiles change between N = 20 and N = 40 Monte Carlo members?"""
+    from pycontrails import MetDataset
+
+    from stratum.physics import cocip_runner as cr
+
+    s = pd.read_parquet(_day_dir(root, "segments_met", day) / "segments_met.parquet")
+    if "in_corridor" in s:
+        s = s[s["flight_id"].isin(set(s.loc[s["in_corridor"], "flight_id"]))]
+    flights = cr.segments_to_flights(s)
+    t0 = pd.Timestamp(day)
+    t1 = t0 + pd.Timedelta(hours=24 + max_age_h + 1)
+    met = MetDataset(era5_window(root, "pl", t0, t1).load())
+    rad = MetDataset(era5_window(root, "sl", t0, t1).load())
+    a = cr.run(flights, met, rad, scaling, n_small, seed, max_age_h).segments
+    b = cr.run(flights, met, rad, scaling, n_large, seed, max_age_h).segments
+    m = a.merge(b, on="segment_id", suffixes=("_n20", "_n40"))
+    m = m[(m["ef_p50_n40"].abs() > 0) | (m["ef_p95_n40"].abs() > 0)]
+    rows = {"day": str(day), "scaling": scaling, "segments_with_ef": len(m)}
+    for q in ("p05", "p50", "p95"):
+        tot20, tot40 = m[f"ef_{q}_n20"].sum(), m[f"ef_{q}_n40"].sum()
+        rows[f"sum_ef_{q}_n20"] = float(tot20)
+        rows[f"sum_ef_{q}_n40"] = float(tot40)
+        rows[f"rel_change_{q}"] = float(abs(tot20 - tot40) / abs(tot40)) if tot40 else None
+    out = root / "interim" / "cocip" / "convergence"
+    out.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([rows]).to_csv(out / f"{day:%Y-%m}.csv", index=False)
+    return rows
