@@ -2,6 +2,20 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-15 (evening) — Phase 2 started
+
+**Done (tested, pushed)**
+- Q12 settled: N = 20 Monte Carlo members (convergence check N = 20 vs 40 runs in Colab).
+- Trajectory steps 3–9: implausibility filter (≤ 3 passes), FL250 cut, 1-min great-circle resampling, gap fill ≤ 10 min / split > 10 min, position-jump split, segment geometry, aircraft type → OpenAP (logged synonyms/type map), mass 0.80 MTOW, fuel flow, η (clipped 0.20–0.45), commercial classification.
+- ERA5 → segments (log-p interpolation, exact on analytic fields), WMO tropopause, features (RHi/RHw, gradient, shear, high cloud, tropopause distance, TAS, LST), SAC flags.
+- CoCiP runner B1/B2/B3 with Monte Carlo EF p5/p50/p95; `build-segments`, `run-cocip`, `cocip-convergence`, `phase2-report`; Colab notebook `02_physics_baseline`.
+- Software test on real 1 Jan 2026 flights (with 15 Jan ERA5 relabelled): 1,706 corridor flights, 132k segments, SAC forms 22 %, persists_raw 0.17 % (dry winter day), CoCiP contrails B1 155 / B2 291 / B3 125, none at the box edge.
+
+**Next**
+- Shrugal: run Colab `02_physics_baseline` and paste the summary.
+- Team: review `configs/airlines.yaml` (307 flights had prefixes not in the draft list) and `configs/type_map.yaml`.
+- Claude: verify the run, review the sanity report, Phase 2 gate report.
+
 ## 2026-10-15 — Phase 1 data complete
 
 **Done**

@@ -469,6 +469,82 @@ print("exit code:", rc)
 ]
 
 
+# ── 02 · Physics baseline B1/B2/B3 (Phase 2) ─────────────────────────────────
+
+PHYSICS = [
+    header(
+        "02 · Physics baseline: segments, SAC flags and CoCiP B1/B2/B3 (Phase 2, task 2.4)",
+        """
+**What this does:** turns the January 2026 flights (the free ADS-B Exchange day 1 Jan 2026)
+into 1-minute cruise segments, attaches ERA5 weather, aircraft performance and the
+Schmidt–Appleman flags, then runs CoCiP with the three humidity scalings B1 (raw), B2 (÷0.95)
+and B3 (pycontrails latitude correction), each with **20 Monte Carlo members** (Q12). Then it
+runs the N = 20 vs 40 convergence check and writes the Phase 2 sanity report.
+
+Reads (already on Drive): `raw/adsb/adsbx/2026-01-01`, `raw/era5/{pl,sl,tropo_T}/2026-01`,
+`raw/aircraft_db`. Writes: `interim/segments_met/2026-01/…`, `interim/cocip/{B1,B2,B3}/2026-01/…`,
+`interim/cocip/convergence/2026-01.csv`, `reports/phase2_sanity/2026-01/` (report + figures).
+
+* **Runtime:** CPU, **High-RAM** if offered (*Runtime → Change runtime type*). No GPU needed.
+* **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** well under 1 GB.
+* **Time:** roughly 15–30 min (measured locally: 1,706 corridor flights through CoCiP in ~10 s
+  per run; 21 runs × 3 scalings plus the 60-run convergence check).
+* **If it disconnects:** *Runtime → Run all* again. Finished days and scalings are skipped.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings(
+        "02_physics_baseline",
+        'MONTH = "2026-01"     # development month (pre-registered)\n'
+        "MEMBERS = 20          # Monte Carlo members (open question 12, settled)\n"
+        "MAX_AGE_H = 24        # CoCiP maximum contrail age (hours)\n",
+    ),
+    *SETUP,
+    code('''
+# ── 7. Segments + ERA5 features + η + SAC flags (per ADS-B day in the month) ──
+rc_seg = stratum(f"build-segments --month {MONTH} --corridor DEL-BOM", live=True)
+print("exit code:", rc_seg)
+'''),
+    code('''
+# ── 8. CoCiP for B1, B2, B3 with Monte Carlo ranges ─────────────────────────
+rc_cocip = stratum(f"run-cocip --month {MONTH} --scaling all --members {MEMBERS} --max-age-h {MAX_AGE_H}", live=True)
+print("exit code:", rc_cocip)
+'''),
+    code('''
+# ── 9. Q12 convergence check (N = 20 vs 40, B1, first day) + sanity report ──
+import glob
+first_day = sorted(glob.glob(f"{DRIVE_ROOT}/interim/segments_met/{MONTH}/*/_SUCCESS"))[0].split("/")[-2]
+rc_conv = stratum(f"cocip-convergence --day {first_day} --scaling B1 --max-age-h {MAX_AGE_H}", live=True)
+rc_rep = stratum(f"phase2-report --month {MONTH}", live=True)
+print("exit codes:", rc_conv, rc_rep)
+'''),
+    code('''
+# ── 10. Collect per-day manifests for the summary ────────────────────────────
+def _stats(pattern):
+    out = {}
+    for m in sorted(glob.glob(pattern)):
+        with open(m) as f:
+            j = json.load(f)
+        out[j.get("unit")] = j.get("stats")
+    return out
+seg_stats = _stats(f"{DRIVE_ROOT}/interim/segments_met/{MONTH}/*/manifest.json")
+cocip_stats = _stats(f"{DRIVE_ROOT}/interim/cocip/*/{MONTH}/*/manifest.json")
+conv_path = f"{DRIVE_ROOT}/interim/cocip/convergence/{MONTH}.csv"
+conv = open(conv_path).read() if os.path.exists(conv_path) else None
+rep_path = f"{DRIVE_ROOT}/reports/phase2_sanity/{MONTH}/report.md"
+report_flags = [l for l in open(rep_path).read().splitlines() if l.startswith("- ")][-6:] if os.path.exists(rep_path) else None
+'''),
+    summary_cell("""    "exit_codes": {"build_segments": rc_seg, "run_cocip": rc_cocip, "convergence": rc_conv, "report": rc_rep},
+    "segments_met": seg_stats,
+    "cocip": cocip_stats,
+    "convergence_csv": conv,
+    "report": rep_path,
+    "report_tail": report_flags,
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -489,4 +565,5 @@ if __name__ == "__main__":
     write("01a2_era5_arco.ipynb", ERA5_ARCO)
     write("01b_adsb_ingest.ipynb", ADSBX)
     write("01c_meteosat_ingest.ipynb", METEOSAT)
+    write("02_physics_baseline.ipynb", PHYSICS)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))
