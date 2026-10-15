@@ -1,7 +1,6 @@
 ```
 ═══ PHASE 3 GATE REPORT — Satellite contrail detector and overlays — DRAFT 15 Oct 2026 ═══
-Status:          READY FOR ACCEPTANCE — figures + time-lapse approved, CNN skipped
-                 (S. Vinod, 15 Oct); waiting for "Phase 3 is accepted"
+Status:          ACCEPTED by Shrugal Vinod, 15 Oct 2026 (chat: "Phase 3 is accepted")
 Calendar:        ahead (Phase 3 window in the team plan is after Phase 2, 20 Dec)
 
 Done-when checklist:
