@@ -2,6 +2,18 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-15 (night) — Phase 2 final run; gate report ready
+
+**Done**
+- Colab `02_physics_baseline`, final run (N = 100, FORCE, 79 min, all exit codes 0): 1,706 corridor flights, 131,661 segments, tropopause 0 % missing, CoCiP B1 77 / B2 101 / B3 71 contrail waypoints, no plausibility flags.
+- N = 100 vs 200: p50 0.9 %, p95 5.6 % stable; p05 49.7 % (lower tail sits at the EF = 0 members; not fixable by more N). Proposed: keep N = 100 (decisions.md).
+- Airline allowlist reviewed (191 prefixes: 160 airlines, 13 excluded, 18 unverified). Scoring scope settled: full domain. Paper v1.2 finalised (19 pp, no placeholders).
+- `docs/phase_reports/phase2_gate_report.md` final.
+
+**Next**
+- Shrugal: OK the p05 decision and say "Phase 2 is accepted" → Phase 3.
+- 2 and 5 Nov: coverage audit (ADS-B Exchange 2026-11-01 + adsb.lol comparison).
+
 ## 2026-10-15 (evening) — Phase 2 started
 
 **Done (tested, pushed)**
