@@ -269,6 +269,22 @@ def detect(
         _summary(f"detect {d}", res)
 
 
+@app.command("phase3-overlays")
+def phase3_overlays(
+    day: Annotated[str, typer.Option(help="YYYY-MM-DD flight day with CoCiP + detections")],
+    scaling: Annotated[str, typer.Option(help="CoCiP run to draw (B1 = physics only)")] = "B1",
+    top: Annotated[int, typer.Option(help="number of candidate overlay times")] = 3,
+    lapse_hours: Annotated[float, typer.Option(help="time-lapse length (hours)")] = 4.0,
+) -> None:
+    """Phase 3: overlay figures (predicted vs detected contrails) + time-lapse for one day."""
+    from datetime import date as _date
+
+    from stratum.phase3 import overlays_day
+
+    res = overlays_day(drive_root(), _date.fromisoformat(day), scaling, top, lapse_hours)
+    _summary(f"phase3-overlays {day}", {k: v for k, v in res.items() if k != "figures"})
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

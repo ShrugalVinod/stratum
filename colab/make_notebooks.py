@@ -546,6 +546,71 @@ report_flags = [l for l in open(rep_path).read().splitlines() if l.startswith("-
 ]
 
 
+DETECT = [
+    header(
+        "03 · Contrail detector + overlay figures (Phase 3, tasks 3.1–3.3)",
+        """
+**What this does:** runs the STRATUM contrail detector on every 15-minute Meteosat-9 image of
+the January 2026 satellite days already on Drive (1, 13 and 14 Jan), then draws the CoCiP
+predicted contrails (B1, from Phase 2) and the detected lines on the satellite images for the
+only January day that has flights (1 Jan). It ranks every image time by how many predicted
+contrails are visible in clear sky and makes the top 3 overlay figures plus a time-lapse.
+These are **illustrations for the brief, video and website, not results**.
+
+Reads (already on Drive): `raw/meteosat/{l15_crop,clm}/2026-01-{01,13,14}`,
+`raw/meteosat/static_grid.zarr`, `interim/cocip/B1/2026-01/2026-01-01/contrail.parquet`.
+Writes: `interim/detections/<day>/objects.parquet`, `reports/phase3_overlays/2026-01-01/`
+(overlay PNGs, `timelapse.mp4` + `.gif`, `slot_scores.csv`, `summary.json`).
+
+* **Runtime:** CPU (default is fine). No GPU needed.
+* **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** under 100 MB.
+* **Time:** about 10–20 minutes (≈ 1–2 s per image, ~104 images per day).
+* **If it disconnects:** *Runtime → Run all* again. Finished days are skipped.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings(
+        "03_detector_overlays",
+        'DETECT_DAYS = "2026-01-01,2026-01-13,2026-01-14"   # January satellite days on Drive\n'
+        'OVERLAY_DAY = "2026-01-01"   # the January day with flights (ADS-B Exchange free day)\n'
+        "TOP = 3                      # candidate overlay times (at least 1 h apart)\n"
+        "LAPSE_HOURS = 4              # time-lapse length around the best time\n"
+        "FORCE = False                # recompute detection days already done\n",
+    ),
+    *SETUP,
+    code('''
+# ── 7. Detector on every slot of each day ────────────────────────────────────
+rc_det = stratum(f"detect --days {DETECT_DAYS}" + (" --force" if FORCE else ""), live=True)
+print("exit code:", rc_det)
+'''),
+    code('''
+# ── 8. Overlay figures + time-lapse for the flight day ──────────────────────
+rc_ov = stratum(f"phase3-overlays --day {OVERLAY_DAY} --top {TOP} --lapse-hours {LAPSE_HOURS}", live=True)
+print("exit code:", rc_ov)
+'''),
+    code('''
+# ── 9. Collect manifests and the overlay summary ─────────────────────────────
+import glob
+det_stats = {}
+for m in sorted(glob.glob(f"{DRIVE_ROOT}/interim/detections/*/manifest.json")):
+    with open(m) as f:
+        j = json.load(f)
+    det_stats[j.get("unit")] = j.get("stats")
+ov_path = f"{DRIVE_ROOT}/reports/phase3_overlays/{OVERLAY_DAY}/summary.json"
+overlay = json.load(open(ov_path)) if os.path.exists(ov_path) else None
+if overlay:
+    overlay = {k: v for k, v in overlay.items() if k != "figures"} | {
+        "figures": [{k: v for k, v in f.items() if k != "png"} for f in overlay.get("figures", [])]
+    }
+'''),
+    summary_cell("""    "exit_codes": {"detect": rc_det, "overlays": rc_ov},
+    "detections": det_stats,
+    "overlay": overlay,
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -567,4 +632,5 @@ if __name__ == "__main__":
     write("01b_adsb_ingest.ipynb", ADSBX)
     write("01c_meteosat_ingest.ipynb", METEOSAT)
     write("02_physics_baseline.ipynb", PHYSICS)
+    write("03_detector_overlays.ipynb", DETECT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))
