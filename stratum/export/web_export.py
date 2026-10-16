@@ -292,7 +292,10 @@ def export_web(
     for d in days:
         t0 = pd.Timestamp(d)
         try:
-            pl = era5_window(root, "pl", t0, t0 + pd.Timedelta(hours=24)).load()
+            # only T and q are needed: reading all 8 variables from Drive was ~4× slower
+            pl = era5_window(root, "pl", t0, t0 + pd.Timedelta(hours=24))[
+                ["air_temperature", "specific_humidity"]
+            ].load()
         except FileNotFoundError:
             summaries[str(d)] = "no ERA5"
             continue
