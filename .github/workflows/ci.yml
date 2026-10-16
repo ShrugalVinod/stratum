@@ -33,7 +33,7 @@ jobs:
         run: uv run mypy
 
       - name: Secret scan (detect-secrets)
-        run: git ls-files -z | grep -zv -E '^(uv\.lock|docs/.*\.pdf)$' | xargs -0 uv run detect-secrets-hook --baseline .secrets.baseline
+        run: git ls-files -z | grep -zv -E '^(uv\.lock|docs/.*\.pdf|web/package-lock\.json|web/public/data/[^/]+/manifest\.json|web/public/.*\.(pdf|mp4|webp|png))$' | xargs -0 uv run detect-secrets-hook --baseline .secrets.baseline
 
       - name: Pre-registration lock unchanged (or deviations approved)
         run: |
@@ -41,3 +41,23 @@ jobs:
 
       - name: Tests
         run: uv run pytest -m "not network" --cov --cov-report=term-missing:skip-covered
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install (clean, from the lock file)
+        run: npm ci
+      - name: Unit tests (vitest)
+        run: npm test
+      - name: Type-check + production build
+        run: npm run build
