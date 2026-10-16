@@ -1,0 +1,94 @@
+{
+ "contract_version": "1.0.0",
+ "build_id": "test-build",
+ "created_at": "2026-10-16T03:31:45+00:00",
+ "git_commit": "unknown",
+ "config_hash": "unknown",
+ "pipeline_version": "phase4-v0",
+ "model_version": "B1-physics-v0",
+ "days": [
+  "2026-01-15"
+ ],
+ "days_with_flights": [],
+ "flight_levels": [
+  {
+   "fl": 280,
+   "pressure_hpa": 329.3
+  },
+  {
+   "fl": 300,
+   "pressure_hpa": 300.9
+  },
+  {
+   "fl": 320,
+   "pressure_hpa": 274.5
+  },
+  {
+   "fl": 340,
+   "pressure_hpa": 250.0
+  },
+  {
+   "fl": 360,
+   "pressure_hpa": 227.3
+  },
+  {
+   "fl": 380,
+   "pressure_hpa": 206.5
+  },
+  {
+   "fl": 400,
+   "pressure_hpa": 187.5
+  },
+  {
+   "fl": 420,
+   "pressure_hpa": 170.4
+  }
+ ],
+ "hours_utc": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23
+ ],
+ "grid": {
+  "lat_north": 37.0,
+  "lat_south": 6.0,
+  "lon_west": 68.0,
+  "lon_east": 98.0,
+  "rows": 125,
+  "cols": 121,
+  "step_deg": 0.25,
+  "encoding": "png_uint8_fraction_of_hour"
+ },
+ "eta_for_grids": 0.3,
+ "coverage": {
+  "adsb_coverage_pct": null,
+  "note": "Coverage audit on 2 and 5 Nov 2026 (build prompt Phase 1); pending."
+ },
+ "credits": [
+  "Contains modified Copernicus Climate Change Service information 2026",
+  "Meteosat-9 imagery © EUMETSAT 2026",
+  "Flight data: ADS-B Exchange",
+  "Aircraft metadata: OpenSky Network"
+ ]
+}

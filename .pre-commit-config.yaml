@@ -14,6 +14,7 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files   # data belongs on Drive, not in git
         args: ["--maxkb=2048"]
+        exclude: ^web/public/STRATUM_Research_Protocol_v[0-9.]+\.pdf$   # the published protocol (2.7 MB)
   - repo: local
     hooks:
       - id: detect-secrets

@@ -43,3 +43,10 @@ data/*
 # Web (Phase 4+)
 node_modules/
 web/dist/
+
+# Web app (Phase 4)
+web/node_modules/
+web/dist/
+web/public/data/dev-local/
+web/test-results/
+web/playwright-report/

@@ -1,0 +1,76 @@
+/* STRATUM design tokens. Dark ("night sky") is the default; light mode via
+   prefers-color-scheme or the header toggle (data-theme on <html>). */
+
+:root {
+  --bg: #0a0e14;
+  --bg-2: #0d121a;
+  --surface: #111722;
+  --raised: #161e2b;
+  --ink: #e7eaf0;
+  --muted: #8c96a6;
+  --faint: #5c6677;
+  --border: #222c3a;
+  --border-strong: #2e3a4c;
+  --accent: #8fa9e6;
+  --accent-ink: #0a0e14;
+  --cyan: #29d3ff;
+  --focus: #29d3ff;
+
+  /* data colours — only for data */
+  --pred: #ff8c1a;
+  --det: #29d3ff;
+  --corridor: #c9a3ff;
+  --pending: #6b7586;
+
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", "IBM Plex Serif", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius: 6px;
+  --maxw: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --header-h: 72px;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f8fa;
+  --bg-2: #eef1f5;
+  --surface: #ffffff;
+  --raised: #f2f4f8;
+  --ink: #111418;
+  --muted: #5b6472;
+  --faint: #8a93a1;
+  --border: #e2e6ec;
+  --border-strong: #cfd5de;
+  --accent: #2a4a8f;
+  --accent-ink: #ffffff;
+  --cyan: #0a7ea4;
+  --focus: #0a7ea4;
+  --det: #0a8fbf;
+  --corridor: #7a4fc4;
+  --pending: #8a93a1;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f7f8fa;
+    --bg-2: #eef1f5;
+    --surface: #ffffff;
+    --raised: #f2f4f8;
+    --ink: #111418;
+    --muted: #5b6472;
+    --faint: #8a93a1;
+    --border: #e2e6ec;
+    --border-strong: #cfd5de;
+    --accent: #2a4a8f;
+    --accent-ink: #ffffff;
+    --cyan: #0a7ea4;
+    --focus: #0a7ea4;
+    --det: #0a8fbf;
+    --corridor: #7a4fc4;
+    --pending: #8a93a1;
+    color-scheme: light;
+  }
+}
