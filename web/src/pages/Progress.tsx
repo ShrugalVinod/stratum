@@ -23,7 +23,7 @@ export function Progress() {
         </aside>
         <ol class="timeline">
           {items.map((e) => (
-            <li>
+            <li class="reveal">
               <time class="mono muted" dateTime={e.date}>
                 {e.date}
               </time>

@@ -2,7 +2,7 @@ import type { ComponentChildren } from "preact";
 
 export function PageHead(props: { eyebrow: string; title: string; side?: ComponentChildren; id?: string }) {
   return (
-    <div class="wrap page-head">
+    <div class="wrap page-head enter">
       <div>
         <p class="eyebrow">{props.eyebrow}</p>
         <h1 class="display l" id={props.id}>

@@ -15,6 +15,7 @@ import { ErrorBoundary, LocationProvider, Route, Router, lazy, useLocation } fro
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { Home } from "./pages/Home";
+import { startReveal } from "./components/reveal";
 
 const MapPage = lazy(() => import("./pages/MapPage").then((m) => m.MapPage));
 const HowItWorks = lazy(() => import("./pages/HowItWorks").then((m) => m.HowItWorks));
@@ -27,6 +28,7 @@ const NotFound = lazy(() => import("./pages/NotFound").then((m) => m.NotFound));
 
 function ScrollReset() {
   const { path } = useLocation();
+  useEffect(() => startReveal(), []);
   useEffect(() => {
     if (!location.hash) window.scrollTo(0, 0);
   }, [path]);

@@ -10,7 +10,7 @@ export function AboutData() {
         side={<p>The dataset is a set of inputs and constraints, not a claim of certainty.</p>}
       />
       <div class="wrap">
-        <div class="table-wrap">
+        <div class="table-wrap reveal">
           <table class="data-table">
             <thead>
               <tr>
@@ -34,7 +34,7 @@ export function AboutData() {
             </tbody>
           </table>
         </div>
-        <div class="about-grid">
+        <div class="about-grid reveal">
           <div>
             <p class="eyebrow">Limits we are honest about</p>
             <h2 class="h3" style="font-size:clamp(26px,3vw,40px)">

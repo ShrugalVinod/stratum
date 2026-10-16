@@ -38,16 +38,16 @@ export function Home() {
       </section>
 
       <section class="section" aria-labelledby="why-title">
-        <div class="wrap why">
+        <div class="wrap why reveal">
           <div>
             <p class="eyebrow">01 / Why this matters</p>
             <h2 id="why-title" class="display l">
               Read the sky before you redraw the route.
             </h2>
           </div>
-          <div class="cards3">
+          <div class="cards3 stagger">
             {whyCards.map((c, i) => (
-              <article class="card">
+              <article class="card" style={{ "--i": i }}>
                 <span class="num">0{i + 1}</span>
                 <h3>{c.title}</h3>
                 <p>{c.body}</p>
@@ -59,7 +59,7 @@ export function Home() {
 
       <section class="section" aria-labelledby="loop-title" style="padding-top:0">
         <div class="wrap">
-          <div class="loop-head">
+          <div class="loop-head reveal">
             <div>
               <p class="eyebrow">02 / The study loop</p>
               <h2 id="loop-title" class="display l">
@@ -68,9 +68,9 @@ export function Home() {
             </div>
             <p>Every step is inspectable. Every claim waits for its evidence.</p>
           </div>
-          <ol class="loop">
-            {loop.map((s) => (
-              <li>
+          <ol class="loop reveal stagger">
+            {loop.map((s, i) => (
+              <li style={{ "--i": i }}>
                 <span class="num">{s.n}</span>
                 <h3>{s.title}</h3>
                 <p>{s.body}</p>
@@ -82,7 +82,7 @@ export function Home() {
 
       <section class="section" aria-labelledby="status-title" style="padding-top:0">
         <div class="wrap">
-          <div class="status-head">
+          <div class="status-head reveal">
             <div>
               <p class="eyebrow">03 / Status</p>
               <h2 id="status-title" class="display l">
@@ -93,9 +93,9 @@ export function Home() {
               Progress log →
             </a>
           </div>
-          <ol class="stepper">
-            {phases.map((p) => (
-              <li class={p.state} aria-label={`Phase ${p.n}: ${p.name} — ${p.state}`}>
+          <ol class="stepper reveal stagger" style={{ "--done": phases.filter((p) => p.state === "done").length / (phases.length - 1) }}>
+            {phases.map((p, i) => (
+              <li class={p.state} style={{ "--i": i }} aria-label={`Phase ${p.n}: ${p.name} — ${p.state}`}>
                 <span class="step-box">
                   {p.state === "done" ? (
                     <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
@@ -114,7 +114,7 @@ export function Home() {
       </section>
 
       <section class="section open-sci" aria-labelledby="open-title">
-        <div class="wrap open-grid">
+        <div class="wrap open-grid reveal">
           <div>
             <p class="eyebrow">04 / Built openly</p>
             <h2 id="open-title" class="display m">

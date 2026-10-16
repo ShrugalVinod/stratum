@@ -17,7 +17,7 @@ export function Methods() {
         </div>
         <div class="rows">
           {methods.map((m, i) => (
-            <div class="row">
+            <div class="row reveal">
               <span class="n">{String(i + 1).padStart(2, "0")}</span>
               <h2 class="h3">{m.title}</h2>
               <p>{m.body}</p>
@@ -28,9 +28,9 @@ export function Methods() {
           <p class="eyebrow" id="hyp">
             Pre-registered hypotheses
           </p>
-          <div class="hyp-grid">
-            {hypotheses.map((h) => (
-              <article class="card hyp">
+          <div class="hyp-grid reveal stagger">
+            {hypotheses.map((h, i) => (
+              <article class="card hyp" style={{ "--i": i }}>
                 <h3>{h.id}</h3>
                 <p>{h.plain}</p>
                 <p class="test">{h.test}</p>

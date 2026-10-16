@@ -14,7 +14,7 @@ export function HowItWorks() {
       <div class="wrap">
         <ol class="pipe">
           {pipeline.map((s, i) => (
-            <li>
+            <li class="reveal">
               <span class="num">{String(i + 1).padStart(2, "0")}</span>
               <div class="pipe-body">
                 <h2 class="h3">{s.title}</h2>
@@ -35,7 +35,7 @@ export function HowItWorks() {
           ))}
         </ol>
 
-        <section class="field-note card" aria-labelledby="fn-title">
+        <section class="field-note card reveal" aria-labelledby="fn-title">
           <div>
             <p class="eyebrow">Field note</p>
             <h2 id="fn-title" class="h3" style="font-size:clamp(26px,3vw,40px)">

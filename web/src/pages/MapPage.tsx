@@ -104,6 +104,8 @@ export function MapPage() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null);
+  const [introCmd, setIntroCmd] = useState<{ kind: "play" | "skip"; n: number }>({ kind: "play", n: 0 });
+  const [intro, setIntro] = useState<{ active: boolean; t: number }>({ active: false, t: 0 });
   useEffect(() => {
     if (!lightbox) return;
     const k = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
@@ -315,6 +317,14 @@ export function MapPage() {
                 </div>
               )}
             </div>
+            {dayData?.day.has_flights && (
+              <button class="btn-sm" onClick={() => setIntroCmd({ kind: "play", n: introCmd.n + 1 })} disabled={intro.active} title="Replay the whole day">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                  <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" />
+                </svg>
+                Replay day
+              </button>
+            )}
             <button class="btn-sm" onClick={copyLink} aria-live="polite">
               {copied ? "Link copied ✓" : "Copy link"}
             </button>
@@ -336,9 +346,11 @@ export function MapPage() {
               onSelect={(s) => setSt({ ...st, seg: s?.segment_id ?? null })}
               onPick={setPicked}
               onHover={setCursor}
+              introCmd={introCmd}
+              onIntro={setIntro}
             />
           )}
-          <div class="map-banners" aria-label="Notes">
+          <div class={`map-banners ${intro.active ? "dim" : ""}`} aria-label="Notes">
             <span>Computational estimate — no real flight was changed</span>
             <span>Physics-only prototype (v0)</span>
             <span>
@@ -383,6 +395,23 @@ export function MapPage() {
             />
           )}
           {!dayData && <div class="map-loading">Loading {st.date}…</div>}
+          {intro.active && (
+            <div class="intro-chip" role="status" aria-live="off">
+              <span class="eyebrow" style="margin:0">Replaying {st.date}</span>
+              <b class="mono">
+                {pad2(Math.floor(intro.t / 60) % 24)}:{pad2(Math.floor(intro.t % 60))} UTC
+              </b>
+              <span class="mono muted">
+                {pad2(Math.floor(((intro.t + 330) % 1440) / 60))}:{pad2(Math.floor((intro.t + 330) % 60))} IST
+              </span>
+              <span class="intro-bar" aria-hidden="true">
+                <i style={{ width: `${(intro.t / 1440) * 100}%` }} />
+              </span>
+              <button class="btn-sm" onClick={() => setIntroCmd({ kind: "skip", n: introCmd.n + 1 })}>
+                Skip
+              </button>
+            </div>
+          )}
         </div>
 
         <section class="gallery" aria-labelledby="gal">

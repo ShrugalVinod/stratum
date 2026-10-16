@@ -6,8 +6,8 @@ export const site = {
   name: "STRATUM",
   school: "Indus International School · Bengaluru",
   competition: "Conrad Challenge 2026–27",
-  // TODO(team): replace with the exact hook and tagline from the brief / Lean Canvas.
-  heroTitle: ["Trace the sky.", "Question the route."],
+  tagline: "Move the plane. Lose the cloud.", // team tagline (16 Oct 2026)
+  heroTitle: ["Move the plane.", "Lose the cloud."],
   heroLede:
     "A student research project about persistent contrails over India — physics predictions, satellite evidence, and honest decisions.",
   email: null as string | null, // TODO(team): team email → shown on Contact

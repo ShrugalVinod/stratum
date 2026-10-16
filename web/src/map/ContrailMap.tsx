@@ -40,7 +40,24 @@ type Props = {
   onSelect: (s: FlaggedSegment | null) => void;
   onPick: (lngLat: [number, number] | null) => void;
   onHover?: (lngLat: [number, number] | null) => void;
+  /** Intro replay of the whole day: "play" (re)starts it, "skip" ends it. */
+  introCmd: { kind: "play" | "skip"; n: number };
+  onIntro: (s: { active: boolean; t: number }) => void;
 };
+
+// ── animation state (one per map) ────────────────────────────────────────────
+type Anim = {
+  intro: { t: number; last: number } | null;
+  front: "A" | "B";
+  riskUrl: string | null;
+  fade: { start: number; from: "A" | "B" } | null;
+  raf: number;
+  lastPulse: number;
+};
+const ANIM = new WeakMap<MLMap, Anim>();
+const INTRO_MS = 7000; // a full day (1,440 min) replays in 7 s
+const FADE_MS = 380;
+export const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -130,16 +147,13 @@ export function ContrailMap(p: Props) {
     const m = new MLMap({
       container: el.current!,
       style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": col.ocean } }] },
-      bounds: [
-        [66, 5],
-        [99, 37.5],
-      ],
-      fitBoundsOptions: { padding: 24 },
+      center: [83, 21],
+      zoom: reducedMotion() ? 4 : 2.6,
       maxBounds: [
         [45, -8],
         [120, 52],
       ],
-      minZoom: 3,
+      minZoom: 2.5,
       maxZoom: 9,
       attributionControl: false,
       dragRotate: false,
@@ -158,7 +172,8 @@ export function ContrailMap(p: Props) {
       m.addSource("countries", { type: "geojson", data: countries });
       m.addSource("states", { type: "geojson", data: states });
       m.addSource("grat", { type: "geojson", data: graticule() });
-      m.addSource("risk", { type: "image", url: transparentPng(), coordinates: imageCoords(props.current.manifest) });
+      m.addSource("riskA", { type: "image", url: transparentPng(), coordinates: imageCoords(props.current.manifest) });
+      m.addSource("riskB", { type: "image", url: transparentPng(), coordinates: imageCoords(props.current.manifest) });
       m.addSource("corridor", { type: "geojson", data: EMPTY });
       m.addSource("legs", { type: "geojson", data: EMPTY });
       m.addSource("flagged", { type: "geojson", data: EMPTY });
@@ -168,12 +183,14 @@ export function ContrailMap(p: Props) {
 
       m.addLayer({ id: "land", type: "fill", source: "countries", paint: { "fill-color": col.land } });
       m.addLayer({ id: "grat", type: "line", source: "grat", paint: { "line-color": col.grat, "line-width": 1 } });
-      m.addLayer({ id: "risk", type: "raster", source: "risk", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 1 } });
+      m.addLayer({ id: "riskA", type: "raster", source: "riskA", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 1 } });
+      m.addLayer({ id: "riskB", type: "raster", source: "riskB", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 0 } });
       m.addLayer({ id: "states", type: "line", source: "states", paint: { "line-color": col.state, "line-width": 0.7 } });
       m.addLayer({ id: "borders", type: "line", source: "countries", paint: { "line-color": col.border, "line-width": 1 } });
       m.addLayer({ id: "corridor-fill", type: "fill", source: "corridor", paint: { "fill-color": col.corr, "fill-opacity": 0.06 } });
       m.addLayer({ id: "corridor-line", type: "line", source: "corridor", paint: { "line-color": col.corr, "line-width": 1.4, "line-dasharray": [3, 3] } });
       m.addLayer({ id: "legs", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 7, 1.4], "line-opacity": 0.1 } });
+      m.addLayer({ id: "legs-head", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 2.2, 7, 4], "line-blur": 2, "line-opacity": 0 } });
       m.addLayer({ id: "flagged-glow", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22], "line-blur": ["interpolate", ["linear"], ["zoom"], 4, 9, 7, 16], "line-opacity": 0.55 } });
       m.addLayer({ id: "flagged", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 3, 7, 4.5] } });
       m.addLayer({ id: "selected-glow", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 14, "line-blur": 8, "line-opacity": 0.5 } });
@@ -233,7 +250,10 @@ export function ContrailMap(p: Props) {
 
       ready.current = true;
       el.current?.classList.add("ready");
+      ANIM.set(m, { intro: null, front: "A", riskUrl: null, fade: null, raf: 0, lastPulse: 0 });
       sync(m, props.current);
+      m.fitBounds([[66, 5], [99, 37.5]], { padding: 24, duration: reducedMotion() ? 0 : 2400, easing: (t) => 1 - Math.pow(1 - t, 3) });
+      startLoop(m, props);
     });
 
     // re-colour when the theme changes
@@ -243,6 +263,8 @@ export function ContrailMap(p: Props) {
     const onMq = () => ready.current && recolour(m);
     mq.addEventListener("change", onMq);
     return () => {
+      const a = ANIM.get(m);
+      if (a) cancelAnimationFrame(a.raf);
       mo.disconnect();
       mq.removeEventListener("change", onMq);
       markers.current.forEach((k) => k.remove());
@@ -253,6 +275,19 @@ export function ContrailMap(p: Props) {
   useEffect(() => {
     if (map.current && ready.current) sync(map.current, p);
   });
+
+  // intro: start when a day's flights arrive, or on demand
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready.current || !p.flights) return;
+    startIntro(m, props.current);
+  }, [p.flights]);
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready.current || p.introCmd.n === 0) return;
+    if (p.introCmd.kind === "play" && p.flights) startIntro(m, props.current, true);
+    else endIntro(m, props.current);
+  }, [p.introCmd.n]);
 
   // fly to a newly selected segment
   useEffect(() => {
@@ -266,14 +301,16 @@ export function ContrailMap(p: Props) {
 
 function sync(m: MLMap, p: Props) {
   const vis = (id: string, on: boolean) => m.getLayer(id) && m.setLayoutProperty(id, "visibility", on ? "visible" : "none");
-  vis("risk", p.layers.risk);
+  vis("riskA", p.layers.risk);
+  vis("riskB", p.layers.risk);
+  vis("legs-head", p.layers.flights);
   ["legs", "planes", "planes-halo", "flagged", "flagged-glow"].forEach((id) => vis(id, p.layers.flights));
   ["corridor-fill", "corridor-line"].forEach((id) => vis(id, p.layers.corridor));
   document.querySelectorAll<HTMLElement>(".city").forEach((d) => (d.style.display = p.layers.cities ? "" : "none"));
 
-  const risk = m.getSource("risk") as ImageSource | undefined;
-  if (risk && p.riskImage && risk.url !== p.riskImage) risk.updateImage({ url: p.riskImage, coordinates: imageCoords(p.manifest) });
-  if (risk && !p.riskImage) risk.updateImage({ url: transparentPng(), coordinates: imageCoords(p.manifest) });
+  const a = ANIM.get(m);
+  const want = p.riskImage ?? transparentPng();
+  if (a && a.riskUrl !== want) crossfadeRisk(m, a, want, p.manifest);
 
   const setData = (id: string, d: GeoJSON.FeatureCollection | GeoJSON.Feature) => (m.getSource(id) as GeoJSONSource | undefined)?.setData(d);
   const key = (m as unknown as { __keys?: Record<string, unknown> }).__keys ?? ((m as unknown as { __keys: Record<string, unknown> }).__keys = {});
@@ -290,16 +327,96 @@ function sync(m: MLMap, p: Props) {
     setData("flagged", segmentFeatures(p.segments));
   }
   const t = p.hour * 60 + 30;
-  if (key.t !== t || key.planesFor !== p.flights) {
+  if (a?.intro) return finishSync(m, p, setData);
+  if (key.t !== t || key.planesFor !== p.flights || key.afterIntro) {
+    key.afterIntro = false;
     key.t = t;
     key.planesFor = p.flights;
     setData("planes", p.flights ? planesAt(p.flights, t) : EMPTY);
     const near: ExpressionSpecification = ["abs", ["-", ["get", "m"], t]];
     m.setPaintProperty("legs", "line-opacity", ["case", ["<=", near, 30], 0.55, ["<=", near, 90], 0.2, 0.06] as ExpressionSpecification);
     m.setPaintProperty("flagged", "line-opacity", ["case", ["<=", near, 60], 1, 0.45] as ExpressionSpecification);
+    m.setPaintProperty("legs-head", "line-opacity", 0);
   }
+  finishSync(m, p, setData);
+}
+
+function finishSync(_m: MLMap, p: Props, setData: (id: string, d: GeoJSON.FeatureCollection | GeoJSON.Feature) => void) {
   setData("selected", p.selected ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[p.selected.lon_start, p.selected.lat_start], [p.selected.lon_end, p.selected.lat_end]] } } : EMPTY);
   setData("pick", p.picked ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p.picked } } : EMPTY);
+}
+
+// ── animations ───────────────────────────────────────────────────────────────
+
+function crossfadeRisk(m: MLMap, a: Anim, url: string, man: Manifest) {
+  a.riskUrl = url;
+  const back = a.front === "A" ? "B" : "A";
+  (m.getSource(`risk${back}`) as ImageSource | undefined)?.updateImage({ url, coordinates: imageCoords(man) });
+  if (reducedMotion()) {
+    m.setPaintProperty(`risk${back}`, "raster-opacity", 1);
+    m.setPaintProperty(`risk${a.front}`, "raster-opacity", 0);
+    a.front = back;
+    return;
+  }
+  a.fade = { start: performance.now(), from: a.front };
+  a.front = back;
+}
+
+function startIntro(m: MLMap, p: Props, force = false) {
+  const a = ANIM.get(m);
+  if (!a || !p.flights) return;
+  if (reducedMotion() && !force) return;
+  a.intro = { t: 0, last: performance.now() };
+  p.onIntro({ active: true, t: 0 });
+}
+
+function endIntro(m: MLMap, p: Props) {
+  const a = ANIM.get(m);
+  if (!a || !a.intro) return;
+  a.intro = null;
+  m.setPaintProperty("legs-head", "line-opacity", 0);
+  m.setPaintProperty("flagged-glow", "line-width", ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22] as ExpressionSpecification);
+  const key = (m as unknown as { __keys: Record<string, unknown> }).__keys;
+  if (key) key.afterIntro = true;
+  p.onIntro({ active: false, t: 1440 });
+  sync(m, p);
+}
+
+function introFrame(m: MLMap, p: Props, a: Anim, now: number) {
+  const it = a.intro!;
+  it.t = Math.min(1440, it.t + ((now - it.last) / INTRO_MS) * 1440);
+  it.last = now;
+  const T = it.t;
+  const m_ = ["get", "m"] as ExpressionSpecification;
+  m.setPaintProperty("legs", "line-opacity", ["case", [">", m_, T], 0, [">=", m_, T - 40], 0.75, [">=", m_, T - 180], 0.3, 0.1] as ExpressionSpecification);
+  m.setPaintProperty("legs-head", "line-opacity", ["case", [">", m_, T], 0, [">=", m_, T - 8], 0.95, 0] as ExpressionSpecification);
+  m.setPaintProperty("flagged", "line-opacity", ["case", [">", m_, T], 0, 1] as ExpressionSpecification);
+  m.setPaintProperty("flagged-glow", "line-width", ["case", [">", m_, T], 0, [">=", m_, T - 45], ["interpolate", ["linear"], ["zoom"], 4, 34, 7, 60], ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22]] as ExpressionSpecification);
+  if (p.flights) (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, T));
+  p.onIntro({ active: true, t: T });
+  if (T >= 1440) endIntro(m, p);
+}
+
+function startLoop(m: MLMap, props: { current: Props }) {
+  const a = ANIM.get(m)!;
+  const reduce = reducedMotion();
+  const tick = (now: number) => {
+    if (a.intro) introFrame(m, props.current, a, now);
+    if (a.fade) {
+      const k = Math.min(1, (now - a.fade.start) / FADE_MS);
+      const e = k * k * (3 - 2 * k);
+      m.setPaintProperty(`risk${a.fade.from}`, "raster-opacity", 1 - e);
+      m.setPaintProperty(`risk${a.front}`, "raster-opacity", e);
+      if (k >= 1) a.fade = null;
+    }
+    if (!reduce && !a.intro && now - a.lastPulse > 50) {
+      a.lastPulse = now;
+      const s = 0.5 + 0.5 * Math.sin((now / 1700) * Math.PI * 2);
+      m.setPaintProperty("flagged-glow", "line-opacity", 0.3 + 0.45 * s);
+    }
+    a.raf = requestAnimationFrame(tick);
+  };
+  a.raf = requestAnimationFrame(tick);
 }
 
 function recolour(m: MLMap) {

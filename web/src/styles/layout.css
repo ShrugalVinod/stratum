@@ -899,3 +899,147 @@ figcaption.fc {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── motion ─────────────────────────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+.hero-content > * {
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-content > :nth-child(1) {
+  animation-delay: 0.05s;
+}
+.hero-content > :nth-child(2) {
+  animation-delay: 0.18s;
+}
+.hero-content > :nth-child(3) {
+  animation-delay: 0.42s;
+}
+.hero-content > :nth-child(4) {
+  animation-delay: 0.58s;
+}
+.hero h1 .accent {
+  display: inline-block;
+  animation: rise 1s 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-coords {
+  animation: rise 1s 1.2s both;
+}
+.enter > * {
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.enter > :nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+.reveal.stagger {
+  opacity: 1;
+  transform: none;
+}
+.reveal.stagger > * {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.2s,
+    background 0.2s;
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.reveal.stagger.in > * {
+  opacity: 1;
+  transform: none;
+}
+.cards3 .card:hover,
+.hyp:hover,
+.person:hover {
+  border-color: var(--border-strong);
+  background: var(--raised);
+}
+.cards3 .card:hover .num {
+  text-shadow: 0 0 12px var(--cyan);
+}
+
+/* stepper: progress line fills once it is in view, done boxes pop in turn */
+.stepper::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 0;
+  height: 1px;
+  width: 0;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  transition: width 1.6s 0.3s cubic-bezier(0.3, 0.6, 0.2, 1);
+}
+.stepper.in::after {
+  width: calc(var(--done, 0) * 100%);
+}
+.stepper.in .done .step-box,
+.stepper.in .current .step-box {
+  animation: pop 0.5s both;
+  animation-delay: calc(0.3s + var(--i, 0) * 0.18s);
+}
+.stepper .current .step-box {
+  animation: pulse-ring 2.2s infinite;
+}
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--cyan) 4%, transparent);
+  }
+}
+@media (max-width: 900px) {
+  .stepper::after {
+    display: none;
+  }
+}
+
+/* figure: slow drift on the satellite image */
+.figure-frame {
+  overflow: hidden;
+}
+.figure-frame img {
+  transition: transform 6s ease-out;
+}
+.open-grid.in .figure-frame img {
+  transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .stepper::after {
+    width: calc(var(--done, 0) * 100%);
+  }
+}

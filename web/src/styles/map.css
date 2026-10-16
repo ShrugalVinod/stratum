@@ -779,3 +779,62 @@ input[type="range"] {
 .lb-close {
   justify-self: start;
 }
+
+.intro-chip {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px 8px 16px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  border: 1px solid var(--cyan);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  animation: chip-in 0.4s ease-out;
+  z-index: 3;
+}
+.intro-chip b {
+  font-size: 18px;
+  min-width: 92px;
+}
+.intro-bar {
+  width: 120px;
+  height: 3px;
+  background: var(--border-strong);
+}
+.intro-bar i {
+  display: block;
+  height: 100%;
+  background: var(--cyan);
+}
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+.btn-sm:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 860px) {
+  .intro-chip {
+    top: auto;
+    bottom: 14px;
+    gap: 10px;
+  }
+  .intro-bar,
+  .intro-chip .muted {
+    display: none;
+  }
+}
+
+.map-banners {
+  transition: opacity 0.3s;
+}
+.map-banners.dim {
+  opacity: 0;
+}

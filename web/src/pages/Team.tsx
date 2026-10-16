@@ -17,9 +17,9 @@ export function Team() {
         }
       />
       <div class="wrap">
-        <div class="team-grid">
-          {[...team, supervisor].map((p) => (
-            <article class="card person">
+        <div class="team-grid reveal stagger">
+          {[...team, supervisor].map((p, i) => (
+            <article class="card person" style={{ "--i": i }}>
               <div class="avatar" aria-hidden="true">
                 {p.initials}
               </div>
