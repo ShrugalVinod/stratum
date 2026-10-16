@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { DaySummary, FlaggedSegment, FlightFeature, Manifest } from "../data/contract";
-import { CIVIDIS } from "../data/cividis";
+import { RAMP } from "../data/ramp";
 import { clock, colourise, hourLabel, joules, type MapState, pad2, parseState, stateQuery } from "../data/format";
 import { gridUrl, loadCorridor, loadDay, loadGridBytes, loadManifest } from "../data/load";
 import { ContrailMap, type Layers } from "../map/ContrailMap";
@@ -55,7 +55,34 @@ function corridorMask(m: Manifest, corridor: GeoJSON.Feature | null): Uint8Array
   return mask;
 }
 
-const DIR_LABEL = { "DEL-BOM": "DEL → BOM", "BOM-DEL": "BOM → DEL", other: "Crossing" } as const;
+type GalleryItem = { title: string; caption: string; long: string; thumb: string; full?: string; video?: string; alt: string };
+const GALLERY: GalleryItem[] = [
+  {
+    title: "Detector finds contrails",
+    caption: "Arabian Sea, 15 Jan 2026, 05:30 IST",
+    long: "Two long contrails over the Arabian Sea at night, found by the STRATUM line detector (15 Jan 2026, 00:00 UTC).",
+    thumb: "/img/meteosat_arabian_sea_2026-01-15_0000.webp",
+    alt: "Meteosat-9 infrared image with two thin bright diagonal contrails over a smooth sea",
+  },
+  {
+    title: "Physics vs satellite",
+    caption: "1 Jan 2026, 18:30 IST — no match",
+    long: "Orange: contrails predicted by uncorrected physics (CoCiP, B1). Blue: lines the detector found. None of the predicted contrails lines up with a detected one — the reason STRATUM learns a correction from satellite evidence (1 Jan 2026, 13:00 UTC).",
+    thumb: "/img/overlay_2026-01-01_1300.webp",
+    alt: "Two-panel satellite image: left plain, right with orange predicted contrails and blue detected lines that do not coincide",
+  },
+  {
+    title: "Four-hour time-lapse",
+    caption: "1 Jan 2026, 09:30–13:30 IST",
+    long: "Predicted contrails drifting with the wind next to the lines the detector finds, every 15 minutes (1 Jan 2026, 04:00–08:00 UTC).",
+    thumb: "/media/timelapse_poster.webp",
+    video: "/media/timelapse_2026-01-01.mp4",
+    alt: "Time-lapse of satellite images with predicted and detected contrails",
+  },
+];
+
+// Direction = overall heading compared with the Delhi–Mumbai route (not the actual origin/destination).
+const DIR_LABEL = { "DEL-BOM": "Southbound", "BOM-DEL": "Northbound", other: "Crossing" } as const;
 
 export function MapPage() {
   const [err, setErr] = useState<string | null>(null);
@@ -76,6 +103,13 @@ export function MapPage() {
   const [nightOnly, setNightOnly] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [lightbox, setLightbox] = useState<GalleryItem | null>(null);
+  useEffect(() => {
+    if (!lightbox) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
+    addEventListener("keydown", k);
+    return () => removeEventListener("keydown", k);
+  }, [lightbox]);
 
   // manifest + initial state from URL
   useEffect(() => {
@@ -359,19 +393,37 @@ export function MapPage() {
             <span class="mono muted small">Real Meteosat-9 images · illustrations, not results</span>
           </div>
           <div class="gal-row">
-            <figure class="gal-card">
-              <img src="/img/meteosat_arabian_sea_2026-01-15_0000.webp" alt="Two contrails over the Arabian Sea in a Meteosat-9 infrared image" loading="lazy" />
-              <figcaption>
-                <b>Meteosat-9 · 15 Jan 2026 · 00:00 UTC</b>
-                <span>Two contrails over the Arabian Sea found by the STRATUM detector. © EUMETSAT 2026</span>
-              </figcaption>
-            </figure>
-            <a class="gal-card more" href="/how-it-works">
-              <b>How the satellite check works →</b>
-              <span>Line detection, parallax correction and the rule that cloudy scenes count as “unknown”, never “no contrail”.</span>
-            </a>
+            {GALLERY.map((g) => (
+              <button class="gal-card" onClick={() => setLightbox(g)}>
+                <img src={g.thumb} alt="" loading="lazy" />
+                <span class="gal-text">
+                  <b>
+                    {g.title}
+                    {g.video && <span class="play-mark" aria-hidden="true">▶</span>}
+                  </b>
+                  <span>{g.caption}</span>
+                </span>
+              </button>
+            ))}
           </div>
         </section>
+        {lightbox && (
+          <div class="lightbox" role="dialog" aria-modal="true" aria-label={lightbox.title} onClick={() => setLightbox(null)}>
+            <figure onClick={(e) => e.stopPropagation()}>
+              {lightbox.video ? (
+                <video src={lightbox.video} poster={lightbox.thumb} controls autoPlay loop playsInline />
+              ) : (
+                <img src={lightbox.full ?? lightbox.thumb} alt={lightbox.alt} />
+              )}
+              <figcaption>
+                <b>{lightbox.title}</b> — {lightbox.long} <span class="muted">© EUMETSAT 2026 · illustration, not a result.</span>
+              </figcaption>
+              <button class="btn-sm lb-close" onClick={() => setLightbox(null)} autoFocus>
+                Close
+              </button>
+            </figure>
+          </div>
+        )}
       </div>
 
       <aside class="side-panel" aria-label="Flagged segments">
@@ -512,7 +564,7 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
                   </text>
                   {p.data![i].map((v, h) => {
                     const k = v > 0 ? Math.min(255, 70 + Math.round(v * 185)) : 0;
-                    const fill = v > 0 ? `rgb(${CIVIDIS[k * 3]},${CIVIDIS[k * 3 + 1]},${CIVIDIS[k * 3 + 2]})` : "var(--raised)";
+                    const fill = v > 0 ? `rgb(${RAMP[k * 3]},${RAMP[k * 3 + 1]},${RAMP[k * 3 + 2]})` : "var(--raised)";
                     return (
                       <rect
                         x={left + h * cw}

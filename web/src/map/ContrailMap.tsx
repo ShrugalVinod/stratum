@@ -50,7 +50,7 @@ function palette() {
   const light = cssVar("color-scheme") === "light";
   return light
     ? { ocean: "#dfe7f2", land: "#f7f8fa", border: "#98a3b3", state: "#c3cad5", grat: "#c9d2df", coast: "#7e8a9c", track: "#334155", plane: "#111418", corr: "#7a4fc4", pred: "#e0730a", label: "#111418", halo: "#f7f8fa" }
-    : { ocean: "#070a0f", land: "#121925", border: "#3a4558", state: "#232d3c", grat: "#141c28", coast: "#4a566b", track: "#e7eaf0", plane: "#ffffff", corr: "#c9a3ff", pred: "#ff8c1a", label: "#c9d1dd", halo: "#070a0f" };
+    : { ocean: "#070a0f", land: "#121925", border: "#3a4558", state: "#232d3c", grat: "#141c28", coast: "#4a566b", track: "#bcd0f5", plane: "#e7eaf0", corr: "#c9a3ff", pred: "#ff8c1a", label: "#c9d1dd", halo: "#070a0f" };
 }
 
 function graticule(step = 5): GeoJSON.FeatureCollection {
@@ -173,13 +173,13 @@ export function ContrailMap(p: Props) {
       m.addLayer({ id: "borders", type: "line", source: "countries", paint: { "line-color": col.border, "line-width": 1 } });
       m.addLayer({ id: "corridor-fill", type: "fill", source: "corridor", paint: { "fill-color": col.corr, "fill-opacity": 0.06 } });
       m.addLayer({ id: "corridor-line", type: "line", source: "corridor", paint: { "line-color": col.corr, "line-width": 1.4, "line-dasharray": [3, 3] } });
-      m.addLayer({ id: "legs", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": 1.1, "line-opacity": 0.15 } });
-      m.addLayer({ id: "flagged-glow", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": 9, "line-blur": 7, "line-opacity": 0.35 } });
-      m.addLayer({ id: "flagged", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": 2.6 } });
+      m.addLayer({ id: "legs", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 7, 1.4], "line-opacity": 0.1 } });
+      m.addLayer({ id: "flagged-glow", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22], "line-blur": ["interpolate", ["linear"], ["zoom"], 4, 9, 7, 16], "line-opacity": 0.55 } });
+      m.addLayer({ id: "flagged", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 3, 7, 4.5] } });
       m.addLayer({ id: "selected-glow", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 14, "line-blur": 8, "line-opacity": 0.5 } });
       m.addLayer({ id: "selected", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 3 } });
-      m.addLayer({ id: "planes-halo", type: "circle", source: "planes", paint: { "circle-radius": 6, "circle-color": col.ocean, "circle-opacity": 0.6 } });
-      m.addLayer({ id: "planes", type: "circle", source: "planes", paint: { "circle-radius": 2.6, "circle-color": ["case", ["get", "flagged"], col.pred, col.plane] } });
+      m.addLayer({ id: "planes-halo", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3.2, 7, 5.5], "circle-color": col.ocean, "circle-opacity": 0.55 } });
+      m.addLayer({ id: "planes", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 7, 3], "circle-color": ["case", ["get", "flagged"], col.pred, col.plane] } });
       m.addLayer({ id: "pick", type: "circle", source: "pick", paint: { "circle-radius": 7, "circle-color": "transparent", "circle-stroke-color": "#29d3ff", "circle-stroke-width": 2 } });
 
       // city labels as HTML markers (crisp, no glyph server needed)
@@ -232,6 +232,7 @@ export function ContrailMap(p: Props) {
       });
 
       ready.current = true;
+      el.current?.classList.add("ready");
       sync(m, props.current);
     });
 
@@ -294,7 +295,7 @@ function sync(m: MLMap, p: Props) {
     key.planesFor = p.flights;
     setData("planes", p.flights ? planesAt(p.flights, t) : EMPTY);
     const near: ExpressionSpecification = ["abs", ["-", ["get", "m"], t]];
-    m.setPaintProperty("legs", "line-opacity", ["case", ["<=", near, 30], 0.95, ["<=", near, 90], 0.42, 0.13] as ExpressionSpecification);
+    m.setPaintProperty("legs", "line-opacity", ["case", ["<=", near, 30], 0.55, ["<=", near, 90], 0.2, 0.06] as ExpressionSpecification);
     m.setPaintProperty("flagged", "line-opacity", ["case", ["<=", near, 60], 1, 0.45] as ExpressionSpecification);
   }
   setData("selected", p.selected ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[p.selected.lon_start, p.selected.lat_start], [p.selected.lon_end, p.selected.lat_end]] } } : EMPTY);

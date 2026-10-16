@@ -187,6 +187,16 @@ input[type="range"] {
   position: absolute;
   inset: 0;
 }
+.map-canvas:not(.ready)::after {
+  content: "Loading map…";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+}
 .maplibregl-ctrl-group {
   background: var(--surface) !important;
   border: 1px solid var(--border-strong);
@@ -258,7 +268,7 @@ input[type="range"] {
 }
 .ramp {
   height: 10px;
-  background: linear-gradient(90deg, #00224e, #2a3f6e, #575d6d, #7c7b78, #a69d75, #d3c164, #fee838);
+  background: linear-gradient(90deg, #423d84, #37598c, #2b738e, #228a8d, #1fa386, #3bba75, #6dce58);
 }
 .ramp-labels {
   display: flex;
@@ -439,6 +449,9 @@ input[type="range"] {
 }
 .gal-card {
   margin: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
   display: grid;
   grid-template-columns: 112px 1fr;
   gap: 14px;
@@ -452,7 +465,10 @@ input[type="range"] {
   height: 84px;
   object-fit: cover;
 }
-.gal-card figcaption,
+.gal-card:hover {
+  border-color: var(--border-strong);
+}
+.gal-text,
 .gal-card.more {
   display: grid;
   gap: 4px;
@@ -725,4 +741,41 @@ input[type="range"] {
   .gallery {
     padding: 18px 16px 24px;
   }
+}
+
+.play-mark {
+  color: var(--cyan);
+  margin-left: 8px;
+  font-size: 12px;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(3, 5, 9, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.lightbox figure {
+  margin: 0;
+  max-width: min(1400px, 96vw);
+  display: grid;
+  gap: 12px;
+}
+.lightbox img,
+.lightbox video {
+  max-height: 78vh;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #000;
+}
+.lightbox figcaption {
+  color: #c9d1dd;
+  font-size: 14.5px;
+  max-width: 900px;
+}
+.lb-close {
+  justify-self: start;
 }

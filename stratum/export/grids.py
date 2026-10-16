@@ -14,7 +14,8 @@ For one ERA5 day and one flight level the map shows, per 0.25° cell and UTC hou
 4. The fraction of the 4 sub-steps that persist (0, ¼, ½, ¾ or 1) is the cell value.
 
 Grids are cropped to the study domain (6–37°N, 68–98°E), flipped north-up and written as
-8-bit grey PNGs (value = round(fraction × 255)); the web app colours them with cividis.
+8-bit grey PNGs (value = round(fraction × 255)); the web app colours them with a viridis
+segment (blue → teal → green, distinct from the orange of predicted contrails).
 """
 
 from __future__ import annotations

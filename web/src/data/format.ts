@@ -1,5 +1,5 @@
 // Small pure helpers (unit-tested): time, energy, colour.
-import { CIVIDIS } from "./cividis";
+import { RAMP } from "./ramp";
 
 const SUP: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
 
@@ -28,16 +28,16 @@ export function hourLabel(h: number): { utc: string; ist: string } {
   return { utc: `${pad2(h)}:00`, ist: `${pad2(Math.floor(ist / 60))}:${pad2(ist % 60)}` };
 }
 
-/** Grey grid bytes → RGBA with the cividis ramp; 0 is fully transparent. */
-export function colourise(bytes: Uint8Array, maxAlpha = 0.85): Uint8ClampedArray {
+/** Grey grid bytes → RGBA with the risk ramp (viridis segment); 0 is fully transparent. */
+export function colourise(bytes: Uint8Array, maxAlpha = 0.72): Uint8ClampedArray {
   const out = new Uint8ClampedArray(bytes.length * 4);
   for (let i = 0; i < bytes.length; i++) {
     const v = bytes[i];
     if (v === 0) continue;
     const k = Math.min(255, 70 + Math.round((v / 255) * 185)); // start mid-ramp so small fractions stay visible
-    out[i * 4] = CIVIDIS[k * 3];
-    out[i * 4 + 1] = CIVIDIS[k * 3 + 1];
-    out[i * 4 + 2] = CIVIDIS[k * 3 + 2];
+    out[i * 4] = RAMP[k * 3];
+    out[i * 4 + 1] = RAMP[k * 3 + 1];
+    out[i * 4 + 2] = RAMP[k * 3 + 2];
     out[i * 4 + 3] = Math.round(255 * maxAlpha * (0.45 + 0.55 * (v / 255)));
   }
   return out;
