@@ -183,7 +183,8 @@ input[type="range"] {
   min-height: 560px;
   background: var(--bg);
 }
-.map-canvas {
+/* more specific than MapLibre's own .maplibregl-map { position: relative }, which loads later */
+.map-wrap .map-canvas {
   position: absolute;
   inset: 0;
 }
