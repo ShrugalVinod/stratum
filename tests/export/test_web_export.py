@@ -99,7 +99,7 @@ def test_salt_required(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _segments() -> tuple[pd.DataFrame, pd.DataFrame]:
     rows, coc = [], []
-    t0 = pd.Timestamp("2026-01-01 06:00")
+    t0 = pd.Timestamp("2026-01-01 06:00", tz="UTC")  # like the real segments_met tables
     for fid, cs, comm in [("800abc_0.1", "IGO123", True), ("800def_0.1", "VJT456", False)]:
         for i in range(10):
             sid = f"{fid}_{i:04d}"
@@ -137,6 +137,8 @@ def test_flights_privacy_and_contract() -> None:
         assert f.p_persistent is None and f.best_alternative_fl is None  # Phase 7: pending
         assert f.extra_co2_kg is None and f.net_warming_avoided_100y is None
         assert f.airline == "IndiGo" and f.fl == 360 and f.contrail_age_h == 2.0
+    assert f.time_utc.startswith("2026-01-01T06:0") and f.time_utc.endswith("Z")
+    assert fc["features"][0]["properties"]["minutes"][0] == 360
 
 
 def test_json_schemas_exist() -> None:

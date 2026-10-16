@@ -144,6 +144,8 @@ def flights_and_segments(
     if "in_corridor" in s:
         s = s[s["flight_id"].isin(set(s.loc[s["in_corridor"], "flight_id"]))]
     s = s[s["commercial"].astype(bool)].copy()
+    for c in ("time_start", "time_end", "time_mid"):  # stored tz-aware UTC → naive UTC
+        s[c] = pd.to_datetime(s[c], utc=True).dt.tz_convert(None)
     if cocip is not None and len(cocip):
         cols = [c for c in ("segment_id", "ef", "persistent_1", "contrail_age",
                             "ef_p05", "ef_p50", "ef_p95") if c in cocip]  # fmt: skip
@@ -172,8 +174,8 @@ def flights_and_segments(
             if "typecode" in g and pd.notna(g["typecode"].iloc[0])
             else None,
             direction=dirn,
-            t_start=t[0].isoformat() + "Z",
-            t_end=t[-1].isoformat() + "Z",
+            t_start=f"{t[0]:%Y-%m-%dT%H:%M:%S}Z",
+            t_end=f"{t[-1]:%Y-%m-%dT%H:%M:%S}Z",
             minutes=[int(m) for m in minutes[keep]],
             flagged=bool(g["flagged"].any()),
         )
@@ -198,7 +200,7 @@ def flights_and_segments(
                     callsign=callsign,
                     airline=airline,
                     direction=dirn,
-                    time_utc=pd.Timestamp(r.time_mid).isoformat() + "Z",
+                    time_utc=f"{pd.Timestamp(r.time_mid):%Y-%m-%dT%H:%M:%S}Z",
                     fl=round(float(r.alt_ft_mid) / 100),
                     lat=round((r.lat_start + r.lat_end) / 2, 4),
                     lon=round((r.lon_start + r.lon_end) / 2, 4),
