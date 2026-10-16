@@ -47,7 +47,7 @@ type Props = {
 
 // ── animation state (one per map) ────────────────────────────────────────────
 type Anim = {
-  intro: { t: number; last: number } | null;
+  intro: { t: number; last: number; planes: number } | null;
   front: "A" | "B";
   riskUrl: string | null;
   fade: { start: number; from: "A" | "B" } | null;
@@ -366,14 +366,20 @@ function startIntro(m: MLMap, p: Props, force = false) {
   const a = ANIM.get(m);
   if (!a || !p.flights) return;
   if (reducedMotion() && !force) return;
-  a.intro = { t: 0, last: performance.now() };
-  p.onIntro({ active: true, t: 0 });
+  // start once the map has drawn its first frame, so loading and the intro don't compete
+  const go = () => {
+    a.intro = { t: 0, last: performance.now(), planes: 0 };
+    p.onIntro({ active: true, t: 0 });
+  };
+  if (force || m.loaded()) setTimeout(go, force ? 0 : 350);
+  else m.once("idle", () => setTimeout(go, 350));
 }
 
 function endIntro(m: MLMap, p: Props) {
   const a = ANIM.get(m);
   if (!a || !a.intro) return;
   a.intro = null;
+  if (p.flights) (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, p.hour * 60 + 30));
   m.setPaintProperty("legs-head", "line-opacity", 0);
   m.setPaintProperty("flagged-glow", "line-width", ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22] as ExpressionSpecification);
   const key = (m as unknown as { __keys: Record<string, unknown> }).__keys;
@@ -391,8 +397,13 @@ function introFrame(m: MLMap, p: Props, a: Anim, now: number) {
   m.setPaintProperty("legs", "line-opacity", ["case", [">", m_, T], 0, [">=", m_, T - 40], 0.75, [">=", m_, T - 180], 0.3, 0.1] as ExpressionSpecification);
   m.setPaintProperty("legs-head", "line-opacity", ["case", [">", m_, T], 0, [">=", m_, T - 8], 0.95, 0] as ExpressionSpecification);
   m.setPaintProperty("flagged", "line-opacity", ["case", [">", m_, T], 0, 1] as ExpressionSpecification);
-  m.setPaintProperty("flagged-glow", "line-width", ["case", [">", m_, T], 0, [">=", m_, T - 45], ["interpolate", ["linear"], ["zoom"], 4, 34, 7, 60], ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22]] as ExpressionSpecification);
-  if (p.flights) (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, T));
+  // zoom interpolation must be the outermost expression; the flash is a case inside each stop
+  const flash = (big: number, normal: number): ExpressionSpecification => ["case", [">", m_, T], 0, [">=", m_, T - 45], big, normal];
+  m.setPaintProperty("flagged-glow", "line-width", ["interpolate", ["linear"], ["zoom"], 4, flash(34, 12), 7, flash(60, 22)]);
+  if (p.flights && now - it.planes > 90) {
+    it.planes = now; // aircraft positions ~11×/s is smooth enough and keeps the main thread free
+    (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, T));
+  }
   p.onIntro({ active: true, t: T });
   if (T >= 1440) endIntro(m, p);
 }

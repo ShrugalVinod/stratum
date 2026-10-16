@@ -3,7 +3,7 @@ import type { DaySummary, FlaggedSegment, FlightFeature, Manifest } from "../dat
 import { RAMP } from "../data/ramp";
 import { clock, colourise, hourLabel, joules, type MapState, pad2, parseState, stateQuery } from "../data/format";
 import { gridUrl, loadCorridor, loadDay, loadGridBytes, loadManifest } from "../data/load";
-import { ContrailMap, type Layers } from "../map/ContrailMap";
+import type { ContrailMap as ContrailMapT, Layers } from "../map/ContrailMap";
 import "../styles/map.css";
 
 type Grid = Uint8Array;
@@ -106,6 +106,11 @@ export function MapPage() {
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null);
   const [introCmd, setIntroCmd] = useState<{ kind: "play" | "skip"; n: number }>({ kind: "play", n: 0 });
   const [intro, setIntro] = useState<{ active: boolean; t: number }>({ active: false, t: 0 });
+  // the map engine (~300 KB) loads in parallel, so controls and the list appear at once
+  const [ContrailMap, setContrailMap] = useState<typeof ContrailMapT | null>(null);
+  useEffect(() => {
+    import("../map/ContrailMap").then((mod) => setContrailMap(() => mod.ContrailMap));
+  }, []);
   useEffect(() => {
     if (!lightbox) return;
     const k = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
@@ -317,8 +322,8 @@ export function MapPage() {
                 </div>
               )}
             </div>
-            {dayData?.day.has_flights && (
-              <button class="btn-sm" onClick={() => setIntroCmd({ kind: "play", n: introCmd.n + 1 })} disabled={intro.active} title="Replay the whole day">
+            {(
+              <button class="btn-sm" onClick={() => setIntroCmd({ kind: "play", n: introCmd.n + 1 })} disabled={intro.active || !dayData?.day.has_flights} title="Replay the whole day">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
                   <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" />
                 </svg>
@@ -332,7 +337,8 @@ export function MapPage() {
         </div>
 
         <div class="map-wrap">
-          {man && (
+          {!ContrailMap && <div class="map-loading">Loading map…</div>}
+          {man && ContrailMap && (
             <ContrailMap
               manifest={man}
               corridor={corridor}

@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { DaySummary, FlaggedSegment, FlightCollection, Manifest } from "./contract";
+import { DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -29,7 +29,7 @@ export async function loadDay(build: string, date: string) {
   const day = await json(dataUrl(build, `days/${date}/day.json`), DaySummary);
   if (!day.has_flights) return { day, flights: null, segments: [] as z.infer<typeof FlaggedSegment>[] };
   const [flights, segments] = await Promise.all([
-    json(dataUrl(build, `days/${date}/flights.geojson`), FlightCollection),
+    json(dataUrl(build, `days/${date}/flights.geojson`), FlightCollectionLite) as Promise<{ type: "FeatureCollection"; features: FlightFeature[] }>,
     json(dataUrl(build, `days/${date}/segments_flagged.json`), z.array(FlaggedSegment)),
   ]);
   return { day, flights, segments };

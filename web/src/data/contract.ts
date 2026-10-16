@@ -69,6 +69,18 @@ export const FlightFeature = z.object({
 });
 export type FlightFeature = z.infer<typeof FlightFeature>;
 export const FlightCollection = z.object({ type: z.literal("FeatureCollection"), features: z.array(FlightFeature) });
+/** Lighter check used in the browser: every property is validated, coordinates only by shape
+ *  (the exporter already validated them; full checking of ~18k vertices costs ~0.5 s on a phone). */
+export const FlightCollectionLite = z.object({
+  type: z.literal("FeatureCollection"),
+  features: z.array(
+    z.object({
+      type: z.literal("Feature"),
+      geometry: z.object({ type: z.literal("LineString"), coordinates: z.array(z.any()).min(2) }),
+      properties: FlightProps,
+    }),
+  ),
+});
 
 export const FlaggedSegment = z.object({
   segment_id: z.string(),
