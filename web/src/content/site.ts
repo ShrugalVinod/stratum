@@ -146,7 +146,7 @@ export const progress = [
 export const team = [
   { initials: "SV", name: "Shrugal Vinod", role: "Team lead · modelling & software" },
   { initials: "AH", name: "Aditya Harsoda", role: "Flight data" },
-  { initials: "IK", name: "Ishan Kupnur", role: "Satellite data & labelling" }, // paper spells "Ishaan" — confirm
+  { initials: "IK", name: "Ishaan Kupnur", role: "Satellite data & labelling" },
   { initials: "AS", name: "Abeer Shah", role: "Product & communication" },
 ];
 export const supervisor = { initials: "VP", name: "Dr. Varsha Pant", role: "Supervisor" };
