@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vite/client", "geojson"]
+    "types": ["vite/client", "geojson", "node"]
   },
   "include": ["src", "tests", "vite.config.ts"]
 }
