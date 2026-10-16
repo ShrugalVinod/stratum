@@ -285,6 +285,36 @@ def phase3_overlays(
     _summary(f"phase3-overlays {day}", {k: v for k, v in res.items() if k != "figures"})
 
 
+@app.command("export-web")
+def export_web_cmd(
+    month: Annotated[str, typer.Option(help="YYYY-MM")] = "2026-01",
+    build_id: Annotated[str | None, typer.Option(help="default: <month>-<git short sha>")] = None,
+    scaling: Annotated[str, typer.Option(help="CoCiP run shown on the map (v0: B1)")] = "B1",
+) -> None:
+    """Phase 4: export grids, flights and flagged segments for the web app.
+
+    Needs STRATUM_ID_SALT (.env or Colab Secrets) for the hashed flight ids."""
+    import subprocess
+
+    from stratum.export.web_export import export_web
+    from stratum.paths import repo_root
+
+    try:
+        sha = subprocess.run(
+            ["git", "-C", str(repo_root()), "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()  # fmt: skip
+    except (OSError, subprocess.CalledProcessError):
+        sha = "unknown"
+    bid = build_id or f"{month}-{sha[:7]}"
+    root = drive_root()
+    res = export_web(
+        root, month, root / "web_exports", bid, git_commit=sha,
+        config_hash=cfg.config_hash(), scaling=scaling,
+    )  # fmt: skip
+    _summary(f"export-web {month}", {k: v for k, v in res.items() if k != "sizes"})
+
+
 @app.command("phase3-showcase")
 def phase3_showcase(
     days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD satellite days")],

@@ -620,6 +620,72 @@ if overlay:
 ]
 
 
+WEB_EXPORT = [
+    header(
+        "04 · Web data export: contrail map grids + 1 Jan flights (Phase 4, task 4.3)",
+        """
+**What this does:** builds the data files the STRATUM website reads, for **every day of
+January 2026**: a contrail-condition grid for each hour (00–23 UTC) and flight level
+(FL280–FL420), plus, for 1 Jan, the commercial corridor flights and the segments CoCiP (B1)
+flags as making a persistent contrail. Aircraft ids are replaced by salted hashes; only
+commercial airline flights are exported. At the end it zips the build so you can download it.
+
+Reads (already on Drive): `raw/era5/pl/2026-01` (+ 1 Feb for the last hour),
+`interim/segments_met/2026-01/…`, `interim/cocip/B1/2026-01/…`.
+Writes: `web_exports/<build_id>/` and `web_exports/<build_id>.zip` (a few MB).
+
+* **Runtime:** CPU (default). No GPU.
+* **Secrets** (🔑): `GITHUB_TOKEN` and **`STRATUM_ID_SALT`**: add a NEW secret with that exact
+  name and any long random text as the value (40+ letters/numbers; make it up, keep it
+  private, never share it). Turn on notebook access for both.
+* **Time:** about 5–10 minutes.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude,
+  then download `web_exports/<build_id>.zip` from Drive into your Downloads folder.
+""",
+    ),
+    settings(
+        "04_web_export",
+        'MONTH = "2026-01"     # the dashboard month (development month)\n',
+    ),
+    *SETUP,
+    code('''
+# ── 7. Salt for hashed flight ids, from Colab Secrets (never printed) ───────
+salt = userdata.get("STRATUM_ID_SALT")
+assert salt and len(salt) >= 16, "Add a Colab secret STRATUM_ID_SALT (16+ characters) and enable notebook access"
+SECRETS.append(salt)
+run_env["STRATUM_ID_SALT"] = salt
+del salt
+print("Salt loaded.")
+'''),
+    code('''
+# ── 8. Export ────────────────────────────────────────────────────────────────
+rc_exp = stratum(f"export-web --month {MONTH}", live=True)
+print("exit code:", rc_exp)
+'''),
+    code('''
+# ── 9. Zip the newest build for download + collect the summary ──────────────
+import glob, shutil
+builds = sorted(glob.glob(f"{DRIVE_ROOT}/web_exports/{MONTH}-*/manifest.json"), key=os.path.getmtime)
+build_dir = os.path.dirname(builds[-1]) if builds else None
+zip_path, man = None, None
+if build_dir:
+    zip_path = shutil.make_archive(build_dir, "zip", build_dir)
+    man = json.load(open(f"{build_dir}/manifest.json"))
+    day_sizes = {d: round(sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(f"{build_dir}/days/{d}") for f in fs) / 1e6, 3)
+                 for d in man["days"]}
+'''),
+    summary_cell("""    "exit_codes": {"export": rc_exp},
+    "build_id": man and man["build_id"],
+    "days": man and len(man["days"]),
+    "days_with_flights": man and man["days_with_flights"],
+    "grid": man and man["grid"],
+    "day_sizes_MB": man and day_sizes,
+    "zip": zip_path and os.path.basename(zip_path),
+    "zip_MB": zip_path and round(os.path.getsize(zip_path) / 1e6, 2),
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -642,4 +708,5 @@ if __name__ == "__main__":
     write("01c_meteosat_ingest.ipynb", METEOSAT)
     write("02_physics_baseline.ipynb", PHYSICS)
     write("03_detector_overlays.ipynb", DETECT)
+    write("04_web_export.ipynb", WEB_EXPORT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

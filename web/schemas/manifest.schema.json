@@ -1,0 +1,196 @@
+{
+ "$defs": {
+  "Coverage": {
+   "additionalProperties": false,
+   "properties": {
+    "adsb_coverage_pct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "description": "Share of scheduled corridor flights with continuous tracks (audit); null = pending",
+     "title": "Adsb Coverage Pct"
+    },
+    "note": {
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "required": [
+    "adsb_coverage_pct",
+    "note"
+   ],
+   "title": "Coverage",
+   "type": "object"
+  },
+  "FlightLevelInfo": {
+   "additionalProperties": false,
+   "properties": {
+    "fl": {
+     "title": "Fl",
+     "type": "integer"
+    },
+    "pressure_hpa": {
+     "title": "Pressure Hpa",
+     "type": "number"
+    }
+   },
+   "required": [
+    "fl",
+    "pressure_hpa"
+   ],
+   "title": "FlightLevelInfo",
+   "type": "object"
+  },
+  "GridMeta": {
+   "additionalProperties": false,
+   "properties": {
+    "lat_north": {
+     "title": "Lat North",
+     "type": "number"
+    },
+    "lat_south": {
+     "title": "Lat South",
+     "type": "number"
+    },
+    "lon_west": {
+     "title": "Lon West",
+     "type": "number"
+    },
+    "lon_east": {
+     "title": "Lon East",
+     "type": "number"
+    },
+    "rows": {
+     "title": "Rows",
+     "type": "integer"
+    },
+    "cols": {
+     "title": "Cols",
+     "type": "integer"
+    },
+    "step_deg": {
+     "title": "Step Deg",
+     "type": "number"
+    },
+    "encoding": {
+     "const": "png_uint8_fraction_of_hour",
+     "title": "Encoding",
+     "type": "string"
+    }
+   },
+   "required": [
+    "lat_north",
+    "lat_south",
+    "lon_west",
+    "lon_east",
+    "rows",
+    "cols",
+    "step_deg",
+    "encoding"
+   ],
+   "title": "GridMeta",
+   "type": "object"
+  }
+ },
+ "additionalProperties": false,
+ "properties": {
+  "contract_version": {
+   "default": "1.0.0",
+   "title": "Contract Version",
+   "type": "string"
+  },
+  "build_id": {
+   "title": "Build Id",
+   "type": "string"
+  },
+  "created_at": {
+   "title": "Created At",
+   "type": "string"
+  },
+  "git_commit": {
+   "title": "Git Commit",
+   "type": "string"
+  },
+  "config_hash": {
+   "title": "Config Hash",
+   "type": "string"
+  },
+  "pipeline_version": {
+   "title": "Pipeline Version",
+   "type": "string"
+  },
+  "model_version": {
+   "description": "e.g. \"B1-physics-v0\"",
+   "title": "Model Version",
+   "type": "string"
+  },
+  "days": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Days",
+   "type": "array"
+  },
+  "days_with_flights": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Days With Flights",
+   "type": "array"
+  },
+  "flight_levels": {
+   "items": {
+    "$ref": "#/$defs/FlightLevelInfo"
+   },
+   "title": "Flight Levels",
+   "type": "array"
+  },
+  "hours_utc": {
+   "items": {
+    "type": "integer"
+   },
+   "title": "Hours Utc",
+   "type": "array"
+  },
+  "grid": {
+   "$ref": "#/$defs/GridMeta"
+  },
+  "eta_for_grids": {
+   "title": "Eta For Grids",
+   "type": "number"
+  },
+  "coverage": {
+   "$ref": "#/$defs/Coverage"
+  },
+  "credits": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Credits",
+   "type": "array"
+  }
+ },
+ "required": [
+  "build_id",
+  "created_at",
+  "git_commit",
+  "config_hash",
+  "pipeline_version",
+  "model_version",
+  "days",
+  "days_with_flights",
+  "flight_levels",
+  "hours_utc",
+  "grid",
+  "eta_for_grids",
+  "coverage",
+  "credits"
+ ],
+ "title": "Manifest",
+ "type": "object"
+}

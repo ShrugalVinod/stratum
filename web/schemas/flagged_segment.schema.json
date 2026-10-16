@@ -1,0 +1,235 @@
+{
+ "additionalProperties": false,
+ "properties": {
+  "segment_id": {
+   "title": "Segment Id",
+   "type": "string"
+  },
+  "flight_id": {
+   "title": "Flight Id",
+   "type": "string"
+  },
+  "callsign": {
+   "title": "Callsign",
+   "type": "string"
+  },
+  "airline": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "title": "Airline"
+  },
+  "direction": {
+   "enum": [
+    "DEL-BOM",
+    "BOM-DEL",
+    "other"
+   ],
+   "title": "Direction",
+   "type": "string"
+  },
+  "time_utc": {
+   "title": "Time Utc",
+   "type": "string"
+  },
+  "fl": {
+   "title": "Fl",
+   "type": "integer"
+  },
+  "lat": {
+   "title": "Lat",
+   "type": "number"
+  },
+  "lon": {
+   "title": "Lon",
+   "type": "number"
+  },
+  "lat_start": {
+   "title": "Lat Start",
+   "type": "number"
+  },
+  "lon_start": {
+   "title": "Lon Start",
+   "type": "number"
+  },
+  "lat_end": {
+   "title": "Lat End",
+   "type": "number"
+  },
+  "lon_end": {
+   "title": "Lon End",
+   "type": "number"
+  },
+  "night": {
+   "description": "local solar time 18\u201306 h",
+   "title": "Night",
+   "type": "boolean"
+  },
+  "ef_J": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "description": "CoCiP central run, B1",
+   "title": "Ef J"
+  },
+  "ef_p05_J": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "title": "Ef P05 J"
+  },
+  "ef_p50_J": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "title": "Ef P50 J"
+  },
+  "ef_p95_J": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "title": "Ef P95 J"
+  },
+  "ef_note": {
+   "title": "Ef Note",
+   "type": "string"
+  },
+  "contrail_age_h": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "title": "Contrail Age H"
+  },
+  "p_persistent": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "P Persistent"
+  },
+  "best_alternative_fl": {
+   "anyOf": [
+    {
+     "type": "integer"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Best Alternative Fl"
+  },
+  "extra_fuel_kg": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Extra Fuel Kg"
+  },
+  "extra_co2_kg": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Extra Co2 Kg"
+  },
+  "net_warming_avoided_20y": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Net Warming Avoided 20Y"
+  },
+  "net_warming_avoided_100y": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Net Warming Avoided 100Y"
+  },
+  "confidence_note": {
+   "title": "Confidence Note",
+   "type": "string"
+  }
+ },
+ "required": [
+  "segment_id",
+  "flight_id",
+  "callsign",
+  "airline",
+  "direction",
+  "time_utc",
+  "fl",
+  "lat",
+  "lon",
+  "lat_start",
+  "lon_start",
+  "lat_end",
+  "lon_end",
+  "night",
+  "ef_J",
+  "ef_p05_J",
+  "ef_p50_J",
+  "ef_p95_J",
+  "ef_note",
+  "contrail_age_h",
+  "confidence_note"
+ ],
+ "title": "FlaggedSegment",
+ "type": "object"
+}
