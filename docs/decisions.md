@@ -131,3 +131,6 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 - **Labellers:** Aditya Harsoda and Ishaan Kupnur, independently; disagreements settled by discussion, Shrugal Vinod decides if they can't agree. Targets: 20-scene pilot by 26 Oct, 200 scenes by 9 Nov.
 - **Labelling app** hosted at its own link (separate Cloudflare project from `labeller/`), not inside the STRATUM site. It contains code only; the satellite scene packages stay private on Drive and are opened from each labeller's laptop.
 - Still open: **Q4** (Driver et al. 2025 detection-efficiency thresholds, Ishaan to send) before Phase 5 step 5.5.7.
+
+## 2026-10-17 — Q4 settled: detection efficiency from Driver et al. 2025, per segment (Team OK: S. Vinod, chat "a"), before any matching
+- A predicted contrail is detectable if CoCiP optical depth ≥ 0.05 (Driver et al. 2025, p. 1123) and CoCiP width ≥ 1 local Meteosat pixel (p. 1120). Stored per segment as a separate uncertainty term for the secondary (efficiency-adjusted) H1 only; never folded into the labels. The paper's population shares (46 % at 2 km, 38 % at 7 km ≈ SEVIRI) are reported as a cross-check. The paper gives no published threshold grid, so the 3-D surface (IWP₀, r_eff, width) is not used.

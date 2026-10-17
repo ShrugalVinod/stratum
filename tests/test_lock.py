@@ -51,7 +51,11 @@ def test_no_lock_means_not_ok(files: dict[str, Path]) -> None:
 def test_fresh_lock_verifies_identical(files: dict[str, Path]) -> None:
     rec = _lock(files)
     assert len(rec.combined_sha256) == 64
-    assert "Q4" in rec.open_at_lock and "Q1" in rec.settled_questions_sha256
+    import re
+
+    still_open = set(re.findall(r"^### (\d+)\..*⚑ OPEN", files["open_questions"].read_text(), re.M))
+    assert set(rec.open_at_lock) == {f"Q{n}" for n in still_open}
+    assert "Q1" in rec.settled_questions_sha256
     res = _verify(files)
     assert res.ok and res.identical
 

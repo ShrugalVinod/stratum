@@ -177,8 +177,17 @@ hypotheses:
     supported_if: "upper_ci < 1"
     primary_definition: raw_detectable          # open question 1 (settled)
     secondary_definition: detection_efficiency_adjusted
-    # Open question 4: Driver et al. (2025) thresholds, from the paper itself, not guessed.
-    detection_efficiency_thresholds: null       # ⚑ fill from Driver et al. 2025 before Phase 6
+    # Open question 4, settled 2026-10-17 (Team OK: S. Vinod), option A, before any matching.
+    # Driver, Stettler & Gryspeerdt (2025), AMT 18, 1115–1134. A predicted contrail counts as
+    # detectable if its CoCiP optical depth ≥ 0.05 (p. 1123: thinner is undetectable at any width)
+    # AND its CoCiP width ≥ 1 local Meteosat pixel (√ pixel area; p. 1120: detection starts near
+    # the imager resolution). Cross-check only: the paper's observable share of segments is
+    # 0.46 at 2 km (p. 1124) and 0.38 at 7 km ≈ SEVIRI (p. 1131). Never folded into the labels.
+    detection_efficiency_thresholds:
+      min_optical_depth: 0.05
+      min_width_pixels: 1.0
+      crosscheck_observable_fraction_2km: 0.46
+      crosscheck_observable_fraction_7km: 0.38
   H2:
     test: mean_bss_vs_B3
     supported_if: "mean >= 0.10 and lower_ci > 0"

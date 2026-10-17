@@ -40,7 +40,7 @@ alone is undefined; the grid supplies negatives while staying close to the objec
 Deviation note: the paper's wording "κ at object level" is honoured by the object F1 and the
 small grid. Must be decided before any labels exist.
 
-### 4. Detection-efficiency thresholds (Driver et al. 2025) — ⚑ OPEN · owner IK · before Phase 5 step 5.5.7
+### 4. Detection-efficiency thresholds (Driver et al. 2025) — SETTLED (2026-10-17, Team OK: S. Vinod) · option A, before any matching
 Needs the actual optical-depth and width thresholds from Driver, Stettler & Gryspeerdt
 (2025), *AMT* 18, 1115–1134. Do not estimate them; read them from the paper (Ishaan to send
 the PDF or the table) and write them here with page/table references.
@@ -67,6 +67,13 @@ Options for the team (not settled): (a) population efficiency range 0.38–0.46 
 2 km results, bracketing SEVIRI over India) for the secondary efficiency-adjusted H1; (b) a
 per-segment flag from the stated numbers (CoCiP τ ≥ 0.05 and width ≥ local pixel size), stored as
 a separate uncertainty term; (c) ask the authors for the threshold grids.
+
+*Answer (2026-10-17, Team OK: S. Vinod): the per-segment rule ("option A" in chat = (b) above).*
+A predicted contrail is **detectable** if CoCiP optical depth ≥ 0.05 AND CoCiP width ≥ 1 local
+Meteosat pixel (√ of the pixel area at that location). Stored per segment as a separate
+uncertainty term, used only for the secondary, efficiency-adjusted H1, never folded into y.
+The paper's population shares (0.46 at 2 km, 0.38 at 7 km) are reported as a cross-check.
+See `preregistered.yaml: hypotheses.H1.detection_efficiency_thresholds`.
 
 ### 5. Climate-metric conversion factors (20- and 100-year horizons) — ⚑ OPEN · owner SV · before Phase 7 step 7.6.4
 Needs a cited, published method to put contrail energy forcing (J) and CO₂ (kg) on a common
