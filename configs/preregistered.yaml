@@ -94,9 +94,13 @@ detection:
   # §4.4 "settle disagreements by discussion" (open question 10, settled).
   disagreement_resolution: discussion_between_labellers
   # Open question 3: "object-level κ" needs true negatives to be defined.
-  agreement_metric: null                 # ⚑ e.g. {kappa: cell_grid_16px, also: object_f1}; set before the pilot
+  # Open question 3, settled 2026-10-17 (Team OK: S. Vinod), before any label exists.
+  agreement_metric:
+    kappa: {method: cell_grid, cell_px: 16}          # cell positive if any polyline passes through it
+    object_f1: {max_mean_distance_px: 2, min_overlap_of_shorter: 0.5, max_angle_deg: 20, assignment: hungarian}
+    ci: {method: scene_bootstrap, level: 0.95, resamples: 2000}
   # Detector threshold is tuned on half the labelled scenes and reported on the other half.
-  labelled_split: {tuning: 100, heldout: 100, stratified_by: scene_strata, seed: null}   # ⚑ seed
+  labelled_split: {tuning: 100, heldout: 100, stratified_by: scene_strata, seed: 20261017}   # Q16 settled 2026-10-17 (S. Vinod)
 
 # Appendix B, labelling guide v0.1 (the parts that affect scoring). The guide text
 # itself may be revised after the pilot (§4.4); these scoring rules may not.
@@ -130,7 +134,16 @@ matching:
 observability:
   max_high_cloud_fraction: 0.5           # ERA5 high cloud at and above segment level < 0.5
   high_cloud_levels: at_and_above_segment_level
-  opaque_cloud_mask_classes: null        # ⚑ which EUMETSAT cloud-mask classes count as opaque; set before matching
+  # Open question 11, settled 2026-10-17 (Team OK: S. Vinod), option (b), before any matching.
+  # The IODC cloud mask has one "cloudy" class (no opaque/thin split). A window counts as opaque
+  # cloud if MORE than half of a 15 × 15-px box centred on the parallax-corrected, advected segment
+  # midpoint is "cloudy". A 0–2 h contrail is ≤ ~3 px wide, so it alone fills ≤ ~20 % of the box
+  # and cannot make its own window "opaque". 0.5 mirrors the ERA5 high-cloud threshold above.
+  opaque_cloud_mask_classes:
+    classes: [cloudy]
+    rule: majority_of_box
+    box_px: 15
+    max_cloudy_fraction: 0.5
   require_no_opaque_cloud_in_window: true
   max_viewing_zenith_deg: 60             # VZA < 60°
   unobservable_label: missing            # §4.5 excluded from training and scoring

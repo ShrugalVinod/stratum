@@ -123,3 +123,11 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 ## 2026-10-17 — Phase 4 accepted; Phase 5 segment scope
 - **Hosting (Phase 4):** Cloudflare Workers static assets (free), not GitHub Pages (the private repo would need a paid plan). Team OK 16 Oct; moved to the team's own Cloudflare account 17 Oct (aerospaceonyx; builds branch `ui-chart-redesign`). Phase 4 accepted 17 Oct by S. Vinod with open items carried forward (gate report a–f).
 - **Phase 5 segments cover the whole study domain:** `build-segments --scope domain` keeps all flights and flags corridor segments (`in_corridor`). Reason: H1–H4 are scored on the full domain (scope decision 15 Oct), so scene density strata and labels need every flight. Corridor results from Phase 2 are unchanged (CoCiP still filters corridor flights). Not a pre-registered value.
+
+## 2026-10-17 — Phase 5 settings (Team OK: S. Vinod, chat 17 Oct), set before any scene was sampled or labelled
+- **Q16 seed = 20261017** for the 100/100 tuning/held-out split (also seeds scene sampling). Never to be changed.
+- **Q3 agreement:** Cohen's κ on a 16 × 16-px cell grid + object-level F1 (≤ 2 px mean distance, ≥ 50 % overlap of the shorter line, ≤ 20°, Hungarian one-to-one), 95 % scene-bootstrap CIs (2,000 resamples).
+- **Q11 opaque cloud:** option (b), majority-cloudy 15 × 15-px box around the parallax-corrected advected segment midpoint (> 50 % "cloudy" = opaque).
+- **Labellers:** Aditya Harsoda and Ishaan Kupnur, independently; disagreements settled by discussion, Shrugal Vinod decides if they can't agree. Targets: 20-scene pilot by 26 Oct, 200 scenes by 9 Nov.
+- **Labelling app** hosted at its own link (separate Cloudflare project from `labeller/`), not inside the STRATUM site. It contains code only; the satellite scene packages stay private on Drive and are opened from each labeller's laptop.
+- Still open: **Q4** (Driver et al. 2025 detection-efficiency thresholds, Ishaan to send) before Phase 5 step 5.5.7.

@@ -28,7 +28,7 @@ y = missing. Per-time details are stored so other rules can be run as sensitivit
 **Why.** One observable match is evidence of a contrail. A single observable "no match" is
 weak evidence of absence, so two are required before calling a segment negative.
 
-### 3. Operationalising "Cohen's κ at object level" (§4.4) — ⚑ OPEN · owner IK · before the 20-scene pilot (Phase 5)
+### 3. Operationalising "Cohen's κ at object level" (§4.4) — SETTLED (2026-10-17, Team OK: S. Vinod) · before any label exists
 `preregistered.yaml: detection.agreement_metric` is `null` until this is settled.
 **Recommended answer.** κ is computed on a fixed grid of **16 × 16-px cells** (a cell is positive for a
 labeller if any of their polylines passes through it), with scene-bootstrap 95 % CIs.
@@ -80,7 +80,7 @@ tracks and predictions. The rest of the guide may be revised after the pilot (§
 adjudication mode records the agreed result and who agreed. If they cannot agree, the object
 is kept as "uncertain" (scored separately, rule 9).
 
-### 11. What counts as "opaque cloud" in the EUMETSAT cloud mask — ⚑ OPEN · owner IK · before Phase 5 step 5.5.5
+### 11. What counts as "opaque cloud" in the EUMETSAT cloud mask — SETTLED (2026-10-17, Team OK: S. Vinod) · option (b), before any matching
 Depends on the categories of the Meteosat-9 IODC cloud-mask product, which we will read in
 Phase 1. Must be fixed before any matching results are looked at.
 
@@ -91,6 +91,12 @@ and thin contrails/cirrus may themselves be flagged "cloudy". Options to decide 
 discard real contrails); (b) use "cloudy" only where T10.8 is also cold and BTD small (an
 opaque-cloud signature), documented thresholds; (c) add the IODC cloud-top-height product
 (`EO:EUM:DAT:MSG:CTH-IODC`) and call cloud opaque if it is a thick layer below the segment.
+
+*Answer (2026-10-17, Team OK: S. Vinod): option (b), as a box rule.* A matching window is opaque
+if more than 50 % of the pixels in a 15 × 15-px box centred on the parallax-corrected, advected
+segment midpoint are "cloudy". A 0–2 h contrail is at most ~3 px wide, so on its own it covers
+≤ ~20 % of the box and cannot make its window "opaque"; 0.5 mirrors the ERA5 high-cloud threshold.
+Set before any matching was run. See `preregistered.yaml: observability.opaque_cloud_mask_classes`.
 
 ### 12. Number of CoCiP Monte Carlo members for EF ranges — SETTLED (2026-10-15)
 **N = 20** Monte Carlo members (approved by Shrugal, 15 Oct 2026). A convergence check (N = 20 vs N = 40 on one corridor day: change in EF p5/p50/p95) is reported in the Phase 2 sanity report. If the ranges are not stable, a larger N is adopted only through the deviation log, before any evaluation run.
@@ -111,7 +117,7 @@ VZA band, day/night) cell; otherwise the card says "extrapolating".
 **Why.** Native monotone constraints, and trees on ~10⁶ rows train in minutes on CPU. Using a
 single library avoids "we tried both and picked the better one".
 
-### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — ⚑ OPEN · owner SV · before scene sampling (Phase 5)
+### 16. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — SETTLED (2026-10-17): seed = 20261017, before any scene was sampled
 `preregistered.yaml: detection.labelled_split.seed` is `null`. Pick any integer **once**, write it
 in the YAML and here, and never change it: re-drawing the split until the detector looks good
 would be leakage. After the lock, filling this `null` is allowed; changing it later is a deviation.

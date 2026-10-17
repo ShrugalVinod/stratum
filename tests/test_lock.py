@@ -118,7 +118,24 @@ def test_editing_a_settled_answer_is_a_change(files: dict[str, Path]) -> None:
     assert "open_questions.Q6" in res.undocumented and not res.ok
 
 
+def _reopen_q16_and_q3(files: dict[str, Path]) -> None:
+    """Put Q16/Q3 back to their lock-time state (open, null), whatever the real files say now."""
+    import re
+
+    data = yaml.safe_load(files["prereg"].read_text())
+    data["detection"]["labelled_split"]["seed"] = None
+    data["detection"]["agreement_metric"] = None
+    files["prereg"].write_text(yaml.safe_dump(data))
+    text = re.sub(
+        r"(### 16\. Random seed for the 100 / 100 tuning / held-out split of the labelled scenes — ).*",
+        r"\1⚑ OPEN · owner SV · before scene sampling (Phase 5)",
+        files["open_questions"].read_text(),
+    )
+    files["open_questions"].write_text(text)
+
+
 def test_settling_an_open_question_later_is_allowed(files: dict[str, Path]) -> None:
+    _reopen_q16_and_q3(files)
     _lock(files)
     text = (
         files["open_questions"]
@@ -145,19 +162,25 @@ def test_flatten_and_diff() -> None:
 
 
 def test_filling_a_null_placeholder_is_allowed(files: dict[str, Path]) -> None:
+    _reopen_q16_and_q3(files)
     _lock(files)
     data = yaml.safe_load(files["prereg"].read_text())
     data["detection"]["labelled_split"]["seed"] = 7
-    data["detection"]["agreement_metric"] = {"kappa": "cell_grid_16px", "also": "object_f1"}
+    data["detection"]["agreement_metric"] = {
+        "kappa": {"method": "cell_grid", "cell_px": 16},
+        "object_f1": {
+            "max_mean_distance_px": 2,
+            "min_overlap_of_shorter": 0.5,
+            "max_angle_deg": 20,
+            "assignment": "hungarian",
+        },
+        "ci": {"method": "scene_bootstrap", "level": 0.95, "resamples": 2000},
+    }
     files["prereg"].write_text(yaml.safe_dump(data))
     res = _verify(files)
     assert res.ok and res.identical
-    assert res.filled_placeholders == [
-        "detection.agreement_metric",
-        "detection.agreement_metric.also",
-        "detection.agreement_metric.kappa",
-        "detection.labelled_split.seed",
-    ]
+    assert "detection.labelled_split.seed" in res.filled_placeholders
+    assert "detection.agreement_metric.kappa.cell_px" in res.filled_placeholders
 
 
 def test_changing_a_set_value_next_to_placeholders_still_fails(files: dict[str, Path]) -> None:
