@@ -112,7 +112,7 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
     setErr(null);
     setBusy(true);
     try {
-      if (!pkgFile) throw new Error("Choose the scene package zip (pilot.zip or main.zip).");
+      if (!pkgFile) throw new Error("Choose the scene package zip (pilot.zip, calibration.zip or test.zip).");
       const pkg = readPackageZip(await readFile(pkgFile), pkgFile.name);
       const ids = [...pkg.scenes.keys()];
       if (mode === "label") {
@@ -168,15 +168,15 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
             <span>Your labeller ID</span>
             <input value={id} onInput={(e) => setId((e.target as HTMLInputElement).value)} placeholder="aditya, ishaan or abeer" autocomplete="off" />
             <small>
-              Always use the same ID. It decides which scenes are yours (pilot: all 20; main: about 133 of 200, each scene shared with one
-              other labeller), your scene order, and where your work is saved.
+              Always use the same ID. It decides which scenes are yours (pilot and calibration: all 20; test: about 67 of 100, each scene shared
+              with one other labeller), your scene order, and where your work is saved.
             </small>
           </label>
         )}
         <label class="field">
           <span>Scene package</span>
           <input type="file" accept=".zip" data-testid="pkg" onChange={(e) => setPkgFile((e.target as HTMLInputElement).files?.[0] ?? null)} />
-          <small>pilot.zip first, main.zip after the pilot is discussed.</small>
+          <small>All three of you label in this order: 1. pilot.zip, 2. calibration.zip, 3. test.zip. Open calibration.zip and test.zip only after the team has discussed the pilot.</small>
         </label>
         {mode === "adjudicate" && (
           <>

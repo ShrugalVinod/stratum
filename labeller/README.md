@@ -3,7 +3,7 @@
 A small static web app for hand-labelling contrails in Meteosat-9 scenes (build prompt §5.2,
 paper §4.4). Team-internal; hosted at its own link, separate from the STRATUM website.
 
-* **Code only.** The scene packages (`pilot.zip`, `main.zip`) come from the team Drive
+* **Code only.** The scene packages (`pilot.zip`, `calibration.zip`, `test.zip`) come from the team Drive
   (`STRATUM/labels/scenes/`) and are opened from the labeller's own laptop. Nothing is uploaded.
   EUMETSAT imagery is never published.
 * Works offline once loaded; any laptop with Chrome, Edge, Firefox or Safari.
