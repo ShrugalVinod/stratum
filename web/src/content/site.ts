@@ -10,7 +10,7 @@ export const site = {
   heroTitle: ["Move the plane.", "Lose the cloud."],
   heroLede:
     "Some contrails spread into long-lived cloud that traps heat. They only last in thin, cold, ice-supersaturated layers of air. STRATUM checks where those layers are over India — so that one day a plane could fly 2,000 ft above or below them.",
-  email: null as string | null, // TODO(team): team email → shown on Contact
+  email: "aerospaceonyx@gmail.com" as string | null, // team email (17 Oct 2026) → shown on Contact
   paperPdf: "/STRATUM_Research_Protocol_v1.2.pdf",
 };
 
