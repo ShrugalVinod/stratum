@@ -121,3 +121,11 @@ def test_high_cloud_takes_the_max_at_and_above() -> None:
     hc = mt.high_cloud_at_and_above(g, [1800.0, 1800.0], [1.0, 1.0], [71.0, 71.0], [225e2, 320e2])
     assert hc[0] == 0.7  # cirrus above counts, the 300-hPa cloud below does not
     assert np.isnan(hc[1]) or hc[1] >= 0.9  # a segment below every level is outside the grid
+
+
+def test_default_rules_are_the_preregistered_ones() -> None:
+    from stratum.config import load_preregistered
+
+    assert mt.rules_from_preregistered() == mt.DEFAULT_RULES
+    m = load_preregistered().matching
+    assert (m.min_age_min, m.max_age_min) == (20, 120)

@@ -51,6 +51,25 @@ class MatchRules:
 DEFAULT_RULES = MatchRules()
 
 
+def rules_from_preregistered() -> MatchRules:
+    """The MatchRules read from ``configs/preregistered.yaml`` (a test checks = DEFAULT_RULES)."""
+    from stratum.config import load_preregistered
+
+    pre = load_preregistered()
+    m, o = pre.matching, pre.observability
+    oc = o.opaque_cloud_mask_classes
+    assert oc is not None, "open question 11 must be settled before matching"
+    return MatchRules(
+        max_distance_px=m.max_distance_px,
+        max_angle_deg=m.max_angle_deg,
+        min_observable_slots=m.segment_label_rule.min_observable_slots,
+        max_high_cloud_fraction=o.max_high_cloud_fraction,
+        max_cloudy_fraction=oc.max_cloudy_fraction,
+        box_px=oc.box_px,
+        max_vza_deg=o.max_viewing_zenith_deg,
+    )
+
+
 def _seg_dist(pr: Array, pc: Array, a: tuple[float, float], b: tuple[float, float]) -> Array:
     """Distance (px) from points to the finite line a–b."""
     ar, ac = a

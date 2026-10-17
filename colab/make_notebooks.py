@@ -861,6 +861,61 @@ with zipfile.ZipFile(f"{sdir}/test.zip") as z:
 ]
 
 
+MATCH_YEAR = [
+    header(
+        "05d · Full-year matching: detection, matching, segment labels (Phase 5, task 5.6)",
+        """
+**What this does:** for each of the 12 flight days:
+1. runs the **tuned detector** (D-002; settings in `configs/pipeline.yaml`) on every stored
+   Meteosat slot (detections made with other settings are recomputed automatically);
+2. carries every contrail-forming segment with the ERA5 wind for 20–120 min, corrects parallax,
+   and checks each satellite image: **matched** (detected line within 2 px and 20°) and
+   **observable** (no high cloud above, no opaque cloud, viewing angle < 60°);
+3. turns that into one label per segment: **y = 1 / y = 0 / missing** (missing never becomes 0);
+4. **wrong-day null**: the same flights against the *next* flight day's images, so every match is
+   chance; this measures how many y = 1 labels are coincidences.
+
+Then the year summary: label counts (month, season, west/east, VZA band, day/night), the
+pre-registered **≥ 300 matched contrails** check, and the parallax before/after figure.
+
+Reads: `interim/segments_met/*/*`, `raw/meteosat/{l15_crop,clm}/*`, `raw/meteosat/static_grid.zarr`,
+`raw/era5/pl/*`. Writes: `interim/detections/*`, `interim/matches/*/*`, `interim/matches_null/*`,
+`reports/phase5/{labels_summary.json, label_counts.csv, parallax_before_after.png}`.
+
+* **Runtime:** CPU, **High-RAM** if offered. No GPU needed.
+* **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** about 1–2 GB (per-image details for sensitivity analyses).
+* **Time:** about 60–90 min (detection is most of it). **Resumable** per day: if it
+  disconnects, *Runtime → Run all* again.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings("05d_match_year"),
+    *SETUP,
+    code('''
+# ── 7. Detection + matching + labels for every flight day, then the year summary ─
+rc_match = stratum("match-year", live=True)
+print("exit code:", rc_match)
+'''),
+    code('''
+# ── 8. Collect for the summary ───────────────────────────────────────────────
+import glob
+rep = f"{DRIVE_ROOT}/reports/phase5/labels_summary.json"
+ls = json.load(open(rep)) if os.path.exists(rep) else {}
+per_day = {}
+for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/matches/*/*/manifest.json")):
+    j = json.load(open(mf)); st = j.get("stats") or {}
+    per_day[j.get("unit")] = {k: st.get(k) for k in ("candidates", "y1", "y0", "missing", "observable_fraction_of_slots")}
+'''),
+    summary_cell("""    "exit_code": rc_match,
+    "per_day": per_day,
+    "totals": {k: ls.get(k) for k in ("candidates", "y1", "y0", "missing", "known_fraction", "y1_events", "y1_flights")},
+    "min_labels_check": ls.get("min_labels_check"),
+    "wrong_day_null": {k: v for k, v in (ls.get("wrong_day_null") or {}).items() if k != "runs"},
+    "parallax": ls.get("parallax"),
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -887,4 +942,5 @@ if __name__ == "__main__":
     write("05a_segments_year.ipynb", SEGMENTS_YEAR)
     write("05b_scenes.ipynb", SCENES)
     write("05c_label_sets.ipynb", LABEL_SETS)
+    write("05d_match_year.ipynb", MATCH_YEAR)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

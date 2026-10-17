@@ -1,0 +1,31 @@
+detector:
+  background_px: 21
+  noise_px: 41
+  orientations: 16
+  lengths_px:
+  - 11
+  - 21
+  core_sigma_px: 0.7
+  flank_px: 2.5
+  t120_weight: 0.5
+  hysteresis:
+  - 6.5
+  - 9.5
+  min_length_px: 10
+  trim_field_min: 1.5
+  max_width_px: 3.0
+  max_line_residual_px: 1.2
+  max_orientation_spread_deg: 15.0
+  coast_buffer_px: 2
+  coast_max_fraction: 0.5
+  max_flank_asymmetry: 1.5
+  max_vza_deg: 65.0
+  confidence:
+    intercept: -0.6049
+    response: 0.0589
+    length: 0.0639
+    linearity: -4.0749
+    btd_contrast: -0.5817
+    cold: -0.1281
+    edge: -1.6205
+  operating_threshold: 0.15

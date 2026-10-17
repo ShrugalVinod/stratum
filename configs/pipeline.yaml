@@ -28,7 +28,7 @@ detector:
   core_sigma_px: 0.7         # Gaussian half-width of the bright core (contrails are 1–2 px wide)
   flank_px: 2.5              # distance of the negative flanks from the core
   t120_weight: 0.5           # weight of the cold T12.0 anomaly added to the BTD response
-  hysteresis: [4.5, 7.0]     # low/high thresholds on the ridge response (noise: median 1.8, 99.9 % ≈ 8 before thinning)
+  hysteresis: [6.5, 9.5]     # low/high ridge-response thresholds; D-002 tuned on DLR training scenes (was [4.5, 7.0])
   trim_field_min: 1.5        # object ends trimmed where the along-line image falls below this
   min_length_px: 10          # = labelling rule 1 (pre-registered min_contrail_length_px)
   max_width_px: 3.0          # mean object width (area / length)
@@ -36,15 +36,17 @@ detector:
   max_orientation_spread_deg: 15.0  # circular spread of per-pixel filter orientations
   coast_buffer_px: 2         # objects with > coast_max_fraction of pixels this close to a
   coast_max_fraction: 0.5    #   coastline are rejected (land–sea BTD edges look like lines)
-  max_flank_asymmetry: 1.5   # |BTD left − right flank| / core excess; above = a cloud edge
+  max_flank_asymmetry: 1.5   # |BTD left − right flank| / core excess; above = a cloud edge (D-002: kept)
   max_vza_deg: 65.0          # no detection beyond this (Phase 5 observability uses 60°)
-  # Provisional confidence weights (logistic). Refitted on the labelled tuning half in Phase 5.
+  # Confidence weights (logistic), fitted 17 Oct 2026 on the DLR expert training scenes
+  # (deviation D-002; stratum tune-detector; report: reports/detector_tuning/tuning.json).
+  # Phase 3 provisional values were -8.0 / 0.7 / 0.08 / -1.0 / 1.5 / 0.3 / -2.0, threshold 0.5.
   confidence:
-    intercept: -8.0
-    response: 0.7            # per unit of mean normalised response
-    length: 0.08             # per pixel of length
-    linearity: -1.0          # per pixel of line-fit residual
-    btd_contrast: 1.5        # per K of mean BTD anomaly
-    cold: 0.3                # per K that the object is colder (T10.8) than its background (±5 K)
-    edge: -2.0               # per unit of flank asymmetry
-  operating_threshold: 0.5   # provisional; chosen on the tuning half in Phase 5
+    intercept: -0.6049
+    response: 0.0589         # per unit of mean normalised response
+    length: 0.0639           # per pixel of length
+    linearity: -4.0749       # per pixel of line-fit residual
+    btd_contrast: -0.5817    # per K of mean BTD anomaly (strong BTD bumps are more often cirrus)
+    cold: -0.1281            # per K that the object is colder (T10.8) than its background (±5 K)
+    edge: -1.6205            # per unit of flank asymmetry
+  operating_threshold: 0.15  # maximises out-of-fold object F1 on the DLR training scenes

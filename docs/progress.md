@@ -46,13 +46,23 @@ Newest first. What was done, what's next, blockers.
   DLR ids = `calibration_scenes(20261017)` exactly. Expert answers kept private in
   `labels/calibration/`.
 
+- Detector tuned on the DLR expert scenes (D-002, `stratum tune-detector`): evaluation (89
+  scenes) precision 0.22 [0.17, 0.27], recall 0.23 [0.18, 0.29], F1 0.22 [0.18, 0.26] (Phase 3
+  settings: F1 0.18). New settings in `configs/pipeline.yaml`; report `reports/detector_tuning/`.
+- Full-year matching built and tested (`stratum match-year`, Colab `05d_match_year`): detection on
+  every slot, advection + parallax + matching + observability per image, segment labels, label
+  counts, ≥ 300 check (counted as contrail events), parallax before/after figure, wrong-day null
+  (chance matches), Driver detectability flag and CoCiP advection comparison where CoCiP ran.
+  Local test: 0.07 ms per segment; 206 Python tests.
+
 **Next**
+- Shrugal: run Colab 05d (full-year matching).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.
 - Labellers: pilot (all three, 20 scenes) by 26 Oct → guide revision → calibration (all three)
   → test (pairs: Aditya 67, Ishaan 67, Abeer 66) by 9 Nov. Exports → Drive `labels/raw/<id>/`.
-- Claude: detector tuning on the DLR training split (check on evaluation split); full-year
-  matching job; coverage audit 2/5 Nov.
+- Claude: Phase 4 open items a, b, d; coverage audit 2/5 Nov; detector precision/recall on the
+  India held-out labels once they exist.
 
 ## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
 

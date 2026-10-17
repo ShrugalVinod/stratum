@@ -429,6 +429,102 @@ def make_labelling_sets(
     _summary("make-labelling-sets", res)
 
 
+@app.command("tune-detector")
+def tune_detector(
+    dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
+) -> None:
+    """Deviation D-002: tune the detector on the DLR training scenes, check on evaluation.
+
+    Writes reports/detector_tuning/{tuning.json, pipeline_detector.yaml}. The chosen values are
+    copied into configs/pipeline.yaml by hand (and logged in docs/decisions.md)."""
+    from pathlib import Path
+
+    import yaml
+
+    from stratum.detect import tuning
+    from stratum.detect.params import load_detector_params
+
+    seed = cfg.load_preregistered().detection.labelled_split.seed or 0
+    res = tuning.tune(Path(dlr_dir), load_detector_params(), seed, log=console.print)
+    p = res.pop("params")
+    out = repo_root() / "reports" / "detector_tuning"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "tuning.json").write_text(json.dumps(res, indent=1, default=str))
+    det = p.model_dump()
+    det["hysteresis"] = list(det["hysteresis"])
+    (out / "pipeline_detector.yaml").write_text(yaml.safe_dump({"detector": det}, sort_keys=False))
+    keys = (
+        "chosen_settings",
+        "operating_threshold",
+        "evaluation",
+        "evaluation_ci95",
+        "evaluation_before_tuning",
+    )
+    _summary("tune-detector", {k: json.dumps(res[k]) for k in keys})
+
+
+@app.command("match-year")
+def match_year(
+    days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD, or 'all'")] = "all",
+    force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
+    null: Annotated[bool, typer.Option(help="also run the wrong-day null (chance matches)")] = True,
+) -> None:
+    """Phase 5.6: detection + matching + segment labels per flight day, then the year summary.
+
+    The wrong-day null matches each day's flights against the NEXT flight day's images and
+    ERA5 (cyclic), so its y = 1 rate measures chance matches."""
+    from datetime import date as _date
+
+    from stratum import phase5
+    from stratum.match.matching import rules_from_preregistered
+    from stratum.match.run import match_day
+    from stratum.match.summary import year_summary
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    todo = (
+        phase5._segment_days(root)
+        if days == "all"
+        else [_date.fromisoformat(d.strip()) for d in days.split(",")]
+    )
+    rules = rules_from_preregistered()
+    for d in todo:
+        res = match_day(
+            root,
+            d,
+            None,
+            rules,
+            pre.matching.min_age_min,
+            pre.matching.max_age_min,
+            cfg.config_hash(),
+            force,
+        )
+        _summary(
+            f"match {d}", {k: json.dumps(v) if isinstance(v, dict) else v for k, v in res.items()}
+        )
+    if null and len(todo) >= 2:
+        for d, other in zip(todo, [*todo[1:], todo[0]], strict=True):
+            res = match_day(
+                root,
+                d,
+                None,
+                rules,
+                pre.matching.min_age_min,
+                pre.matching.max_age_min,
+                cfg.config_hash(),
+                force,
+                image_day=other,
+            )
+            _summary(
+                f"null {d} on {other}", {k: v for k, v in res.items() if not isinstance(v, dict)}
+            )
+    s = year_summary(root, pre.min_labels.matched_observed_contrails)
+    _summary(
+        "labels summary",
+        {k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in s.items()},
+    )
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
