@@ -35,13 +35,24 @@ Newest first. What was done, what's next, blockers.
   dawn 44; density classes 64 / 64 / 72 (terciles, q1 = 0, q2 = 57 persistent segments);
   107 west / 93 east of 80°E; 17 scenes with mean VZA > 60°. pilot.zip 3.9 MB, main.zip 40.9 MB.
 
+- Matching built and tested (`stratum/match/advect.py`, `matching.py`): RK2 advection with ERA5
+  wind, 2 px / 20° match, observability (high cloud at and above < 0.5, majority-cloudy 15-px box,
+  VZA < 60°), segment label rule (unobservable stays missing, never 0).
+- D-002 (Team OK 17 Oct): detector tuned on the DLR expert MSG/SEVIRI dataset; all 200 India
+  scenes held out; three labellers (Aditya, Ishaan, Abeer). Expert-line frame checked on the real
+  files (south-up arrays flipped; 97 % of expert points on expert pixels). 191 Python tests.
+- Colab `05c_label_sets` PASSED (commit 2d3e7a6, 2.5 min): test.zip 100 held-out India scenes
+  (20.5 MB); calibration.zip 20 DLR evaluation scenes C001–C020 (1.3 MB, 126 expert lines),
+  DLR ids = `calibration_scenes(20261017)` exactly. Expert answers kept private in
+  `labels/calibration/`.
+
 **Next**
-- Shrugal: share pilot.zip + main.zip (not scenes.csv) with Aditya and Ishaan; set up the separate Cloudflare
-  project for the labeller; share `labels/scenes/` (zips only) with Aditya and Ishaan.
-- Aditya + Ishaan: pilot (20 scenes) by 26 Oct → export → Drive `labels/raw/<id>/`.
-- Claude: matching (advection, observability, segment labels) with the critical tests;
-  detector confidence refit on the tuning half after the main labels.
-- Ishaan: Driver et al. 2025 detection-efficiency table (Q4).
+- Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
+  with Aditya, Ishaan, Abeer.
+- Labellers: pilot (all three, 20 scenes) by 26 Oct → guide revision → calibration (all three)
+  → test (pairs: Aditya 67, Ishaan 67, Abeer 66) by 9 Nov. Exports → Drive `labels/raw/<id>/`.
+- Claude: detector tuning on the DLR training split (check on evaluation split); full-year
+  matching job; coverage audit 2/5 Nov.
 
 ## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
 
