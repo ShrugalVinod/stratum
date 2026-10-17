@@ -15,12 +15,21 @@ Newest first. What was done, what's next, blockers.
   347,947 segments in 27 s; corridor count 1,706 flights = Phase 2. Colab notebook
   `05a_segments_year` builds all 12 flight days.
 
+- Settled (Team OK 17 Oct, before any sampling or labelling): Q16 seed 20261017, Q3 agreement
+  (16-px grid κ + object F1, scene bootstrap), Q11 opaque cloud (majority-cloudy 15-px box).
+  Labellers Aditya + Ishaan, Shrugal decides disagreements; pilot by 26 Oct, 200 scenes by 9 Nov.
+- Built and tested: scene sampler (`sample-scenes`, once only), scene packages
+  (`export-scene-packages`), agreement + disagreement gallery (`labelling-agreement`), labelling
+  guide v0.1 (`docs/labelling_guide.md`), **labelling app** (`labeller/`, Vitest + Playwright,
+  own CI job, hosted separately), Colab `05b_scenes`. 173 Python tests.
+
 **Next**
-- Shrugal: run Colab `05a_segments_year`, paste the summary.
-- Team: answer the Phase 5 questions (Q16 seed, Q3 agreement metric, labellers, Q11 opaque
-  cloud, Q4 Driver et al. thresholds, labelling dates).
-- Claude: scene sampling + packages, labeller app, agreement module, matching (advection,
-  parallax, observability, labels) with the critical tests.
+- Shrugal: run Colab `05a_segments_year`, then `05b_scenes`; set up the separate Cloudflare
+  project for the labeller; share `labels/scenes/` (zips only) with Aditya and Ishaan.
+- Aditya + Ishaan: pilot (20 scenes) by 26 Oct → export → Drive `labels/raw/<id>/`.
+- Claude: matching (advection, observability, segment labels) with the critical tests;
+  detector confidence refit on the tuning half after the main labels.
+- Ishaan: Driver et al. 2025 detection-efficiency table (Q4).
 
 ## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
 
