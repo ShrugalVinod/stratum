@@ -22,7 +22,7 @@ repos:
         entry: uv run detect-secrets-hook --baseline .secrets.baseline
         language: system
         # web data manifests hold the git commit and config hashes (public fingerprints, not secrets)
-        exclude: ^(uv\.lock|docs/.*\.pdf|web/package-lock\.json|web/public/data/[^/]+/manifest\.json|web/public/.*\.(pdf|mp4|webp|png))$
+        exclude: ^(uv\.lock|docs/.*\.pdf|(web|labeller)/package-lock\.json|web/public/data/[^/]+/manifest\.json|web/public/.*\.(pdf|mp4|webp|png))$
       - id: ruff
         name: ruff (lint)
         entry: uv run ruff check --fix --force-exclude

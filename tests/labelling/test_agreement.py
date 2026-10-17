@@ -61,6 +61,7 @@ def _write(d, sid, who, objs, status="clear"):  # type: ignore[no-untyped-def]
                 "scene_id": sid,
                 "labeller": who,
                 "scene_status": status,
+                "flags": {"no_contrails": not objs, "unusable": False, "unusable_reason": ""},
                 "objects": [
                     {"id": i, "polyline_px": p, "confidence": c} for i, (p, c) in enumerate(objs)
                 ],
@@ -91,3 +92,15 @@ def test_agreement_report_rules(tmp_path) -> None:  # type: ignore[no-untyped-de
     lo, hi = r["sure_and_uncertain"]["ci95"]["object_f1"]
     assert lo <= 1.0 <= hi + 1e-12
     assert 0 < r["sure_only"]["object_f1"] < 1
+
+
+def test_reads_the_labeller_app_export_format() -> None:
+    """Contract with labeller/src/labels.ts: same JSON the app exports."""
+    from pathlib import Path
+
+    d = Path(__file__).parent / "fixtures"
+    lab = ag.read_label(d / "S014.json")
+    assert lab.status == "partly_obscured" and lab.complete and not lab.unusable
+    assert len(lab.sure) == 1 and len(lab.uncertain) == 1  # the 6-px line is dropped (rule 1)
+    todo = ag.read_label(d / "S015.json")
+    assert not todo.complete  # opened but not finished: not counted

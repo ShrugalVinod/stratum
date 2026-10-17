@@ -181,14 +181,21 @@ def cohen_kappa(x: npt.ArrayLike, y: npt.ArrayLike) -> float:
 class SceneLabel:
     scene_id: str
     labeller: str
-    status: str  # clear | partly_obscured | obscured
+    status: str | None  # clear | partly_obscured | obscured (None = not set yet)
     sure: list[Array] = field(default_factory=list)
     uncertain: list[Array] = field(default_factory=list)
+    unusable: bool = False
+    complete: bool = True
 
 
 def read_label(path: Path) -> SceneLabel:
-    """A labeller-app export (schema in labeller/README.md) → SceneLabel (short lines dropped)."""
+    """A labeller-app export (schema in labeller/README.md) → SceneLabel (short lines dropped).
+
+    A scene counts as labelled (``complete``) only if the labeller finished it in the app:
+    status set and lines drawn or "no contrails" pressed, or marked unusable with a reason."""
     j = json.loads(Path(path).read_text())
+    flags = j.get("flags") or {}
+    status = j.get("scene_status")
     sure: list[Array] = []
     unc: list[Array] = []
     for o in j.get("objects", []):
@@ -196,7 +203,12 @@ def read_label(path: Path) -> SceneLabel:
         if len(p) < 2 or length(p) < MIN_LENGTH_PX:
             continue
         (sure if o.get("confidence", "sure") == "sure" else unc).append(p)
-    return SceneLabel(j["scene_id"], j["labeller"], j.get("scene_status", "clear"), sure, unc)
+    unusable = bool(flags.get("unusable"))
+    n_obj = len(j.get("objects", []))
+    complete = (unusable and bool(str(flags.get("unusable_reason", "")).strip())) or (
+        status is not None and (n_obj > 0 or bool(flags.get("no_contrails")))
+    )
+    return SceneLabel(j["scene_id"], j["labeller"], status, sure, unc, unusable, complete)
 
 
 def read_dir(d: Path) -> dict[str, SceneLabel]:
@@ -239,9 +251,12 @@ def agreement(
     level: float = 0.95,
 ) -> dict[str, Any]:
     """Pooled F1 and κ with scene-bootstrap CIs, for "sure only" and "sure + uncertain"."""
-    common = sorted(set(labels_a) & set(labels_b))
+    done_a = {k for k, v in labels_a.items() if v.complete}
+    done_b = {k for k, v in labels_b.items() if v.complete}
+    common = sorted(done_a & done_b)
     obscured = [s for s in common if "obscured" in (labels_a[s].status, labels_b[s].status)]
-    scored = [s for s in common if s not in obscured]
+    unusable = [s for s in common if labels_a[s].unusable or labels_b[s].unusable]
+    scored = [s for s in common if s not in obscured and s not in unusable]
     same = [labels_a[s].status == labels_b[s].status for s in common]
     status_agree = float(np.mean(same)) if same else float("nan")
 
@@ -252,10 +267,13 @@ def agreement(
         "labellers": [who(labels_a), who(labels_b)],
         "scenes_both": len(common),
         "scenes_excluded_obscured": len(obscured),
+        "scenes_excluded_unusable": len([s for s in unusable if s not in obscured]),
+        "scenes_incomplete_A": len(set(labels_a) - done_a),
+        "scenes_incomplete_B": len(set(labels_b) - done_b),
         "scenes_scored": len(scored),
         "scene_status_agreement": status_agree,
-        "only_in_A": sorted(set(labels_a) - set(labels_b)),
-        "only_in_B": sorted(set(labels_b) - set(labels_a)),
+        "only_in_A": sorted(done_a - done_b),
+        "only_in_B": sorted(done_b - done_a),
     }
     rng = np.random.default_rng(seed)
     lo, hi = (1 - level) / 2, 1 - (1 - level) / 2
