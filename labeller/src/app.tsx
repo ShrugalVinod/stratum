@@ -60,6 +60,10 @@ function download(data: Uint8Array, name: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+const hemi = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(1)}°${v >= 0 ? pos : neg}`;
+/** "8.2°S – 15.4°S" style ranges (south/north, west/east), whatever the hemisphere. */
+const latRange = (a: number, b: number) => `${hemi(Math.min(a, b), "N", "S")} – ${hemi(Math.max(a, b), "N", "S")}`;
+const lonRange = (a: number, b: number) => `${hemi(Math.min(a, b), "E", "W")} – ${hemi(Math.max(a, b), "E", "W")}`;
 const ist = (iso: string) => {
   const d = new Date(new Date(iso).getTime() + 330 * 60000);
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")} IST`;
@@ -512,8 +516,8 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
           <p class="mono small muted">
             {pkg.meta.time_utc ? `${pkg.meta.time_utc.replace("T", " ").replace(":00Z", " UTC")} · ${ist(pkg.meta.time_utc)}` : "time not shown"}
             <br />
-            N {pkg.meta.corners_latlon.top_left[0].toFixed(1)}° · S {pkg.meta.corners_latlon.bottom_left[0].toFixed(1)}° · W{" "}
-            {pkg.meta.corners_latlon.top_left[1].toFixed(1)}°E · E {pkg.meta.corners_latlon.top_right[1].toFixed(1)}°E
+            {latRange(pkg.meta.corners_latlon.bottom_left[0], pkg.meta.corners_latlon.top_left[0])} ·{" "}
+            {lonRange(pkg.meta.corners_latlon.top_left[1], pkg.meta.corners_latlon.top_right[1])}
           </p>
 
           {others && (

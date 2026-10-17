@@ -41,13 +41,14 @@ def _scene(path: Path, south_up: bool) -> None:
 
 
 def test_orientation_and_expert_lines_follow_the_flip(tmp_path: Path) -> None:
+    # expert geojson is in the north-up picture frame = file rows flipped: file row 100 → y 155
     gj = tmp_path / "g.geojson"
     gj.write_text(
         json.dumps(
             {
                 "features": [
                     {
-                        "geometry": {"type": "LineString", "coordinates": [[50, 100], [149, 100]]},
+                        "geometry": {"type": "LineString", "coordinates": [[50, 155], [149, 155]]},
                         "properties": {"type": "endpoint"},
                     }
                 ]

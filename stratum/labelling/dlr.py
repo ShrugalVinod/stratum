@@ -17,10 +17,13 @@ How STRATUM uses it (preregistered.yaml: detection.detector_tuning / labeller_ca
   labelling app (BTD + T10.8, one time only: the dataset has no neighbouring slots). Each team
   labeller labels them; their agreement with the expert ground truth is reported.
 
-Coordinates. The expert polylines (``geojson/scene_xxx.geojson``, features of type
-``endpoint``) are given as [x, y] = [column, row] of the 256 × 256 scene. Packages are shown
-north-up / west-left; ``to_north_up`` decides the flips from the latitude/longitude grids, and
-the same flips are applied to the expert lines, so labellers and experts share one frame.
+Coordinates (checked on the real files, 17 Oct 2026). The netCDF arrays are (y, x) in the
+satellite's scan order, south at the top. The expert masks (``Ground Truth/*.png``) and the
+expert polylines (``geojson/scene_xxx.geojson``, [x, y] = [column, row], features of type
+``endpoint``) are in the **north-up** picture frame = the netCDF rows flipped (IoU 1.0 on every
+scene checked). Packages are shown north-up / west-left (``to_north_up``, decided from the
+latitude/longitude grids); expert lines are first mapped back to the file frame
+(row_file = 255 − y) and then through the same flips, so labellers and experts share one frame.
 """
 
 from __future__ import annotations
@@ -116,7 +119,11 @@ def expert_polylines(geojson_path: Path, o: Orientation) -> list[list[tuple[floa
     for f in g["features"]:
         if f["properties"].get("type") != "endpoint" or f["geometry"]["type"] != "LineString":
             continue
-        pts = [point_to_package(float(y), float(x), o) for x, y in f["geometry"]["coordinates"]]
+        # geojson rows are in the north-up picture frame = file rows flipped
+        pts = [
+            point_to_package(SIZE - 1 - float(y), float(x), o)
+            for x, y in f["geometry"]["coordinates"]
+        ]
         lines.append(pts)
     return lines
 
