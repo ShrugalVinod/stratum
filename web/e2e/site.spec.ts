@@ -47,6 +47,7 @@ async function featurePoint(page: Page, layer: string, avoid: string[]) {
 }
 
 test("map: ranked segments, lower detail bar with contrail lifetime, flights, controls", async ({ page }) => {
+  test.setTimeout(240_000); // software WebGL on CI runners is several times slower than a laptop
   const errors = collectErrors(page);
   await openMap(page);
   await expect(page.locator(".strip")).toHaveCount(66); // 1 Jan 2026: 66 flagged segments (B1)
