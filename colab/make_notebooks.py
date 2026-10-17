@@ -802,6 +802,65 @@ zips = {os.path.basename(z): round(os.path.getsize(z) / 1e6, 1) for z in glob.gl
 ]
 
 
+LABEL_SETS = [
+    header(
+        "05c · Labelling sets for three labellers: India test set + expert calibration set (D-002)",
+        """
+**What this does** (deviation D-002, Team OK 17 Oct 2026):
+1. **test.zip**: the 100 India *held-out* scenes, copied from `main.zip` (the scenes drawn by 05b;
+   nothing is re-sampled). Each scene will be labelled by 2 of the 3 labellers.
+2. **calibration.zip**: 20 expert-labelled MSG/SEVIRI scenes from the DLR dataset (Santos Gabriel et
+   al. 2026, ESSD; Zenodo 10.5281/zenodo.17669443, CC BY-NC 4.0), drawn with seed 20261017 from the
+   dataset's evaluation scenes. All three labellers label them; their accuracy against the experts
+   is reported. The experts' answers go to `labels/calibration/` (**not** shared with labellers).
+
+Downloads the DLR dataset (≈ 450 MB) from Zenodo to the Colab disk (not to Drive).
+
+* **Runtime:** CPU (standard is fine). **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** about 25 MB. **Time:** about 10 min (mostly the download).
+* **When finished:** paste the `=== STRATUM RUN SUMMARY ===` block, then share **test.zip** and
+  **calibration.zip** from `STRATUM/labels/scenes/` with Aditya, Ishaan and Abeer.
+""",
+    ),
+    settings("05c_label_sets"),
+    *SETUP,
+    code('''
+# ── 7. DLR expert dataset (Zenodo, CC BY-NC 4.0) → Colab disk ───────────────
+import urllib.request, zipfile
+DLR = "/content/work/dlr"
+os.makedirs(DLR, exist_ok=True)
+for name in ["data.zip", "geojson.zip"]:
+    dst = f"{DLR}/{name}"
+    if not os.path.exists(dst):
+        urllib.request.urlretrieve(f"https://zenodo.org/api/records/23008709/files/{name}/content", dst)
+    zipfile.ZipFile(dst).extractall(DLR)
+print(sorted(os.listdir(DLR)), len(os.listdir(f"{DLR}/data")), "scene files")
+'''),
+    code('''
+# ── 8. test.zip + calibration.zip ────────────────────────────────────────────
+rc_sets = stratum(f"make-labelling-sets --dlr-dir {DLR}", live=True)
+print("exit code:", rc_sets)
+'''),
+    code('''
+# ── 9. Collect for the summary ───────────────────────────────────────────────
+sdir = f"{DRIVE_ROOT}/labels/scenes"
+import glob
+zips = {os.path.basename(z): round(os.path.getsize(z) / 1e6, 1) for z in glob.glob(f"{sdir}/*.zip")}
+cmap = f"{DRIVE_ROOT}/labels/calibration/calibration_map.json"
+cal = json.load(open(cmap)) if os.path.exists(cmap) else {}
+with zipfile.ZipFile(f"{sdir}/test.zip") as z:
+    n_test = sum(1 for n in z.namelist() if n.endswith("meta.json"))
+'''),
+    summary_cell("""    "exit_code": rc_sets,
+    "zips_MB": zips,
+    "test_scenes": n_test,
+    "calibration_scenes": len(cal),
+    "calibration_expert_lines": sum(v["expert_lines"] for v in cal.values()),
+    "calibration_dlr_scenes": sorted(v["dlr_scene"] for v in cal.values()),
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -827,4 +886,5 @@ if __name__ == "__main__":
     write("04_web_export.ipynb", WEB_EXPORT)
     write("05a_segments_year.ipynb", SEGMENTS_YEAR)
     write("05b_scenes.ipynb", SCENES)
+    write("05c_label_sets.ipynb", LABEL_SETS)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

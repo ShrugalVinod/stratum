@@ -384,24 +384,49 @@ def export_scene_packages() -> None:
 
 @app.command("labelling-agreement")
 def labelling_agreement(
-    set_name: Annotated[str, typer.Option("--set", help="pilot or main")] = "pilot",
-    a: Annotated[str, typer.Option(help="labeller A folder name")] = "aditya",
-    b: Annotated[str, typer.Option(help="labeller B folder name")] = "ishaan",
+    set_name: Annotated[str, typer.Option("--set", help="pilot, test or calibration")] = "pilot",
+    labellers: Annotated[
+        str, typer.Option(help="comma-separated labeller ids")
+    ] = "aditya,ishaan,abeer",
 ) -> None:
     """Phase 5.3/5.4: object F1 + 16-px-grid κ with bootstrap CIs, and the disagreement gallery."""
+    from itertools import combinations
+
     from stratum import phase5
 
-    pre = cfg.load_preregistered()
-    seed = pre.detection.labelled_split.seed or 0
-    rep = phase5.agreement_job(drive_root(), a, b, seed, set_name)
-    gal = phase5.gallery_job(drive_root(), a, b, set_name)
+    who = [w.strip() for w in labellers.split(",") if w.strip()]
+    seed = cfg.load_preregistered().detection.labelled_split.seed or 0
+    rep = phase5.agreement_job(drive_root(), who, seed, set_name)
+    zip_name = "main" if set_name == "test" else set_name
+    figs = 0
+    pairs = (
+        [(w, "experts") for w in who] if set_name == "calibration" else list(combinations(who, 2))
+    )
+    for a, b in pairs:
+        figs += phase5.gallery_job(drive_root(), a, b, set_name, zip_name)["figures"]
     rows = {
         k: json.dumps(v, default=str) if isinstance(v, (dict, list)) else v for k, v in rep.items()
     }
-    _summary(
-        f"agreement ({set_name})",
-        {**rows, "gallery_figures": gal["figures"], "gallery_dir": gal["dir"]},
-    )
+    _summary(f"agreement ({set_name})", {**rows, "gallery_figures": figs})
+
+
+@app.command("make-labelling-sets")
+def make_labelling_sets(
+    dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
+) -> None:
+    """Deviation D-002: test.zip (100 India held-out scenes) + calibration.zip (20 expert)."""
+    from pathlib import Path
+
+    from stratum import phase5
+
+    guide = repo_root() / "docs" / "labelling_guide.md"
+    md = guide.read_text() if guide.exists() else None
+    seed = cfg.load_preregistered().detection.labelled_split.seed or 0
+    res = {
+        **phase5.make_test_zip(drive_root(), md),
+        **phase5.make_calibration_zip(drive_root(), Path(dlr_dir), seed, md),
+    }
+    _summary("make-labelling-sets", res)
 
 
 @app.command("download-era5")

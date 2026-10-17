@@ -11,7 +11,7 @@ test("label a scene: draw a polyline, set status, export valid JSON", async ({ p
   writeFileSync(pkg, packageZip());
 
   await page.goto("/");
-  await page.getByPlaceholder("aditya or ishaan").fill("Aditya");
+  await page.getByPlaceholder("aditya, ishaan or abeer").fill("Aditya");
   await page.getByTestId("pkg").setInputFiles(pkg);
   await page.getByRole("button", { name: "Start" }).click();
   const sid = await page.getByTestId("scene-id").textContent();
@@ -57,7 +57,7 @@ test("label a scene: draw a polyline, set status, export valid JSON", async ({ p
 
   // work survives a reload (autosave), and the next scene opens
   await page.reload();
-  await page.getByPlaceholder("aditya or ishaan").fill("aditya");
+  await page.getByPlaceholder("aditya, ishaan or abeer").fill("aditya");
   await page.getByTestId("pkg").setInputFiles(pkg);
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByTestId("scene-id")).not.toHaveText(sid!); // opens the first unfinished scene

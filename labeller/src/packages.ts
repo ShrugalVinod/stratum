@@ -25,7 +25,7 @@ export function readPackageZip(data: Uint8Array, name: string): PackageSet {
   for (const [path, bytes] of Object.entries(files)) {
     const clean = path.replace(/^\.?\/?/, "");
     if (clean.endsWith("labelling_guide.md")) guide = strFromU8(bytes);
-    const m = clean.match(/(?:^|\/)(S\d{3,})\/([^/]+)$/);
+    const m = clean.match(/(?:^|\/)([SC]\d{3,})\/([^/]+)$/);
     if (!m) continue;
     const [, sid, file] = m;
     if (!scenes.has(sid)) scenes.set(sid, { meta: undefined as unknown as Meta, files: {} });
