@@ -124,6 +124,27 @@ def box_fraction(
     return out
 
 
+def high_cloud_at_and_above(
+    grid: object, t_s: npt.ArrayLike, lat: npt.ArrayLike, lon: npt.ArrayLike, p_pa: npt.ArrayLike
+) -> Array:
+    """Max ERA5 cloud fraction at the segment's pressure and on every native level above it
+    (pre-registered ``observability.high_cloud_levels: at_and_above_segment_level``)."""
+    from stratum.met.interp import MetGrid, at_level, interp_points
+
+    assert isinstance(grid, MetGrid)
+    t, la, lo, p = (np.asarray(x, float) for x in (t_s, lat, lon, p_pa))
+    vals, _ = interp_points(grid, ["fraction_of_cloud_cover"], t, la, lo, p)
+    best = vals["fraction_of_cloud_cover"].copy()
+    for k, lev_p in enumerate(grid.levels_pa):
+        above = lev_p <= p  # lower pressure = higher up
+        if not above.any():
+            continue
+        v = at_level(grid, "fraction_of_cloud_cover", t, la, lo, np.full(t.shape, k))
+        best = np.where(above, np.fmax(best, v), best)
+    out: Array = best
+    return out
+
+
 def observable(
     high_cloud: npt.ArrayLike,
     cloudy_fraction: npt.ArrayLike,

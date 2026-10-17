@@ -102,3 +102,22 @@ def test_label_keys_for_leakage_guard() -> None:
     )
     lab = mt.segment_labels(per)
     assert {"segment_id", "flight_id", "image_time_first"} <= set(lab.columns)
+
+
+def test_high_cloud_takes_the_max_at_and_above() -> None:
+    from stratum.met.interp import MetGrid
+
+    lev = np.array([150e2, 200e2, 250e2, 300e2])
+    cc = np.zeros((2, 4, 3, 3))
+    cc[:, 0] = 0.7  # thick cirrus at 150 hPa, above a 225-hPa segment
+    cc[:, 3] = 0.9  # cloud at 300 hPa, below it: must not count
+    g = MetGrid(
+        times_s=np.array([0, 3600]),
+        levels_pa=lev,
+        lat=np.array([0.0, 1.0, 2.0]),
+        lon=np.array([70.0, 71.0, 72.0]),
+        fields={"fraction_of_cloud_cover": cc},
+    )
+    hc = mt.high_cloud_at_and_above(g, [1800.0, 1800.0], [1.0, 1.0], [71.0, 71.0], [225e2, 320e2])
+    assert hc[0] == 0.7  # cirrus above counts, the 300-hPa cloud below does not
+    assert np.isnan(hc[1]) or hc[1] >= 0.9  # a segment below every level is outside the grid
