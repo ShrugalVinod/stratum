@@ -45,6 +45,29 @@ Needs the actual optical-depth and width thresholds from Driver, Stettler & Grys
 (2025), *AMT* 18, 1115–1134. Do not estimate them; read them from the paper (Ishaan to send
 the PDF or the table) and write them here with page/table references.
 
+*Finding (2026-10-17, paper read in full; PDF in the team folder as `amt-18-1115-2025.pdf` (doi:10.5194/amt-18-1115-2025),
+CC BY 4.0):* the paper gives **no single table of thresholds**. Detectability is a 3-D surface in
+(IWP₀, r_eff, width), shown only as figures (Fig. 5, Fig. 8); the threshold grids are not
+published ("analysis code is available on request", p. 1131). What it states in numbers:
+- Detection criterion: detected effective width w_eff > R/2, R = imager resolution (§2.2, Eq. 4,
+  p. 1119); threshold surface at p_obs > 0.5, uncertainty from p_obs 0.25 / 0.75 (§3.2, p. 1122).
+- **Optical thickness below ≈ 0.05 is undetectable at any width** (§3.2, p. 1123).
+- Width: detection starts at widths slightly below the imager resolution (§3.1, p. 1120, Fig. 3c);
+  narrower contrails need a higher optical thickness (Fig. 5a).
+- Resolutions simulated: 0.5, 2 and 7 km; 7 km stands for "previous-generation geostationary
+  imagers at mid-latitudes (e.g. MSG-SEVIRI)" (p. 1124). Meteosat-9 SEVIRI over India is ~3 km at
+  nadir, ~4–5 km over India: between the paper's 2 km and 7 km cases.
+- Instantaneous observable share of CoCiP segments: 46 ± 2 % at 2 km (p. 1124); unobservable
+  62 ± 2 % at 7 km, i.e. 38 ± 2 % observable (p. 1131); net RF observable 70 ± 2 % at 2 km (p. 1124).
+- Over the life cycle (24 h sample, 2 km): 57 % observable at least once, 97 % of lifetime LW
+  forcing; median onset of detectability 21 min after formation (quartiles 10–94 min) (p. 1128).
+- Idealised: clear ocean background, nadir view, one Mannstein-style algorithm, GOES-ABI bands.
+  Against a background cirrus layer < 2 % of segments are detectable (p. 1125).
+Options for the team (not settled): (a) population efficiency range 0.38–0.46 (paper's 7 km and
+2 km results, bracketing SEVIRI over India) for the secondary efficiency-adjusted H1; (b) a
+per-segment flag from the stated numbers (CoCiP τ ≥ 0.05 and width ≥ local pixel size), stored as
+a separate uncertainty term; (c) ask the authors for the threshold grids.
+
 ### 5. Climate-metric conversion factors (20- and 100-year horizons) — ⚑ OPEN · owner SV · before Phase 7 step 7.6.4
 Needs a cited, published method to put contrail energy forcing (J) and CO₂ (kg) on a common
 basis at 20 and 100 years (for example a GWP- or ATR-based contrail-EF-to-CO₂e factor).
