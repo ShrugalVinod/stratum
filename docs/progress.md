@@ -23,8 +23,14 @@ Newest first. What was done, what's next, blockers.
   guide v0.1 (`docs/labelling_guide.md`), **labelling app** (`labeller/`, Vitest + Playwright,
   own CI job, hosted separately), Colab `05b_scenes`. 173 Python tests.
 
+- Colab `05a_segments_year` PASSED (commit 798fe9b, 58 min, 12/12 days exit 0, all whole-domain):
+  8,035–10,401 flights and 298k–385k segments per day; corridor flights 1,465–1,846 per day;
+  1 Jan 2026 identical to the local test (8,573 flights, 347,947 segments, 1,706 corridor).
+  Lasting-contrail conditions (raw ERA5) 0.7 % (1 Apr) to 9.5 % (1 Feb); highest in the
+  monsoon/post-monsoon days and 1 Feb.
+
 **Next**
-- Shrugal: run Colab `05a_segments_year`, then `05b_scenes`; set up the separate Cloudflare
+- Shrugal: run Colab `05b_scenes`; set up the separate Cloudflare
   project for the labeller; share `labels/scenes/` (zips only) with Aditya and Ishaan.
 - Aditya + Ishaan: pilot (20 scenes) by 26 Oct → export → Drive `labels/raw/<id>/`.
 - Claude: matching (advection, observability, segment labels) with the critical tests;
