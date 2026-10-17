@@ -340,6 +340,70 @@ def phase3_showcase(
         _summary(f"phase3-showcase {d}", {**res, "figures": len(res.get("figures", []))})
 
 
+@app.command("sample-scenes")
+def sample_scenes_cmd(
+    n_main: Annotated[int, typer.Option(help="main labelled scenes (pre-registered 200)")] = 200,
+    n_pilot: Annotated[int, typer.Option(help="pilot scenes (pre-registered 20)")] = 20,
+) -> None:
+    """Phase 5.1: draw the labelling scenes ONCE (stratified, pre-registered seed Q16)."""
+    from stratum import phase5
+
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed
+    if seed is None:
+        console.print("[red]Q16 seed is not set in preregistered.yaml.[/red]")
+        raise typer.Exit(1)
+    dom = cfg.load_domain().study_bbox
+    res = phase5.sample_scenes_job(
+        drive_root(),
+        seed,
+        (dom.lat[0], dom.lat[1]),
+        (dom.lon[0], dom.lon[1]),
+        n_main,
+        n_pilot,
+        cfg.config_hash(),
+    )
+    _summary(
+        "sample-scenes",
+        {k: json.dumps(v, default=str) if isinstance(v, dict) else v for k, v in res.items()},
+    )
+
+
+@app.command("export-scene-packages")
+def export_scene_packages() -> None:
+    """Phase 5.1: write pilot.zip and main.zip (images + meta, no predictions) for the labellers."""
+    from stratum import phase5
+
+    guide = repo_root() / "docs" / "labelling_guide.md"
+    res = phase5.export_packages_job(drive_root(), guide.read_text() if guide.exists() else None)
+    _summary(
+        "export-scene-packages",
+        {k: json.dumps(v) if isinstance(v, dict) else v for k, v in res.items()},
+    )
+
+
+@app.command("labelling-agreement")
+def labelling_agreement(
+    set_name: Annotated[str, typer.Option("--set", help="pilot or main")] = "pilot",
+    a: Annotated[str, typer.Option(help="labeller A folder name")] = "aditya",
+    b: Annotated[str, typer.Option(help="labeller B folder name")] = "ishaan",
+) -> None:
+    """Phase 5.3/5.4: object F1 + 16-px-grid κ with bootstrap CIs, and the disagreement gallery."""
+    from stratum import phase5
+
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed or 0
+    rep = phase5.agreement_job(drive_root(), a, b, seed, set_name)
+    gal = phase5.gallery_job(drive_root(), a, b, set_name)
+    rows = {
+        k: json.dumps(v, default=str) if isinstance(v, (dict, list)) else v for k, v in rep.items()
+    }
+    _summary(
+        f"agreement ({set_name})",
+        {**rows, "gallery_figures": gal["figures"], "gallery_dir": gal["dir"]},
+    )
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

@@ -50,3 +50,6 @@ web/dist/
 web/public/data/dev-local/
 web/test-results/
 web/playwright-report/
+
+labeller/test-results/
+labeller/playwright-report/

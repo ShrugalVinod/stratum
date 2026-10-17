@@ -1,0 +1,63 @@
+{
+ "scene_id": "S014",
+ "labeller": "aditya",
+ "app_version": "1.0.0",
+ "package_version": "1.0",
+ "scene_status": "partly_obscured",
+ "flags": {
+  "no_contrails": false,
+  "unusable": false,
+  "unusable_reason": ""
+ },
+ "objects": [
+  {
+   "id": "o1",
+   "polyline_px": [
+    [
+     105.5,
+     53.0
+    ],
+    [
+     128.0,
+     128.0
+    ],
+    [
+     150.5,
+     203.0
+    ]
+   ],
+   "confidence": "sure"
+  },
+  {
+   "id": "o2",
+   "polyline_px": [
+    [
+     20.0,
+     20.0
+    ],
+    [
+     20.0,
+     26.0
+    ]
+   ],
+   "confidence": "sure"
+  },
+  {
+   "id": "o3",
+   "polyline_px": [
+    [
+     60.0,
+     10.0
+    ],
+    [
+     60.0,
+     90.5
+    ]
+   ],
+   "confidence": "uncertain"
+  }
+ ],
+ "started_at": "2026-10-20T10:00:00.000Z",
+ "updated_at": "2026-10-20T10:03:12.000Z",
+ "time_spent_s": 192
+}

@@ -171,6 +171,32 @@ class PreLabelledSplit(StrictModel):
     seed: int | None
 
 
+class PreKappa(StrictModel):
+    method: Literal["cell_grid"]
+    cell_px: int = Field(gt=0)
+
+
+class PreObjectF1(StrictModel):
+    max_mean_distance_px: float
+    min_overlap_of_shorter: float
+    max_angle_deg: float
+    assignment: Literal["hungarian"]
+
+
+class PreCI(StrictModel):
+    method: Literal["scene_bootstrap"]
+    level: float
+    resamples: int
+
+
+class PreAgreement(StrictModel):
+    """Open question 3 (settled 17 Oct 2026): κ on a cell grid + object F1, scene bootstrap."""
+
+    kappa: PreKappa
+    object_f1: PreObjectF1
+    ci: PreCI
+
+
 class PreDetection(StrictModel):
     btd: str
     labelled_scenes: int
@@ -180,7 +206,7 @@ class PreDetection(StrictModel):
     scene_strata: list[str]
     disagreement_resolution: str
     # ⚑ placeholders (null until settled): see lock.py on how filling a null is treated.
-    agreement_metric: dict[str, str] | None
+    agreement_metric: PreAgreement | None
     labelled_split: PreLabelledSplit
 
 
@@ -210,10 +236,19 @@ class PreMatching(StrictModel):
     candidate_segments: str
 
 
+class PreOpaqueCloud(StrictModel):
+    """Open question 11 (settled 17 Oct 2026): majority-cloudy box around the advected segment."""
+
+    classes: list[str]
+    rule: Literal["majority_of_box"]
+    box_px: int = Field(gt=0)
+    max_cloudy_fraction: float
+
+
 class PreObservability(StrictModel):
     max_high_cloud_fraction: float
     high_cloud_levels: str
-    opaque_cloud_mask_classes: list[str] | list[int] | None
+    opaque_cloud_mask_classes: PreOpaqueCloud | None
     require_no_opaque_cloud_in_window: bool
     max_viewing_zenith_deg: float
     unobservable_label: Literal["missing"]
