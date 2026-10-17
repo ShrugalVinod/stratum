@@ -2,6 +2,26 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-17 — Phase 4 accepted; Phase 5 started
+
+**Done**
+- Phase 3 accepted (15 Oct). Phase 4 built and **accepted 17 Oct**: web app v0 + Innovation
+  Website live at https://stratum.aerospaceonyx.workers.dev ("aeronautical chart" design, Chart/
+  Night themes, flight replay with plane icons, lower detail bar with CoCiP contrail lifetime,
+  team email). Lighthouse mobile / 94, /map 92 (a11y, best practices, SEO 100). Gate report:
+  `docs/phase_reports/phase4_gate_report.md` (open items a–f carried forward to 18 Dec).
+- Phase 5, step 1: `build-segments --scope domain` keeps every flight in the study domain and only
+  flags the corridor (scoring is on the full domain). Local test, 1 Jan 2026: 8,573 flight pieces,
+  347,947 segments in 27 s; corridor count 1,706 flights = Phase 2. Colab notebook
+  `05a_segments_year` builds all 12 flight days.
+
+**Next**
+- Shrugal: run Colab `05a_segments_year`, paste the summary.
+- Team: answer the Phase 5 questions (Q16 seed, Q3 agreement metric, labellers, Q11 opaque
+  cloud, Q4 Driver et al. thresholds, labelling dates).
+- Claude: scene sampling + packages, labeller app, agreement module, matching (advection,
+  parallax, observability, labels) with the critical tests.
+
 ## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
 
 **Done (tested, pushed)**

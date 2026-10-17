@@ -56,8 +56,11 @@ def build_segments_day(
     aircraft_db_snapshot: str = "2025-08",
     config_hash: str | None = None,
     force: bool = False,
+    keep_all: bool = False,
 ) -> dict[str, Any]:
     """Raw ADS-B day → segments_met for that day (flights, met features, η, SAC flags).
+
+    ``keep_all`` keeps every flight in the domain (Phase 5) and only flags the corridor.
 
     ``force`` recomputes a finished day (its ``_SUCCESS`` marker is removed first, so a crash
     mid-way leaves the day marked not done)."""
@@ -83,11 +86,14 @@ def build_segments_day(
         return {"day": str(day), "status": "locked by another run"}
     try:
         man = RunManifest.start(
-            "build-segments", unit=str(day), config_hash=config_hash, params={"source": source}
+            "build-segments",
+            unit=str(day),
+            config_hash=config_hash,
+            params={"source": source, "scope": "domain" if keep_all else "corridor"},
         )
         adsb = read_day(adsb_dir)
         db = aircraft_db.load(root / "raw" / "aircraft_db", aircraft_db_snapshot)
-        seg, per, log = build_flight_segments(adsb, db, corridor)
+        seg, per, log = build_flight_segments(adsb, db, corridor, keep_all=keep_all)
         t0 = pd.Timestamp(day)
         pl = era5_window(root, "pl", t0, t0 + pd.Timedelta(hours=25)).load()
         tt = era5_window(root, "tropo_T", t0, t0 + pd.Timedelta(hours=25)).load()

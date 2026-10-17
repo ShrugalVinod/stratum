@@ -7,6 +7,10 @@ one-row-per-flight table and a log of how much every step removed (build prompt 
 Corridor selection (``corridor`` given): a flight is kept if at least one of its cruise
 segments has its midpoint inside the corridor polygon, and then the **whole** flight is kept
 (CoCiP needs complete trajectories); ``in_corridor`` marks the segments inside.
+
+Whole-domain mode (``keep_all=True``, Phase 5): every flight is kept and ``in_corridor`` only
+marks the corridor segments. The confirmatory tests are scored on the full study domain
+(scope decision, 15 Oct 2026), so labels are needed for all flights, not just the corridor.
 """
 
 from __future__ import annotations
@@ -29,6 +33,7 @@ def build_flight_segments(
     aircraft_db: pd.DataFrame,
     corridor: Polygon | None = None,
     mass_fraction: float = ac.MASS_FRACTION,
+    keep_all: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     log: dict[str, Any] = {"reports_in": len(adsb)}
     clean, removed1 = basic_clean(adsb)
@@ -47,16 +52,8 @@ def build_flight_segments(
     seg = rs.make_segments(wp)
     log["step7_segments"] = len(seg)
 
-    if corridor is not None and len(seg):
-        inside = shapely.contains_xy(corridor, seg["lon_mid"].to_numpy(), seg["lat_mid"].to_numpy())
-        seg["in_corridor"] = inside
-        base = seg["flight_id"].str.split(".").str[0]
-        keep_base = set(base[inside])
-        seg = seg[base.isin(keep_base)].reset_index(drop=True)
-        log["corridor_flights"] = len(keep_base)
-        log["corridor_segments_inside"] = int(seg["in_corridor"].sum())
-    else:
-        seg["in_corridor"] = False
+    seg, clog = select_corridor(seg, corridor, keep_all)
+    log.update(clog)
 
     # aircraft type per flight piece (type looked up on the original flight's reports)
     src = cruise.assign(base_id=cruise["flight_id"])
@@ -77,3 +74,25 @@ def build_flight_segments(
     log["step9_reasons"] = per["commercial_reason"].value_counts().to_dict()
     log["indian_registered_share"] = float(np.mean(per["indian_registered"])) if len(per) else None
     return seg, per, log
+
+
+def select_corridor(
+    seg: pd.DataFrame, corridor: Polygon | None, keep_all: bool = False
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Flag corridor segments (``in_corridor``) and, unless ``keep_all``, keep only the flights
+    with at least one segment midpoint inside the corridor (whole flights are kept)."""
+    log: dict[str, Any] = {}
+    seg = seg.copy()
+    if corridor is None or not len(seg):
+        seg["in_corridor"] = False
+        return seg, log
+    inside = shapely.contains_xy(corridor, seg["lon_mid"].to_numpy(), seg["lat_mid"].to_numpy())
+    seg["in_corridor"] = inside
+    base = seg["flight_id"].str.split(".").str[0]
+    keep_base = set(base[inside])
+    log["corridor_flights"] = len(keep_base)
+    if not keep_all:
+        seg = seg[base.isin(keep_base)].reset_index(drop=True)
+    log["corridor_segments_inside"] = int(seg["in_corridor"].sum())
+    log["scope"] = "domain" if keep_all else "corridor"
+    return seg, log
