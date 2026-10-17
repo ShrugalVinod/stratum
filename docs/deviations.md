@@ -32,3 +32,21 @@ both runs (build prompt §6.8).
   physics run (EF percentiles, convergence numbers) had been seen; no labels, detections, matches
   or model scores exist.
 - Team OK: Shrugal Vinod, 2026-10-15 (chat: "approved n = 100")
+
+## D-002 — 2026-10-17 — Detector tuned on expert-labelled SEVIRI scenes; team labels only the India held-out half
+- Keys: detection.labelled_scenes, detection.labelled_split, detection.detector_tuning, detection.labeller_calibration
+- Reason: the team are not contrail experts, and the detector's confidence weights and
+  threshold would otherwise be fitted on their own labels. A published expert dataset now exists
+  for the same instrument: DLR's manually labelled MSG/SEVIRI contrail dataset (Santos Gabriel et
+  al. 2026, ESSD 18, 2397–2412; 140 scenes of 256 × 256 px, three expert labellers, majority
+  ground truth; CC BY-NC 4.0, used non-commercially with attribution). Change: (1) the detector
+  is fitted on the dataset's training scenes and checked on its evaluation scenes; (2) the team
+  labels only the 100 India held-out scenes already drawn with seed 20261017 (each by 2 of 3
+  labellers, so `labellers_per_scene: 2` is unchanged), and the final detector precision/recall
+  over India is reported on them; (3) each labeller first labels 20 expert scenes, and their
+  accuracy against the experts is reported. India validation is kept, because the expert scenes
+  cover Europe and the North Atlantic, not India. The 100 India "tuning" scenes are no longer
+  labelled. The 20-scene India pilot is unchanged.
+- Results seen before the change: no. No scene had been labelled; no detector score, match or
+  model result exists. Only the sampling summary (counts per stratum) had been seen.
+- Team OK: Shrugal Vinod, 2026-10-17 (chat: "B, Team OK")

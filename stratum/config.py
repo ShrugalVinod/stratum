@@ -197,6 +197,23 @@ class PreAgreement(StrictModel):
     ci: PreCI
 
 
+class PreDetectorTuning(StrictModel):
+    """Deviation D-002: detector fitted on an external expert-labelled dataset."""
+
+    source: str
+    doi: str
+    fit_scenes: str
+    check_scenes: str
+    ground_truth: str
+
+
+class PreLabellerCalibration(StrictModel):
+    source: str
+    scenes: int
+    drawn_from: str
+    seed: int
+
+
 class PreDetection(StrictModel):
     btd: str
     labelled_scenes: int
@@ -208,6 +225,8 @@ class PreDetection(StrictModel):
     # ⚑ placeholders (null until settled): see lock.py on how filling a null is treated.
     agreement_metric: PreAgreement | None
     labelled_split: PreLabelledSplit
+    detector_tuning: PreDetectorTuning | None = None
+    labeller_calibration: PreLabellerCalibration | None = None
 
 
 class PreLabellingRules(StrictModel):
