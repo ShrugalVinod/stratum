@@ -459,7 +459,8 @@ function startLoop(m: MLMap, props: { current: Props }) {
   const tick = (now: number) => {
     if (a.intro) introFrame(m, props.current, a, now);
     if (a.fade) {
-      const k = Math.min(1, (now - a.fade.start) / FADE_MS);
+      // the frame time can be a little older than the fade start: clamp to [0, 1]
+      const k = Math.min(1, Math.max(0, (now - a.fade.start) / FADE_MS));
       const e = k * k * (3 - 2 * k);
       m.setPaintProperty(`risk${a.fade.from}`, "raster-opacity", 1 - e);
       m.setPaintProperty(`risk${a.front}`, "raster-opacity", e);

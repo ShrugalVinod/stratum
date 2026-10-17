@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [preact()],
   base: process.env.STRATUM_BASE ?? "/",
   build: { target: "es2022", sourcemap: false },
-  test: { environment: "node" },
+  test: { environment: "node", include: ["tests/**/*.test.ts"] },
 });

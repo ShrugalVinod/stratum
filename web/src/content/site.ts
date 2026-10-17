@@ -61,8 +61,8 @@ export const phases: { n: number; name: string; state: PhaseState; logged?: stri
   { n: 1, name: "Data ingest", state: "done", logged: "14 OCT" },
   { n: 2, name: "Physics baseline", state: "done", logged: "15 OCT" },
   { n: 3, name: "Satellite detector", state: "done", logged: "15 OCT" },
-  { n: 4, name: "Web app v0", state: "current" },
-  { n: 5, name: "Labels & matching", state: "upcoming" },
+  { n: 4, name: "Web app v0", state: "done", logged: "17 OCT" },
+  { n: 5, name: "Labels & matching", state: "current" },
   { n: 6, name: "Evaluation (H1)", state: "upcoming" },
   { n: 7, name: "Correction & decisions", state: "upcoming" },
   { n: 8, name: "Final web app", state: "upcoming" },
@@ -153,13 +153,16 @@ export const hypotheses = [
 export const methods = [
   { title: "Data", body: "ERA5 weather, Meteosat-9 imagery every 15 minutes, ADS-B flight tracks for 12 first-of-month days (Mar 2025 – Feb 2026), and an aircraft database." },
   { title: "Physics baseline", body: "Schmidt–Appleman formation check, then CoCiP for persistence and energy forcing, with three humidity baselines and Monte Carlo ranges." },
-  { title: "Satellite detection", body: "A transparent line-filter detector on the 10.8 − 12.0 µm brightness-temperature difference, tuned only on labelled tuning scenes." },
+  { title: "Satellite detection", body: "A transparent line-filter detector on the 10.8 − 12.0 µm brightness-temperature difference, tuned on 51 expert-labelled Meteosat scenes (DLR dataset) and checked on 89 others; final accuracy is measured on 100 India scenes labelled by the team." },
   { title: "Matching and labels", body: "Each predicted contrail is advected with the wind for 20–120 min, parallax-corrected and matched within 2 px and 20°; unobservable scenes are labelled unknown." },
   { title: "Correction and decision", body: "A calibrated model learns where physics is wrong; the decision layer ranks altitude changes by their lower-bound net warming avoided." },
 ];
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-10-17", phase: 5, title: "Detector tuned on expert labels; matching built", body: "The satellite detector was tuned on 51 Meteosat scenes labelled by three contrail experts (DLR dataset) and checked on 89 others: precision 0.22, recall 0.23, up from 0.14 / 0.26. It still misses many short, faint contrails. The full-year matching that turns satellite images into labels for every flight segment is built and tested." },
+  { date: "2026-10-17", phase: 5, title: "Labelling starts with three labellers", body: "220 Meteosat scenes drawn once with a fixed seed. Three team members label a 20-scene pilot, 20 expert scenes to measure their own accuracy, and 100 India test scenes, each by two people. A separate labelling app keeps the satellite data private." },
+  { date: "2026-10-17", phase: 4, title: "Web app v0 accepted", body: "Map with real January 2026 contrail conditions, flight replay and contrail details, plus the Innovation Website, live on Cloudflare." },
   { date: "2026-10-16", phase: 4, title: "Web app v0 started", body: "Data contract for the website: contrail-condition grids for every hour and flight level of January 2026, commercial flights only, aircraft identities hashed." },
   { date: "2026-10-15", phase: 3, title: "Satellite contrail detector", body: "A line-filter detector on Meteosat-9 finds long contrails such as two over the Arabian Sea at night. Overlays of physics predictions on satellite images: on 1 Jan 2026 no predicted contrail lined up with a detected one — a first sign that physics alone is not enough." },
   { date: "2026-10-15", phase: 2, title: "Physics baseline for January 2026", body: "1,706 flights through the Delhi–Mumbai corridor on 1 Jan 2026, 131,661 one-minute segments, CoCiP with three humidity baselines and 100 Monte Carlo members. A dry winter day: persistent contrails from 6 flights, all south of 15°N." },

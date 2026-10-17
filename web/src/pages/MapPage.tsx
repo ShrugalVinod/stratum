@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useState } from "preact/hooks";
 import type { DaySummary, FlaggedSegment, FlightFeature, Manifest } from "../data/contract";
 import { RAMP } from "../data/ramp";
 import { clock, colourise, joules, type MapState, pad2, parseState, stateQuery } from "../data/format";
@@ -121,7 +121,7 @@ export function MapPage() {
   useEffect(() => {
     import("../map/ContrailMap").then((mod) => setContrailMap(() => mod.ContrailMap));
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!lightbox) return;
     const k = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
     addEventListener("keydown", k);
@@ -621,7 +621,7 @@ export function MapPage() {
       </section>
       )}
       {lightbox && (
-        <div class="lightbox" role="dialog" aria-modal="true" aria-label={lightbox.title} onClick={() => setLightbox(null)}>
+        <div class="lightbox" role="dialog" aria-modal="true" aria-label={lightbox.title} onClick={() => setLightbox(null)} onKeyDown={(e) => e.key === "Escape" && setLightbox(null)}>
           <figure onClick={(e) => e.stopPropagation()}>
             {lightbox.video ? <video src={lightbox.video} poster={lightbox.thumb} controls autoPlay loop playsInline /> : <img src={lightbox.full ?? lightbox.thumb} alt={lightbox.alt} />}
             <figcaption>
