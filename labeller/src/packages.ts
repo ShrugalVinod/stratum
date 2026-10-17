@@ -1,4 +1,4 @@
-// Reading scene packages (pilot.zip / main.zip) and label exports in the browser.
+// Reading scene packages (pilot.zip / calibration.zip / test.zip) and label exports in the browser.
 // Nothing is uploaded anywhere: files are read from the labeller's own disk.
 import { strFromU8, unzipSync } from "fflate";
 import type { SceneLabel } from "./labels";
@@ -25,7 +25,7 @@ export function readPackageZip(data: Uint8Array, name: string): PackageSet {
   for (const [path, bytes] of Object.entries(files)) {
     const clean = path.replace(/^\.?\/?/, "");
     if (clean.endsWith("labelling_guide.md")) guide = strFromU8(bytes);
-    const m = clean.match(/(?:^|\/)(S\d{3,})\/([^/]+)$/);
+    const m = clean.match(/(?:^|\/)([SC]\d{3,})\/([^/]+)$/);
     if (!m) continue;
     const [, sid, file] = m;
     if (!scenes.has(sid)) scenes.set(sid, { meta: undefined as unknown as Meta, files: {} });
@@ -34,7 +34,7 @@ export function readPackageZip(data: Uint8Array, name: string): PackageSet {
     else s.files[file] = bytes;
   }
   for (const [sid, s] of scenes) if (!s.meta || !s.files["btd.png"]) scenes.delete(sid);
-  if (!scenes.size) throw new Error("No scenes found. Open the pilot.zip or main.zip from the team Drive.");
+  if (!scenes.size) throw new Error("No scenes found. Open pilot.zip, calibration.zip or test.zip from the team Drive.");
   return { scenes, guide, name };
 }
 

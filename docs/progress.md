@@ -23,13 +23,46 @@ Newest first. What was done, what's next, blockers.
   guide v0.1 (`docs/labelling_guide.md`), **labelling app** (`labeller/`, Vitest + Playwright,
   own CI job, hosted separately), Colab `05b_scenes`. 173 Python tests.
 
+- Colab `05a_segments_year` PASSED (commit 798fe9b, 58 min, 12/12 days exit 0, all whole-domain):
+  8,035–10,401 flights and 298k–385k segments per day; corridor flights 1,465–1,846 per day;
+  1 Jan 2026 identical to the local test (8,573 flights, 347,947 segments, 1,706 corridor).
+  Lasting-contrail conditions (raw ERA5) 0.7 % (1 Apr) to 9.5 % (1 Feb); highest in the
+  monsoon/post-monsoon days and 1 Feb.
+
+- Colab `05b_scenes` PASSED (commit b64e245, 23 min): scenes drawn once with seed 20261017 from
+  43,992 candidates; 200 main (100 tuning / 100 held-out) + 20 pilot; all 144 strata filled
+  (1 slot short filled elsewhere); 12–22 scenes per month; night 58 / day 50 / dusk 48 /
+  dawn 44; density classes 64 / 64 / 72 (terciles, q1 = 0, q2 = 57 persistent segments);
+  107 west / 93 east of 80°E; 17 scenes with mean VZA > 60°. pilot.zip 3.9 MB, main.zip 40.9 MB.
+
+- Matching built and tested (`stratum/match/advect.py`, `matching.py`): RK2 advection with ERA5
+  wind, 2 px / 20° match, observability (high cloud at and above < 0.5, majority-cloudy 15-px box,
+  VZA < 60°), segment label rule (unobservable stays missing, never 0).
+- D-002 (Team OK 17 Oct): detector tuned on the DLR expert MSG/SEVIRI dataset; all 200 India
+  scenes held out; three labellers (Aditya, Ishaan, Abeer). Expert-line frame checked on the real
+  files (south-up arrays flipped; 97 % of expert points on expert pixels). 191 Python tests.
+- Colab `05c_label_sets` PASSED (commit 2d3e7a6, 2.5 min): test.zip 100 held-out India scenes
+  (20.5 MB); calibration.zip 20 DLR evaluation scenes C001–C020 (1.3 MB, 126 expert lines),
+  DLR ids = `calibration_scenes(20261017)` exactly. Expert answers kept private in
+  `labels/calibration/`.
+
+- Detector tuned on the DLR expert scenes (D-002, `stratum tune-detector`): evaluation (89
+  scenes) precision 0.22 [0.17, 0.27], recall 0.23 [0.18, 0.29], F1 0.22 [0.18, 0.26] (Phase 3
+  settings: F1 0.18). New settings in `configs/pipeline.yaml`; report `reports/detector_tuning/`.
+- Full-year matching built and tested (`stratum match-year`, Colab `05d_match_year`): detection on
+  every slot, advection + parallax + matching + observability per image, segment labels, label
+  counts, ≥ 300 check (counted as contrail events), parallax before/after figure, wrong-day null
+  (chance matches), Driver detectability flag and CoCiP advection comparison where CoCiP ran.
+  Local test: 0.07 ms per segment; 206 Python tests.
+
 **Next**
-- Shrugal: run Colab `05a_segments_year`, then `05b_scenes`; set up the separate Cloudflare
-  project for the labeller; share `labels/scenes/` (zips only) with Aditya and Ishaan.
-- Aditya + Ishaan: pilot (20 scenes) by 26 Oct → export → Drive `labels/raw/<id>/`.
-- Claude: matching (advection, observability, segment labels) with the critical tests;
-  detector confidence refit on the tuning half after the main labels.
-- Ishaan: Driver et al. 2025 detection-efficiency table (Q4).
+- Shrugal: run Colab 05d (full-year matching).
+- Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
+  with Aditya, Ishaan, Abeer.
+- Labellers: pilot (all three, 20 scenes) by 26 Oct → guide revision → calibration (all three)
+  → test (pairs: Aditya 67, Ishaan 67, Abeer 66) by 9 Nov. Exports → Drive `labels/raw/<id>/`.
+- Claude: Phase 4 open items a, b, d; coverage audit 2/5 Nov; detector precision/recall on the
+  India held-out labels once they exist.
 
 ## 2026-10-15 (late) — Phase 2 accepted; Phase 3 built
 

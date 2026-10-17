@@ -1,4 +1,4 @@
-# STRATUM labelling guide — v0.1 (DRAFT, to be revised after the 20-scene pilot)
+# STRATUM labelling guide — v0.1.1 (DRAFT, to be revised after the 20-scene pilot)
 
 Rules 1–6 are the paper's Appendix B (v1.0). They are pre-registered where they affect scoring
 (`preregistered.yaml: labelling_rules`) and may only be clarified, not changed, after the pilot.
@@ -36,17 +36,34 @@ Why rules 3 and 6 exist: sharp coastlines and terrain edges can create line-like
 infrared images that are easy to mistake for contrails, and a labeller who can see the predicted
 flight tracks is more likely to "find" faint lines where they expect them.
 
+## Who labels what (three labellers, deviation D-002)
+
+Labellers: **aditya**, **ishaan**, **abeer** (always type exactly this ID). Three sets, in this order:
+
+| Set (zip on the team Drive) | Scenes | Who | Why |
+|---|---|---|---|
+| 1. `pilot.zip` (India) | 20 | **all three**, every scene | practise; find unclear rules; the guide is revised after it |
+| 2. `calibration.zip` (expert scenes, Europe) | 20 | **all three**, every scene | your labels are compared with three professional labellers; this measures *your* accuracy |
+| 3. `test.zip` (India) | 100 | **two of you per scene** (the app picks: ~67 each) | the real test of our detector over India |
+
+The detector itself is tuned on the experts' data, not on your labels. Your India labels are
+the independent check that it also works over India. Expert scenes have **one time only** (no
+±15 min frames); India scenes have three.
+
+Work alone. Do not compare or discuss scenes until a set is finished by everyone. Disagreements
+are discussed afterwards with the disagreement pictures; Shrugal decides if you can't agree.
+
 ## How to label a scene (app)
 
-1. Open the labelling app link, type your **labeller ID** (`aditya` or `ishaan`, always the same),
-   and open the scene zip (`pilot.zip` first, later `main.zip`). Nothing is uploaded: the images
-   stay on your laptop.
-2. The app shows scenes in **your own random order**. For each scene:
+1. Open the labelling app link, type your **labeller ID** (`aditya`, `ishaan` or `abeer`), and
+   choose the zip for the current set. Nothing is uploaded: the images stay on your laptop.
+   The header shows how many scenes are yours ("your 67 of 100 scenes" in the test set).
+2. The app shows your scenes in **your own random order**. For each scene:
    - Look at the BTD image first. Press **1 / 2 / 3** (or the buttons) to flip between
      **t − 15 min, t and t + 15 min**: contrails drift and spread slowly; surface features don't
      move at all; ordinary clouds change shape.
    - Press **T** to compare with **T10.8** (rule 3).
-   - Use the **contrast** slider and zoom (scroll / pinch, drag to pan) for faint lines.
+   - Use the **contrast** sliders and zoom (scroll, drag to pan) for faint lines.
 3. **Draw** each contrail: click points along its centre line, **double-click** (or press
    **Enter**) to finish. Choose **sure** or **uncertain** for it (press **U** to toggle the
    selected line). Lines shorter than 10 px are refused (rule 1).
@@ -56,18 +73,21 @@ flight tracks is more likely to "find" faint lines where they expect them.
    all, press **No contrails** (that is a real answer, not a skipped scene). If the scene is
    unusable (broken image), choose **Unusable** and write why.
 6. **Next scene**. Your work is saved in the browser as you go, but always press **Export** at
-   the end of a session: it downloads one zip with a JSON file per scene. Upload that zip to the
-   team Drive folder `labels/raw/<your id>/` (unzip it there).
+   the end of a session: it downloads one zip. Unzip it and put the files in the team Drive
+   folder `STRATUM/labels/raw/<your id>/`.
 
-Aim for 3–5 minutes per scene. Don't discuss scenes with the other labeller until both of you
-have finished the set; agreement is only meaningful if you work independently.
+Aim for 2–5 minutes per scene: ~1–1.5 h for each of the pilot and calibration sets, ~4–5 h for
+your 67 test scenes.
 
-## After the pilot
+## After each set
 
-Claude computes agreement (object F1 and Cohen's κ on 16-px cells, with 95 % intervals) and makes
-a **disagreement gallery**. The team discusses it, clarifies this guide (version bump, changelog
-below), and only then do both labellers do the 200 main scenes.
+Claude computes agreement (object F1 and Cohen's κ on 16-px cells, with 95 % intervals) and
+makes disagreement pictures. After the **pilot**, the team discusses them and this guide is
+clarified (version bump, changelog below). After the **calibration** set, each labeller sees
+their score against the experts and the experts' lines, to learn from them. Then the test set.
 
 ## Changelog
 
 - v0.1 (17 Oct 2026): rules 1–6 from paper Appendix B; how-to for the labelling app. Draft.
+- v0.1.1 (17 Oct 2026): three labellers and three sets (pilot, expert calibration, India test),
+  after deviation D-002. Rules 1–6 unchanged.

@@ -163,22 +163,119 @@ def export_packages_job(root: Path, guide_md: str | None = None) -> dict[str, An
     return {"status": "exported", "zips": sizes}
 
 
-def agreement_job(
-    root: Path, labeller_a: str, labeller_b: str, seed: int, set_name: str
-) -> dict[str, Any]:
+def set_scene_ids(root: Path, set_name: str) -> set[str]:
+    """Scene ids of a labelling set: pilot, test (India held-out) or calibration (expert)."""
+    if set_name == "calibration":
+        m = json.loads((root / "labels" / "calibration" / "calibration_map.json").read_text())
+        return set(m)
+    scenes = pd.read_csv(scenes_dir(root) / "scenes.csv")
+    if set_name == "pilot":
+        return set(scenes.loc[scenes["role"] == "pilot", "scene_id"])
+    if set_name == "test":
+        return set(
+            scenes.loc[(scenes["role"] == "main") & (scenes["split"] == "heldout"), "scene_id"]
+        )
+    raise ValueError(f"unknown set {set_name!r} (pilot, test, calibration)")
+
+
+def agreement_job(root: Path, labellers: list[str], seed: int, set_name: str) -> dict[str, Any]:
+    """Pilot/test: every pair of labellers on the scenes both finished, plus all pairs pooled.
+    Calibration: every labeller against the expert ground truth.
+
+    On the test set each scene has exactly one pair, so the pooled numbers are the
+    pre-registered scene-bootstrap agreement (Q3)."""
+    from itertools import combinations
+
     from stratum.labelling import agreement as ag
 
-    scenes = pd.read_csv(scenes_dir(root) / "scenes.csv")
-    keep = set(scenes.loc[scenes["role"] == set_name, "scene_id"])
-    la = {k: v for k, v in ag.read_dir(root / "labels" / "raw" / labeller_a).items() if k in keep}
-    lb = {k: v for k, v in ag.read_dir(root / "labels" / "raw" / labeller_b).items() if k in keep}
-    rep = ag.agreement(la, lb, seed=seed)
-    rep["set"] = set_name
-    rep["scenes_in_set"] = len(keep)
+    keep = set_scene_ids(root, set_name)
+    raw = root / "labels" / "raw"
+    labs = {w: {k: v for k, v in ag.read_dir(raw / w).items() if k in keep} for w in labellers}
+    rep: dict[str, Any] = {"set": set_name, "scenes_in_set": len(keep), "labellers": labellers}
+    if set_name == "calibration":
+        experts = ag.read_dir(root / "labels" / "calibration" / "expert_labels")
+        rep["vs_experts"] = {w: ag.agreement(labs[w], experts, seed=seed) for w in labellers}
+    else:
+        pa: dict[str, ag.SceneLabel] = {}
+        pb: dict[str, ag.SceneLabel] = {}
+        rep["pairs"] = {}
+        for a, b in combinations(labellers, 2):
+            rep["pairs"][f"{a}-{b}"] = ag.agreement(labs[a], labs[b], seed=seed)
+            for sid in set(labs[a]) & set(labs[b]):
+                pa[f"{sid}|{a}-{b}"] = labs[a][sid]
+                pb[f"{sid}|{a}-{b}"] = labs[b][sid]
+        rep["pooled"] = ag.agreement(pa, pb, seed=seed)
     d = root / "reports" / "labelling"
     d.mkdir(parents=True, exist_ok=True)
     (d / f"agreement_{set_name}.json").write_text(json.dumps(rep, indent=1, default=_np_default))
     return rep
+
+
+def make_test_zip(root: Path, guide_md: str | None = None) -> dict[str, Any]:
+    """test.zip = the 100 India held-out scenes, copied from main.zip (no re-sampling)."""
+    import zipfile
+
+    keep = set_scene_ids(root, "test")
+    src = zipfile.ZipFile(scenes_dir(root) / "main.zip")
+    out = scenes_dir(root) / "test.zip"
+    n = 0
+    with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_STORED) as z:
+        for name in src.namelist():
+            sid = name.split("/")[0]
+            if sid in keep:
+                z.writestr(name, src.read(name))
+                n += name.endswith("meta.json")
+        if guide_md is not None:
+            z.writestr("labelling_guide.md", guide_md)
+    return {"test_zip": str(out), "scenes": n, "MB": round(out.stat().st_size / 1e6, 1)}
+
+
+def make_calibration_zip(
+    root: Path, dlr_dir: Path, seed: int, guide_md: str | None = None
+) -> dict[str, Any]:
+    """calibration.zip (20 expert scenes for the labellers) + the private expert answers.
+
+    Scene ids are neutral (C001…C020, random order) so the dataset's scene numbers are not shown;
+    the mapping and the expert labels stay in labels/calibration/ (not shared with labellers)."""
+    import zipfile
+
+    from stratum.labelling import dlr
+
+    picks = dlr.calibration_scenes(seed)
+    rng = np.random.default_rng(seed + 1)
+    ids = [f"C{i:03d}" for i in rng.permutation(len(picks)) + 1]
+    cal = root / "labels" / "calibration"
+    (cal / "expert_labels").mkdir(parents=True, exist_ok=True)
+    out = scenes_dir(root) / "calibration.zip"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    mapping: dict[str, Any] = {}
+    n_lines = 0
+    with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_STORED) as z:
+        for sid, num in sorted(zip(ids, picks, strict=True)):
+            arrs = dlr.scene_arrays(dlr_dir / "data" / f"scene_{num:03d}.nc")
+            files, o = dlr.calibration_package(sid, arrs)
+            for k, v in files.items():
+                z.writestr(f"{sid}/{k}", v)
+            lines = dlr.expert_polylines(dlr_dir / "geojson" / f"scene_{num:03d}.geojson", o)
+            n_lines += len(lines)
+            (cal / "expert_labels" / f"{sid}.json").write_text(
+                json.dumps(dlr.expert_label_json(sid, lines), indent=1)
+            )
+            mapping[sid] = {
+                "dlr_scene": num,
+                "flip_rows": o.flip_rows,
+                "flip_cols": o.flip_cols,
+                "expert_lines": len(lines),
+            }
+        if guide_md is not None:
+            z.writestr("labelling_guide.md", guide_md)
+    (cal / "calibration_map.json").write_text(json.dumps(mapping, indent=1))
+    return {
+        "calibration_zip": str(out),
+        "scenes": len(picks),
+        "expert_lines": n_lines,
+        "MB": round(out.stat().st_size / 1e6, 1),
+    }
 
 
 def _np_default(o: Any) -> Any:
@@ -187,7 +284,9 @@ def _np_default(o: Any) -> Any:
     raise TypeError(type(o))
 
 
-def gallery_job(root: Path, labeller_a: str, labeller_b: str, set_name: str) -> dict[str, Any]:
+def gallery_job(
+    root: Path, labeller_a: str, labeller_b: str, set_name: str, zip_name: str | None = None
+) -> dict[str, Any]:
     """Side-by-side figures of every scene where the two labellers disagree (build prompt §5.3).
 
     Each figure shows the BTD image three times: labeller A's lines, labeller B's lines, and
@@ -203,11 +302,17 @@ def gallery_job(root: Path, labeller_a: str, labeller_b: str, set_name: str) -> 
 
     from stratum.labelling import agreement as ag
 
-    zpath = scenes_dir(root) / f"{set_name}.zip"
+    zpath = scenes_dir(root) / f"{zip_name or set_name}.zip"
     z = zipfile.ZipFile(zpath)
-    la = ag.read_dir(root / "labels" / "raw" / labeller_a)
-    lb = ag.read_dir(root / "labels" / "raw" / labeller_b)
-    out = root / "reports" / "labelling" / f"gallery_{set_name}"
+    keep = set_scene_ids(root, set_name)
+
+    def labels_of(who: str) -> dict[str, ag.SceneLabel]:
+        d = root / "labels" / ("calibration/expert_labels" if who == "experts" else f"raw/{who}")
+        return {k: v for k, v in ag.read_dir(d).items() if k in keep}
+
+    la = labels_of(labeller_a)
+    lb = labels_of(labeller_b)
+    out = root / "reports" / "labelling" / f"gallery_{set_name}" / f"{labeller_a}-{labeller_b}"
     out.mkdir(parents=True, exist_ok=True)
     made = []
     for sid in sorted(set(la) & set(lb)):

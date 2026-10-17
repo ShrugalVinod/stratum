@@ -21,6 +21,7 @@ import {
   seededOrder,
   type Status,
 } from "./labels";
+import { isLabeller, LABELLERS, scenesFor } from "./assignment";
 import { mdToHtml } from "./md";
 import { decodeGrey, type Frame, FRAME_FILE, type PackageSet, readLabelExport, readPackageZip } from "./packages";
 import { makeLut, Viewer } from "./viewer";
@@ -32,6 +33,7 @@ type Session = {
   labeller: string; // "adjudicated" in adjudication mode
   pkg: PackageSet;
   order: string[];
+  total: number; // scenes in the package (order holds only this labeller's share)
   others?: { a: { labeller: string; labels: Map<string, SceneLabel> }; b: { labeller: string; labels: Map<string, SceneLabel> } };
 };
 
@@ -58,6 +60,10 @@ function download(data: Uint8Array, name: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+const hemi = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(1)}°${v >= 0 ? pos : neg}`;
+/** "8.2°S – 15.4°S" style ranges (south/north, west/east), whatever the hemisphere. */
+const latRange = (a: number, b: number) => `${hemi(Math.min(a, b), "N", "S")} – ${hemi(Math.max(a, b), "N", "S")}`;
+const lonRange = (a: number, b: number) => `${hemi(Math.min(a, b), "E", "W")} – ${hemi(Math.max(a, b), "E", "W")}`;
 const ist = (iso: string) => {
   const d = new Date(new Date(iso).getTime() + 330 * 60000);
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")} IST`;
@@ -66,7 +72,8 @@ const ist = (iso: string) => {
 export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [help, setHelp] = useState(false);
-  const guide = session?.pkg.guide ?? guideFallback;
+  // the guide bundled with the app is always the current version (zips may carry an older copy)
+  const guide = guideFallback || session?.pkg.guide || "";
   return (
     <>
       {session ? <Workspace s={session} onHelp={() => setHelp(true)} onQuit={() => setSession(null)} /> : <Start onStart={setSession} onHelp={() => setHelp(true)} />}
@@ -105,22 +112,24 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
     setErr(null);
     setBusy(true);
     try {
-      if (!pkgFile) throw new Error("Choose the scene package zip (pilot.zip or main.zip).");
+      if (!pkgFile) throw new Error("Choose the scene package zip (pilot.zip, calibration.zip or test.zip).");
       const pkg = readPackageZip(await readFile(pkgFile), pkgFile.name);
       const ids = [...pkg.scenes.keys()];
       if (mode === "label") {
-        if (!clean) throw new Error("Type your labeller ID (aditya or ishaan).");
+        if (!clean) throw new Error(`Type your labeller ID (${LABELLERS.join(", ")}).`);
+        if (!isLabeller(clean)) throw new Error(`“${clean}” is not on the labeller list. Use ${LABELLERS.join(", ")}.`);
         try {
           localStorage.setItem("stratum-labeller:last-id", clean);
         } catch {
           /* not remembered */
         }
-        onStart({ mode, labeller: clean, pkg, order: seededOrder(ids, `${clean}|${pkg.name}`) });
+        const mine = scenesFor(ids, clean);
+        onStart({ mode, labeller: clean, pkg, order: seededOrder(mine, `${clean}|${ids.length}`), total: ids.length });
       } else {
         if (!aFile || !bFile) throw new Error("Choose both labellers' export zips.");
         const a = readLabelExport(await readFile(aFile), aFile.name);
         const b = readLabelExport(await readFile(bFile), bFile.name);
-        onStart({ mode, labeller: "adjudicated", pkg, order: [...ids].sort(), others: { a, b } });
+        onStart({ mode, labeller: "adjudicated", pkg, order: [...ids].sort(), total: ids.length, others: { a, b } });
       }
     } catch (e) {
       setErr(String((e as Error).message ?? e));
@@ -157,14 +166,17 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
         {mode === "label" && (
           <label class="field">
             <span>Your labeller ID</span>
-            <input value={id} onInput={(e) => setId((e.target as HTMLInputElement).value)} placeholder="aditya or ishaan" autocomplete="off" />
-            <small>Always use the same ID. It decides your scene order and where your work is saved.</small>
+            <input value={id} onInput={(e) => setId((e.target as HTMLInputElement).value)} placeholder="aditya, ishaan or abeer" autocomplete="off" />
+            <small>
+              Always use the same ID. It decides which scenes are yours (pilot and calibration: all 20; test: about 67 of 100, each scene shared
+              with one other labeller), your scene order, and where your work is saved.
+            </small>
           </label>
         )}
         <label class="field">
           <span>Scene package</span>
           <input type="file" accept=".zip" data-testid="pkg" onChange={(e) => setPkgFile((e.target as HTMLInputElement).files?.[0] ?? null)} />
-          <small>pilot.zip first, main.zip after the pilot is discussed.</small>
+          <small>All three of you label in this order: 1. pilot.zip, 2. calibration.zip, 3. test.zip. Open calibration.zip and test.zip only after the team has discussed the pilot.</small>
         </label>
         {mode === "adjudicate" && (
           <>
@@ -350,9 +362,10 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
         return setMsg(null);
       }
       if (k === "Delete" || k === "Backspace") return del(keyState.current.selected);
-      if (k === "1") return setFrame("m15");
+      const has = (f: Frame) => !!pkg.files[`btd${FRAME_FILE[f]}.png`];
+      if (k === "1" && has("m15")) return setFrame("m15");
       if (k === "2") return setFrame("t");
-      if (k === "3") return setFrame("p15");
+      if (k === "3" && has("p15")) return setFrame("p15");
       if (k.toLowerCase() === "t") return setLayer((l) => (l === "btd" ? "t108" : "btd"));
       if (k.toLowerCase() === "u") return toggleConf(keyState.current.selected);
       if (k.toLowerCase() === "n" || k === "ArrowRight") return go(1);
@@ -385,7 +398,10 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
       <header class="bar">
         <b>STRATUM Labeller</b>
         <span class="pill">{s.mode === "label" ? `Labeller: ${s.labeller}` : "Adjudication"}</span>
-        <span class="muted">{s.pkg.name}</span>
+        <span class="muted">
+          {s.pkg.name}
+          {s.mode === "label" && s.order.length < s.total ? ` · your ${s.order.length} of ${s.total} scenes` : ""}
+        </span>
         <span class="progress" aria-label={`${done} of ${s.order.length} scenes complete`}>
           <i style={{ width: `${(done / s.order.length) * 100}%` }} />
         </span>
@@ -418,7 +434,12 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
             </div>
             <div class="seg" role="group" aria-label="Time">
               {(["m15", "t", "p15"] as Frame[]).map((f, i) => (
-                <button class={frame === f ? "on" : ""} onClick={() => setFrame(f)} title={`key ${i + 1}`}>
+                <button
+                  class={frame === f ? "on" : ""}
+                  onClick={() => setFrame(f)}
+                  disabled={!pkg.files[`btd${FRAME_FILE[f]}.png`]}
+                  title={pkg.files[`btd${FRAME_FILE[f]}.png`] ? `key ${i + 1}` : "Expert scenes have one time only"}
+                >
                   {f === "m15" ? "−15 min" : f === "t" ? "t" : "+15 min"}
                 </button>
               ))}
@@ -493,10 +514,10 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
             </span>
           </div>
           <p class="mono small muted">
-            {pkg.meta.time_utc.replace("T", " ").replace(":00Z", " UTC")} · {ist(pkg.meta.time_utc)}
+            {pkg.meta.time_utc ? `${pkg.meta.time_utc.replace("T", " ").replace(":00Z", " UTC")} · ${ist(pkg.meta.time_utc)}` : "time not shown"}
             <br />
-            N {pkg.meta.corners_latlon.top_left[0].toFixed(1)}° · S {pkg.meta.corners_latlon.bottom_left[0].toFixed(1)}° · W{" "}
-            {pkg.meta.corners_latlon.top_left[1].toFixed(1)}°E · E {pkg.meta.corners_latlon.top_right[1].toFixed(1)}°E
+            {latRange(pkg.meta.corners_latlon.bottom_left[0], pkg.meta.corners_latlon.top_left[0])} ·{" "}
+            {lonRange(pkg.meta.corners_latlon.top_left[1], pkg.meta.corners_latlon.top_right[1])}
           </p>
 
           {others && (

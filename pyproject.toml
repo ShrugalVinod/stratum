@@ -105,7 +105,7 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = [
     "pycontrails.*", "openap.*", "satpy.*", "pyresample.*", "eumdac.*", "cdsapi.*",
-    "shapely.*", "skimage.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*", "scipy.*",
+    "shapely.*", "skimage.*", "sklearn.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*", "scipy.*",
     "pandas.*", "pandera.*", "requests.*", "urllib3.*", "orjson.*",
 ]
 ignore_missing_imports = true

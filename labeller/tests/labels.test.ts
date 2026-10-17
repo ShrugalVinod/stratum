@@ -72,3 +72,25 @@ describe("guide markdown", () => {
     expect(h).not.toContain("<script>");
   });
 });
+
+import { readFileSync } from "node:fs";
+import { labellersFor, scenesFor } from "../src/assignment";
+
+describe("assignment (three labellers)", () => {
+  const main = Array.from({ length: 200 }, (_, i) => `S${String(i + 1).padStart(3, "0")}`);
+  it("main: every scene has exactly two labellers, loads are balanced", () => {
+    const m = labellersFor(main);
+    expect([...m.values()].every((v) => v.length === 2)).toBe(true);
+    const n = (who: "aditya" | "ishaan" | "abeer") => scenesFor(main, who).length;
+    expect([n("aditya"), n("ishaan"), n("abeer")]).toEqual([134, 133, 133]);
+  });
+  it("pilot: everyone labels every scene", () => {
+    const pilot = main.slice(200 - 20);
+    expect(scenesFor(pilot, "abeer")).toHaveLength(20);
+  });
+  it("matches the shared fixture (same rule in Python)", () => {
+    const fx = JSON.parse(readFileSync(new URL("./fixtures/assignment_example.json", import.meta.url), "utf8"));
+    const m = labellersFor(fx.scene_ids);
+    expect(Object.fromEntries(m)).toEqual(fx.expected);
+  });
+});

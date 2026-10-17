@@ -85,7 +85,7 @@ met_interpolation:
 # §4.4 Contrail detection and the hand-labelled validation set.
 detection:
   btd: "T108 - T120"           # §4.4 BTD = T10.8 − T12.0
-  labelled_scenes: 200         # §4.4
+  labelled_scenes: 100         # §4.4 said 200; deviation D-002: India held-out half only (tuning moves to expert data)
   scene_size_px: 256           # §4.4 "256 × 256 pixels"
   pilot_scenes: 20             # §4.4 pilot round of 20 scenes
   labellers_per_scene: 2       # §4.4 two team members, independently
@@ -100,7 +100,29 @@ detection:
     object_f1: {max_mean_distance_px: 2, min_overlap_of_shorter: 0.5, max_angle_deg: 20, assignment: hungarian}
     ci: {method: scene_bootstrap, level: 0.95, resamples: 2000}
   # Detector threshold is tuned on half the labelled scenes and reported on the other half.
-  labelled_split: {tuning: 100, heldout: 100, stratified_by: scene_strata, seed: 20261017}   # Q16 settled 2026-10-17 (S. Vinod)
+  # Deviation D-002 (2026-10-17, before any label existed): the tuning half is replaced by the
+  # expert-labelled MSG/SEVIRI dataset below; the team labels only the 100 held-out India scenes
+  # (the split drawn with seed 20261017 is kept, so which scenes are "held-out" is unchanged).
+  labelled_split: {tuning: 0, heldout: 100, stratified_by: scene_strata, seed: 20261017}
+  # D-002: detector confidence weights + operating threshold are fitted on the DLR expert labels
+  # (Santos Gabriel et al. 2026, ESSD 18, 2397–2412; Zenodo 10.5281/zenodo.17669443, CC BY-NC 4.0):
+  # 140 scenes of 256 × 256 px, same SEVIRI instrument, 3 expert labellers, majority ground truth.
+  # Fit on the dataset's own training scenes (51), check on its evaluation scenes (89); final
+  # detector precision/recall is reported on the 100 India held-out scenes labelled by the team.
+  detector_tuning:
+    source: dlr_msg_seviri_contrail_dataset_v3
+    doi: 10.5281/zenodo.17669443
+    fit_scenes: dataset_training_split
+    check_scenes: dataset_evaluation_split
+    ground_truth: majority_of_3_experts
+  # D-002: every team labeller first labels 20 expert scenes (drawn with seed 20261017 from the
+  # dataset's evaluation split); their object F1 and cell-grid κ against the expert ground truth
+  # are reported, so the team's India labels come with a measured accuracy.
+  labeller_calibration:
+    source: dlr_msg_seviri_contrail_dataset_v3
+    scenes: 20
+    drawn_from: dataset_evaluation_split
+    seed: 20261017
 
 # Appendix B, labelling guide v0.1 (the parts that affect scoring). The guide text
 # itself may be revised after the pilot (§4.4); these scoring rules may not.
@@ -177,8 +199,17 @@ hypotheses:
     supported_if: "upper_ci < 1"
     primary_definition: raw_detectable          # open question 1 (settled)
     secondary_definition: detection_efficiency_adjusted
-    # Open question 4: Driver et al. (2025) thresholds, from the paper itself, not guessed.
-    detection_efficiency_thresholds: null       # ⚑ fill from Driver et al. 2025 before Phase 6
+    # Open question 4, settled 2026-10-17 (Team OK: S. Vinod), option A, before any matching.
+    # Driver, Stettler & Gryspeerdt (2025), AMT 18, 1115–1134. A predicted contrail counts as
+    # detectable if its CoCiP optical depth ≥ 0.05 (p. 1123: thinner is undetectable at any width)
+    # AND its CoCiP width ≥ 1 local Meteosat pixel (√ pixel area; p. 1120: detection starts near
+    # the imager resolution). Cross-check only: the paper's observable share of segments is
+    # 0.46 at 2 km (p. 1124) and 0.38 at 7 km ≈ SEVIRI (p. 1131). Never folded into the labels.
+    detection_efficiency_thresholds:
+      min_optical_depth: 0.05
+      min_width_pixels: 1.0
+      crosscheck_observable_fraction_2km: 0.46
+      crosscheck_observable_fraction_7km: 0.38
   H2:
     test: mean_bss_vs_B3
     supported_if: "mean >= 0.10 and lower_ci > 0"
