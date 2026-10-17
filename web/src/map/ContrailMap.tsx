@@ -57,6 +57,10 @@ type Anim = {
   fade: { start: number; from: "A" | "B" } | null;
   raf: number;
   lastPulse: number;
+  /** aircraft clock (minutes after 00 UTC) shown on the map; glides towards planeTarget */
+  planeT: number | null;
+  planeTarget: number;
+  lastPlanes: number;
 };
 const ANIM = new WeakMap<MLMap, Anim>();
 const INTRO_MS = 7000; // a full day (1,440 min) replays in 7 s
@@ -201,8 +205,21 @@ export function ContrailMap(p: Props) {
       m.addLayer({ id: "flagged", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 3, 7, 4.5] } });
       m.addLayer({ id: "selected-glow", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": col.sel, "line-width": 14, "line-blur": 8, "line-opacity": 0.35 } });
       m.addLayer({ id: "selected", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": col.sel, "line-width": 3 } });
-      m.addLayer({ id: "planes-halo", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3.2, 7, 5.5], "circle-color": col.ocean, "circle-opacity": 0.55 } });
-      m.addLayer({ id: "planes", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 7, 3], "circle-color": ["case", ["get", "flagged"], col.pred, col.plane] } });
+      m.addImage("plane", planeIcon(), { sdf: true, pixelRatio: 2 });
+      m.addLayer({
+        id: "planes",
+        type: "symbol",
+        source: "planes",
+        layout: {
+          "icon-image": "plane",
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.5, 5, 0.75, 8, 1.1],
+          "icon-rotate": ["get", "brg"],
+          "icon-rotation-alignment": "map",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        },
+        paint: { "icon-color": ["case", ["get", "flagged"], col.pred, col.plane], "icon-halo-color": col.land, "icon-halo-width": 1.2, "icon-halo-blur": 0.4 },
+      });
       m.addLayer({ id: "pick", type: "circle", source: "pick", paint: { "circle-radius": 7, "circle-color": "transparent", "circle-stroke-color": col.corr, "circle-stroke-width": 2 } });
 
       // city labels as HTML markers (crisp, no glyph server needed)
@@ -262,10 +279,12 @@ export function ContrailMap(p: Props) {
 
       ready.current = true;
       el.current?.classList.add("ready");
-      ANIM.set(m, { intro: null, front: "A", riskUrl: null, fade: null, raf: 0, lastPulse: 0 });
+      ANIM.set(m, { intro: null, front: "A", riskUrl: null, fade: null, raf: 0, lastPulse: 0, planeT: null, planeTarget: 0, lastPlanes: 0 });
       sync(m, props.current);
       m.fitBounds([[66, 5], [99, 37.5]], { padding: 24, duration: reducedMotion() ? 0 : 2400, easing: (t) => 1 - Math.pow(1 - t, 3) });
       startLoop(m, props);
+      // the day's flights often arrive before the map has loaded: start the replay now
+      if (props.current.flights) startIntro(m, props.current);
     });
 
     // re-colour when the theme changes (synchronously, so the theme transition captures the new map)
@@ -312,7 +331,7 @@ function sync(m: MLMap, p: Props) {
   vis("riskA", p.layers.risk);
   vis("riskB", p.layers.risk);
   vis("legs-head", p.layers.flights);
-  ["legs", "planes", "planes-halo", "flagged", "flagged-glow"].forEach((id) => vis(id, p.layers.flights));
+  ["legs", "planes", "flagged", "flagged-glow"].forEach((id) => vis(id, p.layers.flights));
   ["corridor-fill", "corridor-line"].forEach((id) => vis(id, p.layers.corridor));
   document.querySelectorAll<HTMLElement>(".city").forEach((d) => (d.style.display = p.layers.cities ? "" : "none"));
 
@@ -339,8 +358,16 @@ function sync(m: MLMap, p: Props) {
   if (key.t !== t || key.planesFor !== p.flights || key.afterIntro) {
     key.afterIntro = false;
     key.t = t;
+    const sameDay = key.planesFor === p.flights;
     key.planesFor = p.flights;
-    setData("planes", p.flights ? planesAt(p.flights, t) : EMPTY);
+    if (a) {
+      // aircraft fly to the new hour instead of jumping (snap on a new day or a jump of > 3 h)
+      a.planeTarget = t;
+      if (!sameDay || a.planeT === null || Math.abs(t - a.planeT) > 180 || reducedMotion()) {
+        a.planeT = t;
+        setData("planes", p.flights ? planesAt(p.flights, t) : EMPTY);
+      }
+    } else setData("planes", p.flights ? planesAt(p.flights, t) : EMPTY);
     const near: ExpressionSpecification = ["abs", ["-", ["get", "m"], t]];
     m.setPaintProperty("legs", "line-opacity", ["case", ["<=", near, 30], 0.55, ["<=", near, 90], 0.2, 0.06] as ExpressionSpecification);
     m.setPaintProperty("flagged", "line-opacity", ["case", ["<=", near, 60], 1, 0.45] as ExpressionSpecification);
@@ -381,20 +408,23 @@ function startIntro(m: MLMap, p: Props, force = false) {
   const a = ANIM.get(m);
   if (!a || !p.flights) return;
   if (reducedMotion() && !force) return;
-  // start once the map has drawn its first frame, so loading and the intro don't compete
+  // start once the opening zoom has finished, so loading and the intro don't compete
   const go = () => {
     a.intro = { t: 0, last: performance.now(), planes: 0 };
     p.onIntro({ active: true, t: 0 });
   };
-  if (force || m.loaded()) setTimeout(go, force ? 0 : 350);
-  else m.once("idle", () => setTimeout(go, 350));
+  // ("idle" never fires here: the contrail glow pulses continuously; wait for the opening zoom instead)
+  if (force) go();
+  else if (m.isMoving()) m.once("moveend", () => setTimeout(go, 350));
+  else setTimeout(go, 400);
 }
 
 function endIntro(m: MLMap, p: Props) {
   const a = ANIM.get(m);
   if (!a || !a.intro) return;
   a.intro = null;
-  if (p.flights) (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, p.hour * 60 + 30));
+  a.planeT = a.planeTarget = p.hour * 60 + 30;
+  if (p.flights) (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, a.planeT));
   m.setPaintProperty("legs-head", "line-opacity", 0);
   m.setPaintProperty("flagged-glow", "line-width", ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22] as ExpressionSpecification);
   const key = (m as unknown as { __keys: Record<string, unknown> }).__keys;
@@ -415,8 +445,8 @@ function introFrame(m: MLMap, p: Props, a: Anim, now: number) {
   // zoom interpolation must be the outermost expression; the flash is a case inside each stop
   const flash = (big: number, normal: number): ExpressionSpecification => ["case", [">", m_, T], 0, [">=", m_, T - 45], big, normal];
   m.setPaintProperty("flagged-glow", "line-width", ["interpolate", ["linear"], ["zoom"], 4, flash(34, 12), 7, flash(60, 22)]);
-  if (p.flights && now - it.planes > 90) {
-    it.planes = now; // aircraft positions ~11×/s is smooth enough and keeps the main thread free
+  if (p.flights && now - it.planes > 33) {
+    it.planes = now; // aircraft positions ~30×/s: smooth, and the worker keeps up
     (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(p.flights, T));
   }
   p.onIntro({ active: true, t: T });
@@ -435,6 +465,15 @@ function startLoop(m: MLMap, props: { current: Props }) {
       m.setPaintProperty(`risk${a.front}`, "raster-opacity", e);
       if (k >= 1) a.fade = null;
     }
+    // glide the aircraft to the chosen hour (~0.9 s, ease-out), 30 updates per second
+    const fl = props.current.flights;
+    if (!a.intro && fl && a.planeT !== null && a.planeT !== a.planeTarget && now - a.lastPlanes > 33) {
+      const dt = a.lastPlanes ? Math.min(100, now - a.lastPlanes) : 33;
+      a.lastPlanes = now;
+      const d = a.planeTarget - a.planeT;
+      a.planeT = Math.abs(d) < 0.5 ? a.planeTarget : a.planeT + d * Math.min(1, dt / 260);
+      (m.getSource("planes") as GeoJSONSource | undefined)?.setData(planesAt(fl, a.planeT));
+    } else if (a.planeT === a.planeTarget) a.lastPlanes = 0;
     if (!reduce && !a.intro && now - a.lastPulse > 50) {
       a.lastPulse = now;
       const s = 0.5 + 0.5 * Math.sin((now / 1700) * Math.PI * 2);
@@ -455,8 +494,8 @@ function recolour(m: MLMap) {
   m.setPaintProperty("corridor-line", "line-color", c.corr);
   m.setPaintProperty("corridor-fill", "fill-color", c.corr);
   m.setPaintProperty("legs", "line-color", c.track);
-  m.setPaintProperty("planes", "circle-color", ["case", ["get", "flagged"], c.pred, c.plane]);
-  m.setPaintProperty("planes-halo", "circle-color", c.ocean);
+  m.setPaintProperty("planes", "icon-color", ["case", ["get", "flagged"], c.pred, c.plane]);
+  m.setPaintProperty("planes", "icon-halo-color", c.land);
   m.setPaintProperty("legs-head", "line-color", c.head);
   m.setPaintProperty("flagged", "line-color", c.pred);
   m.setPaintProperty("flagged-glow", "line-color", c.pred);
@@ -464,6 +503,43 @@ function recolour(m: MLMap) {
   m.setPaintProperty("selected-glow", "line-color", c.sel);
   m.setPaintProperty("pick", "circle-stroke-color", c.corr);
   m.redraw();
+}
+
+/** Top-down airliner, nose up (north), white on transparent; used as an SDF so it can be tinted. */
+function planeIcon(): ImageData {
+  const S = 48;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#fff";
+  g.beginPath();
+  // fuselage
+  g.moveTo(24, 3);
+  g.bezierCurveTo(26.6, 3, 27.2, 7, 27.2, 11);
+  g.lineTo(27.2, 18);
+  // right wing
+  g.lineTo(44, 27);
+  g.lineTo(44, 31);
+  g.lineTo(27.2, 26);
+  g.lineTo(27, 36);
+  // right tail
+  g.lineTo(33, 41);
+  g.lineTo(33, 44);
+  g.lineTo(24, 41.5);
+  // left tail
+  g.lineTo(15, 44);
+  g.lineTo(15, 41);
+  g.lineTo(21, 36);
+  g.lineTo(20.8, 26);
+  // left wing
+  g.lineTo(4, 31);
+  g.lineTo(4, 27);
+  g.lineTo(20.8, 18);
+  g.lineTo(20.8, 11);
+  g.bezierCurveTo(20.8, 7, 21.4, 3, 24, 3);
+  g.closePath();
+  g.fill();
+  return g.getImageData(0, 0, S, S);
 }
 
 let blank: string | null = null;

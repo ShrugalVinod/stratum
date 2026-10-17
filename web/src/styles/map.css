@@ -358,6 +358,13 @@
   height: 0;
   border-top: 2px dashed var(--map-corr);
 }
+.sw.plane {
+  height: auto;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--map-plane);
+}
 .sw.track {
   height: 1.5px;
   background: var(--map-track);

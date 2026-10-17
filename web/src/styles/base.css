@@ -667,16 +667,6 @@ main {
 .js .rv-scale {
   transform: scale(0.96);
 }
-.js .rv-clip {
-  opacity: 1;
-  transform: none;
-  clip-path: inset(0 0 100% 0);
-  transition: clip-path 1.3s var(--ease);
-  transition-delay: calc(var(--d, 0) * 1ms);
-}
-.js .rv-clip.in {
-  clip-path: inset(0 0 0 0);
-}
 .js .sec-head.rv {
   opacity: 1;
   transform: none;

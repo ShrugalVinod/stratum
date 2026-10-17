@@ -1,5 +1,5 @@
 // Motion engine. Everything is opt-in by class:
-//   .rv (+ .rv-fade/.rv-left/.rv-scale/.rv-clip/.stagger/.sec-head/.split) → gets .in when it enters the view
+//   .rv (+ .rv-fade/.rv-left/.rv-scale/.stagger/.sec-head/.split) → gets .in when it enters the view
 //   [data-flap]  → split-flap: letters spin through the alphabet, then land (departures board)
 //   [data-count] → number counts up from 0 (keeps the element's own formatting)
 // Respects prefers-reduced-motion: everything is shown at once, nothing spins.

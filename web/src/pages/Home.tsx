@@ -149,7 +149,7 @@ export function Home() {
             <span class="mono-s">Real satellite image · not a result</span>
           </div>
           <div class="openly">
-            <figure class="sat rv rv-clip">
+            <figure class="sat rv rv-fade">
               <div class="sat-frame">
                 <img
                   src="/img/meteosat_arabian_sea_2026-01-15_0000.webp"

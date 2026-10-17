@@ -571,9 +571,27 @@
 .sat:hover .sat-frame img {
   transform: scale(1.04);
 }
+/* reveal: a paper-coloured shutter lifts off the image (the image itself is never clipped,
+   so lazy loading and the scroll observer always see it) */
+.sat-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  transform-origin: top;
+  transform: scaleY(0);
+  pointer-events: none;
+}
+.js .sat:not(.in) .sat-frame::after {
+  transform: scaleY(1);
+}
+.js .sat .sat-frame::after {
+  transition: transform 1.4s var(--ease-io) 0.15s;
+}
 .sat-tl,
 .sat-br {
   position: absolute;
+  z-index: 1;
   color: #f1ece1;
   background: rgb(13 22 35 / 0.72);
   padding: 4px 8px;

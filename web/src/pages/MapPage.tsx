@@ -403,6 +403,12 @@ export function MapPage() {
                 <i class="sw pred" /> Segment making a persistent contrail (CoCiP)
               </div>
               <div class="legend-row">
+                <i class="sw plane" aria-hidden="true">
+                  ✈
+                </i>{" "}
+                Aircraft (orange: makes a persistent contrail)
+              </div>
+              <div class="legend-row">
                 <i class="sw corr" /> Delhi–Mumbai corridor ±75 km
               </div>
               {hourly && (
