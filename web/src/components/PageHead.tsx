@@ -1,15 +1,32 @@
 import type { ComponentChildren } from "preact";
+import { Split } from "./Split";
 
-export function PageHead(props: { eyebrow: string; title: string; side?: ComponentChildren; id?: string }) {
+/** Inner-page title block: red label, mono note on the right, huge split title, lede. */
+export function PageHead(p: { label: string; note?: ComponentChildren; lines: string[]; lede?: ComponentChildren; id?: string }) {
+  let k = 0;
   return (
-    <div class="wrap page-head enter">
-      <div>
-        <p class="eyebrow">{props.eyebrow}</p>
-        <h1 class="display l" id={props.id}>
-          {props.title}
-        </h1>
+    <header class="wrap page-head">
+      <div class="page-head-top rv rv-fade">
+        <p class="label red">{p.label}</p>
+        {p.note && <div class="mono-s muted page-note">{p.note}</div>}
       </div>
-      {props.side && <div class="side">{props.side}</div>}
-    </div>
+      <h1 class="display d-xl" id={p.id}>
+        {p.lines.map((l, i) => {
+          const start = k;
+          k += l.split(" ").length;
+          return (
+            <>
+              <Split text={l} start={start} base={60} />
+              {i < p.lines.length - 1 && <br />}
+            </>
+          );
+        })}
+      </h1>
+      {p.lede && (
+        <p class="lede rv" style={{ "--d": 380 }}>
+          {p.lede}
+        </p>
+      )}
+    </header>
   );
 }

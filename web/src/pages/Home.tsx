@@ -1,182 +1,205 @@
 import { Arrow } from "../components/Footer";
-import { loop, phases, site, whyCards } from "../content/site";
+import { SpreadFigure } from "../components/Figures";
+import { Hero } from "../components/Hero";
+import { Plane } from "../components/Plane";
+import { Split } from "../components/Split";
+import { facts, loop, phases, refs, site, statusUpdated, whyCards } from "../content/site";
+
+const STATUS = { done: "Done", current: "Active", upcoming: "Scheduled" } as const;
 
 export function Home() {
   return (
-    <>
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-sky" aria-hidden="true">
-          <HeroSky />
-        </div>
-        <div class="wrap">
-          <div class="hero-content">
-            <div class="hero-meta">
-              <span class="school">{site.school}</span>
-              <span class="badge">{site.competition}</span>
-            </div>
-            <h1 id="hero-title" class="display xl">
-              {site.heroTitle[0]}
-              <br />
-              <span class="accent">{site.heroTitle[1]}</span>
-            </h1>
-            <p class="lede">{site.heroLede}</p>
-            <div class="hero-actions">
-              <a class="btn primary" href="/map">
-                Explore the contrail map <Arrow />
-              </a>
-              <a class="btn" href="/how-it-works">
-                How it works <Arrow />
-              </a>
-            </div>
-          </div>
-        </div>
-        <div class="hero-coords" aria-hidden="true">
-          12.97° N &nbsp; 77.59° E
-          <br />
-          <span class="tag">ILLUSTRATION · TEAM PHOTO COMING</span>
-        </div>
-      </section>
+    <div class="page home">
+      <Hero />
 
+      <div class="ticker" aria-label="Project facts">
+        <div class="ticker-track">
+          {[0, 1].map((copy) => (
+            <ul aria-hidden={copy === 1 ? "true" : undefined}>
+              {facts.map((f) => (
+                <li class="mono-s">
+                  <i aria-hidden="true">◆</i> {f}
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+
+      {/* §1 */}
       <section class="section" aria-labelledby="why-title">
-        <div class="wrap why reveal">
-          <div>
-            <p class="eyebrow">01 / Why this matters</p>
-            <h2 id="why-title" class="display l">
-              Read the sky before you redraw the route.
-            </h2>
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red">§1 · The problem · The India gap · Our approach</p>
+            <span class="mono-s">Ref. Lee et al. 2021¹</span>
           </div>
-          <div class="cards3 stagger">
-            {whyCards.map((c, i) => (
-              <article class="card" style={{ "--i": i }}>
-                <span class="num">0{i + 1}</span>
-                <h3>{c.title}</h3>
-                <p>{c.body}</p>
-              </article>
+          <div class="why">
+            <div>
+              <h2 id="why-title" class="display d-l">
+                <Split text="A few flights make most of the warming." />
+              </h2>
+              <hr class="rule rule-draw" style={{ "--d": 300 }} />
+              <SpreadFigure />
+            </div>
+            <ol class="why-list rv stagger">
+              {whyCards.map((c, i) => (
+                <li style={{ "--i": i }}>
+                  <span class="n mono">0{i + 1}</span>
+                  <div>
+                    <h3 class="label ink">{c.title}</h3>
+                    <p>{c.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <ol class="refs rv rv-fade">
+            {refs.map((r, i) => (
+              <li>
+                <sup>{i + 1}</sup> {r}
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
-      <section class="section" aria-labelledby="loop-title" style="padding-top:0">
+      {/* §2 */}
+      <section class="section pt0" aria-labelledby="loop-title">
         <div class="wrap">
-          <div class="loop-head reveal">
-            <div>
-              <p class="eyebrow">02 / The study loop</p>
-              <h2 id="loop-title" class="display l">
-                From flight tracks to better questions.
-              </h2>
-            </div>
-            <p>Every step is inspectable. Every claim waits for its evidence.</p>
+          <div class="sec-head rv">
+            <p class="label red" id="loop-title">
+              §2 · The study loop
+            </p>
+            <span class="mono-s">Flight plan · {loop.length} WPT</span>
           </div>
-          <ol class="loop reveal stagger">
+          <ol class="route rv">
+            <span class="route-line" aria-hidden="true" />
+            <span class="route-plane" aria-hidden="true">
+              <Plane width={34} />
+            </span>
             {loop.map((s, i) => (
               <li style={{ "--i": i }}>
-                <span class="num">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
+                <span class="wpt" aria-hidden="true" />
+                <p class="mono-s red">
+                  WPT {i + 1} · {s.code}
+                </p>
+                <h3 class="display d-s">{s.title}</h3>
+                <p class="muted">{s.body}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section class="section" aria-labelledby="status-title" style="padding-top:0">
+      {/* §3 */}
+      <section class="section pt0" aria-labelledby="status-title">
         <div class="wrap">
-          <div class="status-head reveal">
-            <div>
-              <p class="eyebrow">03 / Status</p>
-              <h2 id="status-title" class="display l">
-                A research trail, not a launch claim.
-              </h2>
-            </div>
-            <a class="badge" href="/progress">
-              Progress log →
-            </a>
+          <div class="sec-head rv">
+            <p class="label red">§3 · Status</p>
+            <span class="mono-s">Updated {statusUpdated}</span>
           </div>
-          <ol class="stepper reveal stagger" style={{ "--done": phases.filter((p) => p.state === "done").length / (phases.length - 1) }}>
-            {phases.map((p, i) => (
-              <li class={p.state} style={{ "--i": i }} aria-label={`Phase ${p.n}: ${p.name} — ${p.state}`}>
-                <span class="step-box">
-                  {p.state === "done" ? (
-                    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
-                      <path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                  ) : (
-                    p.n
-                  )}
-                </span>
-                <div class="ph">Phase {p.n}</div>
-                <div class="nm">{p.name}</div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section class="section open-sci" aria-labelledby="open-title">
-        <div class="wrap open-grid reveal">
-          <div>
-            <p class="eyebrow">04 / Built openly</p>
-            <h2 id="open-title" class="display m">
-              Good science leaves room for “not yet”.
-            </h2>
-            <p class="lede" style="margin-top:28px">
-              Our analysis plan was locked before any result existed. The limits are part of the interface. Results arrive only after the
-              correction model is finished.
-            </p>
-            <div class="hero-actions" style="margin-top:36px">
-              <a class="btn" href={site.paperPdf} target="_blank" rel="noopener">
-                Read the protocol <Arrow />
+          <div class="dep">
+            <div>
+              <h2 id="status-title" class="display d-l">
+                <Split text="Departures" />
+              </h2>
+              <p class="lede rv" style={{ "--d": 200 }}>
+                Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. Results arrive in Phase 7.
+              </p>
+              <a class="link rv" style={{ "--d": 320 }} href="/progress">
+                Full progress log →
               </a>
             </div>
-          </div>
-          <figure style="margin:0">
-            <div class="figure-frame">
-              <img
-                src="/img/meteosat_arabian_sea_2026-01-15_0000.webp"
-                alt="Meteosat-9 infrared image over the Arabian Sea at night: two long, thin, bright diagonal lines — contrails — on a smooth grey sea background."
-                loading="lazy"
-                width="1008"
-                height="1008"
-              />
-              <span class="cap">Real satellite image · not a result</span>
+            <div class="board rv rv-scale" role="table" aria-label="Project phases">
+              <div class="b-row b-head" role="row">
+                <span role="columnheader">Phase</span>
+                <span role="columnheader">Destination</span>
+                <span role="columnheader">Status</span>
+                <span role="columnheader">Logged</span>
+              </div>
+              {phases.map((p, i) => (
+                <div class={`b-row ${p.state}`} role="row">
+                  <span role="cell">
+                    <span class="tile">{p.n}</span>
+                  </span>
+                  <span role="cell" class="b-dest" data-flap={p.name.toUpperCase()} data-flap-delay={i * 90}>
+                    {p.name.toUpperCase()}
+                  </span>
+                  <span role="cell" class={`b-status ${p.state}`}>
+                    {p.state === "current" && <i class="dot" aria-hidden="true" />}
+                    <span data-flap={STATUS[p.state].toUpperCase()} data-flap-delay={300 + i * 90}>
+                      {STATUS[p.state].toUpperCase()}
+                    </span>
+                  </span>
+                  <span role="cell" class="b-log">
+                    {p.logged ?? (p.state === "current" ? "NOW" : "—")}
+                  </span>
+                </div>
+              ))}
             </div>
-            <figcaption class="fc">
-              Two contrails over the Arabian Sea, 15 Jan 2026, 00:00 UTC (05:30 IST), found by the STRATUM detector. Meteosat-9 BTD
-              10.8 − 12.0 µm © EUMETSAT 2026.
-            </figcaption>
-          </figure>
+          </div>
         </div>
       </section>
-    </>
-  );
-}
 
-function HeroSky() {
-  return (
-    <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <linearGradient id="trail" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0" stop-color="#e7eaf0" stop-opacity="0" />
-          <stop offset="0.35" stop-color="#e7eaf0" stop-opacity="0.35" />
-          <stop offset="1" stop-color="#ffffff" stop-opacity="0.85" />
-        </linearGradient>
-        <filter id="soft" x="-10%" y="-50%" width="120%" height="200%">
-          <feGaussianBlur stdDeviation="2.2" />
-        </filter>
-        <filter id="softer" x="-10%" y="-50%" width="120%" height="200%">
-          <feGaussianBlur stdDeviation="7" />
-        </filter>
-      </defs>
-      <g opacity="0.07" stroke="#8fa9e6">
-        {[200, 400, 600, 800, 1000, 1200, 1400].map((x) => (
-          <line x1={x} y1="0" x2={x} y2="900" />
-        ))}
-      </g>
-      <path class="contrail-path" d="M820 640 C 1050 520, 1300 380, 1620 210" stroke="url(#trail)" stroke-width="14" fill="none" filter="url(#softer)" opacity="0.45" />
-      <path class="contrail-path" d="M820 636 C 1050 516, 1300 376, 1620 206" stroke="url(#trail)" stroke-width="2.4" fill="none" filter="url(#soft)" />
-      <path class="contrail-path" d="M826 644 C 1056 524, 1306 384, 1620 214" stroke="url(#trail)" stroke-width="1.6" fill="none" filter="url(#soft)" opacity="0.8" />
-      <path d="M0 900 L0 862 L120 850 L210 866 L330 842 L460 858 L560 836 L700 852 L820 828 L950 846 L1080 822 L1210 840 L1330 818 L1460 836 L1600 820 L1600 900 Z" fill="#06080d" opacity="0.85" />
-    </svg>
+      {/* §4 */}
+      <section class="section pt0" aria-labelledby="open-title">
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red">§4 · Built openly</p>
+            <span class="mono-s">Real satellite image · not a result</span>
+          </div>
+          <div class="openly">
+            <figure class="sat rv rv-clip">
+              <div class="sat-frame">
+                <img
+                  src="/img/meteosat_arabian_sea_2026-01-15_0000.webp"
+                  alt="Meteosat-9 infrared image over the Arabian Sea at night: two long, thin, bright diagonal lines — contrails — on a smooth grey sea background."
+                  loading="lazy"
+                  width="1008"
+                  height="1008"
+                />
+                <span class="sat-tl mono-s">MSG-2 · 45.5°E · SEVIRI</span>
+                <span class="sat-br mono-s">15 Jan 2026 · 0000 UTC</span>
+                <span class="sat-scan" aria-hidden="true" />
+              </div>
+              <figcaption class="caption">
+                Fig. 3 — Two contrails over the Arabian Sea at night, found by the STRATUM detector. BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT
+                2026.
+              </figcaption>
+            </figure>
+            <div class="open-text">
+              <h2 id="open-title" class="display d-m">
+                <Split text="Good science leaves room for “not yet”." />
+              </h2>
+              <p class="rv" style={{ "--d": 200 }}>
+                Our plan, our code assumptions and our limits were written down before we saw any result. Anyone can check them.
+              </p>
+              <div class="open-links rv stagger" style={{ "--d": 300 }}>
+                <a class="row-link" href={site.paperPdf} target="_blank" rel="noopener">
+                  <span class="label red">Research protocol (PDF) ↓</span>
+                  <span class="mono-s muted">Pre-registered 13 Oct 2026 · 19 pp</span>
+                </a>
+                <a class="row-link" href="/methods">
+                  <span class="label red">Read the methods →</span>
+                  <span class="mono-s muted">Hypotheses H1–H4</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <a class="cta-band" href="/map">
+        <span class="wrap cta-inner">
+          <span class="mono-s">1 Jan 2026 · 1,458 flights · every hour · 8 flight levels</span>
+          <span class="display cta-big">
+            Open the contrail map <Arrow />
+          </span>
+          <span class="cta-plane" aria-hidden="true">
+            <Plane width={64} />
+          </span>
+        </span>
+      </a>
+    </div>
   );
 }

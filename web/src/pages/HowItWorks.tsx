@@ -1,73 +1,107 @@
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { SideView } from "../components/Figures";
 import { PageHead } from "../components/PageHead";
 import { pipeline } from "../content/site";
 
 export function HowItWorks() {
-  const [openIdx, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<Set<number>>(new Set());
+  const list = useRef<HTMLOListElement>(null);
+
+  // the route fills in red as you scroll; each waypoint lights up when the aircraft reaches it
+  useEffect(() => {
+    const el = list.current!;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect();
+      const mark = innerHeight * 0.62;
+      const p = Math.max(0, Math.min(1, (mark - r.top) / r.height));
+      el.style.setProperty("--p", p.toFixed(4));
+      el.querySelectorAll<HTMLElement>(":scope > li").forEach((li) => li.classList.toggle("reached", li.getBoundingClientRect().top + 40 < mark));
+    };
+    const on = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    addEventListener("scroll", on, { passive: true });
+    addEventListener("resize", on);
+    return () => {
+      removeEventListener("scroll", on);
+      removeEventListener("resize", on);
+    };
+  }, []);
+
+  const toggle = (i: number) => {
+    const n = new Set(open);
+    n.has(i) ? n.delete(i) : n.add(i);
+    setOpen(n);
+  };
+
   return (
-    <>
+    <div class="page">
       <PageHead
-        eyebrow="How it works / Pipeline"
-        title="A chain of evidence, not a black box."
-        side={<p>Seven stages connect a flight track to a question about warming. Each stage has a clear input and output.</p>}
+        label={`Flight plan · ${pipeline.length} waypoints`}
+        note={
+          <>
+            ROUTE: {pipeline.map((s) => s.code).join(" DCT ")}
+          </>
+        }
+        lines={["From a ping", "to a decision."]}
+        lede="Every prediction STRATUM makes follows the same route. Each waypoint takes something in and hands something on."
       />
       <div class="wrap">
-        <ol class="pipe">
+        <ol class="wpts" ref={list}>
+          <span class="wpts-fill" aria-hidden="true" />
           {pipeline.map((s, i) => (
-            <li class="reveal">
-              <span class="num">{String(i + 1).padStart(2, "0")}</span>
-              <div class="pipe-body">
-                <h2 class="h3">{s.title}</h2>
-                <p class="muted pipe-sub">{s.sub}</p>
-                <div class="chips">
-                  <span class="chip">IN · {s.input}</span>
-                  <span class="chip">OUT · {s.output}</span>
-                </div>
-                <button class="sci-toggle" aria-expanded={openIdx === i} onClick={() => setOpen(openIdx === i ? null : i)}>
-                  For scientists
-                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style={{ transform: openIdx === i ? "rotate(180deg)" : "none" }}>
-                    <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" />
-                  </svg>
+            <li class="wpt-row">
+              <div class="wpt-mark">
+                <span class="diamond" aria-hidden="true" />
+                <span class="mono">WPT {String(i + 1).padStart(2, "0")}</span>
+              </div>
+              <div class="wpt-title rv">
+                <p class="mono-s muted">{s.code}</p>
+                <h2 class="display d-m">{s.title}</h2>
+                <p class="muted">{s.sub}</p>
+              </div>
+              <div class="wpt-io rv" style={{ "--d": 120 }}>
+                <dl>
+                  <div>
+                    <dt class="label teal">In</dt>
+                    <dd>{s.input}</dd>
+                  </div>
+                  <div>
+                    <dt class="label red">Out</dt>
+                    <dd>{s.output}</dd>
+                  </div>
+                </dl>
+                <button class={`sci-btn ${open.has(i) ? "on" : ""}`} aria-expanded={open.has(i)} onClick={() => toggle(i)}>
+                  <i aria-hidden="true" /> For scientists
                 </button>
-                {openIdx === i && <p class="sci">{s.sci}</p>}
+                <div class={`sci-wrap ${open.has(i) ? "open" : ""}`}>
+                  <div>
+                    <p class="sci">{s.sci}</p>
+                  </div>
+                </div>
               </div>
             </li>
           ))}
         </ol>
 
-        <section class="field-note card reveal" aria-labelledby="fn-title">
-          <div>
-            <p class="eyebrow">Field note</p>
-            <h2 id="fn-title" class="h3" style="font-size:clamp(26px,3vw,40px)">
-              Cold, humid layers make the difference.
-            </h2>
-            <p class="muted" style="font-size:17px">
-              A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may
-              leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against
-              satellites.
+        <section class="section" aria-labelledby="layer-title">
+          <div class="sec-head rv">
+            <p class="label red" id="layer-title">
+              §2 · The cold-humid layer, side view
             </p>
+            <span class="mono-s">Illustration</span>
           </div>
           <SideView />
+          <p class="field-note rv">
+            A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may
+            leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against
+            satellites.
+          </p>
         </section>
       </div>
-    </>
-  );
-}
-
-function SideView() {
-  return (
-    <svg viewBox="0 0 600 260" class="sideview" role="img" aria-label="Side view: a plane inside a cold humid layer leaves a long contrail; a plane 2,000 ft above leaves a short one.">
-      <rect x="0" y="0" width="600" height="260" fill="var(--raised)" />
-      <rect x="0" y="120" width="600" height="70" fill="color-mix(in srgb, var(--cyan) 10%, transparent)" />
-      <line x1="0" y1="120" x2="600" y2="120" stroke="var(--cyan)" stroke-dasharray="5 5" />
-      <line x1="0" y1="190" x2="600" y2="190" stroke="var(--cyan)" stroke-dasharray="5 5" />
-      <text x="12" y="138" fill="var(--cyan)" font-family="var(--font-mono)" font-size="11" letter-spacing="1">COLD / HUMID LAYER (RHi ≥ 100 %)</text>
-      <text x="470" y="40" fill="var(--muted)" font-family="var(--font-mono)" font-size="11">+2,000 FT</text>
-      <text x="200" y="240" fill="var(--muted)" font-family="var(--font-mono)" font-size="11">PLANNED LEVEL</text>
-      <path d="M150 158 C 260 152, 380 150, 520 152" stroke="var(--pred)" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.9" />
-      <text x="128" y="163" fill="var(--ink)" font-size="18">✈</text>
-      <path d="M420 74 C 445 72, 470 71, 490 72" stroke="var(--det)" stroke-width="2.5" fill="none" stroke-linecap="round" />
-      <text x="398" y="79" fill="var(--ink)" font-size="18">✈</text>
-    </svg>
+    </div>
   );
 }

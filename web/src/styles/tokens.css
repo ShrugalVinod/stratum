@@ -1,76 +1,93 @@
-/* STRATUM design tokens. Dark ("night sky") is the default; light mode via
-   prefers-color-scheme or the header toggle (data-theme on <html>). */
+/* STRATUM design tokens — "the aeronautical chart".
+   Chart (paper) is the default; Night is set by the header toggle (data-theme on <html>).
+   Contrast checked: body text ≥ 4.5:1 on paper, card and paper-2 in both themes. */
 
 :root {
-  --bg: #0a0e14;
-  --bg-2: #0d121a;
-  --surface: #111722;
-  --raised: #161e2b;
-  --ink: #e7eaf0;
-  --muted: #8c96a6;
-  --faint: #5c6677;
-  --border: #222c3a;
-  --border-strong: #2e3a4c;
-  --accent: #8fa9e6;
-  --accent-ink: #0a0e14;
-  --cyan: #29d3ff;
-  --focus: #29d3ff;
+  --paper: #f1ece1;
+  --paper-2: #e8e1d2;
+  --card: #f7f3eb;
+  --ink: #13202f;
+  --ink-2: #2f3c4b;
+  --muted: #5f656c;
+  --faint: #9a968c;
+  --rule: #d6ccb8;
+  --rule-2: #e3dbcc;
+  --grid: rgb(19 32 47 / 0.055);
 
-  /* data colours — only for data */
-  --pred: #ff8c1a;
-  --det: #29d3ff;
-  --corridor: #c9a3ff;
-  --pending: #6b7586;
+  --red: #c8102e; /* fills, outlines */
+  --red-text: #c8102e;
+  --on-red: #ffffff;
+  --block: #e3283c; /* hero "lose the cloud" block, ink text ≥ 3:1 (large) */
+  --teal: #1d6670; /* ice-supersaturated layers */
+  --teal-soft: rgb(29 102 112 / 0.1);
+  --orange: #d6541c; /* persistent contrails (data colour) */
+  --orange-text: #a8431a;
+  --green: #2f6b3a;
+  --tile: #13202f; /* departures-board tiles */
+  --tile-ink: #f1ece1;
 
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Source Serif 4", "IBM Plex Serif", Georgia, serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* map */
+  --map-ocean: #d4e2e5;
+  --map-land: #f6f1e7;
+  --map-border: #a99f8c;
+  --map-state: #ddd3c1;
+  --map-grat: #c3d3d7;
+  --map-track: #13202f;
+  --map-plane: #13202f;
+  --map-head: #c8102e;
+  --map-corr: #c8102e;
+  --map-pred: #d6541c;
+  --map-sel: #13202f;
 
-  --radius: 6px;
-  --maxw: 1200px;
-  --gutter: clamp(16px, 4vw, 40px);
-  --header-h: 72px;
-  color-scheme: dark;
-}
+  --font-display: "Archivo Variable", "Archivo Narrow", "Arial Narrow", sans-serif;
+  --font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Martian Mono Variable", "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;
 
-:root[data-theme="light"] {
-  --bg: #f7f8fa;
-  --bg-2: #eef1f5;
-  --surface: #ffffff;
-  --raised: #f2f4f8;
-  --ink: #111418;
-  --muted: #5b6472;
-  --faint: #8a93a1;
-  --border: #e2e6ec;
-  --border-strong: #cfd5de;
-  --accent: #2a4a8f;
-  --accent-ink: #ffffff;
-  --cyan: #0a7ea4;
-  --focus: #0a7ea4;
-  --det: #0a8fbf;
-  --corridor: #7a4fc4;
-  --pending: #8a93a1;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* long, soft landing */
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-fly: cubic-bezier(0.37, 0.08, 0.63, 0.92); /* near-constant cruise */
+
+  --maxw: 1320px;
+  --gutter: clamp(16px, 4.2vw, 64px);
+  --header-h: 68px;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #f7f8fa;
-    --bg-2: #eef1f5;
-    --surface: #ffffff;
-    --raised: #f2f4f8;
-    --ink: #111418;
-    --muted: #5b6472;
-    --faint: #8a93a1;
-    --border: #e2e6ec;
-    --border-strong: #cfd5de;
-    --accent: #2a4a8f;
-    --accent-ink: #ffffff;
-    --cyan: #0a7ea4;
-    --focus: #0a7ea4;
-    --det: #0a8fbf;
-    --corridor: #7a4fc4;
-    --pending: #8a93a1;
-    color-scheme: light;
-  }
+:root[data-theme="dark"] {
+  --paper: #0d1623;
+  --paper-2: #152234;
+  --card: #111c2a;
+  --ink: #ece6d8;
+  --ink-2: #c8c3b7;
+  --muted: #8f98a5;
+  --faint: #5a6575;
+  --rule: #24334a;
+  --rule-2: #1b2839;
+  --grid: rgb(236 230 216 / 0.045);
+
+  --red: #e8323f;
+  --red-text: #ff6b74;
+  --on-red: #0d1623;
+  --block: #e8323f;
+  --teal: #5cbcc6;
+  --teal-soft: rgb(92 188 198 / 0.1);
+  --orange: #ea7a3c;
+  --orange-text: #f08a4b;
+  --green: #7cc48a;
+  --tile: #ece6d8;
+  --tile-ink: #0d1623;
+
+  --map-ocean: #08101c;
+  --map-land: #132034;
+  --map-border: #3b4b63;
+  --map-state: #1f2d42;
+  --map-grat: #142133;
+  --map-track: #dfe6f2;
+  --map-plane: #ece6d8;
+  --map-head: #ffffff;
+  --map-corr: #ff6b74;
+  --map-pred: #ff8c3a;
+  --map-sel: #ffffff;
+  color-scheme: dark;
 }

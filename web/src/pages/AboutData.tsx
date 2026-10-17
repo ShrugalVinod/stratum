@@ -1,67 +1,76 @@
+import { useEffect } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { dataSources } from "../content/site";
 
 export function AboutData() {
+  // lazy page: jump to #privacy / #ai-use once it exists
+  useEffect(() => {
+    if (location.hash) setTimeout(() => document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "smooth" }), 60);
+  }, []);
   return (
-    <>
+    <div class="page">
       <PageHead
-        eyebrow="About the data"
-        title="Know what the evidence can carry."
-        side={<p>The dataset is a set of inputs and constraints, not a claim of certainty.</p>}
+        label="About the data"
+        note={`${dataSources.length} sources`}
+        lines={["Sources & limits."]}
+        lede="Every dataset, what we use it for, who to credit, and where it falls short."
       />
       <div class="wrap">
-        <div class="table-wrap reveal">
-          <table class="data-table">
+        <div class="table-wrap rv rv-fade">
+          <table class="src-table">
             <thead>
               <tr>
                 <th scope="col">Source</th>
                 <th scope="col">What it is</th>
                 <th scope="col">How we use it</th>
-                <th scope="col">Licence / credit</th>
+                <th scope="col">Credit</th>
                 <th scope="col">Limits</th>
               </tr>
             </thead>
-            <tbody>
-              {dataSources.map((d) => (
-                <tr>
-                  <th scope="row">{d.source}</th>
+            <tbody class="rv stagger">
+              {dataSources.map((d, i) => (
+                <tr style={{ "--i": i }}>
+                  <th scope="row" class="display">
+                    {d.source}
+                  </th>
                   <td>{d.what}</td>
                   <td>{d.use}</td>
-                  <td>{d.credit}</td>
-                  <td>{d.limits}</td>
+                  <td class="mono">{d.credit}</td>
+                  <td class="muted">{d.limits}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div class="about-grid reveal">
-          <div>
-            <p class="eyebrow">Limits we are honest about</p>
-            <h2 class="h3" style="font-size:clamp(26px,3vw,40px)">
-              12 flight days, coverage and reanalysis humidity all matter.
-            </h2>
-          </div>
-          <div class="about-text">
+
+        <div class="notes">
+          <section class="note rv">
+            <p class="label red">§2 · Limits</p>
             <p>
               Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many
-              scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a
-              model estimate, not a measurement; correcting it with satellite evidence is the point of the project.
+              scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model
+              estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study:
+              no real flight was changed, and nothing on this site is a result until Phase 7.
             </p>
-            <h3 id="privacy">Privacy</h3>
+          </section>
+          <section class="note rv" id="privacy">
+            <p class="label red">§3 · Privacy</p>
             <p>
               Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and
-              government flights never appear. This site uses no cookies, analytics or trackers.
+              government flights never appear. No login, no forms, no cookies, no analytics, no trackers.
             </p>
-            <h3 id="ai-use">Use of AI tools</h3>
+          </section>
+          <section class="note rv" id="ai-use">
+            <p class="label red">§4 · AI use</p>
             <p>
               The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis
-              code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the
-              team, and no AI-generated labels, observations or results are presented as data.
+              code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team,
+              and no AI-generated labels, observations or results are presented as data.
             </p>
-          </div>
+          </section>
         </div>
       </div>
-      <div style="height:96px" />
-    </>
+      <div class="spacer" />
+    </div>
   );
 }

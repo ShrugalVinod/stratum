@@ -1,46 +1,42 @@
-import { Arrow } from "../components/Footer";
 import { PageHead } from "../components/PageHead";
-import { site } from "../content/site";
+import { site, supervisor } from "../content/site";
 
 export function Contact() {
   return (
-    <>
-      <PageHead
-        eyebrow="Contact / Research"
-        title="Open to careful questions."
-        side={<p>For judges, researchers, and anyone who wants to understand the protocol before the promise.</p>}
-      />
+    <div class="page">
+      <PageHead label="Contact" note="12.97°N 77.59°E · Bengaluru" lines={["Radio check."]} />
       <div class="wrap">
-        <div class="contact-grid">
+        <hr class="rule rule-draw" />
+        <div class="contact rv stagger">
           <div>
-            <p class="eyebrow">Team email</p>
+            <p class="label">Team email</p>
             {site.email ? (
-              <a class="contact-mail" href={`mailto:${site.email}`}>
-                {site.email} <Arrow />
+              <a class="contact-big mono" href={`mailto:${site.email}`}>
+                {site.email}
               </a>
             ) : (
-              <p class="contact-mail muted">Email address coming soon</p>
+              <p class="contact-big mono">coming soon</p>
             )}
           </div>
           <div>
-            <p class="eyebrow">School</p>
-            <p>
-              Indus International School
+            <p class="label">Institution</p>
+            <p class="contact-text">
+              Indus International School, Bengaluru
               <br />
-              Bengaluru
+              <span class="muted">Supervisor: {supervisor.name}</span>
             </p>
           </div>
           <div>
-            <p class="eyebrow">Context</p>
-            <p>
+            <p class="label">Context</p>
+            <p class="contact-text">
               {site.competition}
               <br />
-              Computational research prototype
+              <span class="muted">Computational research prototype</span>
             </p>
           </div>
         </div>
       </div>
-      <div style="height:160px" />
-    </>
+      <div class="spacer" />
+    </div>
   );
 }

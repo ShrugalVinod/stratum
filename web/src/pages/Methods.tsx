@@ -1,53 +1,73 @@
-import { ExtIcon } from "../components/Footer";
 import { PageHead } from "../components/PageHead";
+import { Split } from "../components/Split";
 import { hypotheses, methods, site } from "../content/site";
 
 export function Methods() {
   return (
-    <>
+    <div class="page">
       <PageHead
-        eyebrow="Methods / Protocol"
-        title="The protocol before the result."
-        side={<p>A compact account of what the first version does — and what it cannot claim yet.</p>}
+        label="Protocol · pre-registered"
+        note="Locked 13 Oct 2026 · SHA-256 fingerprint"
+        lines={["Written down", "before results."]}
+        lede="Our analysis plan was locked on 13 Oct 2026. Nothing here is a finding."
       />
       <div class="wrap">
-        <div class="callout" role="note">
-          <span class="dot">Results arrive in Phase 7 — nothing here is a result yet.</span>
-          <span class="badge">Pre-registered 13 Oct 2026</span>
-        </div>
-        <div class="rows">
+        <ol class="mrows">
           {methods.map((m, i) => (
-            <div class="row reveal">
-              <span class="n">{String(i + 1).padStart(2, "0")}</span>
-              <h2 class="h3">{m.title}</h2>
-              <p>{m.body}</p>
-            </div>
+            <li class="rv">
+              <span class="mono red">M{i + 1}</span>
+              <div>
+                <h2 class="display d-m">{m.title}</h2>
+                <p>{m.body}</p>
+              </div>
+            </li>
           ))}
-        </div>
-        <section class="section" style="padding-bottom:0" aria-labelledby="hyp">
-          <p class="eyebrow" id="hyp">
-            Pre-registered hypotheses
-          </p>
-          <div class="hyp-grid reveal stagger">
+        </ol>
+
+        <section class="section" aria-labelledby="hyp">
+          <div class="sec-head rv">
+            <p class="label red" id="hyp">
+              §2 · Hypotheses · NOTAM
+            </p>
+            <span class="mono-s">{hypotheses.length} notices in force</span>
+          </div>
+          <div class="notams">
             {hypotheses.map((h, i) => (
-              <article class="card hyp" style={{ "--i": i }}>
-                <h3>{h.id}</h3>
-                <p>{h.plain}</p>
-                <p class="test">{h.test}</p>
-                <span class="state">Pre-registered · not yet tested</span>
+              <article class="notam rv" style={{ "--d": (i % 2) * 120 }}>
+                <header>
+                  <span class="mono">A000{i + 1}/26 NOTAMN</span>
+                  <b class="mono">{h.id}</b>
+                </header>
+                <div class="notam-body">
+                  <p class="mono notam-q">
+                    Q) VIDF/QSTRATUM/IV/NBO/E/280/420
+                    <br />
+                    A) VIDF VABF B) 2610130000 C) PERM
+                  </p>
+                  <p class="notam-e">E) {h.plain}</p>
+                  <p class="notam-test">
+                    <span class="label">Test</span> {h.test}
+                  </p>
+                </div>
+                <footer class="mono-s">Pre-registered · not yet tested</footer>
               </article>
             ))}
           </div>
-          <p class="muted" style="margin-top:20px;font-size:14.5px">
+          <p class="muted notam-note rv">
             H1 and H2 are interpreted only if at least 300 matched satellite-observed contrails exist; otherwise they are reported as
-            underpowered. Scored on the full study domain (6–37°N, 68–98°E); the Delhi–Mumbai corridor is the development area.
+            underpowered. Scored on the full study domain (6–37°N, 68–98°E); the Delhi–Mumbai corridor is the development area. VIDF and VABF
+            are the Delhi and Mumbai flight information regions.
           </p>
-          <a class="download" href={site.paperPdf} target="_blank" rel="noopener">
-            Download the research protocol (PDF) <ExtIcon />
-          </a>
         </section>
       </div>
-      <div style="height:96px" />
-    </>
+      <a class="dl-bar" href={site.paperPdf} target="_blank" rel="noopener">
+        <span class="wrap dl-inner">
+          <span class="display d-l">
+            <Split text="Download the research protocol (PDF)" />
+          </span>
+          <span class="mono-s">PDF · 19 pp ↓</span>
+        </span>
+      </a>
+    </div>
   );
 }

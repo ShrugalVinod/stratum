@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="STRATUM — a student research project on persistent aircraft contrails over India: physics predictions, satellite evidence and honest decisions." />
-    <meta name="theme-color" content="#0A0E14" />
+    <meta name="theme-color" content="#F1ECE1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>STRATUM — Move the plane. Lose the cloud.</title>
     <script>
-      try { const t = localStorage.getItem("stratum-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+      document.documentElement.classList.add("js");
+      try { if (localStorage.getItem("stratum-theme") === "dark") { document.documentElement.dataset.theme = "dark"; document.querySelector('meta[name="theme-color"]').content = "#0D1623"; } } catch (e) {}
     </script>
   </head>
   <body>

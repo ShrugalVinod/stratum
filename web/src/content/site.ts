@@ -9,7 +9,7 @@ export const site = {
   tagline: "Move the plane. Lose the cloud.", // team tagline (16 Oct 2026)
   heroTitle: ["Move the plane.", "Lose the cloud."],
   heroLede:
-    "A student research project about persistent contrails over India — physics predictions, satellite evidence, and honest decisions.",
+    "Some contrails spread into long-lived cloud that traps heat. They only last in thin, cold, ice-supersaturated layers of air. STRATUM checks where those layers are over India — so that one day a plane could fly 2,000 ft above or below them.",
   email: null as string | null, // TODO(team): team email → shown on Contact
   paperPdf: "/STRATUM_Research_Protocol_v1.2.pdf",
 };
@@ -17,7 +17,7 @@ export const site = {
 export const whyCards = [
   {
     title: "The problem",
-    body: "Most contrails vanish in seconds. A few spread into thin cloud that lasts for hours and traps heat — a large part of aviation's climate effect.",
+    body: "Most contrails vanish in seconds. A few spread into thin cloud that lasts for hours and traps heat — a large part of aviation's climate effect.¹ Studies elsewhere found that a small share of flights makes most of it.²",
   },
   {
     title: "The India gap",
@@ -29,21 +29,38 @@ export const whyCards = [
   },
 ];
 
+export const refs = [
+  "Lee, D. S. et al. (2021), Atmospheric Environment 244, 117834.",
+  "Teoh, R. et al. (2020), Environmental Science & Technology 54, 2941–2950.",
+];
+
 export const loop = [
-  { n: "01", title: "Flight tracks", body: "ADS-B positions of real commercial flights." },
-  { n: "02", title: "Weather", body: "ERA5 temperature and humidity at flight level." },
-  { n: "03", title: "Will a contrail form?", body: "Schmidt–Appleman criterion, then CoCiP for how long and how much warming." },
-  { n: "04", title: "Satellite check", body: "Meteosat-9 images every 15 minutes, parallax-corrected." },
-  { n: "05", title: "Better advice", body: "A correction learned from the satellite labels, with honest uncertainty." },
+  { n: "01", code: "DEPART", title: "Flight tracks", body: "ADS-B positions of real commercial flights." },
+  { n: "02", code: "WX", title: "Weather", body: "ERA5 temperature and humidity at flight level." },
+  { n: "03", code: "SAC", title: "Will a contrail form?", body: "Schmidt–Appleman criterion, then CoCiP for how long and how much warming." },
+  { n: "04", code: "SAT", title: "Satellite check", body: "Meteosat-9 images every 15 minutes, parallax-corrected." },
+  { n: "05", code: "ARRIVE", title: "Better advice", body: "A correction learned from the satellite labels, with honest uncertainty (Phase 7)." },
+];
+
+// Ticker under the hero. Every number is from the exported build (day.json, manifest.json).
+export const facts = [
+  "1 Jan 2026 · 1,458 commercial flights on the map",
+  "66 persistent-contrail segments from 6 flights (physics only, B1)",
+  "31 days × 8 flight levels × 24 hours of contrail conditions",
+  "Meteosat-9 checks every 15 minutes",
+  "Analysis plan locked 13 Oct 2026",
+  "Results: none yet — they arrive in Phase 7",
 ];
 
 // Phase status: update as phases are accepted (source: docs/phase_reports).
 export type PhaseState = "done" | "current" | "upcoming";
-export const phases: { n: number; name: string; state: PhaseState }[] = [
-  { n: 0, name: "Setup & pre-registration", state: "done" },
-  { n: 1, name: "Data ingest", state: "done" },
-  { n: 2, name: "Physics baseline", state: "done" },
-  { n: 3, name: "Satellite detector", state: "done" },
+export const statusUpdated = "17 Oct 2026";
+// logged = date of the progress-log entry that finished the phase (docs/progress.md)
+export const phases: { n: number; name: string; state: PhaseState; logged?: string }[] = [
+  { n: 0, name: "Setup & pre-registration", state: "done", logged: "13 OCT" },
+  { n: 1, name: "Data ingest", state: "done", logged: "14 OCT" },
+  { n: 2, name: "Physics baseline", state: "done", logged: "15 OCT" },
+  { n: 3, name: "Satellite detector", state: "done", logged: "15 OCT" },
   { n: 4, name: "Web app v0", state: "current" },
   { n: 5, name: "Labels & matching", state: "upcoming" },
   { n: 6, name: "Evaluation (H1)", state: "upcoming" },
@@ -53,6 +70,7 @@ export const phases: { n: number; name: string; state: PhaseState }[] = [
 
 export const pipeline = [
   {
+    code: "ADSB",
     title: "ADS-B flight tracks",
     sub: "Where every commercial flight was, minute by minute",
     input: "Raw position reports",
@@ -60,6 +78,7 @@ export const pipeline = [
     sci: "ADS-B Exchange first-of-month samples, bounded to 4–39°N, 66–100°E. Cleaning: duplicates, implausible jumps (> 6,000 ft/min or 100 kt), cruise ≥ FL250, gaps ≤ 10 min filled along the great circle, longer gaps split. Only commercial airline flights are ever shown.",
   },
   {
+    code: "ERA5",
     title: "ERA5 weather",
     sub: "What the air was like at the aircraft's height",
     input: "Segments",
@@ -67,6 +86,7 @@ export const pipeline = [
     sci: "ECMWF ERA5 reanalysis, hourly, 0.25°, 12 pressure levels (100–500 hPa). Linear in time, bilinear in space, linear in ln p vertically (pre-registered).",
   },
   {
+    code: "SAC",
     title: "Schmidt–Appleman check",
     sub: "Will a contrail form at all?",
     input: "T, humidity, engine efficiency",
@@ -74,6 +94,7 @@ export const pipeline = [
     sci: "Exact threshold temperature from the mixing-line tangent; persistence requires ice supersaturation (RHi ≥ 1). Engine efficiency from OpenAP per aircraft type.",
   },
   {
+    code: "COCIP",
     title: "CoCiP model",
     sub: "How long will it last, and how much will it warm?",
     input: "Flagged segments",
@@ -81,6 +102,7 @@ export const pipeline = [
     sci: "pycontrails CoCiP with three humidity baselines (B1 raw, B2 ÷0.95, B3 latitude correction) and 100 Monte Carlo members for the 5th–95th percentile range.",
   },
   {
+    code: "SAT",
     title: "Satellite check",
     sub: "Did a contrail actually appear?",
     input: "Meteosat-9 images",
@@ -88,6 +110,7 @@ export const pipeline = [
     sci: "Brightness-temperature difference (10.8 − 12.0 µm), oriented line filters, parallax correction for the satellite's viewing angle, and observability rules: cloudy or high-angle scenes count as unknown, never as 'no contrail'.",
   },
   {
+    code: "CORR",
     title: "Correction",
     sub: "Learn where the physics is wrong",
     input: "Predictions + satellite labels",
@@ -95,6 +118,7 @@ export const pipeline = [
     sci: "Gradient-boosted trees with monotone constraints and isotonic calibration, trained west of 80°E and tested east of it on held-out seasons (Phase 7).",
   },
   {
+    code: "DEC",
     title: "Decision",
     sub: "Fly 2,000 ft higher here?",
     input: "Corrected estimate + fuel",

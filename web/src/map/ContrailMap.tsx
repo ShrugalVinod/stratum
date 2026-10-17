@@ -1,4 +1,4 @@
-// The STRATUM map: our own dark basemap (Natural Earth, India point of view), the B1
+// The STRATUM map: our own chart basemap (Natural Earth, India point of view), the B1
 // persistent-contrail-condition grid for the chosen date/hour/flight level, flight tracks
 // that brighten around the chosen hour, CoCiP-flagged segments, aircraft positions, the
 // Delhi–Mumbai corridor, hover info and click-to-inspect. No external tiles or keys.
@@ -35,9 +35,13 @@ type Props = {
   segments: FlaggedSegment[];
   hour: number;
   selected: FlaggedSegment | null;
+  /** a clicked flight (no segment selected): its whole track is highlighted */
+  selectedFlight?: FlightFeature | null;
   picked: [number, number] | null;
   layers: Layers;
   onSelect: (s: FlaggedSegment | null) => void;
+  /** a flight track was clicked (flight_id) */
+  onFlight?: (flightId: string) => void;
   onPick: (lngLat: [number, number] | null) => void;
   onHover?: (lngLat: [number, number] | null) => void;
   /** Intro replay of the whole day: "play" (re)starts it, "skip" ends it. */
@@ -64,10 +68,11 @@ function cssVar(name: string): string {
 }
 
 function palette() {
-  const light = cssVar("color-scheme") === "light";
-  return light
-    ? { ocean: "#dfe7f2", land: "#f7f8fa", border: "#98a3b3", state: "#c3cad5", grat: "#c9d2df", coast: "#7e8a9c", track: "#334155", plane: "#111418", corr: "#7a4fc4", pred: "#e0730a", label: "#111418", halo: "#f7f8fa" }
-    : { ocean: "#070a0f", land: "#121925", border: "#3a4558", state: "#232d3c", grat: "#141c28", coast: "#4a566b", track: "#bcd0f5", plane: "#e7eaf0", corr: "#c9a3ff", pred: "#ff8c1a", label: "#c9d1dd", halo: "#070a0f" };
+  const v = (n: string) => cssVar(`--map-${n}`);
+  return {
+    ocean: v("ocean"), land: v("land"), border: v("border"), state: v("state"), grat: v("grat"), track: v("track"),
+    plane: v("plane"), head: v("head"), corr: v("corr"), pred: v("pred"), sel: v("sel"),
+  };
 }
 
 function graticule(step = 5): GeoJSON.FeatureCollection {
@@ -161,6 +166,7 @@ export function ContrailMap(p: Props) {
       cooperativeGestures: false,
     });
     map.current = m;
+    if (import.meta.env.DEV) (window as unknown as { __map: MLMap }).__map = m; // for local testing only
     m.addControl(new NavigationControl({ showCompass: false }), "top-right");
     m.addControl(new ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-right");
     m.touchZoomRotate.disableRotation();
@@ -190,14 +196,14 @@ export function ContrailMap(p: Props) {
       m.addLayer({ id: "corridor-fill", type: "fill", source: "corridor", paint: { "fill-color": col.corr, "fill-opacity": 0.06 } });
       m.addLayer({ id: "corridor-line", type: "line", source: "corridor", paint: { "line-color": col.corr, "line-width": 1.4, "line-dasharray": [3, 3] } });
       m.addLayer({ id: "legs", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 7, 1.4], "line-opacity": 0.1 } });
-      m.addLayer({ id: "legs-head", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 2.2, 7, 4], "line-blur": 2, "line-opacity": 0 } });
+      m.addLayer({ id: "legs-head", type: "line", source: "legs", layout: { "line-cap": "round" }, paint: { "line-color": col.head, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 2.2, 7, 4], "line-blur": 2, "line-opacity": 0 } });
       m.addLayer({ id: "flagged-glow", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 12, 7, 22], "line-blur": ["interpolate", ["linear"], ["zoom"], 4, 9, 7, 16], "line-opacity": 0.55 } });
       m.addLayer({ id: "flagged", type: "line", source: "flagged", layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 3, 7, 4.5] } });
-      m.addLayer({ id: "selected-glow", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 14, "line-blur": 8, "line-opacity": 0.5 } });
-      m.addLayer({ id: "selected", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 3 } });
+      m.addLayer({ id: "selected-glow", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": col.sel, "line-width": 14, "line-blur": 8, "line-opacity": 0.35 } });
+      m.addLayer({ id: "selected", type: "line", source: "selected", layout: { "line-cap": "round" }, paint: { "line-color": col.sel, "line-width": 3 } });
       m.addLayer({ id: "planes-halo", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3.2, 7, 5.5], "circle-color": col.ocean, "circle-opacity": 0.55 } });
       m.addLayer({ id: "planes", type: "circle", source: "planes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 7, 3], "circle-color": ["case", ["get", "flagged"], col.pred, col.plane] } });
-      m.addLayer({ id: "pick", type: "circle", source: "pick", paint: { "circle-radius": 7, "circle-color": "transparent", "circle-stroke-color": "#29d3ff", "circle-stroke-width": 2 } });
+      m.addLayer({ id: "pick", type: "circle", source: "pick", paint: { "circle-radius": 7, "circle-color": "transparent", "circle-stroke-color": col.corr, "circle-stroke-width": 2 } });
 
       // city labels as HTML markers (crisp, no glyph server needed)
       const want = new Set(CITY_LABELS);
@@ -225,13 +231,15 @@ export function ContrailMap(p: Props) {
         m.getCanvas().style.cursor = "pointer";
         if (h.layer.id === "flagged") {
           const s = props.current.segments.find((x) => x.segment_id === h.properties.id);
-          if (s) tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(s.callsign, s.airline, `FL${s.fl} · ${clock(s.time_utc).utc} UTC`, "Persistent contrail (B1)")).addTo(m);
+          if (s) tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(s.callsign, s.airline, `FL${s.fl} · ${clock(s.time_utc).utc} UTC`, `Persistent contrail (B1)${s.contrail_age_h != null ? ` · lasts ${s.contrail_age_h.toFixed(1)} h` : ""}`)).addTo(m);
           return;
         }
         const f = fl[Number(h.properties.i)];
         if (f) {
           const t = h.properties.m !== undefined ? `${fmtMin(Number(h.properties.m))} UTC` : "";
-          tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(f.properties.callsign, f.properties.airline, [f.properties.aircraft_type, t].filter(Boolean).join(" · "), f.properties.flagged ? "Makes a persistent contrail (B1)" : null)).addTo(m);
+          const ages = props.current.segments.filter((x) => x.flight_id === f.properties.flight_id && x.contrail_age_h != null).map((x) => x.contrail_age_h!);
+          const life = ages.length ? `Persistent contrail (B1) · up to ${Math.max(...ages).toFixed(1)} h` : f.properties.flagged ? "Makes a persistent contrail (B1)" : null;
+          tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(f.properties.callsign, f.properties.airline, [f.properties.aircraft_type, t].filter(Boolean).join(" · "), life)).addTo(m);
         }
       };
       m.on("mousemove", onMove);
@@ -245,6 +253,10 @@ export function ContrailMap(p: Props) {
           const s = props.current.segments.find((x) => x.segment_id === hits[0].properties.id);
           if (s) return props.current.onSelect(s);
         }
+        // a flight track under the click opens its details below the map (the sky column still opens too)
+        const near = m.queryRenderedFeatures([[e.point.x - 5, e.point.y - 5], [e.point.x + 5, e.point.y + 5]], { layers: ["planes", "legs"] });
+        const f = near.length ? props.current.flights?.[Number(near[0].properties.i)] : undefined;
+        if (f) props.current.onFlight?.(f.properties.flight_id);
         props.current.onPick([e.lngLat.lng, e.lngLat.lat]);
       });
 
@@ -256,17 +268,13 @@ export function ContrailMap(p: Props) {
       startLoop(m, props);
     });
 
-    // re-colour when the theme changes
-    const mo = new MutationObserver(() => ready.current && recolour(m));
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const onMq = () => ready.current && recolour(m);
-    mq.addEventListener("change", onMq);
+    // re-colour when the theme changes (synchronously, so the theme transition captures the new map)
+    const onTheme = () => ready.current && recolour(m);
+    addEventListener("stratum-theme", onTheme);
     return () => {
       const a = ANIM.get(m);
       if (a) cancelAnimationFrame(a.raf);
-      mo.disconnect();
-      mq.removeEventListener("change", onMq);
+      removeEventListener("stratum-theme", onTheme);
       markers.current.forEach((k) => k.remove());
       m.remove();
     };
@@ -342,7 +350,14 @@ function sync(m: MLMap, p: Props) {
 }
 
 function finishSync(_m: MLMap, p: Props, setData: (id: string, d: GeoJSON.FeatureCollection | GeoJSON.Feature) => void) {
-  setData("selected", p.selected ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[p.selected.lon_start, p.selected.lat_start], [p.selected.lon_end, p.selected.lat_end]] } } : EMPTY);
+  setData(
+    "selected",
+    p.selected
+      ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[p.selected.lon_start, p.selected.lat_start], [p.selected.lon_end, p.selected.lat_end]] } }
+      : p.selectedFlight
+        ? { type: "Feature", properties: {}, geometry: p.selectedFlight.geometry }
+        : EMPTY,
+  );
   setData("pick", p.picked ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p.picked } } : EMPTY);
 }
 
@@ -442,6 +457,13 @@ function recolour(m: MLMap) {
   m.setPaintProperty("legs", "line-color", c.track);
   m.setPaintProperty("planes", "circle-color", ["case", ["get", "flagged"], c.pred, c.plane]);
   m.setPaintProperty("planes-halo", "circle-color", c.ocean);
+  m.setPaintProperty("legs-head", "line-color", c.head);
+  m.setPaintProperty("flagged", "line-color", c.pred);
+  m.setPaintProperty("flagged-glow", "line-color", c.pred);
+  m.setPaintProperty("selected", "line-color", c.sel);
+  m.setPaintProperty("selected-glow", "line-color", c.sel);
+  m.setPaintProperty("pick", "circle-stroke-color", c.corr);
+  m.redraw();
 }
 
 let blank: string | null = null;

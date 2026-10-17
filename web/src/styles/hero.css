@@ -1,0 +1,498 @@
+/* Hero: a cross-section of the sky drawn behind the headline.
+   Defaults are the final state; every animation only says where it comes "from",
+   so no-JS and reduced-motion visitors see the finished picture. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100svh - var(--header-h));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid var(--rule);
+  --gap: 180px;
+  --y380: 40%;
+  --y360: 62%;
+}
+
+.h-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translate3d(0, calc(var(--sy, 0) * 0.16px), 0);
+}
+
+/* drifting chart grid: the camera follows the aircraft */
+.h-grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + 160px);
+  background: repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 160px);
+  will-change: transform;
+}
+.hero.go .h-grid {
+  animation:
+    fade-in 1.2s var(--ease) both,
+    drift-160 18s linear infinite;
+}
+
+.h-fl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: repeating-linear-gradient(to right, color-mix(in srgb, var(--ink) 26%, transparent) 0 2px, transparent 2px 9px);
+  transform-origin: left;
+}
+.h-fl400 {
+  top: calc(var(--y380) - var(--gap));
+}
+.h-fl380 {
+  top: var(--y380);
+}
+.h-fl360 {
+  top: var(--y360);
+}
+.h-fl340 {
+  top: calc(var(--y360) + var(--gap));
+}
+.hero.go .h-fl {
+  animation: draw-x 1.6s var(--ease-io) both;
+}
+.hero.go .h-fl380 {
+  animation-delay: 0.09s;
+}
+.hero.go .h-fl360 {
+  animation-delay: 0.18s;
+}
+.hero.go .h-fl340 {
+  animation-delay: 0.27s;
+}
+
+/* the ice-supersaturated layer */
+.h-issr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--y360) - var(--gap) * 0.34);
+  height: calc(var(--gap) * 0.68);
+  overflow: hidden;
+  background: var(--teal-soft);
+  border-top: 1px solid color-mix(in srgb, var(--teal) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--teal) 55%, transparent);
+}
+.h-hatch {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + 56.57px);
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--teal) 42%, transparent) 0 1px, transparent 1px 10px);
+  will-change: transform;
+}
+.hero.go .h-issr {
+  animation: grow-y 1.1s var(--ease) 0.85s both;
+}
+.hero.go .h-hatch {
+  animation: drift-hatch 4s linear infinite;
+}
+.h-issr-label {
+  position: absolute;
+  right: var(--gutter);
+  top: calc(var(--y360) + var(--gap) * 0.34 + 12px);
+  margin: 0;
+  color: var(--teal);
+  font-size: 12px;
+  text-transform: none;
+}
+.hero.go .h-issr-label {
+  animation: rise 1s var(--ease) 1.6s both;
+}
+.hero.label-clash .h-issr-label {
+  visibility: hidden;
+}
+
+/* plane B and its persistent contrail (same timing + easing = locked together) */
+.h-trailB {
+  position: absolute;
+  left: -6px;
+  top: var(--y360);
+  width: calc(var(--W, 100vw) + var(--b-over) + 60px);
+  height: 0;
+  transform-origin: left;
+}
+.h-core {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1.5px;
+  height: 3px;
+  background: linear-gradient(to right, var(--orange) 0 calc(100% - 46px), transparent);
+  border-radius: 2px;
+}
+.h-haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--gap) * -0.17);
+  height: calc(var(--gap) * 0.34);
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--orange) 70%, transparent) 42%, color-mix(in srgb, var(--orange) 70%, transparent) 58%, transparent);
+  opacity: 0.55;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+.h-planeB {
+  position: absolute;
+  left: -60px;
+  top: calc(var(--y360) - 12px);
+  color: var(--ink);
+  transform: translateX(calc(var(--W, 100vw) + var(--b-over) + 60px));
+}
+.hero.go .h-trailB {
+  animation: draw-x var(--b-dur) var(--ease-fly) var(--b-start) both;
+}
+.hero.go .h-planeB {
+  animation: fly-b var(--b-dur) var(--ease-fly) var(--b-start) both;
+}
+.hero.go .h-haze {
+  animation:
+    spread 5.5s var(--ease) calc(var(--b-start) + 500ms) both,
+    breathe 7s ease-in-out calc(var(--b-start) + 6s) infinite alternate;
+}
+.hero.go .h-core {
+  animation: core-soften 6s var(--ease) calc(var(--b-start) + 900ms) both;
+}
+
+/* plane A: cruises in at FL380, its trail vanishes within seconds */
+.h-planeA {
+  position: absolute;
+  left: -76px;
+  top: calc(var(--y380) - 12px);
+  color: var(--ink);
+  transform: translateX(var(--ax, 80vw));
+}
+.h-bob {
+  position: relative;
+}
+.h-short {
+  position: absolute;
+  right: calc(100% - 6px);
+  top: 13px;
+  width: 170px;
+  height: 1.5px;
+  background: repeating-linear-gradient(to left, color-mix(in srgb, var(--ink) 60%, transparent) 0 12px, transparent 12px 19px);
+  -webkit-mask: linear-gradient(to left, #000, transparent);
+  mask: linear-gradient(to left, #000, transparent);
+}
+.hero.go .h-planeA {
+  animation: fly-a 2.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
+}
+.hero.go .h-bob {
+  animation: bob 4.6s ease-in-out 2.4s infinite alternate;
+}
+.hero.go .h-short {
+  animation: stream 0.42s linear infinite;
+}
+
+/* +2,000 ft bracket */
+.h-bracket {
+  position: absolute;
+  left: calc(var(--ax, 80vw) + 4px);
+  top: var(--y380);
+  height: var(--gap);
+  width: 22px;
+  color: var(--red-text);
+}
+.h-bracket .bar {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--red);
+  transform-origin: bottom;
+}
+.h-bracket .cap {
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 1.5px;
+  background: var(--red);
+}
+.h-bracket .top {
+  top: 0;
+}
+.h-bracket .bot {
+  bottom: 0;
+}
+.h-bracket span {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: clamp(13px, 1.1vw, 17px);
+}
+.hero.go .h-bracket .bot {
+  animation: draw-x 0.5s var(--ease) 3.6s both;
+}
+.hero.go .h-bracket .bar {
+  animation: grow-y 0.9s var(--ease-io) 3.85s both;
+}
+.hero.go .h-bracket .top {
+  animation: draw-x 0.5s var(--ease) 4.6s both;
+}
+.hero.go .h-bracket span {
+  animation: label-in 0.9s var(--ease) 4.3s both;
+}
+
+/* altitude tape */
+.h-tape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 108px;
+  border-right: 1px solid var(--rule);
+  pointer-events: none;
+  transform: translate3d(0, calc(var(--sy, 0) * 0.16px), 0);
+}
+.h-tape span {
+  position: absolute;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 13.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.h-tape b {
+  font-weight: 500;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 2px 6px;
+}
+.t400 {
+  top: calc(var(--y380) - var(--gap));
+}
+.t380 {
+  top: var(--y380);
+}
+.t360 {
+  top: var(--y360);
+}
+.t340 {
+  top: calc(var(--y360) + var(--gap));
+}
+.hero.go .h-tape span {
+  animation: tape-in 0.9s var(--ease) both;
+}
+.hero.go .t400 {
+  animation-delay: 0.1s;
+}
+.hero.go .t380 {
+  animation-delay: 0.2s;
+}
+.hero.go .t360 {
+  animation-delay: 0.3s;
+}
+.hero.go .t340 {
+  animation-delay: 0.4s;
+}
+
+/* content */
+.h-inner {
+  position: relative;
+  padding-top: clamp(48px, 9vh, 116px);
+  padding-bottom: clamp(48px, 8vh, 96px);
+}
+@media (min-width: 761px) {
+  .h-inner {
+    padding-left: max(var(--gutter), 156px);
+  }
+}
+.h-coords {
+  font-size: clamp(12px, 1vw, 15px);
+  color: var(--muted);
+  margin: 0 0 clamp(28px, 5vh, 56px);
+}
+.hero.go .h-coords {
+  animation: unclip 1.2s var(--ease) 0.15s both;
+}
+.h-title {
+  font-size: clamp(54px, 10.4vw, 178px);
+  line-height: 0.9;
+}
+.h-l1,
+.h-l2 {
+  display: block;
+}
+.h-l2 {
+  margin-top: 0.03em;
+}
+.h-title .block {
+  color: #13202f;
+  background: linear-gradient(var(--block), var(--block)) no-repeat 0 0 / 100% 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0.04em 0.07em 0;
+  margin-left: -0.07em;
+}
+:root[data-theme="dark"] .h-title .block {
+  color: #0b1220;
+}
+.hero.go .h-title .block {
+  animation: block-wipe var(--blk-dur, 1400ms) linear var(--blk-delay, 1500ms) both;
+}
+.js .h-split1 .w > span {
+  transition-delay: calc(480ms + var(--i) * 150ms);
+}
+.h-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) auto;
+  align-items: end;
+  gap: 32px 48px;
+  margin-top: clamp(36px, 6vh, 72px);
+}
+.h-lede {
+  font-size: clamp(18px, 1.45vw, 23px);
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 33em;
+  margin: 0;
+}
+.h-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.hero.go .h-lede {
+  animation: rise 1.1s var(--ease) 1.9s both;
+}
+.hero.go .h-actions > * {
+  animation: rise 1.1s var(--ease) 2.1s both;
+}
+.hero.go .h-actions > * + * {
+  animation-delay: 2.22s;
+}
+
+@media (max-width: 900px) {
+  .h-foot {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .h-tape,
+  .h-bracket,
+  .h-issr-label {
+    display: none;
+  }
+  .h-planeA {
+    transform: translateX(calc(var(--W, 100vw) + 120px));
+  }
+  .hero.go .h-planeA {
+    animation: fly-a 3.6s var(--ease-fly) 0.25s both;
+  }
+  .btn {
+    height: 52px;
+    padding: 0 20px;
+  }
+}
+
+/* ── keyframes ──────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes drift-160 {
+  to {
+    transform: translateX(-160px);
+  }
+}
+@keyframes drift-hatch {
+  to {
+    transform: translateX(-56.57px);
+  }
+}
+@keyframes draw-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+@keyframes label-in {
+  from {
+    opacity: 0;
+    transform: translate(12px, -50%);
+  }
+}
+@keyframes tape-in {
+  from {
+    opacity: 0;
+    transform: translate(-16px, -50%);
+  }
+}
+@keyframes unclip {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes fly-b {
+  from {
+    transform: translateX(0);
+  }
+}
+@keyframes fly-a {
+  from {
+    transform: translateX(0);
+  }
+}
+@keyframes bob {
+  from {
+    transform: translateY(-1.5px);
+  }
+  to {
+    transform: translateY(1.5px);
+  }
+}
+@keyframes stream {
+  to {
+    background-position: -19px 0;
+  }
+}
+@keyframes spread {
+  from {
+    opacity: 0;
+    transform: scaleY(0.12);
+  }
+}
+@keyframes breathe {
+  to {
+    opacity: 0.38;
+    transform: scaleY(1.12);
+  }
+}
+@keyframes core-soften {
+  to {
+    opacity: 0.55;
+  }
+}
+@keyframes block-wipe {
+  from {
+    background-size: 0% 100%;
+  }
+}
