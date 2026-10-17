@@ -29,8 +29,14 @@ Newest first. What was done, what's next, blockers.
   Lasting-contrail conditions (raw ERA5) 0.7 % (1 Apr) to 9.5 % (1 Feb); highest in the
   monsoon/post-monsoon days and 1 Feb.
 
+- Colab `05b_scenes` PASSED (commit b64e245, 23 min): scenes drawn once with seed 20261017 from
+  43,992 candidates; 200 main (100 tuning / 100 held-out) + 20 pilot; all 144 strata filled
+  (1 slot short filled elsewhere); 12–22 scenes per month; night 58 / day 50 / dusk 48 /
+  dawn 44; density classes 64 / 64 / 72 (terciles, q1 = 0, q2 = 57 persistent segments);
+  107 west / 93 east of 80°E; 17 scenes with mean VZA > 60°. pilot.zip 3.9 MB, main.zip 40.9 MB.
+
 **Next**
-- Shrugal: run Colab `05b_scenes`; set up the separate Cloudflare
+- Shrugal: share pilot.zip + main.zip (not scenes.csv) with Aditya and Ishaan; set up the separate Cloudflare
   project for the labeller; share `labels/scenes/` (zips only) with Aditya and Ishaan.
 - Aditya + Ishaan: pilot (20 scenes) by 26 Oct → export → Drive `labels/raw/<id>/`.
 - Claude: matching (advection, observability, segment labels) with the critical tests;
