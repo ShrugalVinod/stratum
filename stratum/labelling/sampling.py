@@ -21,8 +21,10 @@ So scenes are drawn **at random, stratified** so every kind of situation is repr
 
 Candidate scenes are 256 × 256-px windows of the stored crop on a 128-px grid (so windows can
 overlap by half) at every 15-minute slot that has both neighbours (labellers flip between
-t − 15, t and t + 15 min to see motion). A window is a candidate if its centre lies in the
-study domain (6–37°N, 68–98°E) and < 5 % of it is "no data" in the cloud mask.
+t − 15, t and t + 15 min to see motion) and at least 120 min after 00 UTC of the flight day
+(flight data start at 00 UTC, so the density of earlier slots would be unknown, not zero).
+A window is a candidate if its centre lies in the study domain (6–37°N, 68–98°E) and < 5 % of
+it is "no data" in the cloud mask.
 
 Allocation: 12 × 4 × 3 = 144 strata. Every non-empty stratum gets one scene; the remaining
 scenes go to strata chosen at random. Within a stratum scenes are drawn at random, never two
@@ -369,6 +371,10 @@ def candidates_for_day(
     rows = []
     for k, t in enumerate(times):
         if (t - step) not in have or (t + step) not in have:
+            continue
+        # the density window needs flights from t − 120 min; flight data start at 00 UTC of the
+        # day, so earlier slots would look empty when they are really unknown
+        if (t - day0) < pd.Timedelta(minutes=max_age_min):
             continue
         cm = np.asarray(clm.isel(time=k).values)
         n_px = SCENE_PX * SCENE_PX

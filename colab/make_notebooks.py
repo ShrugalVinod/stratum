@@ -750,6 +750,58 @@ for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/segments_met/*/*/manifest.json
 ]
 
 
+SCENES = [
+    header(
+        "05b · Sample the 220 labelling scenes + make the labeller packages (Phase 5, task 5.1)",
+        """
+**What this does:** draws the scenes the team labels by hand, **once**, with the pre-registered
+seed (Q16 = 20261017): 200 main scenes (100 tuning / 100 held-out) + 20 pilot scenes, stratified
+by month × time of day × predicted contrail density. Then it writes the packages the labellers
+open in the labelling app: for each scene the BTD and 10.8 µm images at t − 15, t, t + 15 min
+(north-up) and a small metadata file. **No predictions or flight tracks** go into a package.
+
+Needs Colab `05a_segments_year` finished first (whole-domain segments for all 12 days).
+
+Reads: `interim/segments_met/*/*`, `raw/meteosat/{l15_crop,clm}/*`, `raw/meteosat/static_grid.zarr`,
+`raw/era5/pl/*`. Writes: `labels/scenes/scenes.csv` (team-internal: has the split),
+`labels/scenes/candidates.parquet`, `labels/scenes/pilot.zip`, `labels/scenes/main.zip`.
+
+* **Runtime:** CPU, **High-RAM** if offered. No GPU needed.
+* **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** about 50–80 MB.
+* **Time:** about 15–30 min.
+* **If it disconnects:** *Runtime → Run all* again. Sampling never re-draws once `scenes.csv` exists.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude, then share
+  the Drive folder `STRATUM/labels/scenes/` with Aditya and Ishaan (**pilot.zip and main.zip only**,
+  not scenes.csv).
+""",
+    ),
+    settings("05b_scenes"),
+    *SETUP,
+    code('''
+# ── 7. Draw the scenes (once) ────────────────────────────────────────────────
+rc_sample = stratum("sample-scenes", live=True)
+print("exit code:", rc_sample)
+'''),
+    code('''
+# ── 8. Labeller packages ─────────────────────────────────────────────────────
+rc_pkg = stratum("export-scene-packages", live=True) if rc_sample == 0 else None
+print("exit code:", rc_pkg)
+'''),
+    code('''
+# ── 9. Collect for the summary ───────────────────────────────────────────────
+import glob
+sdir = f"{DRIVE_ROOT}/labels/scenes"
+man = json.load(open(f"{sdir}/manifest.json")) if os.path.exists(f"{sdir}/manifest.json") else {}
+zips = {os.path.basename(z): round(os.path.getsize(z) / 1e6, 1) for z in glob.glob(f"{sdir}/*.zip")}
+'''),
+    summary_cell("""    "exit_codes": {"sample": rc_sample, "packages": rc_pkg},
+    "sampling": man.get("stats"),
+    "zips_MB": zips,
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -774,4 +826,5 @@ if __name__ == "__main__":
     write("03_detector_overlays.ipynb", DETECT)
     write("04_web_export.ipynb", WEB_EXPORT)
     write("05a_segments_year.ipynb", SEGMENTS_YEAR)
+    write("05b_scenes.ipynb", SCENES)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))
