@@ -166,8 +166,12 @@ def build_segments(
     source: Annotated[str, typer.Option(help="adsbx (opensky when granted)")] = "adsbx",
     days: Annotated[str | None, typer.Option(help="only these days, e.g. '1' or '1,15'")] = None,
     force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
+    scope: Annotated[
+        str,
+        typer.Option(help="corridor (keep corridor flights) or domain (keep all, flag corridor)"),
+    ] = "corridor",
 ) -> None:
-    """Phase 2: ADS-B → cleaned 1-min segments + ERA5 features + η + SAC flags (per day)."""
+    """Phase 2/5: ADS-B → cleaned 1-min segments + ERA5 features + η + SAC flags (per day)."""
     from datetime import date as _date
 
     from stratum import phase2
@@ -183,7 +187,13 @@ def build_segments(
         raise typer.Exit(1)
     for d in day_list:
         res = phase2.build_segments_day(
-            root, d, source, poly, config_hash=cfg.config_hash(), force=force
+            root,
+            d,
+            source,
+            poly,
+            config_hash=cfg.config_hash(),
+            force=force,
+            keep_all=scope == "domain",
         )
         _summary(f"build-segments {d}", res)
 

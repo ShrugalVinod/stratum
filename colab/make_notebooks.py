@@ -686,6 +686,70 @@ if build_dir:
 ]
 
 
+SEGMENTS_YEAR = [
+    header(
+        "05a · Flight segments for the whole study domain, all 12 flight days (Phase 5)",
+        """
+**What this does:** rebuilds the 1-minute flight segments (cleaning, ERA5 weather at flight level,
+engine efficiency, Schmidt–Appleman flags) for **every flight in the study domain** on the 12
+ADS-B Exchange days (1st of each month, Mar 2025 – Feb 2026). Phase 2 kept only Delhi–Mumbai
+corridor flights; the confirmatory tests are scored on the whole domain, and Phase 5 needs these
+segments to (a) stratify the 200 labelling scenes by predicted contrail density and (b) build the
+segment labels. Corridor flights stay flagged (`in_corridor`), so Phase 2 and the web export are
+unchanged. 1 Jan 2026 is recomputed once in whole-domain mode.
+
+Reads (already on Drive): `raw/adsb/adsbx/<12 days>`, `raw/era5/{pl,tropo_T}/<months>`,
+`raw/aircraft_db`. Writes: `interim/segments_met/<YYYY-MM>/<YYYY-MM-01>/…` (one folder per day).
+
+* **Runtime:** CPU, **High-RAM** if offered. No GPU needed.
+* **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** about 0.5–1 GB.
+* **Time:** about 30–60 min (≈ 30 s compute per day locally, plus Drive reads).
+* **If it disconnects:** *Runtime → Run all* again. Finished days are skipped.
+* **When finished:** copy the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
+""",
+    ),
+    settings(
+        "05a_segments_year",
+        'MONTHS = ["2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08",\n'
+        '          "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02"]\n'
+        'FORCE_MONTHS = ["2026-01"]   # rebuilt once in whole-domain mode (was corridor-only)\n',
+    ),
+    *SETUP,
+    code('''
+# ── 7. Segments for every flight in the domain, month by month (resumable per day) ──
+rcs = {}
+for m in MONTHS:
+    flag = " --force" if m in FORCE_MONTHS and not os.path.exists(f"{DRIVE_ROOT}/interim/segments_met/{m}/.domain_done") else ""
+    rcs[m] = stratum(f"build-segments --month {m} --corridor DEL-BOM --scope domain" + flag, live=True)
+    if m in FORCE_MONTHS and rcs[m] == 0:
+        open(f"{DRIVE_ROOT}/interim/segments_met/{m}/.domain_done", "w").write("ok")
+print("exit codes:", rcs)
+'''),
+    code('''
+# ── 8. Collect per-day manifests for the summary ─────────────────────────────
+import glob
+days = {}
+for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/segments_met/*/*/manifest.json")):
+    j = json.load(open(mf))
+    st = j.get("stats") or {}
+    steps, met = st.get("steps") or {}, st.get("met") or {}
+    days[j.get("unit")] = {
+        "scope": (j.get("params") or {}).get("scope"),
+        "flights": met.get("flights"), "commercial": steps.get("step9_commercial_flights"),
+        "segments": met.get("segments"), "corridor_flights": steps.get("corridor_flights"),
+        "share_forms": met.get("share_forms") and round(met["share_forms"], 4),
+        "share_persists_raw": met.get("share_persists_raw") and round(met["share_persists_raw"], 5),
+        "met_out_of_domain": met.get("met_out_of_domain"),
+    }
+'''),
+    summary_cell("""    "exit_codes": rcs,
+    "days": days,
+    "n_days_domain": sum(1 for d in days.values() if d["scope"] == "domain"),
+"""),
+]
+
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -709,4 +773,5 @@ if __name__ == "__main__":
     write("02_physics_baseline.ipynb", PHYSICS)
     write("03_detector_overlays.ipynb", DETECT)
     write("04_web_export.ipynb", WEB_EXPORT)
+    write("05a_segments_year.ipynb", SEGMENTS_YEAR)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))
