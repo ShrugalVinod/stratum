@@ -911,6 +911,7 @@ for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/matches/*/*/manifest.json")):
     "per_day": per_day,
     "totals": {k: ls.get(k) for k in ("candidates", "y1", "y0", "missing", "known_fraction", "y1_events", "y1_flights")},
     "min_labels_check": ls.get("min_labels_check"),
+    "sensitivity_min_matched_slots": ls.get("sensitivity_min_matched_slots"),
     "wrong_day_null": {k: v for k, v in (ls.get("wrong_day_null") or {}).items() if k != "runs"},
     "parallax": ls.get("parallax"),
 """),
