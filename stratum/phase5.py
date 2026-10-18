@@ -358,3 +358,106 @@ def gallery_job(
         plt.close(fig)
         made.append(sid)
     return {"status": "done", "figures": len(made), "dir": str(out), "scenes": made}
+
+
+REVIEWERS = ("aditya-review", "ishaan-review", "abeer-review")
+
+
+def detector_objects_in_scene(
+    objs: pd.DataFrame, r0: int, c0: int, size: int = 256, min_len: float = 10.0
+) -> list[Any]:
+    """Detected polylines (native crop pixels) → package frame (north-up), clipped to the scene.
+
+    Inverse of ``packages.package_to_native``: row_pkg = r0 + 255 − row_native (same for col)."""
+    from stratum.labelling import agreement as ag
+
+    out = []
+    for r, c in zip(objs["poly_row"], objs["poly_col"], strict=True):
+        pr = r0 + (size - 1) - np.asarray(r, float)
+        pc = c0 + (size - 1) - np.asarray(c, float)
+        inside = (pr >= 0) & (pr <= size - 1) & (pc >= 0) & (pc <= size - 1)
+        if inside.sum() < 2:
+            continue
+        poly = np.column_stack([pr[inside], pc[inside]])
+        if ag.length(poly) >= min_len:
+            out.append(poly)
+    return out
+
+
+def india_detector_check(root: Path, threshold: float, seed: int) -> dict[str, Any]:
+    """Detector vs the reviewed India labels (deviation D-003: secondary, exploratory).
+
+    Labels: ``labels/raw/<id>-review/`` (Claude draft + one team reviewer per scene). Detector:
+    the stored objects of the scene's image time (``interim/detections``) at or above the
+    operating threshold. Obscured and unusable scenes are excluded (pre-registered rule).
+    Same one-to-one matching as everywhere (≤ 2 px, ≥ 50 % overlap, ≤ 20°); 95 % scene-bootstrap
+    CIs. Reported for "sure" lines only and for "sure + uncertain"."""
+    from stratum.detect.tuning import bootstrap_ci, prf
+    from stratum.labelling import agreement as ag
+
+    scenes = pd.read_csv(scenes_dir(root) / "scenes.csv")
+    test = scenes[(scenes["role"] == "main") & (scenes["split"] == "heldout")]
+    labels: dict[str, ag.SceneLabel] = {}
+    for w in REVIEWERS:
+        d = root / "labels" / "raw" / w
+        if d.exists():
+            labels.update(ag.read_dir(d))
+    if not labels:
+        return {"status": "no reviewed labels in labels/raw/<id>-review/"}
+    det_cache: dict[str, pd.DataFrame] = {}
+    rows: dict[str, list[dict[str, Any]]] = {"sure_only": [], "sure_and_uncertain": []}
+    skipped: dict[str, list[str]] = {
+        "obscured_or_unusable": [],
+        "incomplete": [],
+        "no_detections": [],
+    }
+    for _, s in test.iterrows():
+        sid = str(s["scene_id"])
+        lab = labels.get(sid)
+        if lab is None or not lab.complete:
+            skipped["incomplete"].append(sid)
+            continue
+        if lab.status == "obscured" or lab.unusable:
+            skipped["obscured_or_unusable"].append(sid)
+            continue
+        day = str(s["day"])
+        if day not in det_cache:
+            f = root / "interim" / "detections" / day / "objects.parquet"
+            det_cache[day] = pd.read_parquet(f) if f.exists() else pd.DataFrame()
+        o = det_cache[day]
+        if o.empty:
+            skipped["no_detections"].append(sid)
+            continue
+        t = pd.Timestamp(s["time"])
+        o = o[(pd.to_datetime(o["image_time"]) == t) & (o["confidence"] >= threshold)]
+        det = detector_objects_in_scene(o, int(s["r0"]), int(s["c0"]))
+        for name, ref in (
+            ("sure_only", lab.sure),
+            ("sure_and_uncertain", lab.sure + lab.uncertain),
+        ):
+            tp = len(ag.match_objects(det, ref))
+            hit = sum(any(ag.pair_match(x, e) is not None for x in det) for e in ref)
+            rows[name].append(
+                {"scene": sid, "det": len(det), "exp": len(ref), "tp": tp, "hit": hit}
+            )
+    rep: dict[str, Any] = {
+        "status": "done",
+        "role": "secondary, exploratory (D-003): Claude drafts reviewed by one team member",
+        "operating_threshold": threshold,
+        "scenes_scored": len(rows["sure_only"]),
+        "skipped": {k: len(v) for k, v in skipped.items()},
+    }
+    for name, r in rows.items():
+        c = pd.DataFrame(r, columns=["scene", "det", "exp", "tp", "hit"])
+        rep[name] = {
+            "detections": int(c["det"].sum()),
+            "label_lines": int(c["exp"].sum()),
+            "matched": int(c["tp"].sum()),
+            "scenes_with_label_lines": int((c["exp"] > 0).sum()),
+            **{k: round(v, 3) for k, v in prf(c).items()},
+            "ci95": bootstrap_ci(c, seed) if len(c) >= 5 else None,
+        }
+    out = root / "reports" / "labelling"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "india_detector_check.json").write_text(json.dumps(rep, indent=1, default=_np_default))
+    return rep

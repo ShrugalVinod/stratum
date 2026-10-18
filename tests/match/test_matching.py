@@ -53,12 +53,15 @@ def test_label_rule_any_observable_match_or_two_observable_misses() -> None:
 def test_d004_two_matched_images_make_y1() -> None:
     per = pd.DataFrame(
         {
-            "segment_id": ["e"] * 3,
-            "observable": [True, True, True],
-            "matched": [True, False, True],
+            "segment_id": ["e"] * 3 + ["f"] * 3,
+            "observable": [True] * 6,
+            "matched": [True, False, True, True, False, False],
         }
     )
-    assert mt.segment_labels(per).loc[0, "y"] == 1.0
+    lab = mt.segment_labels(per).set_index("segment_id")
+    assert lab.loc["e", "y"] == 1.0
+    # matched once, observable 3 times: missing, NEVER "not observed" (bug fixed 18 Oct)
+    assert np.isnan(lab.loc["f", "y"])
 
 
 def test_box_fraction_majority_rule() -> None:

@@ -69,8 +69,15 @@ Newest first. What was done, what's next, blockers.
   images**; the 1-image rule stays as a sensitivity analysis. Aditya finished his review of
   Claude's India drafts.
 
+- 05d re-run with D-004: y = 1 1,564 segments, **421 contrail events (≥ 300 passed)**, 369
+  flights; chance share 0.33 (was 0.60). Sensitivity: 1 image 1,222 events, 3 images 207. A bug
+  put 2,608 single-match segments into y = 0; fixed (see decisions 18 Oct).
+- India review finished (36 lines in 16 scenes; 91 scenes scored).
+
 **Next**
-- Shrugal: re-run Colab 05d (labels with the D-004 rule; detections are reused).
+- Shrugal: upload the three review zips to Drive labels/raw/, run Colab 05f (final labels +
+  detector vs India labels).
+- Claude: Phase 5 gate report.
 - Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.

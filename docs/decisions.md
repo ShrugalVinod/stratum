@@ -145,3 +145,17 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 - **Matching (Phase 5.5/5.6) implementation choices, none of them a pre-registered value:** candidates = every SAC-forming segment of any operator (`commercial` kept as a column); parallax uses the segment's ERA5 geopotential height (pressure altitude if missing); cloud-mask *no data* pixels count as cloudy in the 15-px box, so a gap in the mask can only make a segment *missing*, never y = 0; a slot without detection output is not observable; detections or matches made with other detector settings are recomputed automatically.
 - **≥ 300 check counts contrails, not segments.** One contrail is several one-minute segments, so the pre-registered "300 matched observed contrails" is applied to *contrail events* (runs of consecutive y = 1 segments of one flight piece). y = 1 segments and flights are reported alongside. Conservative reading; the team may revisit before Phase 6.
 - **Wrong-day null (added check, exploratory):** each day's flights are also matched against the next flight day's images and ERA5. Every match there is chance, so its y = 1 rate estimates how many real y = 1 labels are coincidences. In a local test with 1 Jan flights on 15 Jan images (Phase 3 settings), 0.43 % of segment × image pairs matched by chance.
+
+## 2026-10-18 — D-003 review done; D-004 label bug found and fixed
+- **India review (D-003).** Aditya 34, Ishaan 33, Abeer 33 scenes, all complete. Of Claude's 15
+  draft lines: 10 kept as drawn (3 with sure/uncertain switched), 5 moved or redrawn, 0 deleted;
+  reviewers added 21 lines. Final: 36 lines (10 sure, 26 uncertain) in 16 scenes. First export
+  marked 71 scenes obscured (median thick-cloud cover only 12 %); guide v0.1.2 clarified rule 4
+  (scoring rule unchanged) and the reviewers re-checked the status: final 32 clear, 59 partly
+  obscured, 9 obscured (reviewers' own judgement kept).
+- **Bug in the first D-004 run (05d at commit 2758320):** with min_matched_slots = 2, a segment
+  matched at exactly one observable image and observable at ≥ 2 was labelled y = 0 instead of
+  missing (2,608 segments). Found from the summary itself (y = 0 335,255 vs 332,647 in the
+  sensitivity table) before any later step used the labels. Fixed, test added, and
+  `LABEL_RULE_VERSION` makes stored match days recompute. That run's y = 1 count (1,564; 421
+  contrail events ≥ 300) and chance share (0.33) are unaffected by the bug.

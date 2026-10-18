@@ -49,6 +49,11 @@ class MatchRules:
     max_vza_deg: float = 60.0
 
 
+# Bumped whenever the label code changes meaning, so stored match days are recomputed.
+# v2 (18 Oct 2026): with min_matched_slots = 2, a segment matched at exactly one observable
+# image is missing, never y = 0 (v1 labelled it 0).
+LABEL_RULE_VERSION = 2
+
 # Pre-registered values (preregistered.yaml: matching, observability); tests use these too.
 DEFAULT_RULES = MatchRules()
 
@@ -204,7 +209,12 @@ def segment_labels(per_slot: pd.DataFrame, rules: MatchRules = DEFAULT_RULES) ->
     y = np.where(
         out["n_matched_observable"] >= rules.min_matched_slots,
         1.0,
-        np.where(out["n_observable"] >= rules.min_observable_slots, 0.0, np.nan),
+        np.where(
+            (out["n_matched_observable"] == 0)
+            & (out["n_observable"] >= rules.min_observable_slots),
+            0.0,
+            np.nan,
+        ),
     )
     out["y"] = y
     keys = [c for c in ("flight_id", "image_time_first") if c in per_slot.columns]
