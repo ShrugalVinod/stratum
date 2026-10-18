@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5181",
     viewport: { width: 1440, height: 900 },
+    reducedMotion: "reduce", // the site skips view transitions and long animations; CI runners are slow
     ...(process.env.CI ? {} : { channel: "chrome" }),
     launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] },
   },
