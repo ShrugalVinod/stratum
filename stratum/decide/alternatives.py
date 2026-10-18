@@ -9,9 +9,11 @@
   rates (climb ``CLIMB_FPM``, descent ``DESCENT_FPM``), so the whole portion is at the new level.
   Alternatives above the type's OpenAP ceiling or below FL250 are rejected, with the reason.
 * **Fuel.** OpenAP fuel flow (``FuelFlow.enroute`` with the vertical speed, so the climb or
-  descent power is included) at the new altitude over every changed segment, at the **same
-  Mach** as planned (true airspeed rescaled by the ISA speed of sound) and over the same ground
-  track and times. Extra fuel = alternative − planned; CO₂ = 3.16 kg per kg fuel.
+  descent power is included) over every changed segment, for the planned and the alternative
+  profile from the same call (so only altitude and vertical speed differ), at the **same Mach**
+  (true airspeed rescaled by the ISA speed of sound) and over the same ground track and times.
+  Extra fuel = alternative − planned (negative = the new level burns less); CO₂ = 3.16 kg per
+  kg fuel. The alternative's fuel flow for CoCiP = stored planned fuel flow + that difference.
 * **η** is recomputed at the new level (it moves the Schmidt–Appleman threshold), so CoCiP's
   formation check is redone too.
 """
@@ -116,20 +118,37 @@ def build(flight: pd.DataFrame, first: int, last: int, delta_ft: float) -> Alter
     tas = g["true_airspeed_ms"].to_numpy(float)
     mach = tas / isa_sound_speed(seg_old)
     tas_new = mach * isa_sound_speed(seg_new)
-    vs_new = np.diff(new_wp) / (np.diff(wp_t) / 60.0)
+    dt_min = np.diff(wp_t) / 60.0
+    vs_old = np.diff(wp_alt) / dt_min
+    vs_new = np.diff(new_wp) / dt_min
     ff = g["fuel_flow_kg_s"].to_numpy(float).copy()
     eta = g["engine_efficiency"].to_numpy(float).copy()
+    extra = 0.0
     if changed.any():
-        perf = ac.performance(otype, g["aircraft_mass_kg"].to_numpy(float)[changed],
-                              tas_new[changed], seg_new[changed], vs_new[changed])  # fmt: skip
-        ff[changed] = perf["fuel_flow_kg_s"]
-        eta[changed] = perf["engine_efficiency"]
-    extra = float(np.nansum((ff - g["fuel_flow_kg_s"].to_numpy(float))[changed] * dur[changed]))
+        # planned and alternative from the same OpenAP call, so only the altitude differs
+        mass = g["aircraft_mass_kg"].to_numpy(float)[changed]
+        old = ac.performance(otype, mass, tas[changed], seg_old[changed], vs_old[changed])
+        new = ac.performance(otype, mass, tas_new[changed], seg_new[changed], vs_new[changed])
+        d_ff = new["fuel_flow_kg_s"] - old["fuel_flow_kg_s"]
+        ff[changed] = ff[changed] + d_ff
+        eta[changed] = new["engine_efficiency"]
+        extra = float(np.nansum(d_ff * dur[changed]))
     return Alternative(
-        delta_ft, True, "", seg_new, new_wp, ff, eta, changed, extra,
-        {"changed_segments": int(changed.sum()), "portion_segments": last - first + 1,
-         "minutes_changed": float(dur[changed].sum() / 60.0)},
-    )  # fmt: skip
+        delta_ft,
+        True,
+        "",
+        seg_new,
+        new_wp,
+        ff,
+        eta,
+        changed,
+        extra,
+        {
+            "changed_segments": int(changed.sum()),
+            "portion_segments": last - first + 1,
+            "minutes_changed": float(dur[changed].sum() / 60.0),
+        },
+    )
 
 
 def _ceiling_m(openap_type: str) -> float:

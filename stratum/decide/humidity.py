@@ -39,8 +39,9 @@ def scaling(edges_deg: list[float], s_by_band: list[float]) -> Any:
         formula = "rhi -> rhi / s(latitude band)"
         scaler_specific_keys = ("latitude",)
 
-        def scale(self, specific_humidity: Any, air_temperature: Any, air_pressure: Any,
-                  **kwargs: Any) -> tuple[Any, Any]:  # fmt: skip
+        def scale(
+            self, specific_humidity: Any, air_temperature: Any, air_pressure: Any, **kwargs: Any
+        ) -> tuple[Any, Any]:
             lat = np.asarray(kwargs["latitude"], float)
             k = np.clip(np.searchsorted(edges, lat, side="right") - 1, 0, len(s_arr) - 1)
             s: Any = s_arr[k]

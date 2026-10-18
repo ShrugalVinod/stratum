@@ -122,6 +122,8 @@ def cocip_day(
     config_hash: str | None = None,
     force: bool = False,
     kind: str = "cocip",
+    scaling_obj: Any = None,
+    extra_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """CoCiP for one day's flights with one humidity scaling (needs build_segments_day).
 
@@ -152,7 +154,12 @@ def cocip_day(
             "run-cocip",
             unit=f"{scaling}/{day}",
             config_hash=config_hash,
-            params={"members": members, "max_age_h": max_age_h, "seed": seed},
+            params={
+                "members": members,
+                "max_age_h": max_age_h,
+                "seed": seed,
+                **(extra_params or {}),
+            },
         )
         s = pd.read_parquet(src / "segments_met.parquet")
         if corridor_only and "in_corridor" in s:
@@ -162,7 +169,16 @@ def cocip_day(
         t1 = t0 + pd.Timedelta(hours=24 + max_age_h + 1)
         pl = era5_window(root, "pl", t0, t1).load()
         sl = era5_window(root, "sl", t0, t1).load()
-        res = cr.run(flights, MetDataset(pl), MetDataset(sl), scaling, members, seed, max_age_h)
+        res = cr.run(
+            flights,
+            MetDataset(pl),
+            MetDataset(sl),
+            scaling,
+            members,
+            seed,
+            max_age_h,
+            scaling_obj=scaling_obj,
+        )
         f1, f2 = out_dir / "segments.parquet", out_dir / "contrail.parquet"
         res.segments.to_parquet(f1, index=False)
         contrail = res.contrail.copy()

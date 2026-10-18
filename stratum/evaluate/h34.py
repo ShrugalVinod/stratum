@@ -85,8 +85,13 @@ def lorenz(
     }
 
 
-def h4(seg: pd.DataFrame, n: int, seed: int, level: float = 0.95,
-       night: tuple[float, float] = (18.0, 6.0)) -> dict[str, Any]:  # fmt: skip
+def h4(
+    seg: pd.DataFrame,
+    n: int,
+    seed: int,
+    level: float = 0.95,
+    night: tuple[float, float] = (18.0, 6.0),
+) -> dict[str, Any]:
     ef = seg["ef"].to_numpy(float)
     pos_ef = np.where(np.isfinite(ef) & (ef > 0), ef, 0.0)
     ln = np.nan_to_num(seg["length_km"].to_numpy(float))

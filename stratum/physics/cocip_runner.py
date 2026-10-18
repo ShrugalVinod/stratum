@@ -133,15 +133,19 @@ def run(
     members: int = 20,
     seed: int = 20261013,
     max_age_h: float = 24.0,
+    scaling_obj: Any = None,
 ) -> CocipResult:
-    """Central CoCiP run plus ``members`` Monte Carlo runs for one humidity scaling."""
+    """Central CoCiP run plus ``members`` Monte Carlo runs for one humidity scaling.
+
+    ``scaling_obj``: a pycontrails HumidityScaling to use instead of the named baseline (the
+    Phase 7 learned correction); ``scaling`` is then only the label."""
     from pycontrails.models.cocip import Cocip, CocipUncertaintyParams
 
     warnings.filterwarnings("ignore", module="pycontrails")
     common = {
         "met": met,
         "rad": rad,
-        "humidity_scaling": humidity_scaling(scaling),
+        "humidity_scaling": scaling_obj if scaling_obj is not None else humidity_scaling(scaling),
         "max_age": np.timedelta64(int(max_age_h * 3600), "s"),
     }
     central = Cocip(**common)
