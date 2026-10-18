@@ -2,25 +2,26 @@
 
 Newest first. What was done, what's next, blockers.
 
-## 2026-10-18 — Phase 7 started: correction model, H2 harness, decision layer built
+## 2026-10-18 — Phase 7: all code built; Colab runs 07a–07d next
 
-**Done (tested, pushed)**
+**Done (tested, pushed, main ≥ bbd9d02, 255 Python tests)**
 - Q5 settled (option A): AR5 AGWP CO₂ factors 2.497e-9 (20 yr) / 6.779e-10 (100 yr) kg CO₂ per J,
   efficacy 0.42 (MC 0.42–1.0). Lock verifies.
-- Correction model (`stratum/model/`): the 18 pre-registered features, monotone LightGBM (+RHi,
-  −(T − T_LM)), Optuna 50 trials on leave-one-day-out Brier, isotonic calibration (cross-fitted
-  validation), RHi-only logistic, option-(b) scaling factor per latitude band; SHAP and
-  monotonicity checks; models frozen with a hash. H2 on the Phase 6 harness (`evaluate-h2`).
-- Decision layer (`stratum/decide/`): learned humidity correction inside CoCiP, ±2,000/±4,000 ft
-  alternatives with OpenAP fuel (same Mach), cropped paired Monte Carlo (humidity, CoCiP,
-  efficacy), net warming per horizon, ranking and alert rule, Table 3 lists, confidence note.
-  H3/H4 statistics (`evaluate-h34`). Real-CoCiP test on the 15 Jan ISSR day. 250 Python tests.
-- Notebooks 07a (train, no held-out scoring), 07b (H2 final), 07c (corrected CoCiP + H3/H4
-  final), 07d (decisions).
+- Correction model (`stratum/model/`): 18 pre-registered features, monotone LightGBM, Optuna 50
+  trials on leave-one-day-out Brier, isotonic calibration, RHi-only logistic; SHAP and
+  monotonicity checks; frozen per-fold models with a hash. H2 on the Phase 6 harness.
+- Option 2 (Team OK): the humidity correction fed back into CoCiP is fitted with detection
+  efficiency; literal fit reported as sensitivity (`fit-correction`).
+- Decision layer (`stratum/decide/`): warming contrails flagged by corrected CoCiP, ±2,000/±4,000 ft,
+  OpenAP fuel at constant Mach, cropped paired 100-member Monte Carlo, alert rule, Table 3 lists,
+  confidence note, `decide --estimate`. H3/H4 (`evaluate-h34`). Report v2 with model card and
+  draft H2–H4 paragraphs (`report-v2`). Second final runs need `--rerun-reason`.
+- Docs: `docs/methods/features.md`, `docs/methods/model_card.md`, Phase 7 gate report draft.
+  Website Methods page: model inputs table (committed, not deployed).
 
 **Next**
-- Shrugal: 07a (running). Then Claude checks it and records (a) vs (b); then 07b, 07c, 07d.
-- Team: how detection efficiency enters the humidity correction (question sent 18 Oct).
+- Shrugal: 07a (running) → paste summary → 07b (H2 final) → 07c (correction + corrected CoCiP +
+  H3/H4 final) → 07d (decisions + report v2).
 
 ## 2026-10-18 — Phase 6 accepted: H1 not supported
 
