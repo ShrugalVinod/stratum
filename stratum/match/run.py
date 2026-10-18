@@ -438,6 +438,7 @@ def match_day(
     force: bool = False,
     max_segments: int | None = None,
     image_day: date | None = None,
+    variant: str | None = None,
 ) -> dict[str, Any]:
     """Labels for the flights of ``day``.
 
@@ -464,6 +465,8 @@ def match_day(
         if null
         else root / "interim" / "matches" / f"{day:%Y-%m}" / d
     )
+    if variant is not None and not null:  # sensitivity analysis: other tolerances, kept apart
+        out_dir = root / "interim" / "matches_sens" / variant / f"{day:%Y-%m}" / d
     shift = pd.Timestamp(img_day) - pd.Timestamp(day)
     if force or _stale_matches(out_dir, p, rules):
         (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)

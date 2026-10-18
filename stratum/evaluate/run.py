@@ -110,7 +110,8 @@ def evaluate(
         for by in ("season", "west_of_80e", "vza_band", "fl_band", "day_night")
     }
     res["h1"]["sensitivity_label_rule"] = {}
-    for col in ("y_k1", "y_k3"):
+    sens_cols = ["y_k1", "y_k3", *[c for c in t.columns if c.startswith(("y_age_", "y_tol_"))]]
+    for col in sens_cols:
         if col in t:
             alt = t[t[col].notna()].assign(y=lambda d, c=col: d[c])
             r = hy.h1(alt, n, seed)
@@ -121,6 +122,7 @@ def evaluate(
     r = hy.h1(win, n, seed)
     res["h1"]["without_january_2026"] = {k: r[k] for k in ("segments", "ratio", "supported")}
     res["b4"] = {"run": False, "reason": B4_REASON}
+    res["h1"]["paragraph"] = hy.paper_paragraph(res)
     res["data"] = {
         "rows_labelled_primary": len(lab),
         "y1": int((lab["y"] == 1).sum()),

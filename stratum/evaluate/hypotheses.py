@@ -106,3 +106,56 @@ def paper_sentence(r: dict[str, Any]) -> str:
         f"against {r['observed_y1']:,} observed by Meteosat-9 (ratio {v['value']:.2f}, 95 % "
         f"day-bootstrap interval {v['lo']:.2f}–{v['hi']:.2f}); H1 is {verdict}."
     )
+
+
+def _fmt(r: dict[str, float]) -> str:
+    return f"{r['value']:.2f} (95 % CI {r['lo']:.2f}–{r['hi']:.2f})"
+
+
+def paper_paragraph(res: dict[str, Any]) -> str:
+    """Draft H1 paragraph for the paper, stating the outcome plainly whichever way it went."""
+    h = res["h1"]
+    r = h["ratio"]
+    lines = [paper_sentence(h)]
+    if h["supported"]:
+        lines.append(
+            "Uncorrected physics therefore under-predicts the persistent contrails that the "
+            "satellite detects, as hypothesised."
+        )
+    elif r["lo"] > 1:
+        lines.append(
+            "The interval lies entirely above 1: uncorrected physics predicts *more* persistent "
+            "contrails than the satellite detects, the opposite of the hypothesis."
+        )
+    else:
+        lines.append(
+            "The interval contains 1, so the data cannot tell whether physics under- or "
+            "over-predicts."
+        )
+    if "secondary" in h:
+        s = h["secondary"]
+        lines.append(
+            "Correcting the observations for detection efficiency "
+            f"({s['detection_efficiency']:.2f}, "
+            f"the share of CoCiP-persistent segments meeting Driver et al.'s thresholds) gives a "
+            f"ratio of {_fmt(s['ratio'])}; this secondary definition does not decide H1."
+        )
+    sens = h.get("sensitivity_label_rule", {})
+    if sens:
+        verdicts = {k: v["supported"] for k, v in sens.items()}
+        same = all(v == h["supported"] for v in verdicts.values())
+        lines.append(
+            "The verdict is "
+            + ("unchanged" if same else "not robust")
+            + " across the label-rule, age-window and tolerance variants ("
+            + ", ".join(
+                f"{k}: {'supported' if v else 'not supported'}" for k, v in verdicts.items()
+            )
+            + ")."
+        )
+    lines.append(
+        "Two caveats bound the result: about a third of the satellite labels are expected to be "
+        "chance matches (Phase 5 wrong-day check), which inflates the observed count, and almost "
+        "no labels exist for June–October, when monsoon cloud hides contrails."
+    )
+    return " ".join(lines)

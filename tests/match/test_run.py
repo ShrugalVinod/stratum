@@ -274,3 +274,20 @@ def test_changed_label_rule_recomputes_matches(root: Path) -> None:
     assert not mr._stale_matches(out, p, mt.MatchRules(min_matched_slots=1))
     assert mr._stale_matches(out, p, mt.DEFAULT_RULES)  # D-004 rule differs → recompute
     assert mr.match_day(root, DAY, det_params=p)["status"] == "done"
+
+
+def test_tolerance_variant_goes_to_its_own_folder(root: Path) -> None:
+    from dataclasses import replace
+
+    from stratum.match import matching as mt
+
+    p = load_detector_params().model_copy(update={"operating_threshold": 0.0})
+    rules = replace(mt.DEFAULT_RULES, **mt.TOLERANCE_VARIANTS["dist3"])
+    res = mr.match_day(root, DAY, det_params=p, rules=rules, variant="dist3")
+    assert res["status"] == "done"
+    assert (
+        root / "interim" / "matches_sens" / "dist3" / "2026-01" / "2026-01-01" / "labels.parquet"
+    ).exists()
+    assert not (
+        root / "interim" / "matches" / "2026-01" / "2026-01-01"
+    ).exists()  # primary untouched

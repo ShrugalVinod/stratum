@@ -1031,6 +1031,38 @@ for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/cocip_domain/B1/*/*/manifest.j
 ]
 
 
+PHASE6_SENS = [
+    header(
+        "06a2 · Phase 6 sensitivity: matching tolerances (labels only)",
+        """
+**What this does** (nothing is scored): re-matches all 12 flight days with four other
+tolerances — distance 1.5 px and 3 px (primary 2 px), angle 15° and 30° (primary 20°) — and
+stores the labels apart (`interim/matches_sens/<variant>/`). The final run (06b) reports H1 under
+each. Detections are reused. Run after 06a, before 06b.
+
+* **Runtime:** CPU, High-RAM. **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** ≈ 2–4 GB. **Time:** ≈ 20–40 min. **Resumable.**
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("06a2_match_sensitivity"),
+    *SETUP,
+    code('''
+# ── 7. Re-match with the four tolerance variants ─────────────────────────────
+rc_sens = stratum("match-sensitivity", live=True)
+import glob
+sens = {}
+for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/matches_sens/*/*/*/manifest.json")):
+    j = json.load(open(mf)); st = j.get("stats") or {}
+    v = mf.split("/matches_sens/")[1].split("/")[0]
+    agg = sens.setdefault(v, {"days": 0, "y1": 0, "y0": 0})
+    agg["days"] += 1; agg["y1"] += st.get("y1", 0); agg["y0"] += st.get("y0", 0)
+'''),
+    summary_cell("""    "exit_code": rc_sens,
+    "variants": sens,
+"""),
+]
+
 PHASE6_FINAL = [
     header(
         "06b · FINAL evaluation run: baselines B0–B3, H1, evaluation report v1",
@@ -1102,5 +1134,6 @@ if __name__ == "__main__":
     write("05e_label_diagnostics.ipynb", LABEL_DIAG)
     write("05f_phase5_finish.ipynb", PHASE5_FINISH)
     write("06a_phase6_inputs.ipynb", PHASE6_INPUTS)
+    write("06a2_match_sensitivity.ipynb", PHASE6_SENS)
     write("06b_evaluate_final.ipynb", PHASE6_FINAL)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

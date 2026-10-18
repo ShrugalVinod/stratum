@@ -49,7 +49,8 @@ def _fake_root(tmp: Path) -> Path:
         md.mkdir(parents=True)
         lab.to_parquet(md / "labels.parquet")
         per = pd.DataFrame({"segment_id": np.repeat(seg_id, 2), "image_time": np.tile([pd.Timestamp(d) + pd.Timedelta("1h"), pd.Timestamp(d) + pd.Timedelta("2h")], n),
-                            "vza_deg": rng.uniform(30, 60, 2 * n)})  # fmt: skip
+                            "vza_deg": rng.uniform(30, 60, 2 * n), "age_min": np.tile([30.0, 100.0], n),
+                            "observable": True, "matched": np.repeat(y == 1, 2)})  # fmt: skip
         per.to_parquet(md / "per_slot.parquet")
         (md / SUCCESS_MARKER).touch()
         cd = tmp / "interim" / "climatology"
@@ -79,6 +80,10 @@ def test_harness_end_to_end(tmp_path: Path) -> None:
     assert b3["value"] == 0.0  # B3 vs itself
     assert np.isfinite(res["h1"]["ratio"]["value"]) and "sentence" in res["h1"]
     assert res["b4"]["run"] is False
+    sens = res["h1"]["sensitivity_label_rule"]
+    assert {"y_k1", "y_k3", "y_age_20_90", "y_age_40_120"} <= set(sens)
+    # a window holding one image per segment can never give y = 1 under the 2-image rule
+    assert sens["y_age_20_90"]["observed_y1"] == 0
     files = rp.write(
         res,
         tmp_path / "rep",

@@ -12,10 +12,12 @@ Newest first. What was done, what's next, blockers.
   synthetic data), H1 (primary + efficiency-adjusted + breakdowns + sensitivity), report v1
   (HTML + MD with the deviation log), final-run lock (`stratum evaluate --final`, append-only
   `_locks/final_runs.jsonl`, peek runs blocked). 231 Python tests.
-- Colab notebooks 06a (climatology + domain CoCiP) and 06b (final run).
+- Colab notebooks 06a (climatology + domain CoCiP), 06a2 (tolerance re-matches) and 06b
+  (final run). Sensitivity analyses: label rule, age window, tolerances, without Jan 2026.
+  H1 paragraph drafted automatically. Phase 6 gate report drafted.
 
 **Next**
-- Shrugal: run Colab 06a, paste the summary; then 06b (the one final run).
+- Shrugal: Colab 06a (running), then 06a2, then 06b (the one final run).
 
 ## 2026-10-17 — Phase 4 accepted; Phase 5 started
 

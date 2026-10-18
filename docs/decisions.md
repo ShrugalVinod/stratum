@@ -168,3 +168,4 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 - **H1 secondary:** detection efficiency = share of CoCiP-persistent labelled segments that meet Driver's thresholds, from a Phase 6 CoCiP B1 central run over the whole domain (contrails followed 2.5 h; EF not used here).
 - **B4 not run:** Wolf et al. (2025) coefficients are fitted on IAGOS data over the North Atlantic/Europe, not India.
 - **Sensitivity:** label rule (1 / 3 images), winter without January 2026. Matching distance/angle tolerances are not re-run (would need new matching).
+- **Sensitivity analyses added (18 Oct):** age windows 20–90 and 40–120 min (from the stored per-image rows) and four tolerance re-matches (distance 1.5 / 3 px, angle 15° / 30°; `stratum match-sensitivity`, Colab 06a2). Reported next to H1; never used for the primary result. The report and `h1_paragraph.md` draft the H1 paragraph automatically from the final run.

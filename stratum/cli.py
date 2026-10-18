@@ -608,6 +608,29 @@ def run_cocip_domain(
         )
 
 
+@app.command("match-sensitivity")
+def match_sensitivity() -> None:
+    """Phase 6 sensitivity: re-match every flight day with other distance/angle tolerances
+    (labels only, kept in interim/matches_sens/<variant>/; detections are reused)."""
+    from dataclasses import replace
+
+    from stratum import phase5
+    from stratum.match.matching import TOLERANCE_VARIANTS, rules_from_preregistered
+    from stratum.match.run import match_day
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    base = rules_from_preregistered()
+    for name, change in TOLERANCE_VARIANTS.items():
+        rules = replace(base, **change)
+        for d in phase5._segment_days(root):
+            res = match_day(
+                root, d, None, rules, pre.matching.min_age_min, pre.matching.max_age_min,
+                cfg.config_hash(), variant=name,
+            )  # fmt: skip
+            _summary(f"{name} {d}", {k: res.get(k) for k in ("status", "y1", "y0", "missing")})
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     final: Annotated[

@@ -121,6 +121,10 @@ def write(
              f"from {s['cocip_persistent_segments']:,} CoCiP-persistent segments; ratio {_f(s['ratio'])}.")  # fmt: skip  # noqa: E501
     para("Context: in Phase 5 a wrong-day check estimated that about a third of y = 1 labels are chance matches, "  # noqa: E501
          "which inflates observed occurrence and pushes the ratio down.")  # fmt: skip
+    if "paragraph" in res["h1"]:
+        head("Draft H1 paragraph for the paper")
+        para(res["h1"]["paragraph"])
+        (out_dir / "h1_paragraph.md").write_text(res["h1"]["paragraph"] + "\n")
     head("Data")
     d = res["data"]
     para(f"{d['rows_labelled_primary']:,} labelled segments (y known under the primary rule, D-004) on {d['days']} days; "  # noqa: E501
@@ -181,8 +185,11 @@ def write(
         ]
     )
     table(["H1 variant", "segments", "observed", "ratio [95 % CI]", "supported"], rows)
-    para("y_k1 = the original pre-registered rule (any 1 matched image); y_k3 = 3 images. Matching distance and "  # noqa: E501
-         "angle tolerances were not re-run (would need new matching); the age window is fixed at 20–120 min.")  # fmt: skip  # noqa: E501
+    para("Label rule: y_k1 = original pre-registered rule (any 1 matched image), y_k3 = 3 images. "
+         "Age window: y_age_20_90 and y_age_40_120 use only images in that contrail-age window "
+         "(primary: 20–120 min). Matching tolerances: y_tol_dist1p5 / dist3 (distance 1.5 / 3 px, "
+         "primary 2 px) and y_tol_ang15 / ang30 (angle 15° / 30°, primary 20°), each a full "
+         "re-match; rows missing from this table were not run.")  # fmt: skip
     head("B4")
     para(res["b4"]["reason"])
     head("Deviations from the pre-registration (docs/deviations.md, verbatim)")

@@ -41,6 +41,22 @@ def _rule(n_mo: np.ndarray, n_obs: np.ndarray, k: int) -> np.ndarray:
     return np.where(n_mo >= k, 1.0, np.where((n_mo == 0) & (n_obs >= 2), 0.0, np.nan))
 
 
+AGE_WINDOWS = {"y_age_20_90": (20.0, 90.0), "y_age_40_120": (40.0, 120.0)}
+
+
+def age_window_labels(per: pd.DataFrame, k: int = 2) -> pd.DataFrame:
+    """Primary-rule labels (≥ k matched observable images) using only images whose contrail
+    age lies in a narrower window (sensitivity analysis of the pre-registered 20–120 min)."""
+    out = pd.DataFrame({"segment_id": per["segment_id"].unique()})
+    for name, (lo, hi) in AGE_WINDOWS.items():
+        w = per[(per["age_min"] >= lo) & (per["age_min"] <= hi)]
+        g = w.assign(om=w["observable"] & w["matched"]).groupby("segment_id")
+        n_obs = g["observable"].sum().reindex(out["segment_id"]).fillna(0).to_numpy()
+        n_mo = g["om"].sum().reindex(out["segment_id"]).fillna(0).to_numpy()
+        out[name] = _rule(n_mo, n_obs, k)
+    return out
+
+
 def day_rows(root: Path, day_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Labelled rows of one matched day + its (segment, image) pairs."""
     day = day_dir.name
@@ -51,13 +67,20 @@ def day_rows(root: Path, day_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     lab["y_k3"] = _rule(n_mo, n_obs, 3)
     lab = lab[lab["y"].notna() | lab["y_k1"].notna()].copy()
     per = pd.read_parquet(
-        day_dir / "per_slot.parquet", columns=["segment_id", "image_time", "vza_deg"]
+        day_dir / "per_slot.parquet",
+        columns=["segment_id", "image_time", "vza_deg", "age_min", "observable", "matched"],
     )
     per = per[per["segment_id"].isin(lab["segment_id"])]
     vza = per.groupby("segment_id")["vza_deg"].median().rename("vza_median")
+    lab = lab.merge(age_window_labels(per), on="segment_id", how="left")
     seg_dir = root / "interim" / "segments_met" / day[:7] / day
     seg = pd.read_parquet(seg_dir / "segments_met.parquet", columns=SEG_FEATURES)
     t = lab.merge(seg, on="segment_id", how="left").merge(vza, on="segment_id", how="left")
+    for vdir in sorted((root / "interim" / "matches_sens").glob(f"*/{day[:7]}/{day}")):
+        if is_done(vdir):
+            name = vdir.parent.parent.name
+            v = pd.read_parquet(vdir / "labels.parquet", columns=["segment_id", "y"])
+            t = t.merge(v.rename(columns={"y": f"y_tol_{name}"}), on="segment_id", how="left")
     t["day"] = day
     return t, per[["segment_id", "image_time"]]
 

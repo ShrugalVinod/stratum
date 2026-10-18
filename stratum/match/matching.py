@@ -29,6 +29,7 @@ Labels do not depend on any prediction (rule 5): every segment that meets the Sc
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -56,6 +57,16 @@ LABEL_RULE_VERSION = 2
 
 # Pre-registered values (preregistered.yaml: matching, observability); tests use these too.
 DEFAULT_RULES = MatchRules()
+
+
+# Sensitivity variants of the matching tolerances (build prompt §5.5 step 8, §6.7). Not used
+# for the primary labels; each is matched separately and reported as y_tol_<name>.
+TOLERANCE_VARIANTS: dict[str, dict[str, Any]] = {
+    "dist1p5": {"max_distance_px": 1.5},
+    "dist3": {"max_distance_px": 3.0},
+    "ang15": {"max_angle_deg": 15.0},
+    "ang30": {"max_angle_deg": 30.0},
+}
 
 
 def rules_from_preregistered() -> MatchRules:

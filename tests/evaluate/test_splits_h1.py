@@ -84,3 +84,15 @@ def test_h1_secondary_efficiency_adjustment() -> None:
     s = r["secondary"]
     assert s["detection_efficiency"] == round(1 / 3, 4)
     assert abs(s["ratio"]["value"] - 2 / (2 / (1 / 3))) < 1e-12  # 2 predicted / (2 observed ÷ ⅓)
+
+
+def test_paper_paragraph_states_each_outcome() -> None:
+    base = {"segments": 100, "days": 5, "predicted_B1": 50, "observed_y1": 10,
+            "sensitivity_label_rule": {"y_k1": {"supported": False}}}  # fmt: skip
+    over = {**base, "ratio": {"value": 5.0, "lo": 3.0, "hi": 7.0}, "supported": False}
+    under = {**base, "ratio": {"value": 0.5, "lo": 0.3, "hi": 0.8}, "supported": True}
+    unclear = {**base, "ratio": {"value": 1.1, "lo": 0.7, "hi": 1.6}, "supported": False}
+    assert "opposite of the hypothesis" in hy.paper_paragraph({"h1": over})
+    assert "as hypothesised" in hy.paper_paragraph({"h1": under})
+    assert "not robust" in hy.paper_paragraph({"h1": under})
+    assert "cannot tell" in hy.paper_paragraph({"h1": unclear})
