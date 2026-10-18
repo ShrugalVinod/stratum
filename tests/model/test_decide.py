@@ -171,3 +171,96 @@ def test_decision_chain_on_the_15_jan_issr_crossing() -> None:
         r["net_h20_p05"].iloc[0] > 0 and r["net_h100_p05"].iloc[0] > 0
     )
     assert np.isfinite(lb)
+
+
+def test_evaluate_h34_cli_on_fake_corrected_runs(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import json
+
+    from typer.testing import CliRunner
+
+    import stratum.cli as cli
+    from stratum.manifest import RunManifest, mark_success
+
+    root = tmp_path / "drive"
+    rng = np.random.default_rng(1)
+    days = ["2025-03-15", "2025-07-15", "2025-11-15", "2026-01-15"]
+    rows = []
+    for d in days:
+        n = 500
+        sid = [f"{d}_{i}" for i in range(n)]
+        sm = root / "interim" / "segments_met" / d[:7] / d
+        sm.mkdir(parents=True)
+        pd.DataFrame(
+            {
+                "segment_id": sid,
+                "length_km": 14.0,
+                "commercial": True,
+                "local_solar_time_h": rng.uniform(0, 24, n),
+            }
+        ).to_parquet(sm / "segments_met.parquet")
+        cd = root / "interim" / "cocip_domain" / "STRATUM" / d[:7] / d
+        cd.mkdir(parents=True)
+        ef = np.where(rng.random(n) < 0.03, rng.lognormal(27, 1, n), 0.0)
+        pd.DataFrame({"segment_id": sid, "ef": ef}).to_parquet(cd / "segments.parquet")
+        mark_success(cd, RunManifest.start("test", unit=d))
+        rows.append(pd.DataFrame({"day": d, "segment_id": sid[:5], "y": 0.0}))
+    ev = root / "interim" / "evaluation"
+    ev.mkdir(parents=True)
+    pd.concat(rows).to_parquet(ev / "table.parquet")
+    pd.DataFrame({"segment_id": [], "image_time": []}).to_parquet(ev / "images.parquet")
+    monkeypatch.setenv("STRATUM_DRIVE_ROOT", str(root))
+    monkeypatch.setattr(cli, "repo_root", lambda: tmp_path / "repo")
+    r = CliRunner().invoke(cli.app, ["evaluate-h34"])
+    assert r.exit_code == 1 and "blocked" in r.output
+    r = CliRunner().invoke(
+        cli.app, ["evaluate-h34", "--peek", lk.PEEK_PHRASE], env={"COLUMNS": "200"}
+    )
+    assert r.exit_code == 0, r.output
+    rec = json.loads((root / "_locks" / "peek_runs.jsonl").read_text().splitlines()[-1])
+    assert rec["hypotheses"] == ["H3", "H4"]
+    assert 0 < rec["h3_share"]["value"] < 0.1 and rec["h3_supported"]
+    assert not rec["h4_supported"]  # night carries EF in proportion to distance here
+
+
+def test_table3_has_every_field_and_a_confidence_note() -> None:
+    from stratum.decide import report as drep
+    from stratum.decide import run as dr
+
+    f = _flight().assign(
+        segment_id=[f"F1_{i:04d}" for i in range(40)],
+        lat_mid=20.0,
+        lon_mid=78.0,
+        local_solar_time_h=22.0,
+        commercial=True,
+        typecode="A320",
+    )
+    cands = pd.DataFrame(
+        {
+            "portion_id": ["F1|p0"] * 2,
+            "flight_id": "F1",
+            "delta_ft": [2000, -2000],
+            "feasible": [True, False],
+            "reason": ["", "below FL250"],
+            "extra_fuel_kg": [-5.0, np.nan],
+            "first": 10,
+            "last": 18,
+            "crop_segments": 14,
+        }
+    )
+    ef = pd.DataFrame(
+        {"m0": [5e12, 1e12], "m1": [4e12, 0.5e12], "m2": [6e12, 2e12]},
+        index=["F1|p0|0", "F1|p0|+2000"],
+    )
+    c = dr.summarise_candidates(cands, ef, np.array([0.42, 0.7, 1.0]))
+    ranked = dr.rank(c)
+    p = pd.Series(0.03, index=f["segment_id"])
+    cells = pd.Series(dtype=float)
+    tab = drep.table3(ranked, cands, f, p, cells, [(6.0, 15.0), (15.0, 25.0), (25.0, 37.0)], 50)
+    row = tab.iloc[0]
+    assert row["planned_fl"] == 360 and row["best_alternative_fl"] == 380
+    assert (
+        row["confidence_note"] == "extrapolating"
+        and row["caveat"] == "ATC feasibility not modelled"
+    )
+    assert row["alert"] and "below FL250" in row["alternatives_rejected"]
+    assert {"net_warming_avoided_h20_p05_kgCO2e", "extra_co2_kg", "start_ist"} <= set(tab.columns)

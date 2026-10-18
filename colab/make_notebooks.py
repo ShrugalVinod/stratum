@@ -1188,6 +1188,72 @@ final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if
 """),
 ]
 
+PHASE7_CORRECTED = [
+    header(
+        "07c · Phase 7: corrected physics over the whole domain, then the FINAL H3/H4 run",
+        """
+**What it does:** (1) runs CoCiP over every flight in the study domain on all 12 days with the
+learned humidity correction (each day uses the correction trained without its own season;
+contrails followed 24 h); resumable, days already done are skipped. (2) Then the **logged final
+run for H3 and H4** on that corrected energy forcing (record in `_locks/final_runs.jsonl`).
+
+* **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** ≈ 1–4 h for
+  the CoCiP part (if Colab disconnects, run again: finished days are kept), then ≈ 5 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("07c_corrected_h34"),
+    *SETUP,
+    code('''
+# ── 7. Corrected CoCiP, every evaluation day (resumable) ─────────────────────
+rc_cocip = stratum("run-corrected-cocip", live=True)
+import glob
+done_days = sorted(os.path.basename(d) for d in glob.glob(f"{DRIVE_ROOT}/interim/cocip_domain/STRATUM/*/*") if os.path.exists(f"{d}/_SUCCESS"))
+# ── 8. The final H3/H4 run (only if all 12 days are done) ────────────────────
+rc_h34 = stratum("evaluate-h34 --final", live=True) if rc_cocip == 0 and len(done_days) == 12 else None
+runs = sorted(glob.glob(f"{DRIVE_ROOT}/reports/2*_*/results_h34.json"))
+res = json.load(open(runs[-1])) if runs and rc_h34 == 0 else {}
+final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if os.path.exists(f"{DRIVE_ROOT}/_locks/final_runs.jsonl") else []
+'''),
+    summary_cell("""    "exit_codes": {"corrected_cocip": rc_cocip, "h34": rc_h34},
+    "corrected_days_done": done_days,
+    "final_run_record": json.loads(final_log[-1]) if final_log and rc_h34 == 0 else None,
+    "h3": {k: v for k, v in res.get("h3", {}).items() if k != "curve"},
+    "h4": res.get("h4"),
+    "h3_commercial": {k: v for k, v in res.get("h3_commercial", {}).items() if k != "curve"},
+    "h4_commercial": res.get("h4_commercial"),
+    "info": res.get("info"),
+"""),
+]
+
+PHASE7_DECIDE = [
+    header(
+        "07d · Phase 7: avoidance decisions — alternatives, Monte Carlo, ranked lists",
+        """
+**What it does:** for every warming persistent contrail the corrected model flags on the 12
+held-out days, it tries ±2,000 and ±4,000 ft, reruns CoCiP for the changed stretch with 100
+Monte Carlo members (humidity, CoCiP parameters, efficacy), adds the OpenAP fuel cost, and
+ranks the alternatives by the lower bound of net warming avoided under the 20- and 100-year
+horizons. It writes a ranked list (paper Table 3 fields) per day and a summary. Resumable.
+
+* **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** unknown until
+  the first day finishes (likely 10–40 min per day). If Colab disconnects, run again.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("07d_decide"),
+    *SETUP,
+    code('''
+# ── 7. Decisions, every evaluation day (resumable) ───────────────────────────
+rc_dec = stratum("decide --members 100", live=True)
+sp_ = f"{DRIVE_ROOT}/reports/phase7_decisions/summary.json"
+res = json.load(open(sp_)) if os.path.exists(sp_) else {}
+'''),
+    summary_cell("""    "exit_code": rc_dec,
+    "decisions": res,
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1222,4 +1288,6 @@ if __name__ == "__main__":
     write("06b_evaluate_final.ipynb", PHASE6_FINAL)
     write("07a_model_train.ipynb", PHASE7_TRAIN)
     write("07b_h2_final.ipynb", PHASE7_H2)
+    write("07c_corrected_h34.ipynb", PHASE7_CORRECTED)
+    write("07d_decide.ipynb", PHASE7_DECIDE)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

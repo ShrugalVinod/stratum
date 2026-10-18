@@ -874,6 +874,211 @@ def evaluate_h2_cmd(
                              "h2": res["h2"]["sentence"]})  # fmt: skip
 
 
+def _eval_days(root: Path) -> list[str]:
+    t, _ = _eval_table(root)
+    return sorted(t["day"].unique())
+
+
+@app.command("run-corrected-cocip")
+def run_corrected_cocip(
+    day: Annotated[
+        str, typer.Option(help="one day YYYY-MM-DD (default: every evaluation day)")
+    ] = "",
+    force: Annotated[bool, typer.Option(help="recompute days already done")] = False,
+) -> None:
+    """Phase 7 (Colab 07c): CoCiP over the whole domain with the learned humidity correction of
+    the fold that holds each day out (central run, contrails followed 24 h)."""
+    from stratum.decide import run as dr
+    from stratum.model import run as mr
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    bands = [(float(a), float(b)) for a, b in pre.correction_model.latitude_bands_deg]
+    days = [day] if day else _eval_days(root)
+    for d in days:
+        r = dr.corrected_domain_day(root, d, bands, mr.model_dir(root), force=force)
+        console.print(
+            f"corrected CoCiP {d}: {r.get('status')} "
+            f"(share_persistent_1 {r.get('share_persistent_1')}, EF+ {r.get('ef_positive_J')})"
+        )
+
+
+def _ci(r: dict[str, float], supported: bool) -> str:
+    verdict = "supported" if supported else "not supported"
+    return f"{r['value']:.4f} [{r['lo']:.4f}, {r['hi']:.4f}] → {verdict}"
+
+
+def _h34_segments(root: Path, days: list[str]) -> tuple[Any, dict[str, int]]:
+    import pandas as pd
+
+    from stratum.manifest import is_done
+
+    parts, info = [], {"days_missing": 0, "segments_no_cocip": 0}
+    for d in days:
+        cdir = root / "interim" / "cocip_domain" / "STRATUM" / d[:7] / d
+        if not is_done(cdir):
+            info["days_missing"] += 1
+            continue
+        s = pd.read_parquet(
+            root / "interim" / "segments_met" / d[:7] / d / "segments_met.parquet",
+            columns=["segment_id", "length_km", "local_solar_time_h", "commercial"],
+        )
+        e = pd.read_parquet(cdir / "segments.parquet", columns=["segment_id", "ef"])
+        m = s.merge(e, on="segment_id", how="left")
+        info["segments_no_cocip"] += int(m["ef"].isna().sum())
+        parts.append(m[m["ef"].notna()].assign(day=d))
+    return pd.concat(parts, ignore_index=True), info
+
+
+@app.command("evaluate-h34")
+def evaluate_h34_cmd(
+    final: Annotated[
+        bool, typer.Option(help="the logged final run (needs a verified lock)")
+    ] = False,
+    peek: Annotated[str, typer.Option(help="non-final run: exact phrase")] = "",
+) -> None:
+    """Phase 7 (Colab 07c): H3 (concentration) and H4 (night share) on corrected EF."""
+    import platform
+    from datetime import datetime
+
+    from stratum.evaluate import h34
+
+    paths = lk.default_paths()
+    root = drive_root()
+    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
+    if final:
+        ok, why = lk.final_allowed(v)
+        if not ok:
+            console.print(f"[red]Final run refused: {why}[/red]")
+            raise typer.Exit(1)
+    elif peek != lk.PEEK_PHRASE:
+        console.print(
+            f'[red]Held-out days are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
+        )
+        raise typer.Exit(1)
+    pre = cfg.load_preregistered()
+    n = pre.bootstrap.n_resamples
+    seed = pre.detection.labelled_split.seed or 0
+    days = _eval_days(root)
+    seg, info = _h34_segments(root, days)
+    if info["days_missing"]:
+        console.print(
+            f"[red]{info['days_missing']} days have no corrected CoCiP run (07c first).[/red]"
+        )
+        raise typer.Exit(1)
+    night = tuple(float(x) for x in (pre.hypotheses["H4"].night_lst or (18, 6)))
+    res = {
+        "h3": h34.h3(seg, n, seed),
+        "h4": h34.h4(seg, n, seed, night=night),  # type: ignore[arg-type]
+        "h3_commercial": h34.h3(seg[seg["commercial"].fillna(False)], n, seed),
+        "h4_commercial": h34.h4(seg[seg["commercial"].fillna(False)], n, seed, night=night),  # type: ignore[arg-type]
+        "info": info,
+    }
+    sha, dirty = git_commit()
+    now = datetime.now(UTC)
+    run_id = f"{now:%Y%m%dT%H%M%SZ}_{(sha or 'nogit')[:7]}"
+    out = root / "reports" / run_id
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "results_h34.json").write_text(json.dumps(res, indent=1, default=str))
+    record = {
+        "run_id": run_id,
+        "commit": sha,
+        "dirty": dirty,
+        "final": final,
+        "n_resamples": n,
+        "seed": seed,
+        "time_utc": now.isoformat(),
+        "config_hash": cfg.config_hash(),
+        "lock_identical": v.identical,
+        "deviations_covering": v.changed,
+        "hypotheses": ["H3", "H4"],
+        "h3_share": res["h3"]["share"],
+        "h3_supported": res["h3"]["supported"],
+        "h4_difference": res["h4"]["difference"],
+        "h4_supported": res["h4"]["supported"],
+        "results_sha256": lk.results_hash(res),
+        "python": platform.python_version(),
+    }
+    log = "final_runs.jsonl" if final else "peek_runs.jsonl"
+    lk.append_run_record(root / "_locks" / log, record)
+    lk.append_run_record(repo_root() / "_locks" / log, record)
+    h3r, h4r = res["h3"], res["h4"]
+    _summary(
+        "evaluate-h34",
+        {
+            "run_id": run_id,
+            "final": final,
+            "H3 share (≤ 0.10 supports)": _ci(h3r["share"], h3r["supported"]),
+            "H4 night EF share − night distance share": _ci(h4r["difference"], h4r["supported"]),
+        },
+    )
+
+
+@app.command("decide")
+def decide_cmd(
+    day: Annotated[
+        str, typer.Option(help="one day YYYY-MM-DD (default: every evaluation day)")
+    ] = "",
+    members: Annotated[
+        int, typer.Option(help="Monte Carlo members (pre-registered N = 100)")
+    ] = 100,
+    force: Annotated[bool, typer.Option(help="recompute days already done")] = False,
+) -> None:
+    """Phase 7 (Colab 07d): alternatives, Monte Carlo, ranked avoidance lists (Table 3)."""
+    import numpy as np
+    import pandas as pd
+
+    from stratum.decide import humidity as hu
+    from stratum.decide import report as drep
+    from stratum.decide import run as dr
+    from stratum.model import features as fe
+    from stratum.model import run as mr
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed or 0
+    bands = [(float(a), float(b)) for a, b in pre.correction_model.latitude_bands_deg]
+    mdir = mr.model_dir(root)
+    t, _ = _eval_table(root)
+    lab = t[t["y"].notna()]
+    days = [day] if day else _eval_days(root)
+    sdir = root / "interim" / "decisions" / "_s_bootstrap"
+    sdir.mkdir(parents=True, exist_ok=True)
+    names = list(pre.correction_model.features)
+    done = []
+    for d in days:
+        fold = hu.fold_for_day(d)
+        sf = sdir / f"{fold}.npy"
+        if not sf.exists():
+            train = lab[lab["season"] != fold]
+            np.save(sf, hu.bootstrap_s(train[np.isfinite(train["rhi"])], bands, members, seed))
+        r = dr.decide_day(root, d, pre, mdir, np.load(sf), members, seed, force=force)
+        console.print(f"decide {d}: {r}")
+        odir = root / "interim" / "decisions" / d[:7] / d
+        if r.get("status") in ("done", "already done") and (odir / "ranked.parquet").exists():
+            ranked = pd.read_parquet(odir / "ranked.parquet")
+            cands = pd.read_parquet(odir / "candidates.parquet")
+            seg = pd.read_parquet(
+                root / "interim" / "segments_met" / d[:7] / d / "segments_met.parquet"
+            )
+            model, _ = mr.load(mdir / fold)
+            ok = np.isfinite(seg["rhi"].to_numpy(float))
+            p = pd.Series(np.nan, index=seg["segment_id"])
+            p[ok] = model.predict(seg.loc[ok, fe.columns(names)].to_numpy(float))
+            cells = dr.confidence_cells(lab[lab["day"] != d], bands)
+            tab = drep.table3(
+                ranked, cands, seg, p, cells, bands, pre.avoidance.confidence_note_min_examples
+            )
+            tab.to_parquet(odir / "table3.parquet", index=False)
+            tab.to_csv(odir / "table3.csv", index=False)
+            done.append(odir)
+    summ = drep.summary(done)
+    out = root / "reports" / "phase7_decisions"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "summary.json").write_text(json.dumps(summ, indent=1, default=str))
+    _summary("decide", {k: json.dumps(v) if isinstance(v, dict) else v for k, v in summ.items()})
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
