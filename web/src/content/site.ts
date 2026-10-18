@@ -62,8 +62,8 @@ export const phases: { n: number; name: string; state: PhaseState; logged?: stri
   { n: 2, name: "Physics baseline", state: "done", logged: "15 OCT" },
   { n: 3, name: "Satellite detector", state: "done", logged: "15 OCT" },
   { n: 4, name: "Web app v0", state: "done", logged: "17 OCT" },
-  { n: 5, name: "Labels & matching", state: "current" },
-  { n: 6, name: "Evaluation (H1)", state: "upcoming" },
+  { n: 5, name: "Labels & matching", state: "done", logged: "18 OCT" },
+  { n: 6, name: "Evaluation (H1)", state: "current" },
   { n: 7, name: "Correction & decisions", state: "upcoming" },
   { n: 8, name: "Final web app", state: "upcoming" },
 ];
@@ -153,15 +153,17 @@ export const hypotheses = [
 export const methods = [
   { title: "Data", body: "ERA5 weather, Meteosat-9 imagery every 15 minutes, ADS-B flight tracks for 12 first-of-month days (Mar 2025 – Feb 2026), and an aircraft database." },
   { title: "Physics baseline", body: "Schmidt–Appleman formation check, then CoCiP for persistence and energy forcing, with three humidity baselines and Monte Carlo ranges." },
-  { title: "Satellite detection", body: "A transparent line-filter detector on the 10.8 − 12.0 µm brightness-temperature difference, tuned on 51 expert-labelled Meteosat scenes (DLR dataset) and checked on 89 others; final accuracy is measured on 100 India scenes labelled by the team." },
-  { title: "Matching and labels", body: "Each predicted contrail is advected with the wind for 20–120 min, parallax-corrected and matched within 2 px and 20°; unobservable scenes are labelled unknown." },
+  { title: "Satellite detection", body: "A transparent line-filter detector on the 10.8 − 12.0 µm brightness-temperature difference, tuned on 51 Meteosat scenes labelled by three contrail experts (DLR dataset) and checked on 89 others (precision 0.22, recall 0.23). Over India it is also checked against 100 scenes whose labels Claude drafted and team members reviewed: a secondary, exploratory check." },
+  { title: "Matching and labels", body: "Each predicted contrail is advected with the wind for 20–120 min, parallax-corrected and matched within 2 px and 20°. A segment counts as observed only if it matches in at least two satellite images; cloudy or steep-angle scenes are labelled unknown, never \"no contrail\". A wrong-day check measures how many matches are chance." },
   { title: "Correction and decision", body: "A calibrated model learns where physics is wrong; the decision layer ranks altitude changes by their lower-bound net warming avoided." },
 ];
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-10-18", phase: 5, title: "Phase 5 accepted: satellite labels for the whole year", body: "680,387 contrail-forming flight segments over India checked against Meteosat-9: 421 contrails observed from 369 flights (the pre-registered minimum is 300). A wrong-day check shows about a third of these matches would happen by chance, so the labels are noisy. Almost all observations are from winter and spring: monsoon cloud hides contrails from June to October. Over India the detector finds about 1 in 3 labelled contrails, but only about 1 in 20 of its lines is a contrail." },
+  { date: "2026-10-18", phase: 5, title: "India labels drafted by AI, reviewed by the team", body: "The team could not find contrails reliably in the India scenes, so Claude drafted the lines and Aditya, Ishaan and Abeer each reviewed and corrected a third of the 100 scenes: 15 draft lines, 0 deleted, 5 moved, 21 added. This is logged as a deviation from the plan and used only as a secondary check." },
   { date: "2026-10-17", phase: 5, title: "Detector tuned on expert labels; matching built", body: "The satellite detector was tuned on 51 Meteosat scenes labelled by three contrail experts (DLR dataset) and checked on 89 others: precision 0.22, recall 0.23, up from 0.14 / 0.26. It still misses many short, faint contrails. The full-year matching that turns satellite images into labels for every flight segment is built and tested." },
-  { date: "2026-10-17", phase: 5, title: "Labelling starts with three labellers", body: "220 Meteosat scenes drawn once with a fixed seed. Three team members label a 20-scene pilot, 20 expert scenes to measure their own accuracy, and 100 India test scenes, each by two people. A separate labelling app keeps the satellite data private." },
+  { date: "2026-10-17", phase: 5, title: "Labelling scenes drawn", body: "220 Meteosat scenes drawn once with a fixed seed, stratified by month, time of day and predicted contrail density. A separate labelling app keeps the satellite data private." },
   { date: "2026-10-17", phase: 4, title: "Web app v0 accepted", body: "Map with real January 2026 contrail conditions, flight replay and contrail details, plus the Innovation Website, live on Cloudflare." },
   { date: "2026-10-16", phase: 4, title: "Web app v0 started", body: "Data contract for the website: contrail-condition grids for every hour and flight level of January 2026, commercial flights only, aircraft identities hashed." },
   { date: "2026-10-15", phase: 3, title: "Satellite contrail detector", body: "A line-filter detector on Meteosat-9 finds long contrails such as two over the Arabian Sea at night. Overlays of physics predictions on satellite images: on 1 Jan 2026 no predicted contrail lined up with a detected one — a first sign that physics alone is not enough." },
@@ -172,9 +174,9 @@ export const progress = [
 
 export const team = [
   { initials: "SV", name: "Shrugal Vinod", role: "Team lead · modelling & software" },
-  { initials: "AH", name: "Aditya Harsoda", role: "Flight data" },
-  { initials: "IK", name: "Ishaan Kupnur", role: "Satellite data & labelling" },
-  { initials: "AS", name: "Abeer Shah", role: "Product & communication" },
+  { initials: "AH", name: "Aditya Harsoda", role: "Flight data · label review" },
+  { initials: "IK", name: "Ishaan Kupnur", role: "Satellite data · label review" },
+  { initials: "AS", name: "Abeer Shah", role: "Product & communication · label review" },
 ];
 export const supervisor = { initials: "VP", name: "Dr. Varsha Pant", role: "Supervisor" };
 

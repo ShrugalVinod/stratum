@@ -64,8 +64,11 @@ export function AboutData() {
             <p class="label red">§4 · AI use</p>
             <p>
               The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis
-              code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team,
-              and no AI-generated labels, observations or results are presented as data.
+              code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team.
+              One exception to "humans label the data": for the 100 India satellite scenes used as a secondary check of the contrail detector,
+              Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result).
+              These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and
+              no AI-generated observations or results are presented as data.
             </p>
           </section>
         </div>
