@@ -26,6 +26,7 @@ import pandas as pd
 from stratum.manifest import is_done
 
 LAB_COLS = [
+    "n_matched_observable",
     "segment_id",
     "flight_id",
     "time_mid",
@@ -177,6 +178,7 @@ def year_summary(root: Path, min_events: int = 300) -> dict[str, Any]:
         },
         "parallax": par,
     }
+    summary["sensitivity_min_matched_slots"] = rule_variants(lab)
     summary["wrong_day_null"] = null_summary(root, summary)
     (out / "labels_summary.json").write_text(json.dumps(summary, indent=1, default=str))
     return {"status": "done", **summary}
@@ -203,4 +205,27 @@ def null_summary(root: Path, real: dict[str, Any] | None = None) -> dict[str, An
         out["share_of_y1_explained_by_chance"] = (
             round(out["chance_y1_rate"] / r, 3) if r and out["chance_y1_rate"] is not None else None
         )
+    return out
+
+
+def rule_variants(lab: pd.DataFrame, min_observable: int = 2) -> dict[str, Any]:
+    """y = 1 / y = 0 / contrail events if y = 1 needed k = 1, 2, 3 matched observable images
+    (D-004: k = 2 is primary; k = 1 is the original pre-registered rule)."""
+    out: dict[str, Any] = {}
+    for k in (1, 2, 3):
+        y = np.where(
+            lab["n_matched_observable"] >= k,
+            1.0,
+            np.where(
+                (lab["n_matched_observable"] == 0) & (lab["n_observable"] >= min_observable),
+                0.0,
+                np.nan,
+            ),
+        )
+        v = lab.assign(y=y)
+        out[f"k{k}"] = {
+            "y1": int((y == 1).sum()),
+            "y0": int((y == 0).sum()),
+            "y1_events": contrail_events(v),
+        }
     return out

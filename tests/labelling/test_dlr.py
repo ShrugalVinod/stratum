@@ -104,3 +104,71 @@ def test_test_zip_holds_only_heldout_scenes(tmp_path: Path) -> None:
     names = zipfile.ZipFile(sd / "test.zip").namelist()
     assert res["scenes"] == 1
     assert sorted(names) == ["S002/btd.png", "S002/meta.json", "labelling_guide.md"]
+
+
+def test_detector_objects_map_back_to_the_package_frame() -> None:
+    from stratum.labelling.packages import package_to_native
+
+    # a line drawn in the package, mapped to native, must come back where it was drawn
+    r, c = package_to_native([40.0, 40.0], [20.0, 120.0], r0=512, c0=256)
+    objs = pd.DataFrame({"poly_row": [list(r)], "poly_col": [list(c)]})
+    (poly,) = phase5.detector_objects_in_scene(objs, 512, 256)
+    assert np.allclose(poly, [[40, 20], [40, 120]])
+    # an object outside the scene box is dropped
+    far = pd.DataFrame({"poly_row": [[10.0, 10.0]], "poly_col": [[10.0, 90.0]]})
+    assert phase5.detector_objects_in_scene(far, 512, 256) == []
+
+
+def test_india_detector_check_end_to_end(tmp_path: Path) -> None:
+    from stratum.labelling.packages import package_to_native
+
+    sd = tmp_path / "labels" / "scenes"
+    sd.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "scene_id": ["S002", "S003", "S004"],
+            "role": ["main"] * 3,
+            "split": ["heldout"] * 3,
+            "day": ["2026-01-15"] * 3,
+            "time": ["2026-01-15 06:00:00"] * 3,
+            "r0": [0, 256, 512],
+            "c0": [0, 0, 0],
+        }
+    ).to_csv(sd / "scenes.csv", index=False)
+    line = [[50.0, 20.0], [50.0, 120.0]]
+    labs = {
+        "S002": ("clear", [line]),  # detected → match
+        "S003": ("partly_obscured", [line]),  # nothing detected → miss
+        "S004": ("obscured", [line]),  # excluded
+    }
+    d = tmp_path / "labels" / "raw" / "aditya-review"
+    d.mkdir(parents=True)
+    for sid, (st, lines) in labs.items():
+        (d / f"{sid}.json").write_text(
+            json.dumps(
+                {
+                    "scene_id": sid,
+                    "labeller": "aditya-review",
+                    "scene_status": st,
+                    "flags": {"no_contrails": False, "unusable": False},
+                    "objects": [{"polyline_px": ln, "confidence": "sure"} for ln in lines],
+                }
+            )
+        )
+    (d / "_export.json").write_text(json.dumps({"labeller": "aditya-review", "scenes": 3}))
+    r, c = package_to_native([50.0, 50.0], [20.0, 120.0], 0, 0)
+    det = tmp_path / "interim" / "detections" / "2026-01-15"
+    det.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "image_time": [pd.Timestamp("2026-01-15 06:00")] * 2,
+            "poly_row": [list(r), [600.0, 610.0]],
+            "poly_col": [list(c), [5.0, 80.0]],  # second object: inside S004's box only
+            "confidence": [0.9, 0.9],
+        }
+    ).to_parquet(det / "objects.parquet")
+    rep = phase5.india_detector_check(tmp_path, threshold=0.15, seed=1)
+    s = rep["sure_only"]
+    assert rep["scenes_scored"] == 2 and rep["skipped"]["obscured_or_unusable"] == 1
+    assert (s["detections"], s["label_lines"], s["matched"]) == (1, 2, 1)
+    assert s["precision"] == 1.0 and s["recall"] == 0.5

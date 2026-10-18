@@ -525,6 +525,47 @@ def match_year(
     )
 
 
+@app.command("label-diagnostics")
+def label_diagnostics() -> None:
+    """Phase 5 check: y = 1 rate on real vs wrong-day flights under 1/2/3-image match rules."""
+    from stratum.match.diagnostics import label_variants
+
+    root = drive_root()
+    res = label_variants(root)
+    out = root / "reports" / "phase5"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "label_diagnostics.json").write_text(json.dumps(res, indent=1, default=str))
+    _summary(
+        "label diagnostics",
+        {k: json.dumps(v) if isinstance(v, dict) else v for k, v in res.items()},
+    )
+
+
+@app.command("india-detector-check")
+def india_detector_check_cmd() -> None:
+    """D-003 (secondary): detector precision/recall vs the reviewed India labels.
+
+    Unpacks the newest ``labels/raw/labels_<id>-review_*.zip`` of each reviewer first."""
+    import zipfile
+
+    from stratum import phase5
+    from stratum.detect.params import load_detector_params
+
+    root = drive_root()
+    raw = root / "labels" / "raw"
+    unpacked = {}
+    for w in phase5.REVIEWERS:
+        zips = sorted(raw.glob(f"labels_{w}_*.zip"))
+        if zips:
+            with zipfile.ZipFile(zips[-1]) as z:
+                z.extractall(raw)
+            unpacked[w] = zips[-1].name
+    seed = cfg.load_preregistered().detection.labelled_split.seed or 0
+    rep = phase5.india_detector_check(root, load_detector_params().operating_threshold, seed)
+    rows = {k: json.dumps(v) if isinstance(v, dict) else v for k, v in rep.items()}
+    _summary("india detector check", {"unpacked": json.dumps(unpacked), **rows})
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

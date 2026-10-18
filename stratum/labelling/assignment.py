@@ -23,3 +23,11 @@ def labellers_for(scene_ids: list[str]) -> dict[str, list[str]]:
     if len(ids) <= PILOT_MAX_SCENES:
         return {s: list(LABELLERS) for s in ids}
     return {s: list(PAIRS[k % 3]) for k, s in enumerate(ids)}
+
+
+def reviewer_for(scene_ids: list[str]) -> dict[str, str]:
+    """Deviation D-003: each Claude draft is reviewed by ONE labeller, position k → k mod 3.
+
+    100 test scenes → aditya 34, ishaan 33, abeer 33. Same rule as ``reviewerFor`` in
+    labeller/src/assignment.ts."""
+    return {s: LABELLERS[k % 3] for k, s in enumerate(sorted(scene_ids))}

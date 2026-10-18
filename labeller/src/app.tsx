@@ -1,6 +1,7 @@
 // STRATUM Labeller: label contrails in Meteosat-9 scene packages (build prompt §5.2).
-// Two modes: "Label" (one labeller, their own labels only) and "Adjudicate" (both labellers'
-// lines on one image; keep, delete or redraw; export the agreed set).
+// Three modes: "Label" (one labeller, their own labels only), "Review" (deviation D-003: start
+// from Claude's draft lines, check every scene, keep / delete / redraw; export the reviewed set)
+// and "Adjudicate" (both labellers' lines on one image; keep, delete or redraw).
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import guideFallback from "../../docs/labelling_guide.md?raw";
 import {
@@ -21,19 +22,20 @@ import {
   seededOrder,
   type Status,
 } from "./labels";
-import { isLabeller, LABELLERS, scenesFor } from "./assignment";
+import { isLabeller, LABELLERS, reviewScenesFor, scenesFor } from "./assignment";
 import { mdToHtml } from "./md";
 import { decodeGrey, type Frame, FRAME_FILE, type PackageSet, readLabelExport, readPackageZip } from "./packages";
 import { makeLut, Viewer } from "./viewer";
 
 type Layer = "btd" | "t108";
-type Mode = "label" | "adjudicate";
+type Mode = "label" | "review" | "adjudicate";
 type Session = {
   mode: Mode;
-  labeller: string; // "adjudicated" in adjudication mode
+  labeller: string; // "adjudicated" in adjudication mode, "<id>-review" in review mode
   pkg: PackageSet;
   order: string[];
   total: number; // scenes in the package (order holds only this labeller's share)
+  draft?: Map<string, SceneLabel>; // review mode: Claude's draft labels
   others?: { a: { labeller: string; labels: Map<string, SceneLabel> }; b: { labeller: string; labels: Map<string, SceneLabel> } };
 };
 
@@ -103,6 +105,7 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
   });
   const [pkgFile, setPkgFile] = useState<File | null>(null);
   const [aFile, setAFile] = useState<File | null>(null);
+  const [draftFile, setDraftFile] = useState<File | null>(null);
   const [bFile, setBFile] = useState<File | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,7 +118,7 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
       if (!pkgFile) throw new Error("Choose the scene package zip (pilot.zip, calibration.zip or test.zip).");
       const pkg = readPackageZip(await readFile(pkgFile), pkgFile.name);
       const ids = [...pkg.scenes.keys()];
-      if (mode === "label") {
+      if (mode === "label" || mode === "review") {
         if (!clean) throw new Error(`Type your labeller ID (${LABELLERS.join(", ")}).`);
         if (!isLabeller(clean)) throw new Error(`“${clean}” is not on the labeller list. Use ${LABELLERS.join(", ")}.`);
         try {
@@ -123,8 +126,15 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
         } catch {
           /* not remembered */
         }
-        const mine = scenesFor(ids, clean);
-        onStart({ mode, labeller: clean, pkg, order: seededOrder(mine, `${clean}|${ids.length}`), total: ids.length });
+        if (mode === "review") {
+          if (!draftFile) throw new Error("Choose Claude's draft file (claude-draft.zip).");
+          const d = readLabelExport(await readFile(draftFile), draftFile.name);
+          const mine = reviewScenesFor(ids, clean);
+          onStart({ mode, labeller: `${clean}-review`, pkg, order: seededOrder(mine, `${clean}|review|${ids.length}`), total: ids.length, draft: d.labels });
+        } else {
+          const mine = scenesFor(ids, clean);
+          onStart({ mode, labeller: clean, pkg, order: seededOrder(mine, `${clean}|${ids.length}`), total: ids.length });
+        }
       } else {
         if (!aFile || !bFile) throw new Error("Choose both labellers' export zips.");
         const a = readLabelExport(await readFile(aFile), aFile.name);
@@ -152,6 +162,9 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
         <button role="tab" aria-selected={mode === "label"} class={mode === "label" ? "on" : ""} onClick={() => setMode("label")}>
           Label
         </button>
+        <button role="tab" aria-selected={mode === "review"} class={mode === "review" ? "on" : ""} onClick={() => setMode("review")}>
+          Review
+        </button>
         <button role="tab" aria-selected={mode === "adjudicate"} class={mode === "adjudicate" ? "on" : ""} onClick={() => setMode("adjudicate")}>
           Adjudicate
         </button>
@@ -163,7 +176,7 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
           go();
         }}
       >
-        {mode === "label" && (
+        {(mode === "label" || mode === "review") && (
           <label class="field">
             <span>Your labeller ID</span>
             <input value={id} onInput={(e) => setId((e.target as HTMLInputElement).value)} placeholder="aditya, ishaan or abeer" autocomplete="off" />
@@ -178,6 +191,16 @@ function Start({ onStart, onHelp }: { onStart: (s: Session) => void; onHelp: () 
           <input type="file" accept=".zip" data-testid="pkg" onChange={(e) => setPkgFile((e.target as HTMLInputElement).files?.[0] ?? null)} />
           <small>All three of you label in this order: 1. pilot.zip, 2. calibration.zip, 3. test.zip. Open calibration.zip and test.zip only after the team has discussed the pilot.</small>
         </label>
+        {mode === "review" && (
+          <label class="field">
+            <span>Claude's draft (claude-draft.zip)</span>
+            <input type="file" accept=".zip,.json" data-testid="draft" onChange={(e) => setDraftFile((e.target as HTMLInputElement).files?.[0] ?? null)} />
+            <small>
+              Claude's draft lines appear in green. Check every scene yourself: delete wrong lines, redraw lines that are off, add missed contrails,
+              then set the scene status (or "No contrails"). You review about 33 of the 100 test scenes.
+            </small>
+          </label>
+        )}
         {mode === "adjudicate" && (
           <>
             <label class="field">
@@ -226,6 +249,7 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
       const saved = loadSaved(s.labeller, id);
       if (saved) m.set(id, saved);
       else if (s.mode === "adjudicate") m.set(id, seedAdjudication(id, s));
+      else if (s.mode === "review") m.set(id, seedReview(id, s));
     }
     return m;
   });
@@ -317,7 +341,7 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
       setMsg(`Too short: ${polyLength(pts).toFixed(1)} px. Contrails must be at least ${MIN_LENGTH_PX} px long (rule 1). Keep clicking or press Esc.`);
       return;
     }
-    const o: Obj = { id: newId(), polyline_px: pts, confidence: newConf, ...(s.mode === "adjudicate" ? { source: "adjudicator" } : {}) };
+    const o: Obj = { id: newId(), polyline_px: pts, confidence: newConf, ...(s.mode === "adjudicate" ? { source: "adjudicator" } : s.mode === "review" ? { source: "reviewer" } : {}) };
     setObjects([...label.objects, o]);
     setDraft([]);
     setSelected(o.id);
@@ -390,17 +414,17 @@ function Workspace({ s, onHelp, onQuit }: { s: Session; onHelp: () => void; onQu
 
   const done = s.order.filter((id) => isComplete(labels.get(id))).length;
   const issues = problems(label);
-  const colors = (o: Obj) => (o.source === "A" ? "#ff9f1c" : o.source === "B" ? "#3ec6ff" : o.source === "adjudicator" ? "#ff5cc8" : "#ffb02e");
+  const colors = (o: Obj) => (o.source === "A" ? "#ff9f1c" : o.source === "B" ? "#3ec6ff" : o.source === "adjudicator" ? "#ff5cc8" : o.source === "claude-draft" ? "#5cff8a" : "#ffb02e");
   const others = s.others;
 
   return (
     <div class="ws">
       <header class="bar">
         <b>STRATUM Labeller</b>
-        <span class="pill">{s.mode === "label" ? `Labeller: ${s.labeller}` : "Adjudication"}</span>
+        <span class="pill">{s.mode === "label" ? `Labeller: ${s.labeller}` : s.mode === "review" ? `Reviewer: ${s.labeller.replace(/-review$/, "")}` : "Adjudication"}</span>
         <span class="muted">
           {s.pkg.name}
-          {s.mode === "label" && s.order.length < s.total ? ` · your ${s.order.length} of ${s.total} scenes` : ""}
+          {s.mode !== "adjudicate" && s.order.length < s.total ? ` · your ${s.order.length} of ${s.total} scenes` : ""}
         </span>
         <span class="progress" aria-label={`${done} of ${s.order.length} scenes complete`}>
           <i style={{ width: `${(done / s.order.length) * 100}%` }} />
@@ -639,5 +663,14 @@ function seedAdjudication(sid: string, s: Session): SceneLabel {
   l.objects = [...(a?.objects ?? []).map((o) => ({ ...o, id: newId(), source: "A" })), ...(b?.objects ?? []).map((o) => ({ ...o, id: newId(), source: "B" }))];
   if (a && b && a.scene_status === b.scene_status) l.scene_status = a.scene_status;
   if (a?.flags.no_contrails && b?.flags.no_contrails) l.flags.no_contrails = true;
+  return l;
+}
+
+/** Review (D-003) starts from Claude's draft lines; status and "No contrails" are left for the
+ * reviewer to set, so a scene only counts as done after a person has looked at it. */
+function seedReview(sid: string, s: Session): SceneLabel {
+  const pv = s.pkg.scenes.get(sid)!.meta.package_version;
+  const l = emptyLabel(sid, s.labeller, pv);
+  l.objects = (s.draft?.get(sid)?.objects ?? []).map((o) => ({ ...o, id: newId(), source: "claude-draft" }));
   return l;
 }

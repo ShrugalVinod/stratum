@@ -214,6 +214,15 @@ class PreLabellerCalibration(StrictModel):
     seed: int
 
 
+class PreIndiaLabels(StrictModel):
+    """Deviation D-003: India labels are Claude drafts reviewed by one team member (secondary)."""
+
+    source: str
+    reviewers_per_scene: int
+    role: str
+    detector_accuracy_primary: str
+
+
 class PreDetection(StrictModel):
     btd: str
     labelled_scenes: int
@@ -227,6 +236,7 @@ class PreDetection(StrictModel):
     labelled_split: PreLabelledSplit
     detector_tuning: PreDetectorTuning | None = None
     labeller_calibration: PreLabellerCalibration | None = None
+    india_labels: PreIndiaLabels | None = None
 
 
 class PreLabellingRules(StrictModel):
@@ -239,6 +249,7 @@ class PreLabellingRules(StrictModel):
 
 class PreSegmentLabelRule(StrictModel):
     observed_if: str
+    min_matched_slots: int = Field(default=1, ge=1)  # D-004: 2
     not_observed_if: str
     min_observable_slots: int = Field(ge=1)
     otherwise: Literal["missing"]

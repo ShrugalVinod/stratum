@@ -39,11 +39,29 @@ def test_label_rule_any_observable_match_or_two_observable_misses() -> None:
             "matched": [False, True, False, False, True, True, False],
         }
     )
-    lab = mt.segment_labels(per).set_index("segment_id")
+    # original pre-registered rule (now the sensitivity variant): any 1 observable match
+    lab = mt.segment_labels(per, mt.MatchRules(min_matched_slots=1)).set_index("segment_id")
     assert np.isnan(lab.loc["a", "y"])  # its only match was unobservable; 1 observable miss
     assert lab.loc["b", "y"] == 0.0  # observable twice, never matched
     assert lab.loc["c", "y"] == 1.0  # matched at an observable image
     assert np.isnan(lab.loc["d", "y"])  # one observable miss is not enough
+    # D-004 primary rule: one observable match is not enough for y = 1, and never becomes 0
+    lab2 = mt.segment_labels(per).set_index("segment_id")
+    assert np.isnan(lab2.loc["c", "y"]) and lab2.loc["b", "y"] == 0.0
+
+
+def test_d004_two_matched_images_make_y1() -> None:
+    per = pd.DataFrame(
+        {
+            "segment_id": ["e"] * 3 + ["f"] * 3,
+            "observable": [True] * 6,
+            "matched": [True, False, True, True, False, False],
+        }
+    )
+    lab = mt.segment_labels(per).set_index("segment_id")
+    assert lab.loc["e", "y"] == 1.0
+    # matched once, observable 3 times: missing, NEVER "not observed" (bug fixed 18 Oct)
+    assert np.isnan(lab.loc["f", "y"])
 
 
 def test_box_fraction_majority_rule() -> None:

@@ -55,8 +55,33 @@ Newest first. What was done, what's next, blockers.
   (chance matches), Driver detectability flag and CoCiP advection comparison where CoCiP ran.
   Local test: 0.07 ms per segment; 206 Python tests.
 
+- Colab `05d_match_year` PASSED (commit d1cc320): 680,387 SAC-forming candidates; y = 1 4,263,
+  y = 0 332,647, missing 343,477 (known 49.5 %; monsoon days Jul–Sep only 3–5 % of images
+  observable). ≥ 300 check passed: 1,222 contrail events (1,065 flights). **But** the wrong-day
+  null gives a chance y = 1 rate of 0.77 % vs 1.27 % real: about 60 % of y = 1 labels are
+  expected by coincidence. Parallax correction barely changes near-matches (0.73 % vs 0.69 %
+  within 2 px), consistent with mostly chance matches. Escalated to the team before Phase 6.
+- D-003 (Team OK): India labels = Claude drafts + one reviewer; drafts done (100 scenes: 4 sure
+  lines in 3 scenes, 11 uncertain lines in 6 more, 91 with no contrails).
+
+- Colab `05e_label_diagnostics`: chance share of y = 1 is 60 % with the 1-image rule, 33 % with
+  ≥ 2 matched images, 24 % with ≥ 3. **D-004 (Team OK 18 Oct): y = 1 needs ≥ 2 matched observable
+  images**; the 1-image rule stays as a sensitivity analysis. Aditya finished his review of
+  Claude's India drafts.
+
+- 05d re-run with D-004: y = 1 1,564 segments, **421 contrail events (≥ 300 passed)**, 369
+  flights; chance share 0.33 (was 0.60). Sensitivity: 1 image 1,222 events, 3 images 207. A bug
+  put 2,608 single-match segments into y = 0; fixed (see decisions 18 Oct).
+- India review finished (36 lines in 16 scenes; 91 scenes scored).
+
+- Colab 05f PASSED (commit 0a89831): final labels (y = 1 1,564; 421 events; y = 0 332,647);
+  India check (91 scenes): detector precision 0.044 [0.020, 0.071], recall 0.33 [0.21, 0.51]
+  (sure + uncertain). Phase 5 gate report written (docs/phase_reports/phase5_gate_report.md).
+
 **Next**
-- Shrugal: run Colab 05d (full-year matching).
+- Phase 5 ACCEPTED 18 Oct (Shrugal). Phase 6 on hold until the team says go.
+- Claude: coverage audit 2/5 Nov.
+- Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.
 - Labellers: pilot (all three, 20 scenes) by 26 Oct → guide revision → calibration (all three)

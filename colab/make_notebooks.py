@@ -911,8 +911,79 @@ for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/matches/*/*/manifest.json")):
     "per_day": per_day,
     "totals": {k: ls.get(k) for k in ("candidates", "y1", "y0", "missing", "known_fraction", "y1_events", "y1_flights")},
     "min_labels_check": ls.get("min_labels_check"),
+    "sensitivity_min_matched_slots": ls.get("sensitivity_min_matched_slots"),
     "wrong_day_null": {k: v for k, v in (ls.get("wrong_day_null") or {}).items() if k != "runs"},
     "parallax": ls.get("parallax"),
+"""),
+]
+
+LABEL_DIAG = [
+    header(
+        "05e · How much of the satellite signal is chance? (Phase 5 check)",
+        """
+**What this does:** reads the per-image results that 05d stored (real flights and the wrong-day
+null) and recomputes the labels with a stricter rule: a contrail counts as seen only if it is
+matched in **2 (or 3) images**, not just 1. For each rule it compares the real y = 1 rate with the
+chance rate. No new detection; reads only.
+
+* **Runtime:** CPU, High-RAM if offered. **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** `reports/phase5/label_diagnostics.json` (a few KB). **Time:** ≈ 5 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("05e_label_diagnostics"),
+    *SETUP,
+    code('''
+# ── 7. Label-rule variants on real vs wrong-day runs ─────────────────────────
+rc = stratum("label-diagnostics", live=True)
+rep = f"{DRIVE_ROOT}/reports/phase5/label_diagnostics.json"
+diag = json.load(open(rep)) if os.path.exists(rep) else {}
+'''),
+    summary_cell("""    "exit_code": rc,
+    "diagnostics": diag,
+"""),
+]
+
+PHASE5_FINISH = [
+    header(
+        "05f · Final segment labels (D-004, fixed) + detector vs the reviewed India labels",
+        """
+**Before running:** upload the three review exports (`labels_aditya-review_test_….zip`,
+`labels_ishaan-review_test_….zip`, `labels_abeer-review_test_….zip`) to Drive
+`STRATUM/labels/raw/` as they are (zipped). The newest zip of each reviewer is used.
+
+**What this does:**
+1. Recomputes the segment labels with the D-004 rule (fixed 18 Oct: a segment matched in only one
+   image is *missing*, never "not observed"); detections are reused. Then the year summary:
+   counts, the ≥ 300 check, the 1/2/3-image sensitivity, the chance check.
+2. Compares the detector with the reviewed India labels: precision and recall with 95 % ranges
+   (deviation D-003, secondary check). Obscured scenes are left out.
+
+* **Runtime:** CPU, High-RAM if offered. **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** `interim/matches*`, `reports/phase5/`, `reports/labelling/india_detector_check.json`.
+* **Time:** ≈ 5–15 min. **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("05f_phase5_finish"),
+    *SETUP,
+    code('''
+# ── 7. Final segment labels (recomputed with the fixed D-004 rule) ───────────
+rc_match = stratum("match-year", live=True)
+rep_l = f"{DRIVE_ROOT}/reports/phase5/labels_summary.json"
+ls = json.load(open(rep_l)) if os.path.exists(rep_l) else {}
+'''),
+    code('''
+# ── 8. Detector vs the reviewed India labels ─────────────────────────────────
+rc_india = stratum("india-detector-check", live=True)
+rep_f = f"{DRIVE_ROOT}/reports/labelling/india_detector_check.json"
+india = json.load(open(rep_f)) if os.path.exists(rep_f) else {}
+'''),
+    summary_cell("""    "exit_codes": {"match_year": rc_match, "india_check": rc_india},
+    "totals": {k: ls.get(k) for k in ("candidates", "y1", "y0", "missing", "known_fraction", "y1_events", "y1_flights")},
+    "min_labels_check": ls.get("min_labels_check"),
+    "sensitivity_min_matched_slots": ls.get("sensitivity_min_matched_slots"),
+    "wrong_day_null": {k: v for k, v in (ls.get("wrong_day_null") or {}).items() if k != "runs"},
+    "india_check": india,
 """),
 ]
 
@@ -943,4 +1014,6 @@ if __name__ == "__main__":
     write("05b_scenes.ipynb", SCENES)
     write("05c_label_sets.ipynb", LABEL_SETS)
     write("05d_match_year.ipynb", MATCH_YEAR)
+    write("05e_label_diagnostics.ipynb", LABEL_DIAG)
+    write("05f_phase5_finish.ipynb", PHASE5_FINISH)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

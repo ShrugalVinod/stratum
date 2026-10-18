@@ -50,3 +50,48 @@ both runs (build prompt §6.8).
 - Results seen before the change: no. No scene had been labelled; no detector score, match or
   model result exists. Only the sampling summary (counts per stratum) had been seen.
 - Team OK: Shrugal Vinod, 2026-10-17 (chat: "B, Team OK")
+
+## D-003 — 2026-10-17 — India labels: Claude drafts, one team member reviews; expert data is the primary detector check
+- Keys: detection.pilot_scenes, detection.labellers_per_scene, detection.labeller_calibration, detection.india_labels
+- Reason: the team tried the 20-scene India pilot and could not find contrails in the images.
+  A check confirmed this is the data, not the app: the images decode correctly, and the
+  detector's best score per pilot scene (median 0.30) matches the expert scenes *without*
+  contrails (0.31), not those with them (0.61). Tropical India has few contrail outbreaks and a
+  busy clear-sky BTD background, so from-scratch labelling by non-experts would be slow and
+  unreliable. No public labelled contrail dataset exists for India, INSAT, Himawari or FY-4
+  (searched 17 Oct 2026; closest: the DLR SEVIRI set already used, and US GOES-16
+  OpenContrails). Change: (1) the detector's accuracy is reported primarily on the DLR expert
+  evaluation split (89 scenes), also for its tropical (< 30°N) and Indian-Ocean-view scenes;
+  (2) the 100 India held-out scenes get AI-assisted labels: Claude draws draft lines (BTD at
+  t ± 15 min with contrast enhancement; each hand-placed line traced to the local BTD ridge;
+  no detector output, flight tracks or predictions used), and one team member reviews and
+  corrects every scene in the labelling app's Review mode (k mod 3 over sorted scene ids:
+  34/33/33); (3) India precision/recall from these labels is secondary and exploratory, reported
+  separately, never pooled with the expert result; (4) no India pilot and no labeller
+  calibration round. Labelling rules (min length 10 px, scene status, uncertain lines scored
+  separately, blind to tracks and predictions) are unchanged.
+- Limitation stated up front: reviewers see the drafts, so their labels are not independent of
+  Claude's; the number of draft lines kept, deleted and added is reported.
+- Results seen before the change: the DLR tuning result (D-002); the detector's object counts
+  and best scores on the 20 *pilot* scenes (not the test scenes); Claude looked at the pilot and
+  test images (drafting the test labels is the change itself). No detector result on the test
+  scenes, no match or segment label, no model or hypothesis result.
+- Team OK: Shrugal Vinod, 2026-10-17 (chat: "Merge 1st option and 2nd and then do it")
+
+## D-004 — 2026-10-18 — A segment counts as "observed" only if matched in ≥ 2 observable images
+- Keys: matching.segment_label_rule.observed_if, matching.segment_label_rule.min_matched_slots
+- Reason: the wrong-day null (each day's flights matched against another day's images, where
+  every match is coincidence) gave a chance y = 1 rate of 0.76 % against 1.27 % for the real
+  flights: about 60 % of single-image matches are expected by chance, mostly cirrus streaks that
+  happen to line up with a flight path. A real contrail drifts with the wind and stays lined up
+  in the next image; a chance line rarely does. Colab 05e: requiring ≥ 2 matched observable
+  images lowers the chance share to 33 % (≥ 3: 24 %) and leaves an estimated ≈ 1,050 truly
+  observed segments (≥ 3: ≈ 620, likely below the 300-contrail minimum). Change: y = 1 needs
+  ≥ 2 matched observable images in the 20–120 min window; y = 0 is unchanged (≥ 2 observable
+  images, no match); a segment with exactly 1 observable match becomes missing. The original
+  rule (any 1 image) is reported as a sensitivity analysis, and the ≥ 300 check is re-run on
+  the new labels.
+- Results seen before the change: 05d label counts and the ≥ 300 check (passed: 1,222 events),
+  the wrong-day null and parallax summaries (Phase 5 data-quality checks), and the 05e
+  diagnostics above. No correction model, baseline, hypothesis test or H1–H4 result exists.
+- Team OK: Shrugal Vinod, 2026-10-18 (chat: "D-004 Team OK")

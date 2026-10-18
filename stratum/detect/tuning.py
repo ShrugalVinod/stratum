@@ -277,5 +277,32 @@ def tune(dlr_dir: Path, base: DetectorParams, seed: int, log: Any = print) -> di
         "evaluation_before_tuning": {k: round(v, 3) for k, v in prf(cold).items()},
         "evaluation_before_tuning_ci95": bootstrap_ci(cold, seed),
         "evaluation_per_scene": cev.to_dict(orient="records"),
+        "evaluation_subsets": subsets(cev, pd.read_csv(dlr_dir / "dataset_info.csv"), seed)
+        if (dlr_dir / "dataset_info.csv").exists()
+        else None,
         "params": p,
     }
+
+
+def subsets(per_scene: pd.DataFrame, info: pd.DataFrame, seed: int) -> dict[str, Any]:
+    """Evaluation metrics for scene groups closer to India (deviation D-003).
+
+    ``info``: the dataset's ``dataset_info.csv`` (scene_number, central_latitude/longitude).
+    Tropical = |central latitude| < 30°; Indian-Ocean side = central longitude > 30°E."""
+    m = per_scene.merge(info, left_on="scene", right_on="scene_number", how="left")
+    groups = {
+        "all": m,
+        "tropical_abs_lat_lt_30": m[m["central_latitude"].abs() < 30],
+        "extratropical": m[m["central_latitude"].abs() >= 30],
+        "east_of_30E": m[m["central_longitude"] > 30],
+    }
+    out: dict[str, Any] = {}
+    for name, g in groups.items():
+        c = g[["scene", "det", "exp", "tp", "hit"]]
+        out[name] = {
+            "scenes": len(c),
+            "expert_lines": int(c["exp"].sum()),
+            **{k: round(v, 3) for k, v in prf(c).items()},
+            "ci95": bootstrap_ci(c, seed) if len(c) >= 5 else None,
+        }
+    return out

@@ -11,6 +11,14 @@ Only derived counts are stored here; no image data.
 | Evaluation, Phase 3 settings | 0.14 [0.11, 0.17] | 0.26 [0.22, 0.31] | 0.18 [0.15, 0.22] | 0.30 [0.25, 0.36] |
 | Training (51 scenes), in-sample | 0.35 | 0.35 | 0.35 | 0.40 |
 
+By region of the 89 evaluation scenes (deviation D-003; closest to India's conditions first):
+
+| subset | scenes | expert lines | precision | recall | F1 [95 % CI] |
+|---|---|---|---|---|---|
+| Tropical (\|lat\| < 30°) | 27 | 68 | 0.25 | 0.43 | 0.32 [0.18, 0.42] |
+| Extratropical | 62 | 452 | 0.21 | 0.20 | 0.20 [0.16, 0.24] |
+| East of 30°E (Indian-Ocean side) | 3 | 23 | 0.27 | 0.17 | 0.21 (too few scenes for a CI) |
+
 95 % scene-bootstrap intervals (2,000 resamples, seed 20261017). One-to-one matching with the
 labeller-agreement rule (≤ 2 px mean distance over ≥ 50 % of the shorter line, ≤ 20°). Expert
 lines shorter than 10 px are dropped. Lenient recall: an expert line counts as found if any

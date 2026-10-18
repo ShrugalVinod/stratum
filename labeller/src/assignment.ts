@@ -22,6 +22,18 @@ export function labellersFor(sceneIds: string[]): Map<string, LabellerId[]> {
   return out;
 }
 
+/** Deviation D-003 review: each Claude draft is reviewed by ONE labeller, k mod 3 over sorted ids. */
+export function reviewerFor(sceneIds: string[]): Map<string, LabellerId> {
+  const out = new Map<string, LabellerId>();
+  [...sceneIds].sort().forEach((sid, k) => out.set(sid, LABELLERS[k % 3]));
+  return out;
+}
+
+export function reviewScenesFor(sceneIds: string[], who: LabellerId): string[] {
+  const m = reviewerFor(sceneIds);
+  return [...sceneIds].sort().filter((sid) => m.get(sid) === who);
+}
+
 export function scenesFor(sceneIds: string[], who: LabellerId): string[] {
   const m = labellersFor(sceneIds);
   return [...sceneIds].sort().filter((sid) => m.get(sid)!.includes(who));

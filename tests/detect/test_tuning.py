@@ -76,3 +76,20 @@ def test_search_space_is_fixed_before_tuning() -> None:
     # stage 1 reaches beyond the first grid's edge; stage 2 has 16 combinations
     assert max(h[0] for h in tu.HYSTERESIS) > 5.5
     assert len(tu.stage2_grid(load_detector_params())) == 16
+
+
+def test_subsets_split_by_latitude_and_longitude() -> None:
+    per = pd.DataFrame(
+        {"scene": [1, 2, 3], "det": [4, 2, 2], "exp": [3, 3, 1], "tp": [2, 1, 1], "hit": [3, 1, 1]}
+    )
+    info = pd.DataFrame(
+        {
+            "scene_number": [1, 2, 3],
+            "central_latitude": [10.0, -45.0, 2.0],
+            "central_longitude": [-20.0, 5.0, 45.5],
+        }
+    )
+    s = tu.subsets(per, info, seed=1)
+    assert s["all"]["scenes"] == 3 and s["tropical_abs_lat_lt_30"]["scenes"] == 2
+    assert s["extratropical"]["scenes"] == 1 and s["east_of_30E"]["scenes"] == 1
+    assert s["tropical_abs_lat_lt_30"]["precision"] == round(3 / 6, 3)
