@@ -124,6 +124,8 @@ def cocip_day(
     kind: str = "cocip",
     scaling_obj: Any = None,
     extra_params: dict[str, Any] | None = None,
+    chunk: int = 0,
+    keep_contrail: bool = True,
 ) -> dict[str, Any]:
     """CoCiP for one day's flights with one humidity scaling (needs build_segments_day).
 
@@ -178,6 +180,8 @@ def cocip_day(
             seed,
             max_age_h,
             scaling_obj=scaling_obj,
+            chunk=chunk,
+            keep_contrail=keep_contrail,
         )
         f1, f2 = out_dir / "segments.parquet", out_dir / "contrail.parquet"
         res.segments.to_parquet(f1, index=False)

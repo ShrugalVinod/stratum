@@ -46,6 +46,7 @@ Array = npt.NDArray[np.float64]
 CO2_PER_KG_FUEL = 3.16  # preregistered.yaml avoidance.co2_per_kg_fuel
 HORIZONS = (20, 100)
 MIN_EXAMPLES = 50  # open question 14
+CHUNK_FLIGHTS = 1500  # corrected domain CoCiP in batches (memory); results are unchanged
 FL_BANDS = [0, 300, 340, 380, 1000]
 
 
@@ -74,7 +75,9 @@ def corrected_domain_day(
         force=force,
         kind="cocip_domain",
         scaling_obj=sc,
-        extra_params={"s_by_band": s, "fold": hu.fold_for_day(day)},
+        extra_params={"s_by_band": s, "fold": hu.fold_for_day(day), "chunk": CHUNK_FLIGHTS},
+        chunk=CHUNK_FLIGHTS,
+        keep_contrail=False,
     )
 
 

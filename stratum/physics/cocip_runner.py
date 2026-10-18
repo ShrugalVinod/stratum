@@ -134,11 +134,16 @@ def run(
     seed: int = 20261013,
     max_age_h: float = 24.0,
     scaling_obj: Any = None,
+    chunk: int = 0,
+    keep_contrail: bool = True,
 ) -> CocipResult:
     """Central CoCiP run plus ``members`` Monte Carlo runs for one humidity scaling.
 
     ``scaling_obj``: a pycontrails HumidityScaling to use instead of the named baseline (the
-    Phase 7 learned correction); ``scaling`` is then only the label."""
+    Phase 7 learned correction); ``scaling`` is then only the label. ``chunk`` > 0 runs the
+    central evaluation in batches of that many flights to bound memory: CoCiP has no
+    contrail–contrail interaction, so the result is the same. ``keep_contrail`` False drops
+    the contrail evolution table (it can be several GB for a domain day with 24 h lifetimes)."""
     from pycontrails.models.cocip import Cocip, CocipUncertaintyParams
 
     warnings.filterwarnings("ignore", module="pycontrails")
@@ -148,9 +153,15 @@ def run(
         "humidity_scaling": scaling_obj if scaling_obj is not None else humidity_scaling(scaling),
         "max_age": np.timedelta64(int(max_age_h * 3600), "s"),
     }
-    central = Cocip(**common)
-    df = _frames(central.eval(source=flights))
-    contrail = central.contrail.copy() if central.contrail is not None else pd.DataFrame()
+    step = chunk if chunk > 0 else max(len(flights), 1)
+    parts, cparts = [], []
+    for i in range(0, len(flights), step):
+        central = Cocip(**common)
+        parts.append(_frames(central.eval(source=flights[i : i + step])))
+        if keep_contrail and central.contrail is not None:
+            cparts.append(central.contrail.copy())
+    df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+    contrail = pd.concat(cparts, ignore_index=True) if cparts else pd.DataFrame()
     # waypoint i starts segment i; the extra last waypoint ends the last segment (dropped)
     n_seg = {fl.attrs["flight_id"]: len(fl) - 1 for fl in flights}
     df = df[df["waypoint"] < df["flight_id"].map(n_seg)].reset_index(drop=True)

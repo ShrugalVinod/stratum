@@ -76,3 +76,37 @@ def test_cocip_runs_on_issr_crossing() -> None:
     assert res.segments["segment_id"].iloc[0] == "TEST_0000"
     assert res.summary["share_sac"] > 0.5
     assert {"ef_p05", "ef_p50", "ef_p95"} <= set(res.segments.columns)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not PL_15JAN.exists(), reason="needs the local 15 Jan 2026 ERA5 test day")
+def test_batched_central_run_equals_one_batch() -> None:
+    """Contrails do not interact in CoCiP, so running flights in batches changes nothing."""
+    import pandas as pd
+    import xarray as xr
+    from pycontrails import MetDataset
+
+    pl_ds = xr.open_zarr(PL_15JAN).load()
+    sl_ds = xr.open_zarr(str(PL_15JAN).replace("/pl/", "/sl/")).load()
+    n = 30
+    t = pd.date_range("2026-01-15T05:40", periods=n + 1, freq="1min", tz="UTC")
+    lon = np.linspace(85.5, 87.0, n + 1)
+    parts = []
+    for k, lat in enumerate((38.9, 38.5, 38.1)):
+        parts.append(pd.DataFrame({
+            "flight_id": f"F{k}", "time_start": t[:-1], "time_end": t[1:],
+            "lon_start": lon[:-1], "lon_end": lon[1:], "lat_start": lat, "lat_end": lat,
+            "alt_ft_start": 34000.0, "alt_ft_end": 34000.0, "fuel_flow_kg_s": 0.7,
+            "engine_efficiency": 0.35, "aircraft_mass_kg": 63200.0, "openap_type": "a20n",
+            "typecode": "A20N", "wingspan_m": 35.8,
+        }))  # fmt: skip
+    flights = cr.segments_to_flights(pd.concat(parts, ignore_index=True))
+    met, rad = MetDataset(pl_ds), MetDataset(sl_ds)
+    one = cr.run(flights, met, rad, "B1", members=0, max_age_h=6)
+    batched = cr.run(flights, met, rad, "B1", members=0, max_age_h=6, chunk=1, keep_contrail=False)
+    a = one.segments.set_index("segment_id")["ef"].fillna(0)
+    b = batched.segments.set_index("segment_id")["ef"].fillna(0)
+    assert len(a) == 3 * n and a.index.equals(b.index)
+    assert np.allclose(a.to_numpy(), b.to_numpy(), rtol=1e-9, atol=1.0)
+    assert (a != 0).any()  # the test day really forms contrails
+    assert batched.contrail.empty and not one.contrail.empty
