@@ -7,7 +7,8 @@ skill score of STRATUM vs B3 over the four held-out seasons, days resampled with
 "STRATUM" here is the calibrated boosted model (paper §4.6 "the main model"), decided 18 Oct 2026
 before any validation or test number; the option-(b) scaling probability (STRATUM_b), the
 uncalibrated model and the RHi-only logistic are reported beside it. Every model is also
-compared with B0 (climatology), B1 and B2, descriptively.
+compared with B0 (climatology), B1, B2 and RATE (the fold's training contrail rate as a constant
+forecast; added 19 Oct 2026 after the 07a validation, before any held-out score), descriptively.
 """
 
 from __future__ import annotations
@@ -23,8 +24,8 @@ from stratum.evaluate import splits as sp
 from stratum.evaluate.run import B4_REASON
 
 BASE = ["B0", "B1", "B2", "B3"]
-STRATUM_MODELS = ["LOGIT", "STRATUM_b", "STRATUM_raw", "STRATUM"]
-REFS = ["B3", "B0", "LOGIT", "B1", "B2"]
+STRATUM_MODELS = ["RATE", "LOGIT", "STRATUM_b", "STRATUM_raw", "STRATUM"]
+REFS = ["B3", "RATE", "B0", "LOGIT", "B1", "B2"]
 H2_MIN = 0.10
 
 
@@ -119,6 +120,7 @@ def evaluate_h2(
             if "models" in res["folds"][f.name]
         },
         "vs_B0": res["mean_over_seasons"]["STRATUM"].get("bss_vs_B0"),
+        "vs_RATE": res["mean_over_seasons"]["STRATUM"].get("bss_vs_RATE"),
         "vs_LOGIT": res["mean_over_seasons"]["STRATUM"].get("bss_vs_LOGIT"),
     }
     res["h2"]["sentence"] = sentence(res["h2"])

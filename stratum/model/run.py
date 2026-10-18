@@ -39,6 +39,7 @@ PRED_COLS = {
     "STRATUM": "calibrated boosted model (a)",
     "STRATUM_raw": "boosted model before calibration",
     "STRATUM_b": "RHi scaling factor per latitude band (b)",
+    "RATE": "constant: the fold's training contrail rate (reference)",
     "LOGIT": "logistic on RHi (sanity)",
 }
 
@@ -193,8 +194,14 @@ def load(fdir: Path) -> tuple[tr.Corrector, pd.DataFrame]:
     return model, pd.read_csv(fdir / "scaling_band.csv")
 
 
+def _train_rate(t: pd.DataFrame, fold: sp.Fold) -> float:
+    """Contrail rate of the fold's training rows (same rows as train_all: labelled, with RHi)."""
+    d = _train_rows(t, fold)
+    return float(d.loc[np.isfinite(d["rhi"].to_numpy(float)), "y"].mean())
+
+
 def predict_heldout(t: pd.DataFrame, pre: Any, mdir: Path) -> pd.DataFrame:
-    """Add STRATUM / STRATUM_raw / STRATUM_b / LOGIT for each fold's held-out rows.
+    """Add STRATUM / STRATUM_raw / STRATUM_b / LOGIT / RATE for each fold's held-out rows.
 
     Seasonal folds fill the plain columns; the spatial folds fill ``<col>__<fold>`` columns
     (their test rows overlap the seasonal ones)."""
@@ -213,6 +220,8 @@ def predict_heldout(t: pd.DataFrame, pre: Any, mdir: Path) -> pd.DataFrame:
             "STRATUM_raw": model.raw(X),
             "STRATUM_b": sc.predict(t.loc[rows], cells, bands),
             "LOGIT": model.predict_logistic(t.loc[rows, "rhi"].to_numpy(float)),
+            # the simplest honest forecast: the training rows' contrail rate, everywhere
+            "RATE": np.full(int(rows.sum()), _train_rate(t, fold)),
         }
         seasonal = fold.name in sp.SEASONS
         for c, p in preds.items():

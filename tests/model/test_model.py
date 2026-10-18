@@ -147,11 +147,13 @@ def test_train_all_then_h2_never_trains_on_held_out_rows(tmp_path: Path) -> None
     assert res["model_hash"] == mr.dir_hash(tmp_path / "model")
     p = mr.predict_heldout(t, PRE, tmp_path / "model")
     assert p["STRATUM"].notna().all() and p["STRATUM_b"].notna().all()
+    assert p["RATE"].nunique() == 4  # one constant per seasonal fold
     assert p["STRATUM__train_west_test_east"].notna().sum() > 0
     h = h2m.evaluate_h2(p, im, n=200, seed=1)
     assert set(h["h2"]) >= {"bss", "supported", "sentence"}
     assert h["h2"]["bss"]["value"] > 0  # a calibrated probability beats a 0/1 rule here
     assert "H2" in h["h2"]["sentence"]
+    assert "bss_vs_RATE" in h["mean_over_seasons"]["STRATUM"] and h["h2"]["vs_RATE"] is not None
 
 
 def test_cli_train_then_h2_peek_and_refusals(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]

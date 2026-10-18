@@ -13,6 +13,7 @@ from stratum.evaluate.report import _f, _table
 H2_METRICS = [
     ("brier", "Brier"),
     ("bss_vs_B3", "BSS vs B3"),
+    ("bss_vs_RATE", "BSS vs RATE"),
     ("bss_vs_B0", "BSS vs B0"),
     ("auroc", "AUROC"),
     ("pod", "POD"),
@@ -187,7 +188,7 @@ def h2_report(
     d.head("H2 in one sentence")
     d.para(res["h2"]["sentence"])
     d.head("Mean skill over the four held-out seasons")
-    refs = ["B3", "B0", "LOGIT", "B1", "B2"]
+    refs = ["B3", "RATE", "B0", "LOGIT", "B1", "B2"]
     d.table(
         ["model", *(f"BSS vs {r}" for r in refs)],
         [
@@ -418,7 +419,7 @@ def full_report(
             ],
         )
     d.head("H2 — skill over the held-out seasons")
-    refs = ["B3", "B0", "LOGIT", "B1", "B2"]
+    refs = ["B3", "RATE", "B0", "LOGIT", "B1", "B2"]
     d.table(
         ["model", *(f"BSS vs {r}" for r in refs)],
         [
@@ -516,6 +517,10 @@ def h2_paragraph(h2: dict[str, Any]) -> str:
         )
     else:
         parts.append("The data cannot show that the correction improves on B3.")
+    if "bss_vs_RATE" in m.get("STRATUM", {}):
+        parts.append(
+            f"Against the simplest forecast, the training contrail rate everywhere, its mean skill was {_v(m['STRATUM']['bss_vs_RATE'])}."
+        )
     if "bss_vs_B0" in m.get("STRATUM", {}):
         parts.append(
             f"Because B3 is a yes/no forecast, the Brier score also rewards any calibrated probability; the stricter comparison is with climatology (B0), against which the mean skill was {_v(m['STRATUM']['bss_vs_B0'])}."
