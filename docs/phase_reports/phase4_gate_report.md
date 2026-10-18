@@ -6,7 +6,8 @@ Calendar:        ahead (Phase 4 deadline 18 Dec 2026)
 
 Live site:       https://stratum.aerospaceonyx.workers.dev  (Cloudflare Workers, new team
                  account; builds branch ui-chart-redesign). The first site,
-                 https://stratum.shrugalvinod874.workers.dev, still builds main (old design).
+                 https://stratum.shrugalvinod874.workers.dev, was deleted on 18 Oct 2026
+                 (item e closed); main and ui-chart-redesign are the same code since 18 Oct.
 
 Done-when checklist (build prompt §4.6):
   [~] Live URL opens on phone and laptop: YES (checked headless at 1440×900 and 390×844,
@@ -61,7 +62,7 @@ Open items carried forward (due before 18 Dec 2026):
   b. Number-consistency list from site data + copy → team.     — Claude, then team
   c. Team photos into the boarding passes.                     — Shrugal sends
   d. 4-minute demo script + recording on a clean profile.      — Claude drafts, team records
-  e. Old site: disconnect or keep (old Cloudflare account).    — Shrugal
+  e. Old site: DELETED 18 Oct 2026 (Cloudflare, old account).  — done
   f. India boundary depiction (Natural Earth, India POV): confirm with Dr. Pant. — team
 Next:            Phase 5 (labelling, matching, observability).
 ════════════════════════════════════════════

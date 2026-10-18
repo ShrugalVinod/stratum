@@ -71,8 +71,8 @@ Risks for Phase 6 (the team should weigh these before accepting):
 Open items carried forward:
   a. Coverage audit 2 and 5 Nov (ADS-B Exchange 1 Nov; adsb.lol test).      — Claude
   b. Q5 before Phase 7.                                                        — team
-  c. Phase 4 items c, d (recording), e, f (photos; demo video; old site; India
-     boundary). Items a, b and the demo script were done 17 Oct.                — team
+  c. Phase 4 items c, d (recording), f (photos; demo video; India boundary).
+     Items a, b, the demo script and e (old site deleted 18 Oct) are done.      — team
 Next:            Phase 6 (evaluation harness, baselines B0–B4, H1) after acceptance.
 ═════════════════════════════════════════════════════
 ```
