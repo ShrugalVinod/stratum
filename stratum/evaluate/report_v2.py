@@ -19,7 +19,7 @@ H2_METRICS = [
     ("csi", "CSI"),
 ]
 STYLE = (
-    "body{font:15px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:980px;margin:32px auto;"  # noqa: E501
+    "body{font:15px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:980px;margin:32px auto;"
     "padding:0 16px;color:#111}table{border-collapse:collapse;margin:8px 0 18px;font-size:13px}"
     "td,th{border:1px solid #ccc;padding:4px 8px;text-align:left}th{background:#f3f3f3}"
     "pre{white-space:pre-wrap;font-size:12px;background:#f8f8f8;padding:12px}img{max-width:100%}"
@@ -178,7 +178,7 @@ def h2_report(
     d = Doc()
     d.head("STRATUM evaluation report v2 — part 1: H2 (correction model vs B3)", 1)
     d.para(
-        f"Run {run['run_id']} · commit {run['commit']} · {'FINAL run' if run.get('final') else 'non-final run'} · "  # noqa: E501
+        f"Run {run['run_id']} · commit {run['commit']} · {'FINAL run' if run.get('final') else 'non-final run'} · "
         f"{run['n_resamples']} day-bootstrap resamples (seed {run['seed']}) · models frozen in "
         f"interim/model (hash {run.get('model_hash', '—')})."
     )
@@ -196,7 +196,7 @@ def h2_report(
     d.head("By held-out fold")
     for fname, f in res["folds"].items():
         d.head(
-            f"{fname} — {f['test_rows']:,} segments, {f.get('test_days', 0)} days, {f.get('test_y1', 0)} observed",  # noqa: E501
+            f"{fname} — {f['test_rows']:,} segments, {f.get('test_days', 0)} days, {f.get('test_y1', 0)} observed",
             3,
         )
         if "models" not in f:
@@ -225,7 +225,7 @@ def h2_report(
         ab = val["a_vs_b"]
         d.para(
             f"Option (a) vs (b), decided on validation days before this run: ({ab['choice']}); "
-            f"validation Brier (a) {ab['mean_validation_brier_a']:.5f}, (b) {ab['mean_validation_brier_b']:.5f}."  # noqa: E501
+            f"validation Brier (a) {ab['mean_validation_brier_a']:.5f}, (b) {ab['mean_validation_brier_b']:.5f}."
         )
     d.head("B4")
     d.para(res["b4"]["reason"])
@@ -233,3 +233,214 @@ def h2_report(
     d.md.append(deviations_md + "\n")
     d.h.append(f"<pre>{html.escape(deviations_md)}</pre>")
     return d.write(out, "evaluation_report_v2_h2", "STRATUM evaluation report v2 (H2)")
+
+
+MODEL_CARD = [
+    (
+        "Model",
+        "STRATUM correction: monotone gradient-boosted trees (LightGBM) on 18 ERA5 and "
+        "position/time features, isotonic calibration; one model per held-out season and per side "
+        "of the west/east split. Feedback into the physics: a humidity scaling factor per latitude "
+        "band, fitted with detection efficiency (option b).",
+    ),
+    (
+        "Intended use",
+        "Research: estimating where ERA5-based contrail physics is wrong over India, "
+        "and ranking flight segments by the lower bound of net warming avoided by a ±2,000/±4,000 ft "
+        "change, with uncertainty ranges, for discussion with airlines and air traffic experts.",
+    ),
+    (
+        "Out of scope",
+        "Operational flight planning or air traffic control instructions; any use "
+        "outside 6–37°N, 68–98°E, below FL250, or for seasons and conditions the labels do not cover "
+        "(the confidence note says 'extrapolating'); estimates of aviation's total climate impact.",
+    ),
+    (
+        "Data",
+        "12 ADS-B days (Mar 2025–Feb 2026), ERA5, Meteosat-9 (IODC) contrail labels from an "
+        "automatic detector matched to advected flight segments (D-004: ≥ 2 matched images). About a "
+        "third of positive labels are expected to be chance matches; almost no monsoon labels.",
+    ),
+    (
+        "Metrics",
+        "Brier score and Brier skill score vs B3 (pre-registered primary), vs B0 and the "
+        "RHi-only logistic; AUROC, POD, FAR, CSI; reliability diagrams; 1,000 day-bootstrap resamples.",
+    ),
+    (
+        "Limitations",
+        "Few days per season (2–4); labels are noisy and detection-limited; the "
+        "detection efficiency comes from CoCiP itself; fuel from OpenAP at constant Mach over the same "
+        "track; ATC feasibility, traffic and airline constraints are not modelled; contrail–contrail "
+        "interactions are not modelled.",
+    ),
+    (
+        "Ethical considerations",
+        "Alerts can burn fuel for no benefit if wrong, so an alert needs a "
+        "positive lower bound under both horizons. Public outputs show commercial flights only with "
+        "hashed identities. Labels for India were drafted with AI assistance and reviewed by the "
+        "team (D-003).",
+    ),
+]
+
+
+def lorenz_png(h3: dict[str, Any], out: Path) -> Path:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    c = h3["curve"]
+    fig, ax = plt.subplots(figsize=(5.2, 4.4))
+    ax.plot(c["distance_share"], c["ef_share"], color="#c0392b", lw=1.8, label="corrected EF")
+    ax.plot([0, 1], [0, 1], color="#888888", ls=":", lw=1, label="no concentration")
+    ax.axhline(0.8, color="k", lw=0.6)
+    ax.axvline(0.10, color="k", lw=0.6, ls="--")
+    s = h3["share"]
+    ax.set_title(
+        f"H3: {s['value'] * 100:.1f} % of cruise distance carries 80 % of warming", fontsize=10
+    )
+    ax.set_xlabel("share of cruise flight distance (largest EF first)")
+    ax.set_ylabel("share of positive energy forcing")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.02)
+    ax.legend(frameon=False, fontsize=8, loc="lower right")
+    fig.tight_layout()
+    f = out / "h3_concentration.png"
+    fig.savefig(f, dpi=150)
+    plt.close(fig)
+    return f
+
+
+def _ci(r: dict[str, float] | None, pct: bool = False) -> str:
+    if not r:
+        return "—"
+    k = 100.0 if pct else 1.0
+    u = " %" if pct else ""
+    return f"{r['value'] * k:.3g}{u} [{r['lo'] * k:.3g}, {r['hi'] * k:.3g}]"
+
+
+def full_report(
+    h2: dict[str, Any],
+    h34: dict[str, Any],
+    decisions: dict[str, Any],
+    validation: dict[str, Any],
+    correction: dict[str, Any],
+    runs: dict[str, str],
+    deviations_md: str,
+    out: Path,
+) -> dict[str, str]:
+    """Evaluation report v2: H2–H4, model card, decision-layer summary (build prompt §7.8)."""
+    out.mkdir(parents=True, exist_ok=True)
+    d = Doc()
+    d.head(
+        "STRATUM evaluation report v2 — correction model (H2), concentration (H3), night (H4), decisions",
+        1,
+    )
+    d.para(
+        "Final runs: "
+        + ", ".join(f"{k} {v}" for k, v in runs.items())
+        + ". All logged in _locks/final_runs.jsonl."
+    )
+    d.head("Results in one line each")
+    v2 = h2["h2"]
+    d.table(
+        ["hypothesis", "pre-registered test", "result [95 % CI]", "verdict"],
+        [
+            [
+                "H2",
+                "mean BSS vs B3 over held-out seasons ≥ 0.10 and lower bound > 0",
+                _ci(v2["bss"]),
+                "supported" if v2["supported"] else "not supported",
+            ],
+            [
+                "H3",
+                "share of cruise distance carrying 80 % of positive EF ≤ 10 %",
+                _ci(h34["h3"]["share"], True),
+                "supported" if h34["h3"]["supported"] else "not supported",
+            ],
+            [
+                "H4",
+                "night EF share − night distance share, lower bound > 0",
+                _ci(h34["h4"]["difference"]),
+                "supported" if h34["h4"]["supported"] else "not supported",
+            ],
+        ],
+    )
+    d.para(v2["sentence"])
+    d.head("H2 — skill over the held-out seasons")
+    refs = ["B3", "B0", "LOGIT", "B1", "B2"]
+    d.table(
+        ["model", *(f"BSS vs {r}" for r in refs)],
+        [
+            [m, *(_f(v.get(f"bss_vs_{r}")) for r in refs)]
+            for m, v in h2["mean_over_seasons"].items()
+        ],
+    )
+    d.head("Validation (training seasons only) and the feedback choice")
+    d.table(
+        ["fold", "constant", "logistic RHi", "GBM raw", "GBM calibrated", "(b) with ε"],
+        [
+            [
+                f,
+                f"{v['brier_climatology']:.5f}",
+                f"{v['brier_logistic_rhi']:.5f}",
+                f"{v['brier_gbm_raw']:.5f}",
+                f"{v['brier_gbm_calibrated']:.5f}",
+                f"{correction['folds'].get(f, {}).get('brier_scaling_b_de', float('nan')):.5f}",
+            ]
+            for f, v in validation["folds"].items()
+        ],
+    )
+    ab = correction.get("a_vs_b", {})
+    if ab:
+        d.para(
+            f"(a)-vs-(b) rule: {ab['rule']} → ({ab['choice']}); mean validation Brier (a) "
+            f"{ab['mean_validation_brier_a']:.5f}, (b) {ab['mean_validation_brier_b']:.5f}."
+        )
+    d.table(
+        [
+            "held-out season",
+            "detection efficiency ε",
+            "s per band (with ε)",
+            "s per band (literal, ε = 1)",
+        ],
+        [
+            [
+                f,
+                f"{v['detection_efficiency']:.3f}",
+                ", ".join(f"{c['band_deg']} {c['s']:.3f}" for c in v["s_band"]),
+                ", ".join(f"{c['band_deg']} {c['s']:.3f}" for c in v["s_band_literal"]),
+            ]
+            for f, v in correction["folds"].items()
+        ],
+    )
+    d.head("H3 — concentration of contrail warming")
+    h3 = h34["h3"]
+    d.para(
+        f"{h3['segments_positive_ef']:,} of {h3['segments']:,} cruise segments have positive corrected EF; "
+        f"{h3['share']['value'] * 100:.2f} % of {h3['distance_km']:,.0f} km of cruise distance carries 80 % of it "
+        f"(day-bootstrap 95 % interval {h3['share']['lo'] * 100:.2f}–{h3['share']['hi'] * 100:.2f} %, descriptive)."
+    )
+    d.image(lorenz_png(h3, out), "H3 concentration curve")
+    d.head("H4 — night flights")
+    h4 = h34["h4"]
+    d.para(
+        f"Night (18:00–06:00 local solar time) carries {h4['night_share_positive_ef'] * 100:.1f} % of positive EF "
+        f"and {h4['night_share_distance'] * 100:.1f} % of cruise distance; difference {_ci(h4['difference'])}."
+    )
+    d.head("Decision layer")
+    if decisions.get("portions"):
+        d.table(["item", "value"], [[k.replace("_", " "), str(v)] for k, v in decisions.items()])
+    else:
+        d.para("No flagged warming contrails on the held-out days.")
+    d.para(
+        "An alert needs the 5th percentile of net warming avoided to be positive under both the 20- and "
+        "100-year horizons. 'Without fuel credit' counts the alerts that remain when a fuel saving at the "
+        "new level is not counted. ATC feasibility is not modelled."
+    )
+    d.head("Model card")
+    d.table(["", ""], [[k, v] for k, v in MODEL_CARD])
+    d.head("Deviations from the pre-registration (docs/deviations.md, verbatim)")
+    d.md.append(deviations_md + "\n")
+    d.h.append(f"<pre>{html.escape(deviations_md)}</pre>")
+    return d.write(out, "evaluation_report_v2", "STRATUM evaluation report v2")

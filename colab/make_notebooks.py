@@ -1245,7 +1245,8 @@ PHASE7_DECIDE = [
 held-out days, it tries ±2,000 and ±4,000 ft, reruns CoCiP for the changed stretch with 100
 Monte Carlo members (humidity, CoCiP parameters, efficacy), adds the OpenAP fuel cost, and
 ranks the alternatives by the lower bound of net warming avoided under the 20- and 100-year
-horizons. It writes a ranked list (paper Table 3 fields) per day and a summary. Resumable.
+horizons. It writes a ranked list (paper Table 3 fields) per day and a summary, then the
+**evaluation report v2** (`reports/evaluation_report_v2/`). Resumable. Run after 07b and 07c.
 
 * **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** unknown until
   the first day finishes (likely 10–40 min per day). If Colab disconnects, run again.
@@ -1257,10 +1258,11 @@ horizons. It writes a ranked list (paper Table 3 fields) per day and a summary. 
     code('''
 # ── 7. Decisions, every evaluation day (resumable) ───────────────────────────
 rc_dec = stratum("decide --members 100", live=True)
+rc_rep = stratum("report-v2", live=True) if rc_dec == 0 else None
 sp_ = f"{DRIVE_ROOT}/reports/phase7_decisions/summary.json"
 res = json.load(open(sp_)) if os.path.exists(sp_) else {}
 '''),
-    summary_cell("""    "exit_code": rc_dec,
+    summary_cell("""    "exit_codes": {"decide": rc_dec, "report_v2": rc_rep},
     "decisions": res,
 """),
 ]

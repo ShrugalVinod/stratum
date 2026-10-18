@@ -222,3 +222,42 @@ def test_fit_correction_writes_per_fold_cells_draws_and_the_a_vs_b_rule(tmp_path
 
     _, s = hu.scaling_for_day(tmp_path, "2026-01-15", bands)
     assert s == [round(x, 12) for x in s] and len(s) == 3
+
+
+def test_full_report_v2_renders_every_section(tmp_path: Path) -> None:
+    from stratum.evaluate import h34
+    from stratum.evaluate import report_v2 as r2
+    from stratum.model import correction as co
+
+    t, im = _year(seed=13, per_day=300)
+    t["cocip_contrail"] = (t["rhi"] > 1.0).astype(float)
+    t["detectable"] = 1.0
+    val = mr.train_all(t, PRE, tmp_path / "model", n_trials=1, seed=2)
+    val.pop("_figs")
+    corr = co.fit_correction(
+        t, [(6.0, 15.0), (15.0, 25.0), (25.0, 37.0)], tmp_path / "corr", 2, 1, val
+    )
+    h2 = h2m.evaluate_h2(mr.predict_heldout(t, PRE, tmp_path / "model"), im, n=100, seed=1)
+    seg = t.assign(
+        ef=np.where(t["y"] == 1, 1e12, 0.0),
+        length_km=10.0,
+        local_solar_time_h=np.random.default_rng(0).uniform(0, 24, len(t)),
+    )
+    res34 = {"h3": h34.h3(seg, 100, 1), "h4": h34.h4(seg, 100, 1)}
+    dec = {"days": 12, "portions": 5, "alerts": 2, "alerts_without_fuel_credit": 1}
+    files = r2.full_report(
+        h2, res34, dec, val, corr, {"H2": "x", "H3/H4": "y"}, "## D-001", tmp_path / "rep"
+    )
+    html_text = Path(files["html"]).read_text()
+    for needle in (
+        "H2",
+        "H3",
+        "H4",
+        "Model card",
+        "Intended use",
+        "Decision layer",
+        "D-001",
+        "data:image/png",
+    ):
+        assert needle in html_text
+    assert (tmp_path / "rep" / "h3_concentration.png").exists()

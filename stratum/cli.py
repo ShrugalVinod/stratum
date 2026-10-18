@@ -1126,6 +1126,43 @@ def decide_cmd(
     _summary("decide", {k: json.dumps(v) if isinstance(v, dict) else v for k, v in summ.items()})
 
 
+@app.command("report-v2")
+def report_v2_cmd() -> None:
+    """Phase 7: evaluation report v2 from the logged final runs (H2, H3/H4), the validation and
+    correction summaries and the decision-layer summary."""
+    from stratum.evaluate import report_v2 as r2
+    from stratum.model import run as mr
+
+    root = drive_root()
+    log = root / "_locks" / "final_runs.jsonl"
+    recs = [json.loads(x) for x in log.read_text().splitlines()] if log.exists() else []
+    last = {}
+    for r in recs:
+        for h in r.get("hypotheses", []):
+            last[h] = r["run_id"]
+    if "H2" not in last or "H3" not in last:
+        console.print("[red]Needs the final H2 (07b) and H3/H4 (07c) runs.[/red]")
+        raise typer.Exit(1)
+    h2 = json.loads((root / "reports" / last["H2"] / "results.json").read_text())
+    h34 = json.loads((root / "reports" / last["H3"] / "results_h34.json").read_text())
+    dec_f = root / "reports" / "phase7_decisions" / "summary.json"
+    dec = json.loads(dec_f.read_text()) if dec_f.exists() else {}
+    val = json.loads((mr.model_dir(root) / "summary.json").read_text())
+    corr = json.loads((root / "interim" / "correction" / "summary.json").read_text())
+    out = root / "reports" / "evaluation_report_v2"
+    files = r2.full_report(
+        h2,
+        h34,
+        dec,
+        val,
+        corr,
+        {"H1": last.get("H1", "—"), "H2": last["H2"], "H3/H4": last["H3"]},
+        lk.default_paths()["deviations"].read_text(),
+        out,
+    )
+    _summary("report-v2", {"report": files["html"]})
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],

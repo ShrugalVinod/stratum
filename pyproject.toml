@@ -88,6 +88,7 @@ extend-exclude = ["notebooks", "colab", "docs/paper"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E501"]  # long literal test fixtures read better on one line
+"stratum/evaluate/report*.py" = ["E501"]  # report prose and table cells read better unbroken
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]
