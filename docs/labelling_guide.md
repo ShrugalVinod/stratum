@@ -1,4 +1,4 @@
-# STRATUM labelling guide — v0.1.1 (DRAFT, to be revised after the 20-scene pilot)
+# STRATUM labelling guide — v0.1.2
 
 Rules 1–6 are the paper's Appendix B (v1.0). They are pre-registered where they affect scoring
 (`preregistered.yaml: labelling_rules`) and may only be clarified, not changed, after the pilot.
@@ -25,7 +25,11 @@ along air routes.
    scoring.
    - *clear*: you can see the whole scene; thick cloud covers less than ~10 % of it.
    - *partly obscured*: thick cloud hides part of the scene, but you can judge the rest.
-   - *obscured*: so much thick cloud (or bad data) that you could not see contrails anyway.
+   - *obscured*: so much thick cloud (or bad data) that you could not see contrails anyway —
+     in practice, **more than about half** of the scene is thick cloud.
+   - How to judge thick cloud: switch to the **T10.8** layer. Thick, high cloud is **bright white
+     there** (very cold). A busy, speckled or streaky **BTD** picture is *not* cloud cover: that is
+     the normal clear-sky look over India, and contrails can still be seen through it.
 5. **When unsure, mark the line as uncertain rather than leaving it out.** Uncertain lines are
    scored separately.
 6. **Label without looking at the flight tracks or the model's predictions,** so that labels stay
@@ -91,3 +95,6 @@ their score against the experts and the experts' lines, to learn from them. Then
 - v0.1 (17 Oct 2026): rules 1–6 from paper Appendix B; how-to for the labelling app. Draft.
 - v0.1.1 (17 Oct 2026): three labellers and three sets (pilot, expert calibration, India test),
   after deviation D-002. Rules 1–6 unchanged.
+- v0.1.2 (18 Oct 2026): rule 4 clarified (scoring rule unchanged): *obscured* means more than
+  about half of the scene is thick cloud, judged on the T10.8 layer, not on BTD texture. Added after
+  the D-003 review, where 70 of 100 scenes were marked obscured with a median of 12 % thick cloud.
