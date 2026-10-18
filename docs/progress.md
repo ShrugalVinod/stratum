@@ -55,8 +55,18 @@ Newest first. What was done, what's next, blockers.
   (chance matches), Driver detectability flag and CoCiP advection comparison where CoCiP ran.
   Local test: 0.07 ms per segment; 206 Python tests.
 
+- Colab `05d_match_year` PASSED (commit d1cc320): 680,387 SAC-forming candidates; y = 1 4,263,
+  y = 0 332,647, missing 343,477 (known 49.5 %; monsoon days Jul–Sep only 3–5 % of images
+  observable). ≥ 300 check passed: 1,222 contrail events (1,065 flights). **But** the wrong-day
+  null gives a chance y = 1 rate of 0.77 % vs 1.27 % real: about 60 % of y = 1 labels are
+  expected by coincidence. Parallax correction barely changes near-matches (0.73 % vs 0.69 %
+  within 2 px), consistent with mostly chance matches. Escalated to the team before Phase 6.
+- D-003 (Team OK): India labels = Claude drafts + one reviewer; drafts done (100 scenes: 4 sure
+  lines in 3 scenes, 11 uncertain lines in 6 more, 91 with no contrails).
+
 **Next**
-- Shrugal: run Colab 05d (full-year matching).
+- Shrugal: run Colab 05e (label diagnostics: 2- and 3-image match rules vs chance).
+- Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.
 - Labellers: pilot (all three, 20 scenes) by 26 Oct → guide revision → calibration (all three)

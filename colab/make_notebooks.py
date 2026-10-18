@@ -916,6 +916,33 @@ for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/matches/*/*/manifest.json")):
 """),
 ]
 
+LABEL_DIAG = [
+    header(
+        "05e · How much of the satellite signal is chance? (Phase 5 check)",
+        """
+**What this does:** reads the per-image results that 05d stored (real flights and the wrong-day
+null) and recomputes the labels with a stricter rule: a contrail counts as seen only if it is
+matched in **2 (or 3) images**, not just 1. For each rule it compares the real y = 1 rate with the
+chance rate. No new detection; reads only.
+
+* **Runtime:** CPU, High-RAM if offered. **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** `reports/phase5/label_diagnostics.json` (a few KB). **Time:** ≈ 5 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("05e_label_diagnostics"),
+    *SETUP,
+    code('''
+# ── 7. Label-rule variants on real vs wrong-day runs ─────────────────────────
+rc = stratum("label-diagnostics", live=True)
+rep = f"{DRIVE_ROOT}/reports/phase5/label_diagnostics.json"
+diag = json.load(open(rep)) if os.path.exists(rep) else {}
+'''),
+    summary_cell("""    "exit_code": rc,
+    "diagnostics": diag,
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -943,4 +970,5 @@ if __name__ == "__main__":
     write("05b_scenes.ipynb", SCENES)
     write("05c_label_sets.ipynb", LABEL_SETS)
     write("05d_match_year.ipynb", MATCH_YEAR)
+    write("05e_label_diagnostics.ipynb", LABEL_DIAG)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

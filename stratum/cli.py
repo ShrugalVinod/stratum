@@ -525,6 +525,22 @@ def match_year(
     )
 
 
+@app.command("label-diagnostics")
+def label_diagnostics() -> None:
+    """Phase 5 check: y = 1 rate on real vs wrong-day flights under 1/2/3-image match rules."""
+    from stratum.match.diagnostics import label_variants
+
+    root = drive_root()
+    res = label_variants(root)
+    out = root / "reports" / "phase5"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "label_diagnostics.json").write_text(json.dumps(res, indent=1, default=str))
+    _summary(
+        "label diagnostics",
+        {k: json.dumps(v) if isinstance(v, dict) else v for k, v in res.items()},
+    )
+
+
 @app.command("download-era5")
 def download_era5(
     month: Annotated[str, typer.Option(help="YYYY-MM, or a range YYYY-MM:YYYY-MM")],
