@@ -165,6 +165,27 @@ export const methods = [
   { title: "Correction and decision", body: "A calibrated model learns where physics is wrong; the decision layer ranks altitude changes by their lower-bound net warming avoided." },
 ];
 
+// Correction-model inputs (source: docs/methods/features.md; pre-registered set, paper §4.6).
+// mono: "+" = prediction can only rise with it, "−" = only fall; "" = unconstrained.
+export const modelFeatures: { name: string; unit: string; why: string; mono?: "+" | "−" }[] = [
+  { name: "RHi at the flight level", unit: "–", why: "Ice supersaturation is what lets a contrail persist", mono: "+" },
+  { name: "RHi one level above", unit: "–", why: "A moist layer just above may mean ERA5 placed the supersaturated layer slightly wrong" },
+  { name: "RHi one level below", unit: "–", why: "The same, for the level below" },
+  { name: "Vertical RHi gradient", unit: "per km", why: "Sharp humidity edges are where ERA5 misses thin moist layers" },
+  { name: "Temperature", unit: "K", why: "Colder air favours formation and ice growth" },
+  { name: "Temperature above the formation threshold (T − T_LM)", unit: "K", why: "Warmer than the Schmidt–Appleman threshold, no contrail forms", mono: "−" },
+  { name: "Pressure (flight level)", unit: "Pa", why: "ERA5's humidity bias depends on altitude" },
+  { name: "Cloud ice water content", unit: "kg/kg", why: "Natural cirrus already present: humid air, but contrails are harder to see" },
+  { name: "High-cloud fraction at and above", unit: "–", why: "Cirrus above hides contrails from the satellite" },
+  { name: "Vertical velocity", unit: "Pa/s", why: "Rising air cools and moistens, creating moist layers ERA5 may underplay" },
+  { name: "Vertical wind shear", unit: "m/s per km", why: "Shear spreads contrails into wider, more visible cirrus" },
+  { name: "Distance to the tropopause", unit: "m", why: "Moist layers cluster just below the tropopause, where ERA5 is driest" },
+  { name: "Latitude", unit: "°N", why: "Tropical versus subtropical air" },
+  { name: "Longitude", unit: "°E", why: "West versus east India (sea, land, monsoon onset)" },
+  { name: "Month (sin, cos)", unit: "–", why: "Season, encoded as a circle so December sits next to January" },
+  { name: "Local solar time (sin, cos)", unit: "–", why: "Day and night: detection and humidity both follow the daily cycle" },
+];
+
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
   { date: "2026-10-18", phase: 6, title: "Phase 6 accepted: H1 is not supported", body: "The one logged test of H1: over 334,211 flight segments on 12 days, raw ERA5 physics predicted 10,076 persistent contrails and Meteosat-9 saw 1,564 — a ratio of 6.44 (95 % range 4.92–12.12). We expected physics to predict too few; it predicts about six times too many. Most predicted contrails are too thin or narrow for the satellite: only 16 % pass the detectability thresholds, and allowing for that the two agree (1.05). The answer is the same under every alternative label rule and matching tolerance. Limits: only 2–4 days per season, no monsoon contrails seen, and about a third of the satellite labels are chance matches. A refuted hypothesis is a result, and we report it as one." },
