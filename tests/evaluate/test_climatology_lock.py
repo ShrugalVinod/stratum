@@ -81,3 +81,26 @@ def test_climatology_command_lists_the_evaluation_months(tmp_path: Path, monkeyp
     assert r.exit_code == 0, r.output
     assert "climatology 2025-03" in r.output and "climatology 2026-02" in r.output
     assert "no ERA5 pl" in r.output  # empty root: reported, not crashed
+
+
+def test_a_second_final_run_needs_a_reason(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import json
+
+    from typer.testing import CliRunner
+
+    from stratum.cli import app
+
+    monkeypatch.setenv("STRATUM_DRIVE_ROOT", str(tmp_path))
+    (tmp_path / "_locks").mkdir()
+    (tmp_path / "_locks" / "final_runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "final": True, "hypotheses": ["H2"]}) + "\n"
+    )
+    assert lk.previous_finals(tmp_path / "_locks" / "final_runs.jsonl", "H2") == ["r1"]
+    assert lk.previous_finals(tmp_path / "_locks" / "final_runs.jsonl", "H3") == []
+    r = CliRunner().invoke(app, ["evaluate-h2", "--final"], env={"COLUMNS": "200"})
+    assert r.exit_code == 1 and "--rerun-reason" in r.output
+    # with a reason it gets past the gate (and stops later: no models in this empty root)
+    r = CliRunner().invoke(
+        app, ["evaluate-h2", "--final", "--rerun-reason", "bug fix"], env={"COLUMNS": "200"}
+    )
+    assert r.exit_code == 1 and "No trained models" in r.output

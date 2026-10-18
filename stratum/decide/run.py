@@ -243,6 +243,49 @@ def cell_keys(t: pd.DataFrame, bands: list[tuple[float, float]]) -> list[pd.Seri
     return [t["season"].rename("season"), lat_band, fl, vza, dn]
 
 
+def flagged_segments(corr: pd.DataFrame) -> set[str]:
+    """Persistent contrails under the corrected humidity that warm (EF > 0): avoiding a cooling
+    contrail is not the aim, and rewarding a move into one would be perverse."""
+    warm = (corr["persistent_1"].fillna(0) > 0) & (corr["ef"].fillna(0) > 0)
+    return set(corr.loc[warm, "segment_id"])
+
+
+def plan_day(root: Path, day: str, pre: Any) -> tuple[set[str], pd.DataFrame, pd.DataFrame]:
+    """Flagged segments, cropped variant flights and candidate table for one day (no CoCiP)."""
+    corr_dir = _day_dir(root, "cocip_domain/STRATUM", day)
+    seg = pd.read_parquet(_day_dir(root, "segments_met", day) / "segments_met.parquet")
+    corr = pd.read_parquet(
+        corr_dir / "segments.parquet", columns=["segment_id", "persistent_1", "ef"]
+    )
+    flagged = flagged_segments(corr)
+    deltas = [int(d) for d in pre.avoidance.alternatives_ft]
+    frames, cands = _variant_frames(seg, flagged, deltas)
+    return flagged, frames, cands
+
+
+def time_one_member(
+    root: Path, day: str, pre: Any, cdir: Path, frames: pd.DataFrame, max_age_h: float = 24.0
+) -> float:
+    """Seconds for one CoCiP evaluation of all variant flights of a day (for planning 07d)."""
+    import time
+
+    from pycontrails import MetDataset
+
+    from stratum.phase2 import era5_window
+    from stratum.physics.cocip_runner import segments_to_flights
+
+    bands = [tuple(b) for b in pre.correction_model.latitude_bands_deg]
+    flights = segments_to_flights(frames)
+    t0 = pd.Timestamp(day)
+    t1 = t0 + pd.Timedelta(hours=24 + max_age_h + 1)
+    met = MetDataset(era5_window(root, "pl", t0, t1).load())
+    rad = MetDataset(era5_window(root, "sl", t0, t1).load())
+    sc, _ = hu.scaling_for_day(cdir, day, bands)
+    start = time.time()
+    _ef_by_variant(flights, met, rad, sc, None, max_age_h)
+    return time.time() - start
+
+
 def decide_day(
     root: Path,
     day: str,
@@ -268,16 +311,7 @@ def decide_day(
     if not is_done(corr_dir):
         return {"day": day, "status": "corrected CoCiP missing"}
     bands = [tuple(b) for b in pre.correction_model.latitude_bands_deg]
-    seg = pd.read_parquet(_day_dir(root, "segments_met", day) / "segments_met.parquet")
-    corr = pd.read_parquet(
-        corr_dir / "segments.parquet", columns=["segment_id", "persistent_1", "ef"]
-    )
-    # flagged = persistent contrail under the corrected humidity that warms (EF > 0): avoiding a
-    # cooling contrail is not the aim, and rewarding a move into one would be perverse
-    warm = (corr["persistent_1"].fillna(0) > 0) & (corr["ef"].fillna(0) > 0)
-    flagged = set(corr.loc[warm, "segment_id"])
-    deltas = [int(d) for d in pre.avoidance.alternatives_ft]
-    frames, cands = _variant_frames(seg, flagged, deltas)
+    flagged, frames, cands = plan_day(root, day, pre)
     out_dir.mkdir(parents=True, exist_ok=True)
     man = RunManifest.start(
         "decide-day",

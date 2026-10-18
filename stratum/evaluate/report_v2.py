@@ -113,7 +113,9 @@ def validation_report(
         ],
     )
     ab = res["a_vs_b"]
-    d.head("Option (a) vs (b)")
+    d.head(
+        "Option (a) vs (b), literal (b) without detection efficiency (reported; the binding rule uses fit-correction)"
+    )
     d.para(
         f"Rule (pre-stated): {ab['rule']}. Mean validation Brier over the four seasonal folds: "
         f"(a) {ab['mean_validation_brier_a']:.5f}, (b) {ab['mean_validation_brier_b']:.5f}; "
@@ -193,6 +195,7 @@ def h2_report(
             for m, v in res["mean_over_seasons"].items()
         ],
     )
+    d.image(reliability_png(res["reliability"], out), "Reliability on held-out seasons")
     d.head("By held-out fold")
     for fname, f in res["folds"].items():
         d.head(
@@ -283,6 +286,38 @@ MODEL_CARD = [
 ]
 
 
+def reliability_png(rel: dict[str, list[dict[str, Any]]], out: Path) -> Path:
+    """Reliability on all held-out seasonal rows (10 equal-count bins, with counts)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    colors = {"B0": "#6b7280", "LOGIT": "#e67e22", "STRATUM_b": "#2c7fb8", "STRATUM": "#c0392b"}
+    fig, ax = plt.subplots(figsize=(5.4, 4.6))
+    top = 0.0
+    for m, rows in rel.items():
+        if not rows:
+            continue
+        x = [r["mean_forecast"] for r in rows]
+        y = [r["observed"] for r in rows]
+        top = max(top, *x, *y)
+        ax.plot(x, y, marker="o", ms=3.5, lw=1.4, color=colors.get(m, "k"), label=m)
+    lim = max(0.02, top * 1.1)
+    ax.plot([0, lim], [0, lim], color="#999999", lw=1, ls=":")
+    ax.set_xlim(0, lim)
+    ax.set_ylim(0, lim)
+    ax.set_xlabel("forecast probability (bin mean)")
+    ax.set_ylabel("observed frequency")
+    ax.set_title("Reliability on held-out seasons (10 equal-count bins)", fontsize=10)
+    ax.legend(frameon=False, fontsize=8)
+    fig.tight_layout()
+    f = out / "reliability_h2.png"
+    fig.savefig(f, dpi=150)
+    plt.close(fig)
+    return f
+
+
 def lorenz_png(h3: dict[str, Any], out: Path) -> Path:
     import matplotlib
 
@@ -366,7 +401,22 @@ def full_report(
             ],
         ],
     )
-    d.para(v2["sentence"])
+    d.head("Draft paragraphs for the paper")
+    paras = {"H2": h2_paragraph(h2), "H3": h3_paragraph(h34["h3"]), "H4": h4_paragraph(h34["h4"])}
+    for k, ptxt in paras.items():
+        d.para(f"{k}. {ptxt}")
+    (out / "paper_paragraphs_h2_h4.md").write_text(
+        "\n\n".join(f"**{k}.** {v}" for k, v in paras.items()) + "\n"
+    )
+    if "class_balance" in h2:
+        d.head("Class balance by season (labelled segments)")
+        d.table(
+            ["season", "labelled", "y = 1", "rate"],
+            [
+                [k, f"{v['labelled']:,}", f"{v['y1']:,}", f"{v['rate'] * 100:.2f} %"]
+                for k, v in h2["class_balance"].items()
+            ],
+        )
     d.head("H2 — skill over the held-out seasons")
     refs = ["B3", "B0", "LOGIT", "B1", "B2"]
     d.table(
@@ -376,6 +426,7 @@ def full_report(
             for m, v in h2["mean_over_seasons"].items()
         ],
     )
+    d.image(reliability_png(h2["reliability"], out), "Reliability on held-out seasons")
     d.head("Validation (training seasons only) and the feedback choice")
     d.table(
         ["fold", "constant", "logistic RHi", "GBM raw", "GBM calibrated", "(b) with ε"],
@@ -444,3 +495,59 @@ def full_report(
     d.md.append(deviations_md + "\n")
     d.h.append(f"<pre>{html.escape(deviations_md)}</pre>")
     return d.write(out, "evaluation_report_v2", "STRATUM evaluation report v2")
+
+
+def _v(r: dict[str, float]) -> str:
+    return f"{r['value']:.2f} (95 % CI {r['lo']:.2f} to {r['hi']:.2f})"
+
+
+def h2_paragraph(h2: dict[str, Any]) -> str:
+    """Draft H2 paragraph, stating the outcome plainly whichever way it went."""
+    h = h2["h2"]
+    m = h2["mean_over_seasons"]
+    parts = [h["sentence"]]
+    if h["supported"]:
+        parts.append(
+            "The correction improves on the best published humidity correction by the pre-registered margin."
+        )
+    elif h["bss"]["lo"] > 0:
+        parts.append(
+            "The correction is better than B3, but not by the pre-registered margin of 0.10."
+        )
+    else:
+        parts.append("The data cannot show that the correction improves on B3.")
+    if "bss_vs_B0" in m.get("STRATUM", {}):
+        parts.append(
+            f"Because B3 is a yes/no forecast, the Brier score also rewards any calibrated probability; the stricter comparison is with climatology (B0), against which the mean skill was {_v(m['STRATUM']['bss_vs_B0'])}."
+        )
+    if "bss_vs_LOGIT" in m.get("STRATUM", {}):
+        parts.append(
+            f"Against a logistic regression on RHi alone it was {_v(m['STRATUM']['bss_vs_LOGIT'])}, which shows whether the other 17 features earn their place."
+        )
+    parts.append(
+        "Each season holds only 2–4 flight days, and about a third of the satellite labels are expected to be chance matches, so the per-season intervals are wide."
+    )
+    return " ".join(parts)
+
+
+def h3_paragraph(h3: dict[str, Any]) -> str:
+    s = h3["share"]
+    verdict = "supported" if h3["supported"] else "not supported"
+    return (
+        f"With the corrected humidity, {s['value'] * 100:.1f} % of cruise flight distance carried 80 % of the positive "
+        f"contrail energy forcing over the study domain (day-bootstrap 95 % interval {s['lo'] * 100:.1f}–{s['hi'] * 100:.1f} %, "
+        f"descriptive); H3 (≤ 10 %) is {verdict}. {h3['segments_positive_ef']:,} of {h3['segments']:,} cruise segments had "
+        "positive EF. The share depends on the humidity correction and on CoCiP's own parameters; avoiding a small share "
+        "of flying only pays if those segments can be identified in advance, which the decision layer tests."
+    )
+
+
+def h4_paragraph(h4: dict[str, Any]) -> str:
+    verdict = "supported" if h4["supported"] else "not supported"
+    return (
+        f"Flights between 18:00 and 06:00 local solar time carried {h4['night_share_positive_ef'] * 100:.1f} % of the "
+        f"positive contrail energy forcing and {h4['night_share_distance'] * 100:.1f} % of the cruise distance; the "
+        f"difference was {_v(h4['difference'])}, so H4 (lower bound > 0) is {verdict}. Night contrails warm because "
+        "they trap outgoing heat with no sunlight to reflect; daytime contrails can cool, which this statistic counts "
+        "only through positive EF."
+    )

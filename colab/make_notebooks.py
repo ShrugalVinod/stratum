@@ -1256,7 +1256,9 @@ horizons. It writes a ranked list (paper Table 3 fields) per day and a summary, 
     settings("07d_decide"),
     *SETUP,
     code('''
-# ── 7. Decisions, every evaluation day (resumable) ───────────────────────────
+# ── 7. How much work? (counts per day, times one Monte Carlo member) ─────────
+stratum("decide --estimate", live=True)
+# ── 8. Decisions, every evaluation day (resumable) ───────────────────────────
 rc_dec = stratum("decide --members 100", live=True)
 rc_rep = stratum("report-v2", live=True) if rc_dec == 0 else None
 sp_ = f"{DRIVE_ROOT}/reports/phase7_decisions/summary.json"

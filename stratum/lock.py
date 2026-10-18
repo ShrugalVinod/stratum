@@ -339,6 +339,19 @@ def append_run_record(path: Path, record: dict[str, Any]) -> None:
         fh.write(json.dumps(record, sort_keys=True, default=str) + "\n")
 
 
+def previous_finals(log: Path, hypothesis: str) -> list[str]:
+    """Run ids of earlier final runs that evaluated ``hypothesis``."""
+    if not log.exists():
+        return []
+    out = []
+    for line in log.read_text().splitlines():
+        if line.strip():
+            r = json.loads(line)
+            if r.get("final") and hypothesis in r.get("hypotheses", []):
+                out.append(str(r.get("run_id")))
+    return out
+
+
 def final_allowed(verify: VerifyResult) -> tuple[bool, str]:
     """A final run needs the lock to verify (identical, or every difference a Team-OK deviation)."""
     if not verify.lock_found:

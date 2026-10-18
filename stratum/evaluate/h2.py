@@ -126,6 +126,10 @@ def evaluate_h2(
         f.pop("_stats", None)
     lab = t[t["y"].notna()]
     seas = lab[lab["season"].isin(sp.SEASONS)]
+    res["class_balance"] = {
+        str(k): {"labelled": int(g.size), "y1": int(g.sum()), "rate": float(g.mean())}
+        for k, g in lab.groupby("season")["y"]
+    }
     res["reliability"] = {
         m: mt.reliability(seas["y"], seas[m]).to_dict(orient="records")
         for m in ["B0", "LOGIT", "STRATUM_b", "STRATUM"]

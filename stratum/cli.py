@@ -642,6 +642,7 @@ def evaluate_cmd(
         str, typer.Option(help="non-final run on held-out seasons: type the exact phrase")
     ] = "",
     rebuild_table: Annotated[bool, typer.Option(help="rebuild the evaluation table")] = False,
+    rerun_reason: RERUN = "",
 ) -> None:
     """Phase 6: B0–B3 on held-out seasons and the spatial split, H1, evaluation report v1.
 
@@ -659,17 +660,7 @@ def evaluate_cmd(
 
     paths = lk.default_paths()
     root = drive_root()
-    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
-    if final:
-        ok, why = lk.final_allowed(v)
-        if not ok:
-            console.print(f"[red]Final run refused: {why}[/red]")
-            raise typer.Exit(1)
-    elif peek != lk.PEEK_PHRASE:
-        console.print(
-            f'[red]Held-out seasons are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
-        )
-        raise typer.Exit(1)
+    v = _gate(root, final, peek, ["H1"], rerun_reason)
     pre = cfg.load_preregistered()
     n = pre.bootstrap.n_resamples
     seed = pre.detection.labelled_split.seed or 0
@@ -710,6 +701,7 @@ def evaluate_cmd(
         "h1_supported": res["h1"]["supported"],
         "results_sha256": lk.results_hash(res),
         "python": platform.python_version(),
+        "rerun_reason": rerun_reason or None,
     }
     log = "final_runs.jsonl" if final else "peek_runs.jsonl"
     lk.append_run_record(root / "_locks" / log, record)
@@ -719,6 +711,38 @@ def evaluate_cmd(
     }
     _summary("evaluate", {"run_id": run_id, "final": final, "report": files["html"], "primary_bss_vs_B3": json.dumps(prim),  # noqa: E501
                           "h1": res["h1"]["sentence"]})  # fmt: skip
+
+
+def _gate(root: Path, final: bool, peek: str, hyps: list[str], rerun_reason: str) -> Any:
+    """Lock check for runs that score held-out data. A final run needs a verified lock, and a
+    second final run of the same hypothesis needs a reason (both runs are then reported, build
+    prompt §6.8). Anything else needs the exact peek phrase."""
+    paths = lk.default_paths()
+    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
+    if final:
+        ok, why = lk.final_allowed(v)
+        if not ok:
+            console.print(f"[red]Final run refused: {why}[/red]")
+            raise typer.Exit(1)
+        before = sorted(
+            {r for h in hyps for r in lk.previous_finals(root / "_locks" / "final_runs.jsonl", h)}
+        )
+        if before and not rerun_reason:
+            console.print(
+                f"[red]A final run of {hyps} exists ({before}). To repeat one (e.g. after a bug "
+                'fix), pass --rerun-reason "…"; both runs are then reported.[/red]'
+            )
+            raise typer.Exit(1)
+    elif peek != lk.PEEK_PHRASE:
+        console.print(
+            "[red]Held-out data are blocked outside a final run. "
+            f'Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'
+        )
+        raise typer.Exit(1)
+    return v
+
+
+RERUN = Annotated[str, typer.Option(help="required for a second final run of the same hypothesis")]
 
 
 def _eval_table(root: Path) -> tuple[Any, Any]:
@@ -798,6 +822,7 @@ def evaluate_h2_cmd(
         bool, typer.Option(help="the logged final run (needs a verified lock)")
     ] = False,
     peek: Annotated[str, typer.Option(help="non-final run on held-out seasons: exact phrase")] = "",
+    rerun_reason: RERUN = "",
 ) -> None:
     """Phase 7 (Colab 07b): H2 with the frozen models of model-train. Final runs are logged in
     _locks/final_runs.jsonl; held-out predictions are kept for the decision layer."""
@@ -813,17 +838,7 @@ def evaluate_h2_cmd(
 
     paths = lk.default_paths()
     root = drive_root()
-    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
-    if final:
-        ok, why = lk.final_allowed(v)
-        if not ok:
-            console.print(f"[red]Final run refused: {why}[/red]")
-            raise typer.Exit(1)
-    elif peek != lk.PEEK_PHRASE:
-        console.print(
-            f'[red]Held-out seasons are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
-        )
-        raise typer.Exit(1)
+    v = _gate(root, final, peek, ["H2"], rerun_reason)
     mdir = mr.model_dir(root)
     if not (mdir / "summary.json").exists():
         console.print("[red]No trained models: run model-train (07a) first.[/red]")
@@ -865,8 +880,9 @@ def evaluate_h2_cmd(
     record = {**run, "time_utc": now.isoformat(), "config_hash": cfg.config_hash(),
               "lock_identical": v.identical, "deviations_covering": v.changed, "hypotheses": ["H2"],
               "h2_bss": res["h2"]["bss"], "h2_supported": res["h2"]["supported"],
-              "a_vs_b": val["a_vs_b"]["choice"], "results_sha256": lk.results_hash(res),
-              "python": platform.python_version()}  # fmt: skip
+              "a_vs_b_literal_07a": val["a_vs_b"]["choice"], "results_sha256": lk.results_hash(res),
+              "python": platform.python_version(),
+              "rerun_reason": rerun_reason or None}  # fmt: skip
     log = "final_runs.jsonl" if final else "peek_runs.jsonl"
     lk.append_run_record(root / "_locks" / log, record)
     lk.append_run_record(repo_root() / "_locks" / log, record)
@@ -987,6 +1003,7 @@ def evaluate_h34_cmd(
         bool, typer.Option(help="the logged final run (needs a verified lock)")
     ] = False,
     peek: Annotated[str, typer.Option(help="non-final run: exact phrase")] = "",
+    rerun_reason: RERUN = "",
 ) -> None:
     """Phase 7 (Colab 07c): H3 (concentration) and H4 (night share) on corrected EF."""
     import platform
@@ -994,19 +1011,8 @@ def evaluate_h34_cmd(
 
     from stratum.evaluate import h34
 
-    paths = lk.default_paths()
     root = drive_root()
-    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
-    if final:
-        ok, why = lk.final_allowed(v)
-        if not ok:
-            console.print(f"[red]Final run refused: {why}[/red]")
-            raise typer.Exit(1)
-    elif peek != lk.PEEK_PHRASE:
-        console.print(
-            f'[red]Held-out days are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
-        )
-        raise typer.Exit(1)
+    v = _gate(root, final, peek, ["H3", "H4"], rerun_reason)
     pre = cfg.load_preregistered()
     n = pre.bootstrap.n_resamples
     seed = pre.detection.labelled_split.seed or 0
@@ -1049,6 +1055,7 @@ def evaluate_h34_cmd(
         "h4_supported": res["h4"]["supported"],
         "results_sha256": lk.results_hash(res),
         "python": platform.python_version(),
+        "rerun_reason": rerun_reason or None,
     }
     log = "final_runs.jsonl" if final else "peek_runs.jsonl"
     lk.append_run_record(root / "_locks" / log, record)
@@ -1074,6 +1081,7 @@ def decide_cmd(
         int, typer.Option(help="Monte Carlo members (pre-registered N = 100)")
     ] = 100,
     force: Annotated[bool, typer.Option(help="recompute days already done")] = False,
+    estimate: Annotated[bool, typer.Option(help="only count the work and time one member")] = False,
 ) -> None:
     """Phase 7 (Colab 07d): alternatives, Monte Carlo, ranked avoidance lists (Table 3)."""
     import numpy as np
@@ -1095,6 +1103,34 @@ def decide_cmd(
     days = [day] if day else _eval_days(root)
     cdir = hu.correction_dir(root)
     names = list(pre.correction_model.features)
+    if estimate:
+        plan = {}
+        for d in days:
+            flagged, frames, cands = dr.plan_day(root, d, pre)
+            plan[d] = {
+                "flagged_segments": len(flagged),
+                "portions": int(cands["portion_id"].nunique()) if len(cands) else 0,
+                "variants": int(frames["flight_id"].nunique()) if len(frames) else 0,
+                "crop_segments": len(frames),
+            }
+        busiest = max(plan, key=lambda k: plan[k]["crop_segments"])
+        sec = (
+            dr.time_one_member(root, busiest, pre, cdir, dr.plan_day(root, busiest, pre)[1])
+            if plan[busiest]["variants"]
+            else 0.0
+        )
+        total = sum(p["crop_segments"] for p in plan.values())
+        est_h = sec * (members + 1) * total / max(plan[busiest]["crop_segments"], 1) / 3600.0
+        _summary(
+            "decide --estimate",
+            {
+                "per_day": json.dumps(plan),
+                "busiest_day": busiest,
+                "seconds_one_member_busiest_day": round(sec, 1),
+                "estimated_hours_all_days": round(est_h, 1),
+            },
+        )
+        return
     done = []
     for d in days:
         fold = hu.fold_for_day(d)
