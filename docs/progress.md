@@ -79,7 +79,7 @@ Newest first. What was done, what's next, blockers.
   (sure + uncertain). Phase 5 gate report written (docs/phase_reports/phase5_gate_report.md).
 
 **Next**
-- Team: review the Phase 5 gate report; "Phase 5 is accepted" starts Phase 6.
+- Phase 5 ACCEPTED 18 Oct (Shrugal). Phase 6 on hold until the team says go.
 - Claude: coverage audit 2/5 Nov.
 - Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)

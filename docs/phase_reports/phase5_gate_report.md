@@ -1,7 +1,7 @@
 ```
 ═══ PHASE 5 GATE REPORT — Labels, matching and observability — 18 Oct 2026 ═══
-Status:          READY FOR REVIEW (not accepted). Phase 6 does not start until
-                 "Phase 5 is accepted".
+Status:          ACCEPTED by Shrugal Vinod, 18 Oct 2026 (chat: "Phase 5 is accepted"),
+                 with the risks and open items below. Phase 6 starts when the team says so.
 Calendar:        ahead (plan: Phase 5 20 Oct–10 Nov; done 18 Oct)
 Code:            commit 0a89831; 214 Python tests + labeller (Vitest 11, Playwright 2) pass;
                  CI green; pre-registration lock verifies (deviations D-001 … D-004).
