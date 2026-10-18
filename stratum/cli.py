@@ -27,7 +27,8 @@ if os.environ.get("MPLBACKEND", "").startswith("module://"):
 import json
 import shutil
 from datetime import UTC
-from typing import Annotated
+from pathlib import Path
+from typing import Annotated, Any
 
 import typer
 from dotenv import load_dotenv
@@ -718,6 +719,159 @@ def evaluate_cmd(
     }
     _summary("evaluate", {"run_id": run_id, "final": final, "report": files["html"], "primary_bss_vs_B3": json.dumps(prim),  # noqa: E501
                           "h1": res["h1"]["sentence"]})  # fmt: skip
+
+
+def _eval_table(root: Path) -> tuple[Any, Any]:
+    import pandas as pd
+
+    ev_dir = root / "interim" / "evaluation"
+    tf, imf = ev_dir / "table.parquet", ev_dir / "images.parquet"
+    if not tf.exists():
+        console.print("[red]No evaluation table: run the Phase 6 evaluation (06b) first.[/red]")
+        raise typer.Exit(1)
+    return pd.read_parquet(tf), pd.read_parquet(imf)
+
+
+@app.command("model-train")
+def model_train(
+    trials: Annotated[
+        int, typer.Option(help="Optuna trials per outer fold (pre-registered 50–100)")
+    ] = 50,
+    force: Annotated[
+        bool, typer.Option(help="retrain although models exist (only before H2)")
+    ] = False,
+) -> None:
+    """Phase 7 (Colab 07a): train the correction model for every outer fold on its training rows
+    only; write the validation report (no held-out scoring) and freeze the models."""
+    from datetime import datetime
+
+    from stratum.evaluate import report_v2 as r2
+    from stratum.model import features as fe
+    from stratum.model import figures as mf
+    from stratum.model import run as mr
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed or 0
+    mdir = mr.model_dir(root)
+    final_log = root / "_locks" / "final_runs.jsonl"
+    if final_log.exists() and any('"H2"' in ln for ln in final_log.read_text().splitlines()):
+        console.print("[red]An H2 final run exists; the models it used are frozen.[/red]")
+        raise typer.Exit(1)
+    if (mdir / "summary.json").exists() and not force:
+        console.print(
+            "[yellow]Models already trained; use --force to retrain (before H2 only).[/yellow]"
+        )
+        raise typer.Exit(1)
+    if mdir.exists():
+        shutil.rmtree(mdir)
+    t, _ = _eval_table(root)
+    t = fe.attach(root, t, list(pre.correction_model.features))
+    res = mr.train_all(t, pre, mdir, trials, seed)
+    figs = res.pop("_figs")
+    sha, dirty = git_commit()
+    run: dict[str, Any] = {
+        "run_id": f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}_{(sha or 'nogit')[:7]}",
+        "commit": sha,
+        "dirty": dirty,
+    }
+    out = root / "reports" / "phase7_validation" / run["run_id"]
+    out.mkdir(parents=True, exist_ok=True)
+    files = [mf.reliability(figs, out), mf.shap_importance(res, out)]
+    files += [mf.shap_dependence(figs, res["features"], out, f) for f in ("winter", "pre_monsoon")]
+    summary = {**run, **res}
+    (mdir / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
+    (out / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
+    rep = r2.validation_report(res, out, run, files)
+    ab = res["a_vs_b"]
+    _summary("model-train", {
+        "run_id": run["run_id"], "report": rep["html"], "model_hash": res["model_hash"],
+        "a_vs_b": f"({ab['choice']}): a {ab['mean_validation_brier_a']:.5f} vs b {ab['mean_validation_brier_b']:.5f}",  # noqa: E501
+        "validation_brier": json.dumps({f: {k: round(v[k], 5) for k in ("brier_climatology", "brier_logistic_rhi", "brier_gbm_raw", "brier_gbm_calibrated", "brier_scaling_b")} for f, v in res["folds"].items()}),  # noqa: E501
+        "monotonicity_violations": sum(m["violations"] for v in res["folds"].values() for m in v["monotonicity"].values()),  # noqa: E501
+    })  # fmt: skip
+
+
+@app.command("evaluate-h2")
+def evaluate_h2_cmd(
+    final: Annotated[
+        bool, typer.Option(help="the logged final run (needs a verified lock)")
+    ] = False,
+    peek: Annotated[str, typer.Option(help="non-final run on held-out seasons: exact phrase")] = "",
+) -> None:
+    """Phase 7 (Colab 07b): H2 with the frozen models of model-train. Final runs are logged in
+    _locks/final_runs.jsonl; held-out predictions are kept for the decision layer."""
+    import platform
+    from datetime import datetime
+
+    import pandas as pd
+
+    from stratum.evaluate import h2 as h2m
+    from stratum.evaluate import report_v2 as r2
+    from stratum.model import features as fe
+    from stratum.model import run as mr
+
+    paths = lk.default_paths()
+    root = drive_root()
+    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
+    if final:
+        ok, why = lk.final_allowed(v)
+        if not ok:
+            console.print(f"[red]Final run refused: {why}[/red]")
+            raise typer.Exit(1)
+    elif peek != lk.PEEK_PHRASE:
+        console.print(
+            f'[red]Held-out seasons are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
+        )
+        raise typer.Exit(1)
+    mdir = mr.model_dir(root)
+    if not (mdir / "summary.json").exists():
+        console.print("[red]No trained models: run model-train (07a) first.[/red]")
+        raise typer.Exit(1)
+    val = json.loads((mdir / "summary.json").read_text())
+    mh = mr.dir_hash(mdir)
+    if mh != val["model_hash"]:
+        console.print("[red]Model files changed since model-train; refusing.[/red]")
+        raise typer.Exit(1)
+    pre = cfg.load_preregistered()
+    n = pre.bootstrap.n_resamples
+    seed = pre.detection.labelled_split.seed or 0
+    t, images = _eval_table(root)
+    t = fe.attach(root, t, list(pre.correction_model.features))
+    t = mr.predict_heldout(t, pre, mdir)
+    res = h2m.evaluate_h2(t, images, n, seed)
+    sha, dirty = git_commit()
+    now = datetime.now(UTC)
+    run_id = f"{now:%Y%m%dT%H%M%SZ}_{(sha or 'nogit')[:7]}"
+    run = {"run_id": run_id, "commit": sha, "dirty": dirty, "final": final, "n_resamples": n,
+           "seed": seed, "model_hash": mh}  # fmt: skip
+    out = root / "reports" / run_id
+    out.mkdir(parents=True, exist_ok=True)
+    files = r2.h2_report(res, out, run, val, paths["deviations"].read_text())
+    (out / "results.json").write_text(json.dumps(res, indent=1, default=str))
+    pred_cols = [
+        "segment_id",
+        "flight_id",
+        "day",
+        "season",
+        *[c for c in t.columns if c.split("__")[0] in mr.PRED_COLS],
+    ]
+    preds = pd.DataFrame(t[pred_cols])
+    preds.to_parquet(out / "heldout_predictions.parquet", index=False)
+    if final:  # the decision layer (H3, H4, ranked lists) reads the final run's predictions
+        pdir = root / "interim" / "model_predictions"
+        pdir.mkdir(parents=True, exist_ok=True)
+        preds.to_parquet(pdir / "heldout.parquet", index=False)
+    record = {**run, "time_utc": now.isoformat(), "config_hash": cfg.config_hash(),
+              "lock_identical": v.identical, "deviations_covering": v.changed, "hypotheses": ["H2"],
+              "h2_bss": res["h2"]["bss"], "h2_supported": res["h2"]["supported"],
+              "a_vs_b": val["a_vs_b"]["choice"], "results_sha256": lk.results_hash(res),
+              "python": platform.python_version()}  # fmt: skip
+    log = "final_runs.jsonl" if final else "peek_runs.jsonl"
+    lk.append_run_record(root / "_locks" / log, record)
+    lk.append_run_record(repo_root() / "_locks" / log, record)
+    _summary("evaluate-h2", {"run_id": run_id, "final": final, "report": files["html"],
+                             "h2": res["h2"]["sentence"]})  # fmt: skip
 
 
 @app.command("download-era5")

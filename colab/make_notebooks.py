@@ -1114,6 +1114,80 @@ final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if
 """),
 ]
 
+PHASE7_TRAIN = [
+    header(
+        "07a · Phase 7: train the correction model (training seasons only, no held-out scoring)",
+        """
+**What it does:** for each held-out season (and each side of the west/east split) it trains
+the correction model on the *other* seasons only: an Optuna search (50 trials, leave-one-day-out
+Brier), the monotone LightGBM model, isotonic calibration, the RHi-only logistic sanity model
+and the option-(b) RHi scaling factor per latitude band. It writes a **validation report**
+(training days only) and freezes the models in `interim/model/`. Nothing here scores a held-out
+season: that is 07b, the logged final run.
+
+* **Runtime:** CPU, **High-RAM** (more CPU cores = faster). **Secrets** (🔑): `GITHUB_TOKEN`
+  only. **Time:** ≈ 45–120 min (6 folds × 50 trials × ~10 model fits).
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude. Don't run 07b
+  until Claude has checked it and recorded the (a)-vs-(b) decision.
+""",
+    ),
+    settings("07a_model_train"),
+    *SETUP,
+    code('''
+# ── 7. Train (training rows only) ────────────────────────────────────────────
+rc_train = stratum("model-train --trials 50 --force", live=True)
+summ_path = f"{DRIVE_ROOT}/interim/model/summary.json"
+res = json.load(open(summ_path)) if rc_train == 0 and os.path.exists(summ_path) else {}
+'''),
+    summary_cell("""    "exit_code": rc_train,
+    "model_hash": res.get("model_hash"),
+    "a_vs_b": res.get("a_vs_b"),
+    "validation": {f: {k: v.get(k) for k in ("train_rows", "train_pos", "train_days", "brier_climatology", "brier_logistic_rhi",
+                                              "brier_gbm_raw", "brier_gbm_calibrated", "brier_scaling_b", "auroc", "best_params")}
+                   for f, v in res.get("folds", {}).items()},
+    "monotonicity_violations": {f: {k: m["violations"] for k, m in v.get("monotonicity", {}).items()} for f, v in res.get("folds", {}).items()},
+    "scaling_s_by_band": {f: [(c["band_deg"], round(c["s"], 3), round(c["tau"], 3), c["s_at_bound"]) for c in v.get("scaling_cells_band", [])]
+                          for f, v in res.get("folds", {}).items()},
+    "shap_top6": {f: list(v.get("shap_importance", {}))[:6] for f, v in res.get("folds", {}).items()},
+"""),
+]
+
+PHASE7_H2 = [
+    header(
+        "07b · FINAL run: H2 (correction model vs B3) on held-out seasons",
+        """
+**This is the logged final run for H2** (build prompt §7.5). It refuses to start unless the
+pre-registration lock verifies and the frozen models from 07a are unchanged (hash check). It
+never retrains: it loads each fold's model, predicts that fold's held-out rows, and scores
+STRATUM, the option-(b) scaling model, the RHi logistic and B0–B3 with 1,000 day-bootstrap
+resamples. The record goes to `_locks/final_runs.jsonl` (never deleted). Run it **once**.
+
+* **Runtime:** CPU, High-RAM. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** ≈ 5–15 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("07b_h2_final"),
+    *SETUP,
+    code('''
+# ── 7. The final H2 run ──────────────────────────────────────────────────────
+rc_h2 = stratum("evaluate-h2 --final", live=True)
+import glob
+runs = sorted(glob.glob(f"{DRIVE_ROOT}/reports/2*_*/results.json"))
+res = json.load(open(runs[-1])) if runs and rc_h2 == 0 else {}
+final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if os.path.exists(f"{DRIVE_ROOT}/_locks/final_runs.jsonl") else []
+'''),
+    summary_cell("""    "exit_code": rc_h2,
+    "report_dir": os.path.dirname(runs[-1]) if runs else None,
+    "final_run_record": json.loads(final_log[-1]) if final_log else None,
+    "h2": res.get("h2"),
+    "mean_over_seasons": res.get("mean_over_seasons"),
+    "folds": {k: {"test_rows": v.get("test_rows"), "test_y1": v.get("test_y1"),
+                  "brier": {m: (r.get("brier") or {}).get("value") for m, r in (v.get("models") or {}).items()},
+                  "auroc": {m: (r.get("auroc") or {}).get("value") for m, r in (v.get("models") or {}).items()},
+                  "bss_vs_B3": {m: r.get("bss_vs_B3") for m, r in (v.get("models") or {}).items()}} for k, v in res.get("folds", {}).items()},
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1146,4 +1220,6 @@ if __name__ == "__main__":
     write("06a_phase6_inputs.ipynb", PHASE6_INPUTS)
     write("06a2_match_sensitivity.ipynb", PHASE6_SENS)
     write("06b_evaluate_final.ipynb", PHASE6_FINAL)
+    write("07a_model_train.ipynb", PHASE7_TRAIN)
+    write("07b_h2_final.ipynb", PHASE7_H2)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

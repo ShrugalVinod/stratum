@@ -8,8 +8,10 @@ bootstrap only has to add up rows: 1,000 resamples × all metrics take well unde
 * Brier score BS = mean (p − y)²; **Brier skill score vs B3** = 1 − BS_model / BS_B3
   (pre-registered primary metric).
 * AUROC from per-day histograms of the probability for positives and negatives
-  (``AUC_BINS`` bins, ties counted half). For 0/1 forecasts this equals the exact AUROC; for
-  continuous ones it is within ~1/AUC_BINS of scikit-learn's value (tested).
+  (``AUC_BINS`` bins of p^(1/4), ties counted half). AUROC depends only on the ranking, so any
+  increasing transform is allowed; the fourth root gives fine bins near 0, where calibrated
+  forecasts of a rare event sit (p = 0.001 and 0.002 fall ~130 bins apart). For 0/1 forecasts
+  this equals the exact AUROC; for continuous ones it is close to scikit-learn's (tested).
 * Reliability diagram: 10 equal-count bins of the probability (with counts), on the pooled
   test set (not bootstrapped).
 """
@@ -23,7 +25,7 @@ import numpy.typing as npt
 import pandas as pd
 
 Array = npt.NDArray[np.float64]
-AUC_BINS = 1000
+AUC_BINS = 4000
 THRESHOLD = 0.5
 STAT_KEYS = ("n", "pos", "sum_p", "brier", "a", "b", "c")
 
@@ -44,7 +46,7 @@ def day_stats(day: npt.ArrayLike, y: npt.ArrayLike, p: npt.ArrayLike) -> dict[st
         out: Array = np.bincount(k, weights=w, minlength=n_d).astype(float)
         return out
 
-    bins = np.clip((pp * AUC_BINS).astype(int), 0, AUC_BINS - 1)
+    bins = np.clip((np.clip(pp, 0.0, 1.0) ** 0.25 * AUC_BINS).astype(int), 0, AUC_BINS - 1)
     hist_pos = np.zeros((n_d, AUC_BINS))
     hist_neg = np.zeros((n_d, AUC_BINS))
     np.add.at(hist_pos, (k[yy == 1], bins[yy == 1]), 1)
