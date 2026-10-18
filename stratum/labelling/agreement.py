@@ -212,7 +212,9 @@ def read_label(path: Path) -> SceneLabel:
 
 
 def read_dir(d: Path) -> dict[str, SceneLabel]:
-    return {lab.scene_id: lab for lab in (read_label(p) for p in sorted(Path(d).glob("*.json")))}
+    """All scene labels in a folder; the app's export summary (``_export.json``) is skipped."""
+    files = sorted(p for p in Path(d).glob("*.json") if not p.name.startswith("_"))
+    return {lab.scene_id: lab for lab in (read_label(p) for p in files)}
 
 
 # ── agreement report ────────────────────────────────────────────────────────

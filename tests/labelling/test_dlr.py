@@ -155,6 +155,7 @@ def test_india_detector_check_end_to_end(tmp_path: Path) -> None:
                 }
             )
         )
+    (d / "_export.json").write_text(json.dumps({"labeller": "aditya-review", "scenes": 3}))
     r, c = package_to_native([50.0, 50.0], [20.0, 120.0], 0, 0)
     det = tmp_path / "interim" / "detections" / "2026-01-15"
     det.mkdir(parents=True)
