@@ -87,8 +87,8 @@ detection:
   btd: "T108 - T120"           # §4.4 BTD = T10.8 − T12.0
   labelled_scenes: 100         # §4.4 said 200; deviation D-002: India held-out half only (tuning moves to expert data)
   scene_size_px: 256           # §4.4 "256 × 256 pixels"
-  pilot_scenes: 20             # §4.4 pilot round of 20 scenes
-  labellers_per_scene: 2       # §4.4 two team members, independently
+  pilot_scenes: 0              # §4.4 said 20; deviation D-003: no from-scratch human labelling, so no pilot round
+  labellers_per_scene: 1       # §4.4 said 2; D-003: one team member reviews each Claude draft
   # §4.4 sampled "across months, times of day and predicted contrail density".
   scene_strata: [month, time_of_day, predicted_contrail_density]
   # §4.4 "settle disagreements by discussion" (open question 10, settled).
@@ -118,11 +118,18 @@ detection:
   # D-002: every team labeller first labels 20 expert scenes (drawn with seed 20261017 from the
   # dataset's evaluation split); their object F1 and cell-grid κ against the expert ground truth
   # are reported, so the team's India labels come with a measured accuracy.
-  labeller_calibration:
-    source: dlr_msg_seviri_contrail_dataset_v3
-    scenes: 20
-    drawn_from: dataset_evaluation_split
-    seed: 20261017
+  # D-003 (2026-10-17): no from-scratch human labelling, so no labeller calibration round.
+  labeller_calibration: null
+  # D-003: the primary detector accuracy is the DLR evaluation split (expert ground truth; also
+  # reported for its tropical and Indian-Ocean-view scenes). The 100 India held-out scenes get
+  # AI-assisted labels: Claude drafts lines without any detector output or flight data, one team
+  # member reviews and corrects each scene. India precision/recall from these labels is a
+  # secondary, exploratory check, reported separately and never pooled with the expert result.
+  india_labels:
+    source: claude_draft_then_human_review
+    reviewers_per_scene: 1
+    role: secondary_exploratory
+    detector_accuracy_primary: dlr_evaluation_split
 
 # Appendix B, labelling guide v0.1 (the parts that affect scoring). The guide text
 # itself may be revised after the pilot (§4.4); these scoring rules may not.

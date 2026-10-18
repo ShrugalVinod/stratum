@@ -50,3 +50,30 @@ both runs (build prompt §6.8).
 - Results seen before the change: no. No scene had been labelled; no detector score, match or
   model result exists. Only the sampling summary (counts per stratum) had been seen.
 - Team OK: Shrugal Vinod, 2026-10-17 (chat: "B, Team OK")
+
+## D-003 — 2026-10-17 — India labels: Claude drafts, one team member reviews; expert data is the primary detector check
+- Keys: detection.pilot_scenes, detection.labellers_per_scene, detection.labeller_calibration, detection.india_labels
+- Reason: the team tried the 20-scene India pilot and could not find contrails in the images.
+  A check confirmed this is the data, not the app: the images decode correctly, and the
+  detector's best score per pilot scene (median 0.30) matches the expert scenes *without*
+  contrails (0.31), not those with them (0.61). Tropical India has few contrail outbreaks and a
+  busy clear-sky BTD background, so from-scratch labelling by non-experts would be slow and
+  unreliable. No public labelled contrail dataset exists for India, INSAT, Himawari or FY-4
+  (searched 17 Oct 2026; closest: the DLR SEVIRI set already used, and US GOES-16
+  OpenContrails). Change: (1) the detector's accuracy is reported primarily on the DLR expert
+  evaluation split (89 scenes), also for its tropical (< 30°N) and Indian-Ocean-view scenes;
+  (2) the 100 India held-out scenes get AI-assisted labels: Claude draws draft lines (BTD at
+  t ± 15 min with contrast enhancement; each hand-placed line traced to the local BTD ridge;
+  no detector output, flight tracks or predictions used), and one team member reviews and
+  corrects every scene in the labelling app's Review mode (k mod 3 over sorted scene ids:
+  34/33/33); (3) India precision/recall from these labels is secondary and exploratory, reported
+  separately, never pooled with the expert result; (4) no India pilot and no labeller
+  calibration round. Labelling rules (min length 10 px, scene status, uncertain lines scored
+  separately, blind to tracks and predictions) are unchanged.
+- Limitation stated up front: reviewers see the drafts, so their labels are not independent of
+  Claude's; the number of draft lines kept, deleted and added is reported.
+- Results seen before the change: the DLR tuning result (D-002); the detector's object counts
+  and best scores on the 20 *pilot* scenes (not the test scenes); Claude looked at the pilot and
+  test images (drafting the test labels is the change itself). No detector result on the test
+  scenes, no match or segment label, no model or hypothesis result.
+- Team OK: Shrugal Vinod, 2026-10-17 (chat: "Merge 1st option and 2nd and then do it")

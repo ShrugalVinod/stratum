@@ -1,3 +1,4 @@
+import { reviewerFor, reviewScenesFor } from "../src/assignment";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { dedupe, distToPoly, emptyLabel, exportZip, isComplete, polyLength, problems, seededOrder, type SceneLabel } from "../src/labels";
@@ -92,5 +93,14 @@ describe("assignment (three labellers)", () => {
     const fx = JSON.parse(readFileSync(new URL("./fixtures/assignment_example.json", import.meta.url), "utf8"));
     const m = labellersFor(fx.scene_ids);
     expect(Object.fromEntries(m)).toEqual(fx.expected);
+  });
+});
+
+describe("review assignment (D-003)", () => {
+  const ids = Array.from({ length: 100 }, (_, i) => `S${String(i + 1).padStart(3, "0")}`);
+  it("every scene has exactly one reviewer, loads 34/33/33", () => {
+    const m = reviewerFor(ids);
+    expect(m.size).toBe(100);
+    expect([reviewScenesFor(ids, "aditya").length, reviewScenesFor(ids, "ishaan").length, reviewScenesFor(ids, "abeer").length]).toEqual([34, 33, 33]);
   });
 });
