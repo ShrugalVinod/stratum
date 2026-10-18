@@ -1,6 +1,7 @@
 ```
 ═══ PHASE 6 GATE REPORT — Evaluation harness, baselines B0–B4, H1 — 18 Oct 2026 ═══
-Status:          READY FOR REVIEW. The one final run is logged; H1 is NOT SUPPORTED.
+Status:          ACCEPTED by Shrugal Vinod, 18 Oct 2026 (chat: "phase 6 is accepted"), with H1
+                 reported as NOT SUPPORTED and the website update approved.
 Calendar:        far ahead (plan: Phases 5 + 6 done by 28 Feb 2027; done 18 Oct 2026)
 Code:            final run at commit 4a82cfa (clean tree); 234 Python tests pass; ruff clean;
                  pre-registration lock verifies (differences all covered by D-001 … D-004).
@@ -91,11 +92,9 @@ Deviations:      none new in Phase 6. No peek runs (_locks/peek_runs.jsonl absen
 Fixed after the final run (wording only, no result changes): the auto paragraph says "no
                  labels for June–October"; October has 39 and November 182 y = 1, so the
                  code and paper draft now say June–September.
-Open questions:  ⚑ Accept H1 as not supported and publish it as such (recommended: yes —
-                   a refuted hypothesis is a valid result; the paper promised every outcome).
-                 ⚑ Website: add the H1 result to the diary/results page after acceptance
-                   (recommended: yes, with the detectability explanation and the limits).
-                 ⚑ Q5 still open before Phase 7.
+Open questions:  H1 reported as not supported (accepted 18 Oct). Website updated 18 Oct
+                   (H1 card result, ticker, diary entry with the limits).
+                 ⚑ Q5 still open before Phase 7 step 7.6.4.
 Risks:           Phase 7 (H2) uses the same 12 days and noisy labels; power is low. More
                  ADS-B days would help most.
 Next phase:      Phase 7 — correction model (H2), avoidance layer (H3, H4).

@@ -48,8 +48,15 @@ export function Methods() {
                   <p class="notam-test">
                     <span class="label">Test</span> {h.test}
                   </p>
+                  {h.result && (
+                    <p class="notam-test notam-result">
+                      <span class="label">Result</span> <b>{h.result.verdict}.</b> {h.result.body}
+                    </p>
+                  )}
                 </div>
-                <footer class="mono-s">Pre-registered · not yet tested</footer>
+                <footer class="mono-s">
+                  {h.result ? `Pre-registered · tested ${h.result.date} · ${h.result.verdict.toLowerCase()}` : "Pre-registered · not yet tested"}
+                </footer>
               </article>
             ))}
           </div>

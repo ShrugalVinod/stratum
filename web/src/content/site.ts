@@ -42,19 +42,20 @@ export const loop = [
   { n: "05", code: "ARRIVE", title: "Better advice", body: "A correction learned from the satellite labels, with honest uncertainty (Phase 7)." },
 ];
 
-// Ticker under the hero. Every number is from the exported build (day.json, manifest.json).
+// Ticker under the hero. Numbers are from the exported build (day.json, manifest.json) or the
+// logged final run (docs/phase_reports/phase6_gate_report.md).
 export const facts = [
   "1 Jan 2026 · 1,458 commercial flights on the map",
   "66 persistent-contrail segments from 6 flights (physics only, B1)",
   "31 days × 8 flight levels × 24 hours of contrail conditions",
   "Meteosat-9 checks every 15 minutes",
   "Analysis plan locked 13 Oct 2026",
-  "Results: none yet — they arrive in Phase 7",
+  "H1 tested 18 Oct 2026: not supported — physics predicts ~6× more persistent contrails than the satellite sees",
 ];
 
 // Phase status: update as phases are accepted (source: docs/phase_reports).
 export type PhaseState = "done" | "current" | "upcoming";
-export const statusUpdated = "17 Oct 2026";
+export const statusUpdated = "18 Oct 2026";
 // logged = date of the progress-log entry that finished the phase (docs/progress.md)
 export const phases: { n: number; name: string; state: PhaseState; logged?: string }[] = [
   { n: 0, name: "Setup & pre-registration", state: "done", logged: "13 OCT" },
@@ -63,8 +64,8 @@ export const phases: { n: number; name: string; state: PhaseState; logged?: stri
   { n: 3, name: "Satellite detector", state: "done", logged: "15 OCT" },
   { n: 4, name: "Web app v0", state: "done", logged: "17 OCT" },
   { n: 5, name: "Labels & matching", state: "done", logged: "18 OCT" },
-  { n: 6, name: "Evaluation (H1)", state: "current" },
-  { n: 7, name: "Correction & decisions", state: "upcoming" },
+  { n: 6, name: "Evaluation (H1)", state: "done", logged: "18 OCT" },
+  { n: 7, name: "Correction & decisions", state: "current" },
   { n: 8, name: "Final web app", state: "upcoming" },
 ];
 
@@ -127,11 +128,17 @@ export const pipeline = [
   },
 ];
 
-export const hypotheses = [
+// result: set once the hypothesis' logged final run exists (source: docs/phase_reports).
+export const hypotheses: { id: string; plain: string; test: string; result?: { verdict: string; date: string; body: string } }[] = [
   {
     id: "H1",
     plain: "Uncorrected physics under-predicts the persistent contrails that satellites actually detect.",
     test: "Ratio of B1-predicted persistence to observed detectable contrails; supported if the upper 95 % CI is below 1.",
+    result: {
+      verdict: "Not supported",
+      date: "18 Oct 2026",
+      body: "Ratio 6.44 (95 % CI 4.92–12.12): physics predicts about 6× more persistent contrails than Meteosat-9 sees, the opposite of the hypothesis. Most are too thin or narrow to detect: allowing for that, the ratio is 1.05 (0.81–1.91). 12 flight days, mostly winter and spring.",
+    },
   },
   {
     id: "H2",
@@ -160,6 +167,7 @@ export const methods = [
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-10-18", phase: 6, title: "Phase 6 accepted: H1 is not supported", body: "The one logged test of H1: over 334,211 flight segments on 12 days, raw ERA5 physics predicted 10,076 persistent contrails and Meteosat-9 saw 1,564 — a ratio of 6.44 (95 % range 4.92–12.12). We expected physics to predict too few; it predicts about six times too many. Most predicted contrails are too thin or narrow for the satellite: only 16 % pass the detectability thresholds, and allowing for that the two agree (1.05). The answer is the same under every alternative label rule and matching tolerance. Limits: only 2–4 days per season, no monsoon contrails seen, and about a third of the satellite labels are chance matches. A refuted hypothesis is a result, and we report it as one." },
   { date: "2026-10-18", phase: 6, title: "Evaluation harness built", body: "One harness that every model goes through the same way: four baselines (climatology, raw ERA5, constant humidity scaling, latitude-dependent correction), seasons held out one at a time, no flight or satellite image on both sides of a split, and 1,000 day-resamples for every uncertainty range. The H1 test runs once, logged, before the results are seen." },
   { date: "2026-10-18", phase: 5, title: "Phase 5 accepted: satellite labels for the whole year", body: "680,387 contrail-forming flight segments over India checked against Meteosat-9: 421 contrails observed from 369 flights (the pre-registered minimum is 300). A wrong-day check shows about a third of these matches would happen by chance, so the labels are noisy. Almost all observations are from winter and spring: monsoon cloud hides contrails from June to October. Over India the detector finds about 1 in 3 labelled contrails, but only about 1 in 20 of its lines is a contrail." },
   { date: "2026-10-18", phase: 5, title: "India labels drafted by AI, reviewed by the team", body: "The team could not find contrails reliably in the India scenes, so Claude drafted the lines and Aditya, Ishaan and Abeer each reviewed and corrected a third of the 100 scenes: 15 draft lines, 0 deleted, 5 moved, 21 added. This is logged as a deviation from the plan and used only as a secondary check." },

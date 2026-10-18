@@ -2,7 +2,7 @@
 
 Newest first. What was done, what's next, blockers.
 
-## 2026-10-18 — Phase 6 final run done; gate report ready for review
+## 2026-10-18 — Phase 6 accepted: H1 not supported
 
 **Done**
 - Colab 06a2: 12 climatology months; tolerance re-matches (1.5 / 3 px, 15° / 30°) for 12 days.
@@ -15,8 +15,9 @@ Newest first. What was done, what's next, blockers.
 - Gate report: `docs/phase_reports/phase6_gate_report.md`.
 
 **Next**
-- Team: read the gate report (limits 1–4), then "Phase 6 is accepted". Settle Q5.
-- After acceptance: website diary/results entry for H1; Phase 7.
+- Phase 6 accepted by Shrugal (18 Oct); website updated with the H1 result (Methods H1 card,
+  ticker, diary).
+- Phase 7: settle Q5 (climate-metric conversion, before step 7.6.4); build the correction model.
 
 ## 2026-10-18 — Phase 6 started: evaluation harness built
 
