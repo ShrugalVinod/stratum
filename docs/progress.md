@@ -74,10 +74,13 @@ Newest first. What was done, what's next, blockers.
   put 2,608 single-match segments into y = 0; fixed (see decisions 18 Oct).
 - India review finished (36 lines in 16 scenes; 91 scenes scored).
 
+- Colab 05f PASSED (commit 0a89831): final labels (y = 1 1,564; 421 events; y = 0 332,647);
+  India check (91 scenes): detector precision 0.044 [0.020, 0.071], recall 0.33 [0.21, 0.51]
+  (sure + uncertain). Phase 5 gate report written (docs/phase_reports/phase5_gate_report.md).
+
 **Next**
-- Shrugal: upload the three review zips to Drive labels/raw/, run Colab 05f (final labels +
-  detector vs India labels).
-- Claude: Phase 5 gate report.
+- Team: review the Phase 5 gate report; "Phase 5 is accepted" starts Phase 6.
+- Claude: coverage audit 2/5 Nov.
 - Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.
