@@ -278,6 +278,15 @@ avoidance:
   rank_by: lower_bound_net_warming_avoided
   alert_if: "lower_bound > 0"
   alert_requires_all_horizons: true        # §4.7: lower bound taken across metric horizons too
-  # Open question 5: contrail-EF → CO2-equivalent factors per horizon, with a citation.
-  metric_conversion: {source: null, factor_h20: null, factor_h100: null}   # ⚑ set before Phase 7
+  # Open question 5, settled 2026-10-18 (Team OK: S. Vinod, chat "A i choose a"), before any
+  # decision-layer number exists. CO2e [kg] = EF [J] × efficacy × factor_h. factor_h =
+  # 1 / (AGWP_CO2(H) × 5.101e14 m² × 31,536,000 s yr⁻¹), AGWP_CO2 from IPCC AR5 WG1 Ch. 8
+  # (Myhre et al. 2013): 2.49e-14 (20 yr) and 9.17e-14 (100 yr) W m⁻² yr kg⁻¹ — the same factors as
+  # the Google/Breakthrough Energy Contrails API. Efficacy (ERF/RF of contrail cirrus) 0.42 from
+  # Lee et al. 2021 (Atmos. Environ. 244, 117834); Monte Carlo uniform between 0.42 and 1.0
+  # (1.0 = no adjustment, as Teoh et al. 2020 compare EF directly).
+  metric_conversion:
+    source: "IPCC AR5 WG1 Ch. 8 AGWP_CO2 (Myhre et al. 2013); efficacy Lee et al. 2021"
+    factor_h20: 2.497e-9                  # kg CO2-eq per J of contrail EF (before efficacy)
+    factor_h100: 6.779e-10
   confidence_note_min_examples: 50         # open question 14 (settled)

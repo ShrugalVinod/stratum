@@ -52,6 +52,7 @@ dependencies = [
     "matplotlib",
     "orjson>=3.13.0",
     "eccodeslib",
+    "optuna>=4",
 ]
 
 [project.scripts]

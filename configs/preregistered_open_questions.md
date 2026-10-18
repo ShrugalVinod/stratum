@@ -75,10 +75,24 @@ uncertainty term, used only for the secondary, efficiency-adjusted H1, never fol
 The paper's population shares (0.46 at 2 km, 0.38 at 7 km) are reported as a cross-check.
 See `preregistered.yaml: hypotheses.H1.detection_efficiency_thresholds`.
 
-### 5. Climate-metric conversion factors (20- and 100-year horizons) — ⚑ OPEN · owner SV · before Phase 7 step 7.6.4
-Needs a cited, published method to put contrail energy forcing (J) and CO₂ (kg) on a common
-basis at 20 and 100 years (for example a GWP- or ATR-based contrail-EF-to-CO₂e factor).
-Factors and citation go here **before** anything is computed. Do not invent factors.
+### 5. Climate-metric conversion factors (20- and 100-year horizons) — SETTLED (2026-10-18, Team OK: S. Vinod, chat "A i choose a") · before any decision-layer number exists
+**Answer (option A: CO₂-equivalent via the absolute global warming potential of CO₂).**
+CO₂e [kg] = EF [J] × efficacy × factor_H, with factor_H = 1 / (AGWP_CO₂(H) × A_earth × s_yr).
+* AGWP_CO₂ from IPCC AR5 WG1 Chapter 8 (Myhre et al. 2013, supplementary material):
+  **2.49 × 10⁻¹⁴** (H = 20 yr) and **9.17 × 10⁻¹⁴** (H = 100 yr) W m⁻² yr (kg CO₂)⁻¹;
+  A_earth = 5.101 × 10¹⁴ m², s_yr = 31,536,000 s.
+* → **factor_20 = 2.497 × 10⁻⁹** and **factor_100 = 6.779 × 10⁻¹⁰** kg CO₂ per J (identical to
+  the Google / Breakthrough Energy Contrails API "GWP factors", which state the same AR5 source).
+* **Efficacy** (ERF/RF of contrail cirrus): central **0.42** (Lee et al. 2021, Atmos. Environ.
+  244, 117834). In the Monte Carlo it is drawn **uniformly between 0.42 and 1.0**: 1.0 is no
+  adjustment (Teoh et al. 2020 compare EF with CO₂ directly). Lower published efficacies exist
+  but were not verified, so the conservative choice is not to go below 0.42.
+* Extra CO₂ from fuel uses 3.16 kg CO₂ per kg fuel (preregistered.yaml).
+* Contrail forcing acts within hours, so its integrated forcing is the same at both horizons;
+  only CO₂'s changes. The 20-year horizon therefore weighs contrails ~3.7× more than 100 years.
+**Why.** Works per segment (Phase 7 ranks individual altitude changes); uses sources already
+cited on the website; the same factors as the operational contrail API. Options B (Lee et al.
+2021 fleet-mean GWP ratios) and C (ATR with a climate response model) were not chosen.
 
 ### 6. Aircraft mass fraction — SETTLED (2026-10-13)
 **Answer.** Mass = **0.80 × MTOW**; sensitivity runs at **0.70** and **0.90**.

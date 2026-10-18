@@ -176,3 +176,7 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 - **Primary metric (BSS vs B3, mean of 4 seasons):** B0 +0.45, B1 −0.23, B2 −1.04, CoCiP-B1 −0.74. B0 wins on Brier by forecasting small probabilities on a 0.47 % base rate; it does not rank (AUROC < 0.5 in two seasons).
 - **Not re-run, not re-defined.** The result stands as logged (build prompt §13). Wording fix after the run (no number changes): the auto-generated caveat said "June–October"; now "June–September" in `stratum/evaluate/hypotheses.py` and `docs/paper/h1_result_draft.md`. The run's own `h1_paragraph.md` is kept verbatim.
 - **Recommendation for Phase 7 (descriptive, no deviation):** report BSS vs B0 next to the pre-registered BSS vs B3.
+
+## 2026-10-18 — Q5 settled (Team OK: S. Vinod, chat "A i choose a"), before any decision-layer number
+- CO₂e [kg] = EF [J] × efficacy × factor_H; factor_20 = 2.497e-9, factor_100 = 6.779e-10 kg CO₂ per J, from IPCC AR5 AGWP_CO₂ (2.49e-14 / 9.17e-14 W m⁻² yr kg⁻¹; the same factors as the Google/Breakthrough Energy Contrails API). Efficacy 0.42 (Lee et al. 2021), Monte Carlo uniform 0.42–1.0. Written into `configs/preregistered_open_questions.md` Q5 and `avoidance.metric_conversion`; the lock verifies (filled ⚑ placeholders). The efficacy is not a YAML key (adding keys would read as a change to the lock); it lives in the settled Q5 text and the code checks itself against that text.
+- Phase 7 hyperparameter search uses Optuna (TPE sampler, fixed seed), added as a dependency.

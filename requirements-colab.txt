@@ -6,6 +6,8 @@ aiohttp==3.14.5
     # via gcsfs
 aiosignal==1.4.0
     # via aiohttp
+alembic==1.20.0
+    # via optuna
 annotated-doc==0.0.5
     # via typer
 annotated-types==0.8.0
@@ -46,8 +48,11 @@ cloudpickle==3.1.2
     #   shap
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
+    #   colorlog
     #   tqdm
     #   typer
+colorlog==6.12.0
+    # via optuna
 configobj==5.0.9
     # via pyresample
 contourpy==1.4.0
@@ -75,6 +80,10 @@ eccodes==2.49.0
     # via
     #   cfgrib
     #   pycontrails
+eccodeslib==2.49.0.30
+    # via stratum
+eckitlib==2.3.0.30
+    # via eccodeslib
 ecmwf-api-client==1.7.0
     # via pycontrails
 ecmwf-datastores-client==0.5.3
@@ -159,8 +168,12 @@ lightgbm==4.7.0
     # via stratum
 locket==1.0.0
     # via partd
+mako==1.4.3
+    # via alembic
 markdown-it-py==4.2.0
     # via rich
+markupsafe==3.0.4
+    # via mako
 matplotlib==3.11.2
     # via stratum
 mdurl==0.1.2
@@ -201,6 +214,7 @@ numpy==2.5.4
     #   numcodecs
     #   openap
     #   opencv-python-headless
+    #   optuna
     #   pandas
     #   pycontrails
     #   pykdtree
@@ -228,11 +242,16 @@ opencv-python-headless==5.0.0.93
     # via stratum
 opentelemetry-api==1.45.1
     # via google-api-core
+optuna==5.0.0
+    # via stratum
+orjson==3.13.0
+    # via stratum
 packaging==26.3
     # via
     #   dask
     #   lazy-loader
     #   matplotlib
+    #   optuna
     #   pandera
     #   pooch
     #   satpy
@@ -338,6 +357,7 @@ pyyaml==6.0.3
     #   donfig
     #   eumdac
     #   openap
+    #   optuna
     #   pyresample
     #   satpy
     #   stratum
@@ -391,6 +411,10 @@ six==1.17.0
     # via python-dateutil
 slicer==0.0.8
     # via shap
+sqlalchemy==2.1.5
+    # via
+    #   alembic
+    #   optuna
 threadpoolctl==3.7.0
     # via scikit-learn
 tifffile==2026.9.20
@@ -403,6 +427,7 @@ tqdm==4.70.1
     # via
     #   cdsapi
     #   multiurl
+    #   optuna
     #   pycontrails
     #   shap
 trollimage==1.28.0
@@ -417,6 +442,7 @@ typing-extensions==4.16.0
     # via
     #   aiohttp
     #   aiosignal
+    #   alembic
     #   ecmwf-datastores-client
     #   grpcio
     #   numcodecs
@@ -424,6 +450,7 @@ typing-extensions==4.16.0
     #   pandera
     #   pydantic
     #   pydantic-core
+    #   sqlalchemy
     #   typeguard
     #   typing-inspect
     #   typing-inspection
