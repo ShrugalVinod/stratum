@@ -7,20 +7,63 @@ import "./styles/base.css";
 import "./styles/layout.css";
 import { render } from "preact";
 import { useEffect } from "preact/hooks";
-import { ErrorBoundary, LocationProvider, Route, Router, lazy, useLocation } from "preact-iso";
+import {
+  ErrorBoundary,
+  LocationProvider,
+  Route,
+  Router,
+  lazy,
+  useLocation,
+} from "preact-iso";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { startMotion } from "./components/motion";
 import { Home } from "./pages/Home";
 
-const MapPage = lazy(() => import("./pages/MapPage").then((m) => m.MapPage));
-const HowItWorks = lazy(() => import("./pages/HowItWorks").then((m) => m.HowItWorks));
-const Progress = lazy(() => import("./pages/Progress").then((m) => m.Progress));
-const Methods = lazy(() => import("./pages/Methods").then((m) => m.Methods));
-const Team = lazy(() => import("./pages/Team").then((m) => m.Team));
-const AboutData = lazy(() => import("./pages/AboutData").then((m) => m.AboutData));
-const Contact = lazy(() => import("./pages/Contact").then((m) => m.Contact));
-const NotFound = lazy(() => import("./pages/NotFound").then((m) => m.NotFound));
+// A page's code is fetched when it is first opened. If that fetch fails (a new version was
+// deployed while the tab was open, so the old file names are gone, or the dev server stopped),
+// load the page normally once instead of silently staying on the current one.
+function reloadOnce<T>(load: () => Promise<T>): () => Promise<T> {
+  return () =>
+    load().catch((err: unknown) => {
+      const key = `stratum-reload:${location.pathname}`;
+      let tried = false;
+      try {
+        tried = sessionStorage.getItem(key) === "1";
+        sessionStorage.setItem(key, "1");
+      } catch {
+        tried = false;
+      }
+      if (!tried) {
+        location.reload();
+        return new Promise<T>(() => {}); // the reload replaces the page
+      }
+      throw err;
+    });
+}
+
+const MapPage = lazy(
+  reloadOnce(() => import("./pages/MapPage").then((m) => m.MapPage)),
+);
+const HowItWorks = lazy(
+  reloadOnce(() => import("./pages/HowItWorks").then((m) => m.HowItWorks)),
+);
+const Progress = lazy(
+  reloadOnce(() => import("./pages/Progress").then((m) => m.Progress)),
+);
+const Methods = lazy(
+  reloadOnce(() => import("./pages/Methods").then((m) => m.Methods)),
+);
+const Team = lazy(reloadOnce(() => import("./pages/Team").then((m) => m.Team)));
+const AboutData = lazy(
+  reloadOnce(() => import("./pages/AboutData").then((m) => m.AboutData)),
+);
+const Contact = lazy(
+  reloadOnce(() => import("./pages/Contact").then((m) => m.Contact)),
+);
+const NotFound = lazy(
+  reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
+);
 
 function ScrollReset() {
   const { path } = useLocation();

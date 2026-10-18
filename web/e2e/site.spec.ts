@@ -130,3 +130,17 @@ test("phone layout has no horizontal scroll", async ({ browser }) => {
   }
   await ctx.close();
 });
+
+test("a page whose code fails to load is opened by a full reload, not left on Home", async ({ page }) => {
+  await page.goto("/");
+  let blocked = 0;
+  // first request for the Methods page code fails (as after a deploy or a stopped server)
+  await page.route(/\/(assets\/Methods-[^/]+\.js|src\/pages\/Methods\.tsx)/, (route) => {
+    if (blocked++ === 0) return route.abort();
+    return route.continue();
+  });
+  await page.locator('header a[href="/methods"]').first().click();
+  await expect(page.locator("h1")).toContainText("before results", { timeout: 15_000 });
+  expect(page.url()).toContain("/methods");
+  expect(blocked).toBeGreaterThanOrEqual(2);
+});
