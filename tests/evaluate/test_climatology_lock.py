@@ -69,3 +69,15 @@ def test_evaluate_refuses_held_out_scoring_without_final_or_peek(
     r = CliRunner().invoke(app, ["evaluate", "--peek", "please"])
     assert r.exit_code == 1
     assert not (tmp_path / "_locks").exists()  # nothing scored, nothing logged
+
+
+def test_climatology_command_lists_the_evaluation_months(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from typer.testing import CliRunner
+
+    from stratum.cli import app
+
+    monkeypatch.setenv("STRATUM_DRIVE_ROOT", str(tmp_path))
+    r = CliRunner().invoke(app, ["climatology"], env={"COLUMNS": "200"})
+    assert r.exit_code == 0, r.output
+    assert "climatology 2025-03" in r.output and "climatology 2026-02" in r.output
+    assert "no ERA5 pl" in r.output  # empty root: reported, not crashed

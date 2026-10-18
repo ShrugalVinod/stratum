@@ -579,9 +579,10 @@ def climatology_cmd(
 
     root = drive_root()
     if months == "all":
-        months_l = [
-            f"{m:%Y-%m}" for m in __import__("pandas").period_range("2025-03", "2026-02", freq="M")
-        ]
+        import pandas as pd
+
+        start, end = cfg.load_preregistered().periods.evaluation
+        months_l = [p.strftime("%Y-%m") for p in pd.period_range(start[:7], end[:7], freq="M")]
     else:
         months_l = [m.strip() for m in months.split(",")]
     for m in months_l:
