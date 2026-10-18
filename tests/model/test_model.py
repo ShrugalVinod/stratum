@@ -188,3 +188,37 @@ def test_cli_train_then_h2_peek_and_refusals(tmp_path: Path, monkeypatch) -> Non
     (root / "interim" / "model" / "winter" / "params.json").write_text("{}")
     r = run.invoke(cli.app, ["evaluate-h2", "--peek", lk.PEEK_PHRASE])
     assert r.exit_code == 1 and "changed" in r.output
+
+
+def test_scaling_with_detection_efficiency_recovers_the_persistence_curve() -> None:
+    rng = np.random.default_rng(4)
+    rhi = rng.uniform(0.6, 1.5, 120_000)
+    de = 0.16
+    y = (rng.random(rhi.size) < de * sc.prob(rhi, 1.02, 0.04)).astype(float)
+    with_de = sc.fit(rhi, y, de)
+    literal = sc.fit(rhi, y, 1.0)
+    assert abs(with_de["s"] - 1.02) < 0.015 and with_de["de"] == de
+    assert literal["s"] > with_de["s"] + 0.05  # ignoring ε "dries" the air to fit fewer contrails
+    t = pd.DataFrame({"cocip_contrail": [1, 1, 1, 1, 0, np.nan], "detectable": [1, 0, 0, 0, 1, 1]})
+    assert sc.detection_efficiency(t) == 0.25
+
+
+def test_fit_correction_writes_per_fold_cells_draws_and_the_a_vs_b_rule(tmp_path: Path) -> None:
+    from stratum.model import correction as co
+
+    t, _ = _year(seed=12, per_day=400)
+    t["cocip_contrail"] = (t["rhi"] > 1.0).astype(float)
+    t["detectable"] = (np.random.default_rng(0).random(len(t)) < 0.2).astype(float)
+    bands = [(6.0, 15.0), (15.0, 25.0), (25.0, 37.0)]
+    val = {"folds": {f: {"brier_gbm_calibrated": 0.03} for f in sp.SEASONS}}
+    res = co.fit_correction(t, bands, tmp_path, n_draws=4, seed=1, validation=val)
+    assert set(res["folds"]) == set(sp.SEASONS)
+    for f in sp.SEASONS:
+        assert (tmp_path / f / "scaling_band.csv").exists()
+        assert np.load(tmp_path / f / "s_draws.npy").shape == (4, 3)
+        assert 0.1 < res["folds"][f]["detection_efficiency"] < 0.3
+    assert res["a_vs_b"]["choice"] in ("a", "b")
+    from stratum.decide import humidity as hu
+
+    _, s = hu.scaling_for_day(tmp_path, "2026-01-15", bands)
+    assert s == [round(x, 12) for x in s] and len(s) == 3

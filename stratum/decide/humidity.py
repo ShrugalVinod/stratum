@@ -68,26 +68,38 @@ def fold_for_day(day: str) -> str:
     return str(season_of(np.array([int(day[5:7])]))[0])
 
 
+def correction_dir(root: Path) -> Path:
+    """Option-2 humidity corrections (fitted with detection efficiency), one folder per fold."""
+    return root / "interim" / "correction"
+
+
 def scaling_for_day(
-    model_dir: Path, day: str, bands: list[tuple[float, float]]
+    cdir: Path, day: str, bands: list[tuple[float, float]]
 ) -> tuple[Any, list[float]]:
-    cells = pd.read_csv(model_dir / fold_for_day(day) / "scaling_band.csv")
+    """The correction of the seasonal fold that holds ``day`` out."""
+    cells = pd.read_csv(cdir / fold_for_day(day) / "scaling_band.csv")
     s = band_s(cells, len(bands))
     return scaling(edges(bands), s), s
 
 
-def bootstrap_s(t: pd.DataFrame, bands: list[tuple[float, float]], n: int, seed: int) -> np.ndarray:
-    """Humidity uncertainty for the Monte Carlo: band s refitted on day-bootstrap resamples of
-    the training rows (``n`` × n_bands)."""
+def bootstrap(
+    t: pd.DataFrame, bands: list[tuple[float, float]], n: int, seed: int, with_de: bool = True
+) -> tuple[np.ndarray, np.ndarray]:
+    """Humidity (i) and detection-efficiency (ii) uncertainty for the Monte Carlo: on each
+    day-bootstrap resample of the training rows, ε is recomputed and the band s refitted with it.
+    Returns (``n`` × n_bands s draws, ``n`` ε draws)."""
     from stratum.model import scaling as sc
 
     rng = np.random.default_rng(seed)
     days = np.unique(t["day"].to_numpy())
     by_day = {d: g for d, g in t.groupby("day")}
-    out = np.empty((n, len(bands)))
+    s_out = np.empty((n, len(bands)))
+    de_out = np.ones(n)
     for i in range(n):
         pick = rng.choice(days, len(days), replace=True)
         r = pd.concat([by_day[d] for d in pick], ignore_index=True)
-        cells = sc.fit_cells(r, bands, by_season=False)
-        out[i] = band_s(cells, len(bands))
-    return out
+        de = sc.detection_efficiency(r) if with_de else 1.0
+        cells = sc.fit_cells(r, bands, by_season=False, de=de)
+        s_out[i] = band_s(cells, len(bands))
+        de_out[i] = de
+    return s_out, de_out

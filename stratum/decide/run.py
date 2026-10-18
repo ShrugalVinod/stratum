@@ -10,17 +10,19 @@ Per held-out day (resumable, one ``_SUCCESS`` per day):
    flown again through CoCiP. Only the stretch of flight that an alternative changes is run
    (planned and alternative alike): CoCiP treats every segment's contrail independently, so the
    EF of unchanged segments cancels exactly in the difference. Monte Carlo member 0 is the
-   central run; members 1…N pair (i) a humidity draw (band ``s`` refitted on a day-bootstrap of
-   the fold's training rows), (iii) CoCiP's own parameter draw (``CocipUncertaintyParams``) and
-   (iv) an efficacy draw (Q5), identically for the planned and every alternative flight.
+   central run; members 1…N pair (i)+(ii) a humidity draw (band ``s`` refitted, with detection
+   efficiency ε recomputed, on a day-bootstrap of the fold's training rows), (iii) CoCiP's own
+   parameter draw (``CocipUncertaintyParams``) and (iv) an efficacy draw (Q5), identically for
+   the planned and every alternative flight.
    Net warming avoided (kg CO₂e, per horizon) = CO₂e(EF_planned − EF_alt) − 3.16 × extra fuel.
    Best alternative = the largest lower bound (5th percentile, the smaller of the two horizons);
    **alert only if that lower bound is > 0 under both horizons**. Single-horizon counterfactual
    alerts are stored too, and so is the alert without credit for a fuel saving (OpenAP often
    finds a higher level slightly cheaper; such an alert would not be about the contrail).
 
-Detection efficiency (ii) enters through the humidity draws if the correction is fitted with it
-(see ``docs/decisions.md``); it is reported separately either way.
+The correction is fitted with detection efficiency (``stratum/model/correction.py``; Team OK
+"Option 2", 18 Oct 2026), so the corrected physics describes persistent contrails, not only the
+ones Meteosat could see.
 """
 
 from __future__ import annotations
@@ -55,13 +57,13 @@ def corrected_domain_day(
     root: Path,
     day: str,
     bands: list[tuple[float, float]],
-    mdir: Path,
+    cdir: Path,
     max_age_h: float = 24.0,
     force: bool = False,
 ) -> dict[str, Any]:
     from stratum.phase2 import cocip_day
 
-    sc, s = hu.scaling_for_day(mdir, day, bands)
+    sc, s = hu.scaling_for_day(cdir, day, bands)
     return cocip_day(
         root,
         date.fromisoformat(day),
@@ -245,7 +247,7 @@ def decide_day(
     root: Path,
     day: str,
     pre: Any,
-    mdir: Path,
+    cdir: Path,
     s_draws: Array,
     members: int,
     seed: int,
@@ -300,7 +302,7 @@ def decide_day(
     met = MetDataset(era5_window(root, "pl", t0, t1).load())
     rad = MetDataset(era5_window(root, "sl", t0, t1).load())
     edges = hu.edges(bands)
-    _, s_central = hu.scaling_for_day(mdir, day, bands)
+    _, s_central = hu.scaling_for_day(cdir, day, bands)
     cols = []
     for m in range(members + 1):
         s = s_central if m == 0 else list(s_draws[(m - 1) % len(s_draws)])

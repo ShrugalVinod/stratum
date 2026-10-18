@@ -879,6 +879,47 @@ def _eval_days(root: Path) -> list[str]:
     return sorted(t["day"].unique())
 
 
+@app.command("fit-correction")
+def fit_correction_cmd(
+    draws: Annotated[int, typer.Option(help="bootstrap draws for the Monte Carlo (N = 100)")] = 100,
+) -> None:
+    """Phase 7 (Colab 07c, step 1): the humidity correction fed back into the physics, fitted
+    with detection efficiency per seasonal fold (training rows only), its bootstrap draws, and
+    the (a)-vs-(b) rule against 07a's validation numbers."""
+    from stratum.decide import humidity as hu
+    from stratum.model import correction as co
+    from stratum.model import run as mr
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed or 0
+    bands = [(float(a), float(b)) for a, b in pre.correction_model.latitude_bands_deg]
+    vf = mr.model_dir(root) / "summary.json"
+    if not vf.exists():
+        console.print("[red]No 07a validation summary: run model-train first.[/red]")
+        raise typer.Exit(1)
+    t, _ = _eval_table(root)
+    for c in ("cocip_contrail", "detectable"):
+        if c not in t or t[c].notna().sum() == 0:
+            console.print(
+                f"[red]The evaluation table has no {c} (needs the Phase 6 domain CoCiP run).[/red]"
+            )
+            raise typer.Exit(1)
+    cdir = hu.correction_dir(root)
+    res = co.fit_correction(t, bands, cdir, draws, seed, json.loads(vf.read_text()))
+    _summary(
+        "fit-correction",
+        {
+            "a_vs_b": json.dumps(res.get("a_vs_b")),
+            **{
+                f"{f} ε / s per band": f"{v['detection_efficiency']:.3f} / "
+                + ", ".join(f"{c['band_deg']} {c['s']:.3f}" for c in v["s_band"])
+                for f, v in res["folds"].items()
+            },
+        },
+    )
+
+
 @app.command("run-corrected-cocip")
 def run_corrected_cocip(
     day: Annotated[
@@ -888,15 +929,25 @@ def run_corrected_cocip(
 ) -> None:
     """Phase 7 (Colab 07c): CoCiP over the whole domain with the learned humidity correction of
     the fold that holds each day out (central run, contrails followed 24 h)."""
+    from stratum.decide import humidity as hu
     from stratum.decide import run as dr
-    from stratum.model import run as mr
 
     root = drive_root()
     pre = cfg.load_preregistered()
     bands = [(float(a), float(b)) for a, b in pre.correction_model.latitude_bands_deg]
+    cdir = hu.correction_dir(root)
+    summ = cdir / "summary.json"
+    if not summ.exists():
+        console.print("[red]No humidity correction: run fit-correction first.[/red]")
+        raise typer.Exit(1)
+    if json.loads(summ.read_text()).get("a_vs_b", {}).get("choice") != "b":
+        console.print(
+            "[red]The (a)-vs-(b) rule did not choose (b): decide the feedback path first.[/red]"
+        )
+        raise typer.Exit(1)
     days = [day] if day else _eval_days(root)
     for d in days:
-        r = dr.corrected_domain_day(root, d, bands, mr.model_dir(root), force=force)
+        r = dr.corrected_domain_day(root, d, bands, cdir, force=force)
         console.print(
             f"corrected CoCiP {d}: {r.get('status')} "
             f"(share_persistent_1 {r.get('share_persistent_1')}, EF+ {r.get('ef_positive_J')})"
@@ -1042,17 +1093,13 @@ def decide_cmd(
     t, _ = _eval_table(root)
     lab = t[t["y"].notna()]
     days = [day] if day else _eval_days(root)
-    sdir = root / "interim" / "decisions" / "_s_bootstrap"
-    sdir.mkdir(parents=True, exist_ok=True)
+    cdir = hu.correction_dir(root)
     names = list(pre.correction_model.features)
     done = []
     for d in days:
         fold = hu.fold_for_day(d)
-        sf = sdir / f"{fold}.npy"
-        if not sf.exists():
-            train = lab[lab["season"] != fold]
-            np.save(sf, hu.bootstrap_s(train[np.isfinite(train["rhi"])], bands, members, seed))
-        r = dr.decide_day(root, d, pre, mdir, np.load(sf), members, seed, force=force)
+        s_draws = np.load(cdir / fold / "s_draws.npy")
+        r = dr.decide_day(root, d, pre, cdir, s_draws, members, seed, force=force)
         console.print(f"decide {d}: {r}")
         odir = root / "interim" / "decisions" / d[:7] / d
         if r.get("status") in ("done", "already done") and (odir / "ranked.parquet").exists():

@@ -1192,10 +1192,13 @@ PHASE7_CORRECTED = [
     header(
         "07c · Phase 7: corrected physics over the whole domain, then the FINAL H3/H4 run",
         """
-**What it does:** (1) runs CoCiP over every flight in the study domain on all 12 days with the
-learned humidity correction (each day uses the correction trained without its own season;
-contrails followed 24 h); resumable, days already done are skipped. (2) Then the **logged final
-run for H3 and H4** on that corrected energy forcing (record in `_locks/final_runs.jsonl`).
+**What it does:** (1) fits the humidity correction that goes back into the physics, per held-out
+season on training rows only, *with* detection efficiency (team decision "Option 2"), plus 100
+bootstrap draws for the uncertainty, and applies the pre-stated (a)-vs-(b) rule; (2) runs CoCiP
+over every flight in the study domain on all 12 days with that correction (each day uses the
+correction trained without its own season; contrails followed 24 h); resumable, days already
+done are skipped. (3) Then the **logged final run for H3 and H4** on that corrected energy
+forcing (record in `_locks/final_runs.jsonl`).
 
 * **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** ≈ 1–4 h for
   the CoCiP part (if Colab disconnects, run again: finished days are kept), then ≈ 5 min.
@@ -1205,17 +1208,25 @@ run for H3 and H4** on that corrected energy forcing (record in `_locks/final_ru
     settings("07c_corrected_h34"),
     *SETUP,
     code('''
-# ── 7. Corrected CoCiP, every evaluation day (resumable) ─────────────────────
-rc_cocip = stratum("run-corrected-cocip", live=True)
+# ── 7. Humidity correction with detection efficiency (training rows only) ────
+import os
+corr_summary = f"{DRIVE_ROOT}/interim/correction/summary.json"
+rc_fit = 0 if os.path.exists(corr_summary) else stratum("fit-correction --draws 100", live=True)
+corr = json.load(open(corr_summary)) if os.path.exists(corr_summary) else {}
+# ── 8. Corrected CoCiP, every evaluation day (resumable) ─────────────────────
+rc_cocip = stratum("run-corrected-cocip", live=True) if rc_fit == 0 else None
 import glob
 done_days = sorted(os.path.basename(d) for d in glob.glob(f"{DRIVE_ROOT}/interim/cocip_domain/STRATUM/*/*") if os.path.exists(f"{d}/_SUCCESS"))
-# ── 8. The final H3/H4 run (only if all 12 days are done) ────────────────────
+# ── 9. The final H3/H4 run (only if all 12 days are done) ────────────────────
 rc_h34 = stratum("evaluate-h34 --final", live=True) if rc_cocip == 0 and len(done_days) == 12 else None
 runs = sorted(glob.glob(f"{DRIVE_ROOT}/reports/2*_*/results_h34.json"))
 res = json.load(open(runs[-1])) if runs and rc_h34 == 0 else {}
 final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if os.path.exists(f"{DRIVE_ROOT}/_locks/final_runs.jsonl") else []
 '''),
-    summary_cell("""    "exit_codes": {"corrected_cocip": rc_cocip, "h34": rc_h34},
+    summary_cell("""    "exit_codes": {"fit_correction": rc_fit, "corrected_cocip": rc_cocip, "h34": rc_h34},
+    "correction": {"a_vs_b": corr.get("a_vs_b"),
+                   "folds": {f: {k: v.get(k) for k in ("detection_efficiency", "de_draws_p05_p95", "brier_scaling_b_de", "s_band", "s_band_literal", "s_draws_p05_p95")}
+                             for f, v in corr.get("folds", {}).items()}},
     "corrected_days_done": done_days,
     "final_run_record": json.loads(final_log[-1]) if final_log and rc_h34 == 0 else None,
     "h3": {k: v for k, v in res.get("h3", {}).items() if k != "curve"},
