@@ -153,7 +153,10 @@ matching:
   # Open question 2: how per-image matches become ONE label per segment.
   # Must be fixed before any segment labels are scored.
   segment_label_rule:
-    observed_if: matched_at_any_observable_slot_in_age_window
+    # D-004 (2026-10-18): y = 1 needs matches at ≥ 2 observable slots (was: any 1); the
+    # wrong-day null showed 60 % of single-image matches are chance. Rule 1 kept as sensitivity.
+    observed_if: matched_at_min_observable_slots_in_age_window
+    min_matched_slots: 2
     not_observed_if: observable_at_min_slots_and_never_matched
     min_observable_slots: 2            # ⚑ team to confirm
     otherwise: missing

@@ -77,3 +77,21 @@ both runs (build prompt §6.8).
   test images (drafting the test labels is the change itself). No detector result on the test
   scenes, no match or segment label, no model or hypothesis result.
 - Team OK: Shrugal Vinod, 2026-10-17 (chat: "Merge 1st option and 2nd and then do it")
+
+## D-004 — 2026-10-18 — A segment counts as "observed" only if matched in ≥ 2 observable images
+- Keys: matching.segment_label_rule.observed_if, matching.segment_label_rule.min_matched_slots
+- Reason: the wrong-day null (each day's flights matched against another day's images, where
+  every match is coincidence) gave a chance y = 1 rate of 0.76 % against 1.27 % for the real
+  flights: about 60 % of single-image matches are expected by chance, mostly cirrus streaks that
+  happen to line up with a flight path. A real contrail drifts with the wind and stays lined up
+  in the next image; a chance line rarely does. Colab 05e: requiring ≥ 2 matched observable
+  images lowers the chance share to 33 % (≥ 3: 24 %) and leaves an estimated ≈ 1,050 truly
+  observed segments (≥ 3: ≈ 620, likely below the 300-contrail minimum). Change: y = 1 needs
+  ≥ 2 matched observable images in the 20–120 min window; y = 0 is unchanged (≥ 2 observable
+  images, no match); a segment with exactly 1 observable match becomes missing. The original
+  rule (any 1 image) is reported as a sensitivity analysis, and the ≥ 300 check is re-run on
+  the new labels.
+- Results seen before the change: 05d label counts and the ≥ 300 check (passed: 1,222 events),
+  the wrong-day null and parallax summaries (Phase 5 data-quality checks), and the 05e
+  diagnostics above. No correction model, baseline, hypothesis test or H1–H4 result exists.
+- Team OK: Shrugal Vinod, 2026-10-18 (chat: "D-004 Team OK")

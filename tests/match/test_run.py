@@ -222,6 +222,8 @@ def test_year_summary_and_minimum_sample_check(root: Path) -> None:
     s = year_summary(root)
     assert s["status"] == "done" and s["y1"] == 1
     assert s["min_labels_check"]["result"] == "escalate"  # 1 event ≪ 300: must be escalated
+    sens = s["sensitivity_min_matched_slots"]
+    assert sens["k1"]["y1"] == sens["k2"]["y1"] == 1  # A is matched in all 3 images
     out = root / "reports" / "phase5"
     assert (out / "parallax_before_after.png").exists() and (out / "label_counts.csv").exists()
     t = pd.read_csv(out / "label_counts.csv")
@@ -261,3 +263,14 @@ def test_detections_with_other_settings_are_recomputed(root: Path) -> None:
     res = mr.match_day(root, DAY, det_params=p2)  # no force needed: settings changed
     assert res["status"] == "done"
     assert json.loads(mf.read_text())["params"]["hysteresis"] == [5.5, 8.0]
+
+
+def test_changed_label_rule_recomputes_matches(root: Path) -> None:
+    from stratum.match import matching as mt
+
+    p = load_detector_params().model_copy(update={"operating_threshold": 0.0})
+    out = root / "interim" / "matches" / "2026-01" / "2026-01-01"
+    mr.match_day(root, DAY, det_params=p, rules=mt.MatchRules(min_matched_slots=1))
+    assert not mr._stale_matches(out, p, mt.MatchRules(min_matched_slots=1))
+    assert mr._stale_matches(out, p, mt.DEFAULT_RULES)  # D-004 rule differs → recompute
+    assert mr.match_day(root, DAY, det_params=p)["status"] == "done"

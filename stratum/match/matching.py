@@ -16,7 +16,8 @@ For one flight segment and one satellite image taken 20–120 min after it was f
    half of a 15 × 15-px box around the predicted midpoint cloudy; open question 11) and the
    viewing angle is < 60°. Otherwise this image says nothing about the segment.
 4. **One label per segment** (open question 2, pre-registered rule):
-   * y = 1 if matched at **any observable** image in the window;
+   * y = 1 if matched at **≥ 2 observable** images in the window (deviation D-004; the
+     pre-registered "any 1 image" is kept as a sensitivity rule: ``min_matched_slots=1``);
    * y = 0 if observable in **at least 2** images and matched in none;
    * y = **missing** otherwise. Missing is never turned into 0 (build prompt rule 3): a
      contrail hidden by cloud is not evidence that there was no contrail.
@@ -40,6 +41,7 @@ Array = npt.NDArray[np.float64]
 class MatchRules:
     max_distance_px: float = 2.0
     max_angle_deg: float = 20.0
+    min_matched_slots: int = 2  # D-004 (was 1: any observable match)
     min_observable_slots: int = 2
     max_high_cloud_fraction: float = 0.5
     max_cloudy_fraction: float = 0.5
@@ -63,6 +65,7 @@ def rules_from_preregistered() -> MatchRules:
         max_distance_px=m.max_distance_px,
         max_angle_deg=m.max_angle_deg,
         min_observable_slots=m.segment_label_rule.min_observable_slots,
+        min_matched_slots=m.segment_label_rule.min_matched_slots,
         max_high_cloud_fraction=o.max_high_cloud_fraction,
         max_cloudy_fraction=oc.max_cloudy_fraction,
         box_px=oc.box_px,
@@ -199,7 +202,7 @@ def segment_labels(per_slot: pd.DataFrame, rules: MatchRules = DEFAULT_RULES) ->
         }
     )
     y = np.where(
-        out["n_matched_observable"] > 0,
+        out["n_matched_observable"] >= rules.min_matched_slots,
         1.0,
         np.where(out["n_observable"] >= rules.min_observable_slots, 0.0, np.nan),
     )

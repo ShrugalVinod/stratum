@@ -249,6 +249,7 @@ class PreLabellingRules(StrictModel):
 
 class PreSegmentLabelRule(StrictModel):
     observed_if: str
+    min_matched_slots: int = Field(default=1, ge=1)  # D-004: 2
     not_observed_if: str
     min_observable_slots: int = Field(ge=1)
     otherwise: Literal["missing"]

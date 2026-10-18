@@ -64,8 +64,13 @@ Newest first. What was done, what's next, blockers.
 - D-003 (Team OK): India labels = Claude drafts + one reviewer; drafts done (100 scenes: 4 sure
   lines in 3 scenes, 11 uncertain lines in 6 more, 91 with no contrails).
 
+- Colab `05e_label_diagnostics`: chance share of y = 1 is 60 % with the 1-image rule, 33 % with
+  ≥ 2 matched images, 24 % with ≥ 3. **D-004 (Team OK 18 Oct): y = 1 needs ≥ 2 matched observable
+  images**; the 1-image rule stays as a sensitivity analysis. Aditya finished his review of
+  Claude's India drafts.
+
 **Next**
-- Shrugal: run Colab 05e (label diagnostics: 2- and 3-image match rules vs chance).
+- Shrugal: re-run Colab 05d (labels with the D-004 rule; detections are reused).
 - Team: review Claude's drafts in the labelling app (Review tab).
 - Shrugal: share pilot.zip, calibration.zip, test.zip (never scenes.csv or labels/calibration/)
   with Aditya, Ishaan, Abeer.

@@ -410,8 +410,8 @@ def _detectability(
     return dtc.detectability(con, px, min_age_min, max_age_min)
 
 
-def _stale_matches(out_dir: Path, p: Any) -> bool:
-    """True if a finished match day was made with other detector settings."""
+def _stale_matches(out_dir: Path, p: Any, rules: mt.MatchRules | None = None) -> bool:
+    """True if a finished match day was made with other detector settings or label rules."""
     import json
 
     from stratum.manifest import MANIFEST_NAME
@@ -419,8 +419,10 @@ def _stale_matches(out_dir: Path, p: Any) -> bool:
     mf = out_dir / MANIFEST_NAME
     if not (is_done(out_dir) and mf.exists()):
         return False
-    old = (json.loads(mf.read_text()).get("params") or {}).get("detector")
-    return bool(old != json.loads(json.dumps(p.model_dump())))
+    params = json.loads(mf.read_text()).get("params") or {}
+    if params.get("detector") != json.loads(json.dumps(p.model_dump())):
+        return True
+    return bool(rules is not None and params.get("rules") != json.loads(json.dumps(rules.__dict__)))
 
 
 def match_day(
@@ -461,7 +463,7 @@ def match_day(
         else root / "interim" / "matches" / f"{day:%Y-%m}" / d
     )
     shift = pd.Timestamp(img_day) - pd.Timestamp(day)
-    if force or _stale_matches(out_dir, p):
+    if force or _stale_matches(out_dir, p, rules):
         (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)
     if is_done(out_dir):
         return {"day": seg_d, "status": "already done"}
