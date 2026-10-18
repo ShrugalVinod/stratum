@@ -97,9 +97,11 @@ def _variant_frames(
                 span |= a.changed
             idx = np.flatnonzero(span)
             lo, hi = int(idx.min()), int(idx.max())
+            if hi == lo:  # a pycontrails Flight needs ≥ 2 segments here
+                lo, hi = (lo, hi + 1) if hi + 1 < len(g) else (max(lo - 1, 0), hi)
             pid = f"{fid}|p{k}"
-            crop = g.iloc[lo : hi + 1]
-            rows.append(crop.assign(flight_id=f"{pid}|0"))
+            if ok:  # nothing to fly through CoCiP when every alternative is rejected
+                rows.append(g.iloc[lo : hi + 1].assign(flight_id=f"{pid}|0"))
             for d, a in ok.items():
                 rows.append(al.apply(g, a).iloc[lo : hi + 1].assign(flight_id=f"{pid}|{d:+d}"))
             for d, a in alts.items():
@@ -157,7 +159,11 @@ def summarise_candidates(cands: pd.DataFrame, ef: pd.DataFrame, efficacy: Array)
     for r in cands.itertuples():
         base = dict(r._asdict())
         base.pop("Index", None)
-        planned = ef.loc[f"{r.portion_id}|0"].to_numpy(float)
+        key = f"{r.portion_id}|0"
+        if key not in ef.index:  # no feasible alternative: nothing was run
+            out.append(base)
+            continue
+        planned = ef.loc[key].to_numpy(float)
         base["ef_planned_p05"], base["ef_planned_p50"], base["ef_planned_p95"] = np.percentile(
             planned, [5, 50, 95]
         )
@@ -330,6 +336,16 @@ def decide_day(
         man.stats = {"portions": 0, "alerts": 0}
         mark_success(out_dir, man)
         return {"day": day, "status": "done", "portions": 0}
+    if frames.empty:  # every flagged portion had only rejected alternatives
+        c = summarise_candidates(
+            cands, pd.DataFrame(columns=["m0"]), np.array([cm.EFFICACY_CENTRAL])
+        )
+        ranked = rank(c)
+        c.to_parquet(out_dir / "candidates.parquet", index=False)
+        ranked.to_parquet(out_dir / "ranked.parquet", index=False)
+        man.stats = {"portions": len(ranked), "alerts": 0, "variants": 0}
+        mark_success(out_dir, man)
+        return {"day": day, "status": "done", **man.stats}
     flights = segments_to_flights(frames)
     t0 = pd.Timestamp(day)
     t1 = t0 + pd.Timedelta(hours=24 + max_age_h + 1)

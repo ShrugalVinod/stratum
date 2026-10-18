@@ -264,3 +264,20 @@ def test_table3_has_every_field_and_a_confidence_note() -> None:
     )
     assert row["alert"] and "below FL250" in row["alternatives_rejected"]
     assert {"net_warming_avoided_h20_p05_kgCO2e", "extra_co2_kg", "start_ist"} <= set(tab.columns)
+
+
+def test_portion_with_no_feasible_alternative_is_kept_but_not_flown() -> None:
+    from stratum.decide import run as dr
+
+    f = _flight(alt=40_500.0).assign(segment_id=[f"F1_{i:04d}" for i in range(40)])
+    f["alt_ft_start"] = f["alt_ft_end"] = f["alt_ft_mid"] = 26_000.0
+    f.loc[10:12, ["alt_ft_start", "alt_ft_end", "alt_ft_mid"]] = 26_500.0
+    frames, cands = dr._variant_frames(f, {"F1_0011"}, [-4000, -2000])  # both below FL250
+    assert frames.empty and len(cands) == 2 and not cands["feasible"].any()
+    c = dr.summarise_candidates(cands, pd.DataFrame(columns=["m0"]), np.array([0.42]))
+    r = dr.rank(c)
+    assert len(r) == 1 and not r["alert"].iloc[0] and "below FL250" in r["rejected"].iloc[0]
+    # a one-segment portion is cropped to ≥ 2 segments for CoCiP
+    g = _flight().assign(segment_id=[f"F1_{i:04d}" for i in range(40)])
+    frames, _ = dr._variant_frames(g, {"F1_0039"}, [2000])
+    assert frames.groupby("flight_id").size().min() >= 2
