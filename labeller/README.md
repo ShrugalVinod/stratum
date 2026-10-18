@@ -8,6 +8,9 @@ paper §4.4). Team-internal; hosted at its own link, separate from the STRATUM w
   EUMETSAT imagery is never published.
 * Works offline once loaded; any laptop with Chrome, Edge, Firefox or Safari.
 * Each labeller sees only their own labels, in their own fixed random order.
+* **Review** mode (deviation D-003, in use): Claude's draft lines (`claude-draft.zip`) are
+  pre-loaded in green; one reviewer per scene (k mod 3 over sorted ids) checks, corrects and
+  sets the status. Export goes to `labels/raw/<id>-review/`.
 * Autosave in the browser (`localStorage`); **Export** downloads a zip with one JSON per scene.
 * **Adjudicate** mode shows both labellers' lines (A orange, B blue) to settle disagreements
   by discussion; its export is the adjudicated set (`labels/adjudicated/`).

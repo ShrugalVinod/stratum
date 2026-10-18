@@ -1,10 +1,12 @@
-"""How well do the two labellers agree? (paper §4.4; build prompt §5.4; open question 3).
+"""How well do two sets of contrail lines agree? (paper §4.4; build prompt §5.4; open question 3).
 
 What it does
 ------------
-Each scene is labelled by two people working independently (Aditya and Ishaan). Before their
-labels can be used to test the detector, we must show they agree well enough; otherwise
-"ground truth" would just be one person's opinion. Two pre-registered measures (Q3, settled
+Written for two labellers per scene (paper §4.4). Since deviation D-003 each India scene has one
+reviewer, so the same measures are used to compare labels with the detector and with the DLR
+experts; inter-labeller agreement is not reported (stated in the Phase 5 gate report). When
+two people label a scene, we must show they agree well enough; otherwise "ground truth" would
+just be one person's opinion. Two pre-registered measures (Q3, settled
 17 Oct 2026, before any label existed):
 
 1. **Object-level F1.** Every contrail is a polyline. Two polylines from different labellers

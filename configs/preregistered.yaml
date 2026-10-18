@@ -158,7 +158,7 @@ matching:
     observed_if: matched_at_min_observable_slots_in_age_window
     min_matched_slots: 2
     not_observed_if: observable_at_min_slots_and_never_matched
-    min_observable_slots: 2            # ⚑ team to confirm
+    min_observable_slots: 2            # confirmed by the team 18 Oct 2026 (S. Vinod), unchanged value
     otherwise: missing
   candidate_segments: sac_formation                 # §4.6 "segments that satisfy the formation criterion"
 

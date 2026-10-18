@@ -20,6 +20,8 @@ indian:
   SDG: Star Air
   GOA: Fly91
   BDA: Blue Dart Aviation (cargo)
+  FQA: Quikjet Airlines (cargo; VT-registered B737-800F, verified 18 Oct)
+  IOG: IndiGo (non-standard callsign seen on IndiGo A321neo VT-IBQ, verified 18 Oct)
 
 foreign:
   # Middle East
@@ -180,6 +182,19 @@ foreign:
   JST: Jetstar
   VOZ: Virgin Australia
   ACI: Air Calédonie International
+  # Verified 18 Oct 2026 from the OpenSky DB owner/operator of the aircraft flying each code
+  # on 1 Jan / 1 Feb 2026 (all airline or cargo-airline aircraft):
+  CSG: China Southern Airlines (cargo, B777F)
+  HLF: DHL Air / partner (cargo, B777F)
+  TLH: Thai Lion Air (B737-800)
+  RLH: Ruili Airlines (B737)
+  UBT: Norse Atlantic (B787-9)
+  KMI: K-Mile Air (cargo, B737-800F)
+  AAE: Air Atlanta Europe for Air Malta (A320 wet lease)
+  CGS: SolitAir (cargo, B737-800BCF)
+  CTJ: Tianjin Air Cargo (B737-800F)
+  TVR: Terra Avia (cargo, B747-400)
+  TXC: TransAVIAexport Cargo (B747-300F)
 
 # Seen on 2026-01-01 but NOT commercial airlines: never shown publicly.
 excluded:
@@ -196,6 +211,9 @@ excluded:
   ICL: private operator (business jet)
   PAF: business jet / state operator
   HTT: helicopter operator
+  VTJ: not an airline code — registration-style callsigns (VT-JMR E175, VT-JSJ Global 7500 business jet)
 
 # Seen on 2026-01-01 but the operator could not be confirmed: hidden until verified.
-unverified: [IOG, FQA, UBT, CSG, HLF, TLH, RLH, CTJ, NWS, KMI, LXE, VJI, VTJ, TXC, TVR, AAE, CGS, NCR]
+# Re-checked 18 Oct 2026: 13 confirmed (listed above), VTJ excluded; these 4 have no aircraft
+# database match (NCR, NWS, VJI) or an unknown A350 operator (LXE), so they stay hidden.
+unverified: [LXE, NCR, NWS, VJI]

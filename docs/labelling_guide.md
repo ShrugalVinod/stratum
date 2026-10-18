@@ -1,4 +1,4 @@
-# STRATUM labelling guide — v0.1.2
+# STRATUM labelling guide — v0.1.3
 
 Rules 1–6 are the paper's Appendix B (v1.0). They are pre-registered where they affect scoring
 (`preregistered.yaml: labelling_rules`) and may only be clarified, not changed, after the pilot.
@@ -40,22 +40,19 @@ Why rules 3 and 6 exist: sharp coastlines and terrain edges can create line-like
 infrared images that are easy to mistake for contrails, and a labeller who can see the predicted
 flight tracks is more likely to "find" faint lines where they expect them.
 
-## Who labels what (three labellers, deviation D-002)
+## Who labels what (deviation D-003, from 18 Oct 2026)
 
-Labellers: **aditya**, **ishaan**, **abeer** (always type exactly this ID). Three sets, in this order:
+The 20-scene pilot showed that contrails are rare and hard to see in India scenes, so the plan
+changed (D-003, Team OK): **Claude drafts the lines and one team member reviews each scene** in
+the app's **Review** tab. Reviewers: **aditya**, **ishaan**, **abeer** (always type exactly this
+ID); the app gives each about a third of the 100 India test scenes. Check every scene yourself:
+delete wrong lines, redraw lines that are off, add missed contrails, set the scene status.
+These labels are a *secondary* check of the detector over India; the main check uses labels by
+professional contrail experts (DLR dataset). `pilot.zip` and `calibration.zip` are no longer
+used (kept on Drive for the record).
 
-| Set (zip on the team Drive) | Scenes | Who | Why |
-|---|---|---|---|
-| 1. `pilot.zip` (India) | 20 | **all three**, every scene | practise; find unclear rules; the guide is revised after it |
-| 2. `calibration.zip` (expert scenes, Europe) | 20 | **all three**, every scene | your labels are compared with three professional labellers; this measures *your* accuracy |
-| 3. `test.zip` (India) | 100 | **two of you per scene** (the app picks: ~67 each) | the real test of our detector over India |
-
-The detector itself is tuned on the experts' data, not on your labels. Your India labels are
-the independent check that it also works over India. Expert scenes have **one time only** (no
-±15 min frames); India scenes have three.
-
-Work alone. Do not compare or discuss scenes until a set is finished by everyone. Disagreements
-are discussed afterwards with the disagreement pictures; Shrugal decides if you can't agree.
+Earlier plan (D-002, superseded): all three label a 20-scene pilot and 20 expert calibration
+scenes, then two of three label each India test scene.
 
 ## How to label a scene (app)
 
@@ -83,12 +80,10 @@ are discussed afterwards with the disagreement pictures; Shrugal decides if you 
 Aim for 2–5 minutes per scene: ~1–1.5 h for each of the pilot and calibration sets, ~4–5 h for
 your 67 test scenes.
 
-## After each set
+## After the review
 
-Claude computes agreement (object F1 and Cohen's κ on 16-px cells, with 95 % intervals) and
-makes disagreement pictures. After the **pilot**, the team discusses them and this guide is
-clarified (version bump, changelog below). After the **calibration** set, each labeller sees
-their score against the experts and the experts' lines, to learn from them. Then the test set.
+Claude compares the reviewed labels with the detector (precision and recall with 95 % ranges)
+and reports how many draft lines were kept, moved, deleted and added. Done 18 Oct 2026.
 
 ## Changelog
 
@@ -98,3 +93,5 @@ their score against the experts and the experts' lines, to learn from them. Then
 - v0.1.2 (18 Oct 2026): rule 4 clarified (scoring rule unchanged): *obscured* means more than
   about half of the scene is thick cloud, judged on the T10.8 layer, not on BTD texture. Added after
   the D-003 review, where 70 of 100 scenes were marked obscured with a median of 12 % thick cloud.
+- v0.1.3 (18 Oct 2026): "Who labels what" and "After the review" updated for D-003 (Claude
+  drafts + one reviewer per scene); the D-002 plan kept as history. Rules 1–6 unchanged.

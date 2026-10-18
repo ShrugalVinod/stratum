@@ -1,4 +1,7 @@
-"""Who labels which scene (team decision 17 Oct 2026; mirrored in labeller/src/assignment.ts).
+"""Who labels which scene (mirrored in labeller/src/assignment.ts).
+
+In use since deviation D-003 (18 Oct 2026): ``reviewer_for`` (one reviewer per India scene,
+reviewing Claude's drafts). The pair rotation below (17 Oct, D-002) is kept for the record.
 
 Three labellers (Aditya, Ishaan, Abeer). The pre-registration says each scene is labelled by
 **two** team members independently (paper §4.4, ``labellers_per_scene: 2``); with three people

@@ -287,7 +287,9 @@ def _np_default(o: Any) -> Any:
 def gallery_job(
     root: Path, labeller_a: str, labeller_b: str, set_name: str, zip_name: str | None = None
 ) -> dict[str, Any]:
-    """Side-by-side figures of every scene where the two labellers disagree (build prompt §5.3).
+    """Side-by-side figures of every scene where two label sets disagree (build prompt §5.3).
+
+    Kept for two-labeller sets and for labels vs experts or detector; unused for the D-003 review.
 
     Each figure shows the BTD image three times: labeller A's lines, labeller B's lines, and
     both together; lines the other labeller has no match for are drawn thick."""
