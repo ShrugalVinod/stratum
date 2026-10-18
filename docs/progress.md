@@ -2,6 +2,22 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-18 — Phase 6 final run done; gate report ready for review
+
+**Done**
+- Colab 06a2: 12 climatology months; tolerance re-matches (1.5 / 3 px, 15° / 30°) for 12 days.
+- Colab 06b: the one final run (20261018T113902Z_4a82cfa, commit 4a82cfa), logged in
+  `_locks/final_runs.jsonl` (repo copy = Drive). **H1 not supported:** ratio 6.44
+  (4.92–12.12) — physics predicts ~6× more persistent contrails than the satellite sees;
+  efficiency-adjusted 1.05 (0.81–1.91). Robust to every sensitivity variant.
+- Evaluation report v1 on Drive (`STRATUM/reports/20261018T113902Z_4a82cfa/`); H1 paragraph
+  in `reports/20261018T113902Z_4a82cfa/` and `docs/paper/h1_result_draft.md`.
+- Gate report: `docs/phase_reports/phase6_gate_report.md`.
+
+**Next**
+- Team: read the gate report (limits 1–4), then "Phase 6 is accepted". Settle Q5.
+- After acceptance: website diary/results entry for H1; Phase 7.
+
 ## 2026-10-18 — Phase 6 started: evaluation harness built
 
 **Done (tested, pushed)**

@@ -169,3 +169,10 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 - **B4 not run:** Wolf et al. (2025) coefficients are fitted on IAGOS data over the North Atlantic/Europe, not India.
 - **Sensitivity:** label rule (1 / 3 images), winter without January 2026. Matching distance/angle tolerances are not re-run (would need new matching).
 - **Sensitivity analyses added (18 Oct):** age windows 20–90 and 40–120 min (from the stored per-image rows) and four tolerance re-matches (distance 1.5 / 3 px, angle 15° / 30°; `stratum match-sensitivity`, Colab 06a2). Reported next to H1; never used for the primary result. The report and `h1_paragraph.md` draft the H1 paragraph automatically from the final run.
+
+## 2026-10-18 — Phase 6 final run (the only one): H1 not supported
+- Run 20261018T113902Z_4a82cfa (Colab 06b, commit 4a82cfa, clean tree), record in `_locks/final_runs.jsonl`. Lock verified: every difference from the locked pre-registration is a Team-OK deviation (D-001 … D-004). No peek runs.
+- **H1 primary:** B1 predicted / observed = 6.44 (95 % CI 4.92–12.12) → not supported; physics predicts more persistent contrails than Meteosat-9 sees. Secondary (efficiency-adjusted, 0.163): 1.05 (0.81–1.91). Same verdict in all eight sensitivity variants and without January 2026.
+- **Primary metric (BSS vs B3, mean of 4 seasons):** B0 +0.45, B1 −0.23, B2 −1.04, CoCiP-B1 −0.74. B0 wins on Brier by forecasting small probabilities on a 0.47 % base rate; it does not rank (AUROC < 0.5 in two seasons).
+- **Not re-run, not re-defined.** The result stands as logged (build prompt §13). Wording fix after the run (no number changes): the auto-generated caveat said "June–October"; now "June–September" in `stratum/evaluate/hypotheses.py` and `docs/paper/h1_result_draft.md`. The run's own `h1_paragraph.md` is kept verbatim.
+- **Recommendation for Phase 7 (descriptive, no deviation):** report BSS vs B0 next to the pre-registered BSS vs B3.

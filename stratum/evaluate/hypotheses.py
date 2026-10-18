@@ -156,6 +156,6 @@ def paper_paragraph(res: dict[str, Any]) -> str:
     lines.append(
         "Two caveats bound the result: about a third of the satellite labels are expected to be "
         "chance matches (Phase 5 wrong-day check), which inflates the observed count, and almost "
-        "no labels exist for June–October, when monsoon cloud hides contrails."
+        "no labels exist for June–September, when monsoon cloud hides contrails."
     )
     return " ".join(lines)
