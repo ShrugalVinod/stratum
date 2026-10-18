@@ -2,6 +2,26 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-18 — Phase 7 started: correction model, H2 harness, decision layer built
+
+**Done (tested, pushed)**
+- Q5 settled (option A): AR5 AGWP CO₂ factors 2.497e-9 (20 yr) / 6.779e-10 (100 yr) kg CO₂ per J,
+  efficacy 0.42 (MC 0.42–1.0). Lock verifies.
+- Correction model (`stratum/model/`): the 18 pre-registered features, monotone LightGBM (+RHi,
+  −(T − T_LM)), Optuna 50 trials on leave-one-day-out Brier, isotonic calibration (cross-fitted
+  validation), RHi-only logistic, option-(b) scaling factor per latitude band; SHAP and
+  monotonicity checks; models frozen with a hash. H2 on the Phase 6 harness (`evaluate-h2`).
+- Decision layer (`stratum/decide/`): learned humidity correction inside CoCiP, ±2,000/±4,000 ft
+  alternatives with OpenAP fuel (same Mach), cropped paired Monte Carlo (humidity, CoCiP,
+  efficacy), net warming per horizon, ranking and alert rule, Table 3 lists, confidence note.
+  H3/H4 statistics (`evaluate-h34`). Real-CoCiP test on the 15 Jan ISSR day. 250 Python tests.
+- Notebooks 07a (train, no held-out scoring), 07b (H2 final), 07c (corrected CoCiP + H3/H4
+  final), 07d (decisions).
+
+**Next**
+- Shrugal: 07a (running). Then Claude checks it and records (a) vs (b); then 07b, 07c, 07d.
+- Team: how detection efficiency enters the humidity correction (question sent 18 Oct).
+
 ## 2026-10-18 — Phase 6 accepted: H1 not supported
 
 **Done**
