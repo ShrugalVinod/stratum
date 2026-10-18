@@ -121,16 +121,20 @@ def cocip_day(
     corridor_only: bool = True,
     config_hash: str | None = None,
     force: bool = False,
+    kind: str = "cocip",
 ) -> dict[str, Any]:
     """CoCiP for one day's flights with one humidity scaling (needs build_segments_day).
 
-    N = 100 Monte Carlo members (open question 12 as amended by deviation D-001)."""
+    N = 100 Monte Carlo members (open question 12 as amended by deviation D-001).
+    ``kind="cocip_domain"`` with ``corridor_only=False`` is the Phase 6 run over every flight in
+    the study domain (central run only; for the detectability flag and the CoCiP-B1 variant),
+    stored apart from the Phase 2 corridor runs."""
     from pycontrails import MetDataset
 
     from stratum.physics import cocip_runner as cr
 
     src = _day_dir(root, "segments_met", day)
-    out_dir = _day_dir(root, f"cocip/{scaling}", day)
+    out_dir = _day_dir(root, f"{kind}/{scaling}", day)
     if force:
         (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)
     if is_done(out_dir):

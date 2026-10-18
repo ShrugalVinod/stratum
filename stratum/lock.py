@@ -321,3 +321,28 @@ def verify_lock(
     approved = approved_deviation_keys(dev_text)
     undocumented = [k for k in changed if not _covered(k, approved)]
     return VerifyResult(True, sorted(changed), sorted(undocumented), newly, sorted(filled), lock)
+
+
+# ── final evaluation runs (build prompt §6.8) ─────────────────────────────────
+
+PEEK_PHRASE = "I am scoring held-out seasons outside a final run"
+
+
+def results_hash(results: Any) -> str:
+    return hashlib.sha256(canonical_json(results).encode("utf-8")).hexdigest()
+
+
+def append_run_record(path: Path, record: dict[str, Any]) -> None:
+    """Append one line to a run log. The log is append-only: existing lines are never touched."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record, sort_keys=True, default=str) + "\n")
+
+
+def final_allowed(verify: VerifyResult) -> tuple[bool, str]:
+    """A final run needs the lock to verify (identical, or every difference a Team-OK deviation)."""
+    if not verify.lock_found:
+        return False, "no pre-registration lock found"
+    if verify.undocumented:
+        return False, f"undocumented changes: {verify.undocumented}"
+    return True, "lock verified"

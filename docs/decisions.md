@@ -159,3 +159,12 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
   sensitivity table) before any later step used the labels. Fixed, test added, and
   `LABEL_RULE_VERSION` makes stored match days recompute. That run's y = 1 count (1,564; 421
   contrail events ≥ 300) and chance share (0.33) are unaffected by the bug.
+
+## 2026-10-18 — Phase 6 harness choices (not pre-registered values)
+- **B0 climatology:** per month of the evaluation year, the fraction of ERA5 hours with SAC (η = 0.30, as on the website maps) ∧ RHi ≥ 1 at each 0.25° cell and native level; a segment's B0 is the equal-weight mean of its fold's **training months only**, nearest cell, linear in ln p between levels. Spatial split: B0 from all 12 months (B0 never uses labels).
+- **B1–B3:** SAC ∧ RHi ≥ 1 on each segment's own ERA5 values with per-type η; B2 divides RHi by 0.95; B3 is pycontrails' ExponentialBoostLatitudeCorrectionHumidityScaling (level_type = pressure, as in the Phase 2 CoCiP runs). The SAC is recomputed with the corrected humidity. All 0/1 (pycontrails gives no probability). B1 reproduces the stored `persists_raw` flag exactly.
+- **Splits:** leakage groups = connected components over shared flight and shared satellite image (seasonal folds); spatial split groups by flight (each flight on the side holding most of its labelled segments; minority-side segments dropped and counted). Validation = leave-one-day-out inside training seasons (for Phase 7).
+- **Contingency metrics** use probability ≥ 0.5 as "yes". AUROC from 1,000-bin histograms (exact for 0/1 forecasts).
+- **H1 secondary:** detection efficiency = share of CoCiP-persistent labelled segments that meet Driver's thresholds, from a Phase 6 CoCiP B1 central run over the whole domain (contrails followed 2.5 h; EF not used here).
+- **B4 not run:** Wolf et al. (2025) coefficients are fitted on IAGOS data over the North Atlantic/Europe, not India.
+- **Sensitivity:** label rule (1 / 3 images), winter without January 2026. Matching distance/angle tolerances are not re-run (would need new matching).

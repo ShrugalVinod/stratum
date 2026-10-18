@@ -987,6 +987,91 @@ india = json.load(open(rep_f)) if os.path.exists(rep_f) else {}
 """),
 ]
 
+PHASE6_INPUTS = [
+    header(
+        "06a · Phase 6 inputs: B0 climatology grids + CoCiP over the whole domain",
+        """
+**What this does** (nothing is scored here):
+1. **B0 climatology:** for each month of the evaluation year, how often each ERA5 cell and level
+   has lasting-contrail conditions (SAC ∧ RHi ≥ 1). 12 small grids.
+2. **CoCiP B1 over every flight in the domain** for the 12 flight days (central run, contrails
+   followed for 2.5 h). Gives the Driver detectability flag (secondary H1) and the CoCiP-B1
+   variant. Stored apart from the Phase 2 corridor runs.
+
+* **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only.
+* **Writes to Drive:** `interim/climatology/` (≈ 10 MB), `interim/cocip_domain/` (≈ 1–3 GB).
+* **Time:** ≈ 1–2 h (CoCiP is most of it). **Resumable** per month / day: if it disconnects,
+  *Runtime → Run all* again.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("06a_phase6_inputs"),
+    *SETUP,
+    code('''
+# ── 7. B0 climatology grids (12 months) ──────────────────────────────────────
+rc_clim = stratum("climatology", live=True)
+'''),
+    code('''
+# ── 8. CoCiP B1 over the whole domain, all flight days ───────────────────────
+rc_cocip = stratum("run-cocip-domain", live=True)
+'''),
+    code('''
+# ── 9. Collect for the summary ───────────────────────────────────────────────
+import glob
+clim_months = sorted(os.path.basename(f)[:7] for f in glob.glob(f"{DRIVE_ROOT}/interim/climatology/*.nc"))
+cocip = {}
+for mf in sorted(glob.glob(f"{DRIVE_ROOT}/interim/cocip_domain/B1/*/*/manifest.json")):
+    j = json.load(open(mf)); st = j.get("stats") or {}
+    cocip[j.get("unit")] = {k: st.get(k) for k in ("flights", "share_sac", "share_persistent_1") if k in st} or {"done": True}
+'''),
+    summary_cell("""    "exit_codes": {"climatology": rc_clim, "cocip_domain": rc_cocip},
+    "climatology_months": clim_months,
+    "cocip_domain_days": cocip,
+"""),
+]
+
+
+PHASE6_FINAL = [
+    header(
+        "06b · FINAL evaluation run: baselines B0–B3, H1, evaluation report v1",
+        """
+**This is the logged final run** (build prompt §6.8). It refuses to start unless the
+pre-registration lock verifies. Its record is appended to `_locks/final_runs.jsonl` and is
+never deleted. Run it **once**; if Claude later finds a bug, the fix is run again and both
+runs are reported.
+
+**What it does:** builds the evaluation table (one row per labelled segment, B0–B3
+predictions), scores every baseline on each held-out season, winter without January 2026 and the
+west/east split with 1,000 day-bootstrap resamples, tests H1, and writes
+`reports/<run_id>/evaluation_report_v1.{html,md}`.
+
+* **Runtime:** CPU, High-RAM. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** ≈ 10–20 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude, and download
+  the HTML report from the Drive folder it names.
+""",
+    ),
+    settings("06b_evaluate_final"),
+    *SETUP,
+    code('''
+# ── 7. The final evaluation run ──────────────────────────────────────────────
+rc_eval = stratum("evaluate --final --rebuild-table", live=True)
+import glob
+runs = sorted(glob.glob(f"{DRIVE_ROOT}/reports/2*_*/results.json"))
+res = json.load(open(runs[-1])) if runs and rc_eval == 0 else {}
+final_log = open(f"{DRIVE_ROOT}/_locks/final_runs.jsonl").read().splitlines() if os.path.exists(f"{DRIVE_ROOT}/_locks/final_runs.jsonl") else []
+'''),
+    summary_cell("""    "exit_code": rc_eval,
+    "report_dir": os.path.dirname(runs[-1]) if runs else None,
+    "final_run_record": json.loads(final_log[-1]) if final_log else None,
+    "data": res.get("data"),
+    "primary_bss_vs_B3": res.get("primary"),
+    "h1": {k: res.get("h1", {}).get(k) for k in ("sentence", "ratio", "supported", "secondary", "sensitivity_label_rule", "without_january_2026")},
+    "folds": {k: {"test_rows": v.get("test_rows"), "test_y1": v.get("test_y1"), "dropped": v.get("dropped"),
+                  "brier": {m: (r.get("brier") or {}).get("value") for m, r in (v.get("models") or {}).items()},
+                  "bss_vs_B3": {m: r.get("bss_vs_B3") for m, r in (v.get("models") or {}).items()}} for k, v in res.get("folds", {}).items()},
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1016,4 +1101,6 @@ if __name__ == "__main__":
     write("05d_match_year.ipynb", MATCH_YEAR)
     write("05e_label_diagnostics.ipynb", LABEL_DIAG)
     write("05f_phase5_finish.ipynb", PHASE5_FINISH)
+    write("06a_phase6_inputs.ipynb", PHASE6_INPUTS)
+    write("06b_evaluate_final.ipynb", PHASE6_FINAL)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

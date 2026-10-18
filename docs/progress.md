@@ -2,6 +2,21 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-18 — Phase 6 started: evaluation harness built
+
+**Done (tested, pushed)**
+- Baselines: B0 climatology (`stratum/baselines/climatology.py`, training months only), B1–B3
+  (`stratum/baselines/physics.py`; B1 = stored persists_raw exactly), B4 documented skip.
+- Harness (`stratum/evaluate/`): evaluation table, leakage-safe seasonal/spatial splits, metrics
+  (vs scikit-learn and hand values), vectorised paired day bootstrap (CI coverage ≈ 95 % on
+  synthetic data), H1 (primary + efficiency-adjusted + breakdowns + sensitivity), report v1
+  (HTML + MD with the deviation log), final-run lock (`stratum evaluate --final`, append-only
+  `_locks/final_runs.jsonl`, peek runs blocked). 231 Python tests.
+- Colab notebooks 06a (climatology + domain CoCiP) and 06b (final run).
+
+**Next**
+- Shrugal: run Colab 06a, paste the summary; then 06b (the one final run).
+
 ## 2026-10-17 — Phase 4 accepted; Phase 5 started
 
 **Done**

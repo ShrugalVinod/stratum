@@ -26,6 +26,7 @@ if os.environ.get("MPLBACKEND", "").startswith("module://"):
 
 import json
 import shutil
+from datetime import UTC
 from typing import Annotated
 
 import typer
@@ -564,6 +565,135 @@ def india_detector_check_cmd() -> None:
     rep = phase5.india_detector_check(root, load_detector_params().operating_threshold, seed)
     rows = {k: json.dumps(v) if isinstance(v, dict) else v for k, v in rep.items()}
     _summary("india detector check", {"unpacked": json.dumps(unpacked), **rows})
+
+
+@app.command("climatology")
+def climatology_cmd(
+    months: Annotated[
+        str, typer.Option(help="comma-separated YYYY-MM, or 'all' (evaluation year)")
+    ] = "all",
+    force: Annotated[bool, typer.Option(help="recompute months that are already done")] = False,
+) -> None:
+    """Phase 6 B0: monthly ERA5 persistence-frequency grids (SAC ∧ RHi ≥ 1, η = 0.30)."""
+    from stratum.baselines import climatology as clim
+
+    root = drive_root()
+    if months == "all":
+        months_l = [
+            f"{m:%Y-%m}" for m in __import__("pandas").period_range("2025-03", "2026-02", freq="M")
+        ]
+    else:
+        months_l = [m.strip() for m in months.split(",")]
+    for m in months_l:
+        _summary(f"climatology {m}", clim.build_month(root, m, force))
+
+
+@app.command("run-cocip-domain")
+def run_cocip_domain(
+    max_age_h: Annotated[float, typer.Option(help="CoCiP max contrail age, hours")] = 2.5,
+    force: Annotated[bool, typer.Option(help="recompute days that are already done")] = False,
+) -> None:
+    """Phase 6: CoCiP B1 central run over every flight in the domain, all flight days
+    (detectability flag + the CoCiP-B1 variant). Stored in interim/cocip_domain/B1/."""
+    from stratum import phase2, phase5
+
+    root = drive_root()
+    for d in phase5._segment_days(root):
+        res = phase2.cocip_day(
+            root, d, "B1", members=0, max_age_h=max_age_h, corridor_only=False,
+            config_hash=cfg.config_hash(), force=force, kind="cocip_domain",
+        )  # fmt: skip
+        _summary(
+            f"cocip domain {d}", {k: v for k, v in res.items() if not isinstance(v, (dict, list))}
+        )
+
+
+@app.command("evaluate")
+def evaluate_cmd(
+    final: Annotated[
+        bool, typer.Option(help="the logged final run (needs a verified lock)")
+    ] = False,
+    peek: Annotated[
+        str, typer.Option(help="non-final run on held-out seasons: type the exact phrase")
+    ] = "",
+    rebuild_table: Annotated[bool, typer.Option(help="rebuild the evaluation table")] = False,
+) -> None:
+    """Phase 6: B0–B3 on held-out seasons and the spatial split, H1, evaluation report v1.
+
+    Final runs are appended to _locks/final_runs.jsonl (never deleted). A non-final run on
+    held-out seasons needs --peek with the exact phrase and is logged to _locks/peek_runs.jsonl
+    (it must then be listed as a deviation)."""
+    import platform
+    from datetime import datetime
+
+    import pandas as pd
+
+    from stratum.evaluate import report as rp
+    from stratum.evaluate import run as ev
+    from stratum.evaluate import table as tb
+
+    paths = lk.default_paths()
+    root = drive_root()
+    v = lk.verify_lock(paths["prereg"], paths["open_questions"], paths["lock"], paths["deviations"])
+    if final:
+        ok, why = lk.final_allowed(v)
+        if not ok:
+            console.print(f"[red]Final run refused: {why}[/red]")
+            raise typer.Exit(1)
+    elif peek != lk.PEEK_PHRASE:
+        console.print(
+            f'[red]Held-out seasons are blocked outside a final run. Use --final, or --peek "{lk.PEEK_PHRASE}".[/red]'  # noqa: E501
+        )
+        raise typer.Exit(1)
+    pre = cfg.load_preregistered()
+    n = pre.bootstrap.n_resamples
+    seed = pre.detection.labelled_split.seed or 0
+    ev_dir = root / "interim" / "evaluation"
+    tf, imf = ev_dir / "table.parquet", ev_dir / "images.parquet"
+    if rebuild_table or not tf.exists():
+        t, images, info = tb.build(root, pre.matching.min_age_min, pre.matching.max_age_min)
+        ev_dir.mkdir(parents=True, exist_ok=True)
+        t.to_parquet(tf, index=False)
+        images.to_parquet(imf, index=False)
+        _summary("evaluation table", info)
+    t, images = pd.read_parquet(tf), pd.read_parquet(imf)
+    res = ev.evaluate(t, images, n, seed)
+    sha, dirty = git_commit()
+    now = datetime.now(UTC)
+    run_id = f"{now:%Y%m%dT%H%M%SZ}_{(sha or 'nogit')[:7]}"
+    run = {
+        "run_id": run_id,
+        "commit": sha,
+        "dirty": dirty,
+        "final": final,
+        "n_resamples": n,
+        "seed": seed,
+    }
+    out = root / "reports" / run_id
+    lab5 = root / "reports" / "phase5" / "labels_summary.json"
+    phase5 = json.loads(lab5.read_text()) if lab5.exists() else None
+    files = rp.write(res, out, run, paths["deviations"].read_text(), phase5)
+    (out / "results.json").write_text(json.dumps(res, indent=1, default=str))
+    record = {
+        **run,
+        "time_utc": now.isoformat(),
+        "config_hash": cfg.config_hash(),
+        "lock_identical": v.identical,
+        "deviations_covering": v.changed,
+        "hypotheses": ["H1"],
+        "h1_ratio": res["h1"]["ratio"],
+        "h1_supported": res["h1"]["supported"],
+        "results_sha256": lk.results_hash(res),
+        "python": platform.python_version(),
+    }
+    log = "final_runs.jsonl" if final else "peek_runs.jsonl"
+    lk.append_run_record(root / "_locks" / log, record)
+    lk.append_run_record(repo_root() / "_locks" / log, record)
+    prim = {
+        m: f"{x['value']:.3f} [{x['lo']:.3f}, {x['hi']:.3f}]" for m, x in res["primary"].items()
+    }
+    _summary("evaluate", {"run_id": run_id, "final": final, "report": files["html"], "primary_bss_vs_B3": json.dumps(prim),  # noqa: E501
+                          "h1": res["h1"]["sentence"]})  # fmt: skip
 
 
 @app.command("download-era5")
