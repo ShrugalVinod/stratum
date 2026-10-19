@@ -220,6 +220,19 @@ def test_evaluate_h34_cli_on_fake_corrected_runs(tmp_path: Path, monkeypatch) ->
     assert rec["hypotheses"] == ["H3", "H4"]
     assert 0 < rec["h3_share"]["value"] < 0.1 and rec["h3_supported"]
     assert not rec["h4_supported"]  # night carries EF in proportion to distance here
+    # the descriptive context path reads another physics folder and writes no lock record
+    for d in days:
+        src = root / "interim" / "cocip_domain" / "STRATUM" / d[:7] / d
+        dst = root / "interim" / "cocip_domain24" / "B1" / d[:7] / d
+        dst.mkdir(parents=True)
+        for f in src.iterdir():
+            (dst / f.name).write_bytes(f.read_bytes())
+    n_lines = len((root / "_locks" / "peek_runs.jsonl").read_text().splitlines())
+    r = CliRunner().invoke(cli.app, ["h34-context", "--scaling", "B1"], env={"COLUMNS": "200"})
+    assert r.exit_code == 0, r.output
+    ctx = json.loads((root / "reports" / "phase7_h34_context" / "B1.json").read_text())
+    assert ctx["descriptive_only"] and ctx["h3"]["share"]["value"] == rec["h3_share"]["value"]
+    assert len((root / "_locks" / "peek_runs.jsonl").read_text().splitlines()) == n_lines
 
 
 def test_table3_has_every_field_and_a_confidence_note() -> None:

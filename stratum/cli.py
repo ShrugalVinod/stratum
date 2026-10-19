@@ -975,14 +975,16 @@ def _ci(r: dict[str, float], supported: bool) -> str:
     return f"{r['value']:.4f} [{r['lo']:.4f}, {r['hi']:.4f}] → {verdict}"
 
 
-def _h34_segments(root: Path, days: list[str]) -> tuple[Any, dict[str, int]]:
+def _h34_segments(
+    root: Path, days: list[str], kind: str = "cocip_domain/STRATUM"
+) -> tuple[Any, dict[str, int]]:
     import pandas as pd
 
     from stratum.manifest import is_done
 
     parts, info = [], {"days_missing": 0, "segments_no_cocip": 0}
     for d in days:
-        cdir = root / "interim" / "cocip_domain" / "STRATUM" / d[:7] / d
+        cdir = root / "interim" / kind / d[:7] / d
         if not is_done(cdir):
             info["days_missing"] += 1
             continue
@@ -1068,6 +1070,77 @@ def evaluate_h34_cmd(
             "final": final,
             "H3 share (≤ 0.10 supports)": _ci(h3r["share"], h3r["supported"]),
             "H4 night EF share − night distance share": _ci(h4r["difference"], h4r["supported"]),
+        },
+    )
+
+
+CONTEXT_SCALINGS = ("B1", "B3")
+
+
+@app.command("run-context-cocip")
+def run_context_cocip(
+    scaling: Annotated[str, typer.Option(help="B1 (raw ERA5) or B3 (published correction)")],
+    day: Annotated[
+        str, typer.Option(help="one day YYYY-MM-DD (default: every evaluation day)")
+    ] = "",
+) -> None:
+    """Phase 7 context (descriptive, post hoc, Team OK needed): CoCiP over the whole domain with
+    the uncorrected (B1) or published (B3) humidity, 24 h lifetimes, central run, in batches."""
+    from datetime import date as _date
+
+    from stratum.decide.run import CHUNK_FLIGHTS
+    from stratum.phase2 import cocip_day
+
+    if scaling not in CONTEXT_SCALINGS:
+        console.print(f"[red]scaling must be one of {CONTEXT_SCALINGS}[/red]")
+        raise typer.Exit(1)
+    root = drive_root()
+    for d in [day] if day else _eval_days(root):
+        r = cocip_day(root, _date.fromisoformat(d), scaling, members=0, max_age_h=24.0,
+                      corridor_only=False, kind="cocip_domain24", chunk=CHUNK_FLIGHTS,
+                      keep_contrail=False)  # fmt: skip
+        console.print(
+            f"{scaling} {d}: {r.get('status')} (persistent share {r.get('share_persistent_1')})"
+        )
+
+
+@app.command("h34-context")
+def h34_context(
+    scaling: Annotated[str, typer.Option(help="B1 or B3")],
+) -> None:
+    """H3/H4 statistics under uncorrected or published physics: descriptive context for the
+    logged H3/H4 final run, never a hypothesis test (written to reports/phase7_h34_context/)."""
+    from stratum.evaluate import h34
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    n = pre.bootstrap.n_resamples
+    seed = pre.detection.labelled_split.seed or 0
+    seg, info = _h34_segments(root, _eval_days(root), kind=f"cocip_domain24/{scaling}")
+    if info["days_missing"]:
+        console.print(
+            f"[red]{info['days_missing']} days missing: run-context-cocip --scaling {scaling}[/red]"
+        )
+        raise typer.Exit(1)
+    lst = pre.hypotheses["H4"].night_lst or (18, 6)
+    night = (float(lst[0]), float(lst[1]))
+    res: dict[str, Any] = {
+        "scaling": scaling,
+        "descriptive_only": True,
+        "h3": h34.h3(seg, n, seed),
+        "h4": h34.h4(seg, n, seed, night=night),
+        "info": info,
+    }
+    out = root / "reports" / "phase7_h34_context"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / f"{scaling}.json").write_text(json.dumps(res, indent=1, default=str))
+    h3r, h4r = res["h3"], res["h4"]
+    _summary(
+        f"h34-context {scaling} (descriptive)",
+        {
+            "segments / positive EF": f"{h3r['segments']:,} / {h3r['segments_positive_ef']:,}",
+            "H3-style share": _ci(h3r["share"], h3r["supported"]),
+            "H4-style difference": _ci(h4r["difference"], h4r["supported"]),
         },
     )
 
@@ -1185,6 +1258,11 @@ def report_v2_cmd() -> None:
     dec = json.loads(dec_f.read_text()) if dec_f.exists() else {}
     val = json.loads((mr.model_dir(root) / "summary.json").read_text())
     corr = json.loads((root / "interim" / "correction" / "summary.json").read_text())
+    ctx = {}
+    for sc_name in CONTEXT_SCALINGS:
+        f = root / "reports" / "phase7_h34_context" / f"{sc_name}.json"
+        if f.exists():
+            ctx[f"{sc_name} (descriptive)"] = json.loads(f.read_text())
     out = root / "reports" / "evaluation_report_v2"
     files = r2.full_report(
         h2,
@@ -1195,6 +1273,7 @@ def report_v2_cmd() -> None:
         {"H1": last.get("H1", "—"), "H2": last["H2"], "H3/H4": last["H3"]},
         lk.default_paths()["deviations"].read_text(),
         out,
+        context=ctx or None,
     )
     _summary("report-v2", {"report": files["html"]})
 

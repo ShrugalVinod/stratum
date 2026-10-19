@@ -248,7 +248,15 @@ def test_full_report_v2_renders_every_section(tmp_path: Path) -> None:
     res34 = {"h3": h34.h3(seg, 100, 1), "h4": h34.h4(seg, 100, 1)}
     dec = {"days": 12, "portions": 5, "alerts": 2, "alerts_without_fuel_credit": 1}
     files = r2.full_report(
-        h2, res34, dec, val, corr, {"H2": "x", "H3/H4": "y"}, "## D-001", tmp_path / "rep"
+        h2,
+        res34,
+        dec,
+        val,
+        corr,
+        {"H2": "x", "H3/H4": "y"},
+        "## D-001",
+        tmp_path / "rep",
+        context={"B1 (descriptive)": res34},
     )
     html_text = Path(files["html"]).read_text()
     for needle in (

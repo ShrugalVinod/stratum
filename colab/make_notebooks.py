@@ -1269,6 +1269,39 @@ res = json.load(open(sp_)) if os.path.exists(sp_) else {}
 """),
 ]
 
+PHASE7_CONTEXT = [
+    header(
+        "07e · Phase 7 context: H3/H4 statistics with uncorrected (B1) and published (B3) physics",
+        """
+**Descriptive, post hoc (team OK needed before running).** The logged H3/H4 run used the learned
+humidity correction, which turned out far too dry when fed back into CoCiP (only s is used; see
+docs/decisions.md, 19 Oct). This runs CoCiP over the whole domain on all 12 days with raw ERA5 (B1)
+and with the published correction (B3), contrails followed 24 h, and computes the same H3/H4
+statistics as **context, not hypothesis tests** (nothing is logged as a final run). Then it
+rebuilds evaluation report v2 with a context table. Resumable.
+
+* **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** likely 1–4 h
+  per physics version (many more contrails than the corrected run). Run again if it disconnects.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("07e_h34_context"),
+    *SETUP,
+    code('''
+# ── 7. Context physics (resumable), then the descriptive statistics ─────────
+rc = {}
+for sc_ in ("B1", "B3"):
+    rc[f"cocip_{sc_}"] = stratum(f"run-context-cocip --scaling {sc_}", live=True)
+    rc[f"h34_{sc_}"] = stratum(f"h34-context --scaling {sc_}", live=True) if rc[f"cocip_{sc_}"] == 0 else None
+rc["report_v2"] = stratum("report-v2", live=True)
+import glob
+ctx = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(f"{DRIVE_ROOT}/reports/phase7_h34_context/*.json")}
+'''),
+    summary_cell("""    "exit_codes": rc,
+    "context": {k: {"h3": {kk: vv for kk, vv in v.get("h3", {}).items() if kk != "curve"}, "h4": v.get("h4"), "info": v.get("info")} for k, v in ctx.items()},
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1305,4 +1338,5 @@ if __name__ == "__main__":
     write("07b_h2_final.ipynb", PHASE7_H2)
     write("07c_corrected_h34.ipynb", PHASE7_CORRECTED)
     write("07d_decide.ipynb", PHASE7_DECIDE)
+    write("07e_h34_context.ipynb", PHASE7_CONTEXT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

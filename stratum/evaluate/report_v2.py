@@ -364,8 +364,11 @@ def full_report(
     runs: dict[str, str],
     deviations_md: str,
     out: Path,
+    context: dict[str, Any] | None = None,
 ) -> dict[str, str]:
-    """Evaluation report v2: H2–H4, model card, decision-layer summary (build prompt §7.8)."""
+    """Evaluation report v2: H2–H4, model card, decision-layer summary (build prompt §7.8).
+
+    ``context``: descriptive H3/H4 statistics under B1/B3 physics (post hoc, not tests)."""
     out.mkdir(parents=True, exist_ok=True)
     d = Doc()
     d.head(
@@ -480,6 +483,30 @@ def full_report(
         f"Night (18:00–06:00 local solar time) carries {h4['night_share_positive_ef'] * 100:.1f} % of positive EF "
         f"and {h4['night_share_distance'] * 100:.1f} % of cruise distance; difference {_ci(h4['difference'])}."
     )
+    if context:
+        d.head(
+            "H3/H4 context with uncorrected (B1) and published (B3) physics — descriptive, post hoc"
+        )
+        d.para(
+            "The corrected physics keeps only the humidity divisor s (at its 1.20 bound) and drops the curve's spread, so it forms far fewer contrails than either the fitted curve or raw ERA5 implies (docs/decisions.md, 19 Oct 2026). These rows show the same statistics with standard physics. They are context, not hypothesis tests."
+        )
+        d.table(
+            [
+                "physics",
+                "segments with positive EF",
+                "H3-style distance share [95 % CI]",
+                "H4-style night difference [95 % CI]",
+            ],
+            [
+                [
+                    k,
+                    f"{v['h3']['segments_positive_ef']:,} of {v['h3']['segments']:,}",
+                    _ci(v["h3"]["share"], True),
+                    _ci(v["h4"]["difference"]),
+                ]
+                for k, v in {"STRATUM-corrected (logged final run)": h34, **context}.items()
+            ],
+        )
     d.head("Decision layer")
     if decisions.get("portions"):
         d.table(["item", "value"], [[k.replace("_", " "), str(v)] for k, v in decisions.items()])
