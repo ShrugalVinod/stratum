@@ -84,11 +84,18 @@ const dataRows: [string, string | number][] = [
 ];
 for (const d of man.days_with_flights as string[]) {
   const dj = JSON.parse(readFileSync(join(dataDir, build, "days", d, "day.json"), "utf8"));
-  const segs = JSON.parse(readFileSync(join(dataDir, build, "days", d, "segments_flagged.json"), "utf8")) as { flight_id: string }[];
+  // v2 builds: one list per model (segments_B1/B3/STRATUM.json); v1 builds: segments_flagged.json
+  const dayDir = join(dataDir, build, "days", d);
+  const listFile = existsSync(join(dayDir, "segments_B1.json")) ? "segments_B1.json" : "segments_flagged.json";
+  const segs = JSON.parse(readFileSync(join(dayDir, listFile), "utf8")) as { flight_id: string }[];
   dataRows.push([`${d}: commercial flights on the map`, dj.n_flights]);
   dataRows.push([`${d}: one-minute segments`, dj.n_segments]);
-  dataRows.push([`${d}: flagged persistent-contrail segments (B1)`, dj.n_flagged]);
-  dataRows.push([`${d}: flights with a flagged segment`, new Set(segs.map((s) => s.flight_id)).size]);
+  dataRows.push([`${d}: ${dj.n_flagged_by_model ? "B1 warming portions listed (top 300 by EF)" : "flagged persistent-contrail segments (B1)"}`, dj.n_flagged]);
+  dataRows.push([`${d}: flights with a listed B1 segment`, new Set(segs.map((s) => s.flight_id)).size]);
+  if (dj.n_flagged_by_model) {
+    dataRows.push([`${d}: STRATUM avoidance candidates`, dj.n_flagged_by_model.STRATUM ?? 0]);
+    dataRows.push([`${d}: STRATUM alerts`, dj.n_alerts ?? 0]);
+  }
 }
 
 const md: string[] = [
