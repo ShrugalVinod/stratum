@@ -473,8 +473,8 @@ def full_report(
     h3 = h34["h3"]
     d.para(
         f"{h3['segments_positive_ef']:,} of {h3['segments']:,} cruise segments have positive corrected EF; "
-        f"{h3['share']['value'] * 100:.2f} % of {h3['distance_km']:,.0f} km of cruise distance carries 80 % of it "
-        f"(day-bootstrap 95 % interval {h3['share']['lo'] * 100:.2f}–{h3['share']['hi'] * 100:.2f} %, descriptive)."
+        f"{_pct(h3['share']['value'])} of {h3['distance_km']:,.0f} km of cruise distance carries 80 % of it "
+        f"(day-bootstrap 95 % interval {_pct(h3['share']['lo'])} to {_pct(h3['share']['hi'])}, descriptive)."
     )
     d.image(lorenz_png(h3, out), "H3 concentration curve")
     d.head("H4 — night flights")
@@ -509,7 +509,9 @@ def full_report(
         )
     d.head("Decision layer")
     if decisions.get("portions"):
-        d.table(["item", "value"], [[k.replace("_", " "), str(v)] for k, v in decisions.items()])
+        d.table(
+            ["item", "value"], [[k.replace("_", " "), _fmt_value(v)] for k, v in decisions.items()]
+        )
     else:
         d.para("No flagged warming contrails on the held-out days.")
     d.para(
@@ -525,6 +527,16 @@ def full_report(
     return d.write(out, "evaluation_report_v2", "STRATUM evaluation report v2")
 
 
+def _fmt_value(v: Any) -> str:
+    if isinstance(v, float):
+        return f"{v:,.0f}" if abs(v) >= 100 else f"{v:.3g}"
+    if isinstance(v, int):
+        return f"{v:,}"
+    if isinstance(v, dict):
+        return ", ".join(f"{k}: {_fmt_value(x)}" for k, x in v.items())
+    return str(v)
+
+
 def _v(r: dict[str, float]) -> str:
     return f"{r['value']:.2f} (95 % CI {r['lo']:.2f} to {r['hi']:.2f})"
 
@@ -534,7 +546,12 @@ def h2_paragraph(h2: dict[str, Any]) -> str:
     h = h2["h2"]
     m = h2["mean_over_seasons"]
     parts = [h["sentence"]]
-    if h["supported"]:
+    rate = m.get("RATE", {}).get("bss_vs_B3")
+    if h["supported"] and rate and rate["value"] >= h["bss"]["value"] - 0.02:
+        parts.append(
+            f"This margin does not come from the correction itself: a constant forecast of the training contrail rate scores {_v(rate)} against B3 as well, because B3 is a yes/no forecast and the Brier score rewards any sensible probability for a rare event."
+        )
+    elif h["supported"]:
         parts.append(
             "The correction improves on the best published humidity correction by the pre-registered margin."
         )
@@ -546,11 +563,11 @@ def h2_paragraph(h2: dict[str, Any]) -> str:
         parts.append("The data cannot show that the correction improves on B3.")
     if "bss_vs_RATE" in m.get("STRATUM", {}):
         parts.append(
-            f"Against the simplest forecast, the training contrail rate everywhere, its mean skill was {_v(m['STRATUM']['bss_vs_RATE'])}."
+            f"Against that constant-rate forecast, the strictest comparison, its mean skill was {_v(m['STRATUM']['bss_vs_RATE'])}."
         )
     if "bss_vs_B0" in m.get("STRATUM", {}):
         parts.append(
-            f"Because B3 is a yes/no forecast, the Brier score also rewards any calibrated probability; the stricter comparison is with climatology (B0), against which the mean skill was {_v(m['STRATUM']['bss_vs_B0'])}."
+            f"Against the climatology of persistence conditions (B0) it was {_v(m['STRATUM']['bss_vs_B0'])}."
         )
     if "bss_vs_LOGIT" in m.get("STRATUM", {}):
         parts.append(
@@ -562,12 +579,17 @@ def h2_paragraph(h2: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _pct(x: float) -> str:
+    """A share as a percentage with 2 significant digits (0.0044 %, 0.48 %, 12 %)."""
+    return f"{x * 100:.2g} %"
+
+
 def h3_paragraph(h3: dict[str, Any]) -> str:
     s = h3["share"]
     verdict = "supported" if h3["supported"] else "not supported"
     return (
-        f"With the corrected humidity, {s['value'] * 100:.1f} % of cruise flight distance carried 80 % of the positive "
-        f"contrail energy forcing over the study domain (day-bootstrap 95 % interval {s['lo'] * 100:.1f}–{s['hi'] * 100:.1f} %, "
+        f"With the corrected humidity, {_pct(s['value'])} of cruise flight distance carried 80 % of the positive "
+        f"contrail energy forcing over the study domain (day-bootstrap 95 % interval {_pct(s['lo'])} to {_pct(s['hi'])}, "
         f"descriptive); H3 (≤ 10 %) is {verdict}. {h3['segments_positive_ef']:,} of {h3['segments']:,} cruise segments had "
         "positive EF. The share depends on the humidity correction and on CoCiP's own parameters; avoiding a small share "
         "of flying only pays if those segments can be identified in advance, which the decision layer tests."
