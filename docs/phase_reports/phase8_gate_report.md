@@ -1,35 +1,40 @@
 ```
-═══ PHASE 8 GATE REPORT — Web app v1, expo build, open release — 19 Oct 2026 (draft) ═══
-Status:          OPEN. Everything Claude can do is built and tested; the items marked [team]
-                 need a person (decisions, photos, a fresh-Colab test, the booth laptop).
+═══ PHASE 8 GATE REPORT — Web app v1, expo build, open release — 19 Oct 2026 ═══
+Status:          OPEN only on [team] items (booth laptop, fresh-Colab README test, 08b run,
+                 repo public + DOI at v1.0.0). Everything else is built, tested and live.
 Calendar:        far ahead (plan: Phase 8 by the Summit, 21–24 Apr 2027)
-Code:            main ≥ 8ad5698; ruff + mypy --strict clean; Python tests pass (slow ones
+Code:            main ≥ 655b339; ruff + mypy --strict clean; Python tests pass (slow ones
                  included: web export end to end, finish-only, release bundle); lock verifies.
                  No new deviation in Phase 8.
 
 Done-when checklist (build prompt §8.5):
-  [~] v1 live: model switcher (B1 / B3 / STRATUM, default STRATUM), STRATUM probability,
-      uncertainty and satellite-coverage views, flights coloured by alert, ranked lists per model
-      with airline / direction / night / alerts / confidence filters and CSV, segment cards with
-      every Table-3 field, alternatives and the RHi profile chart, /results with H1–H4, Methods
-      with SHAP, model card, threats, deviations and what didn't work. Built on data export
-      v1-d126083 (42 days: 12 held-out flight days + January 2026). Live once 08a finish-only
-      has written results.json + manifest.json (the export stopped on the per-day size check;
-      fixed in cff7208).
-      Playwright: new tests for /results and booth mode. Lighthouse: run after deploy.
+  [x] v1 live (https://stratum.aerospaceonyx.workers.dev, data build v1-d126083: 42 days =
+      12 held-out flight days + January 2026): model switcher (B1 / B3 / STRATUM, default
+      STRATUM), STRATUM probability, uncertainty and satellite-coverage views, flights coloured
+      by alert, ranked lists per model with airline / direction / night / alerts / confidence
+      filters and CSV, segment cards with every Table-3 field, alternatives and the RHi profile
+      chart, /results with H1–H4 from results.json, Methods with SHAP, model card, threats,
+      deviations and what didn't work, Data & code.
+      Playwright 6/6 (map with STRATUM card + model switcher, every page, phone layout, reload,
+      /results, booth mode); CI green. Lighthouse (mobile, live): accessibility, best practices
+      and SEO 100 on /, /map, /results, /methods; performance / 97 (after the font preload),
+      /map 87, /results 94, /methods 95.
   [~] Expo build: `npm run build:expo` / `make expo` → web/expo-build/ with start-expo.command,
       .bat and .sh (local server, no internet calls at runtime), service worker, booth mode
       (?booth=1: tours map → top alert and its card → B1 for contrast → results → threats;
       pauses on any touch, resumes after 60 s). docs/expo_checklist.md written.
-      [team] test on the booth laptop with Wi-Fi off; tick the checklist.
+      Checked by Claude: the 72 MB folder served by serve.py with every non-local request
+      blocked — all 9 pages load, the map shows 298 candidates and the card, booth mode starts,
+      0 external requests, 0 errors.
+      [team] the same test on the booth laptop with Wi-Fi off; tick the checklist.
   [~] Release: `stratum release-bundle` (colab/08b) — commercial flights only, salted-hash ids,
       positions rounded to 0.25°, labellers pseudonymised, no raw ADS-B / ERA5 / Meteosat data;
       `make reproduce-figures` redraws every results figure from results.json alone;
       CITATION.cff; docs/data_card.md; README "reproduce" path (three levels).
-      [team] licence choice (suggested CC BY 4.0 for our derived data; DLR-derived parts stay
-      CC BY-NC 4.0), no EUMETSAT scene packages (numerical data may not be redistributed),
-      position resolution in the release, DOI timing (Zenodo; permanent — needs the team's OK),
-      a team member runs the README path in a fresh Colab.
+      Decided by the team 19 Oct (decisions.md): CC BY 4.0 for derived data, DLR-derived parts
+      CC BY-NC 4.0, no EUMETSAT scene packages, positions at 0.25°, DOI approved for v1.0.0.
+      [team] run 08b; a team member runs the README path in a fresh Colab; make the repo public
+      and switch it on in Zenodo, then publish the v1.0.0 GitHub release (mints the DOI).
   [x] Final gate report with what didn't work: below.
 
 What didn't work, and why (the paper promises this list):
@@ -58,7 +63,9 @@ What didn't work, and why (the paper promises this list):
  10. Twelve flight days (free ADS-B samples) are too few for tight per-season intervals.
  11. Engineering: the first v1 export stopped on its own 4 MB per-day check after writing all
      42 days (the busiest day was 4.14 MB); a finish-only mode now completes such an export in
-     minutes instead of re-running 49 minutes.
+     minutes instead of re-running 49 minutes. The real results.json then held NaN for
+     undefined numbers (B0's false-alarm ratio; empty H1 breakdown cells), which browsers
+     reject; all web JSON is now written strictly with null. Neither showed up on test data.
 
 Still open outside Phase 8: the November ADS-B coverage audit (2 and 5 Nov 2026); team photos
 for the Team page (real photos only, location metadata stripped); India boundary confirmation
