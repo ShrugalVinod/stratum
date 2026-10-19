@@ -44,7 +44,7 @@ Research on contrail prediction and observation over India; teaching; checking o
 reductions.
 
 ## Licences
-- Our code: Apache-2.0. Our derived data: **CC BY 4.0 proposed** (team decision pending); anything
+- Our code: Apache-2.0. Our derived data: **CC BY 4.0** (team decision, 19 Oct 2026); anything
   derived from the DLR expert labels stays CC BY-NC 4.0.
 - Upstream: ERA5 under the Copernicus licence (attribution: "Contains modified Copernicus Climate
   Change Service information"); Meteosat data © EUMETSAT (images with credit; the original numerical
