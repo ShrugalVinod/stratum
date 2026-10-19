@@ -1298,3 +1298,147 @@
     font-size: 12px;
   }
 }
+
+/* ── Phase 8: model switcher, day strip, STRATUM card ─────────────────────── */
+.model-ctl button {
+  white-space: nowrap;
+}
+.day-strip {
+  display: inline-flex;
+  gap: 2px;
+  align-items: stretch;
+}
+.day-strip button {
+  width: 18px;
+  height: 30px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--orange) calc(var(--v, 0) * 100%), var(--card));
+  cursor: pointer;
+  padding: 0;
+  display: grid;
+  place-items: end center;
+}
+.day-strip button span {
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.day-strip button.on {
+  outline: 2px solid var(--ink);
+  outline-offset: -1px;
+}
+.alert-tag {
+  font-style: normal;
+  color: var(--orange-text);
+  border: 1px solid currentColor;
+  padding: 0 4px;
+}
+/* the STRATUM card: alternatives and the humidity profile on a second row */
+.dk-end {
+  grid-row: 1;
+  grid-column: 5;
+}
+.dk-alts {
+  grid-column: 1 / span 3;
+  border-top: 1px solid var(--rule);
+}
+.dk-prof {
+  grid-column: 4 / span 2;
+  border-top: 1px solid var(--rule);
+  margin: 0;
+}
+.alt-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.alt-table th,
+.alt-table td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+}
+.alt-table thead th {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.alt-table tr.best th,
+.alt-table tr.best td {
+  color: var(--orange-text);
+  font-weight: 700;
+}
+.alt-table tr.no td,
+.alt-table tr.no th {
+  color: var(--muted);
+}
+.dk-prof svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+.dk-prof .issr {
+  fill: color-mix(in srgb, var(--blue, #2c7fb8) 12%, transparent);
+}
+.dk-prof .ax {
+  font: 9px var(--font-mono);
+  fill: var(--muted);
+}
+.dk-prof .ax-line {
+  stroke: var(--muted);
+  stroke-dasharray: 2 3;
+}
+.dk-prof path {
+  fill: none;
+  stroke-width: 1.8;
+}
+.dk-prof .pr-raw {
+  stroke: var(--muted);
+}
+.dk-prof .pr-b3 {
+  stroke: #2c7fb8;
+}
+.dk-prof .pr-st {
+  stroke: var(--orange);
+}
+.dk-prof .lvl-planned,
+.dk-prof .lvl-best {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.dk-prof .lvl-best {
+  stroke: var(--orange-text);
+  stroke-dasharray: 4 3;
+}
+.dk-prof .k {
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  vertical-align: middle;
+  margin: 0 3px 0 6px;
+}
+.dk-prof .k-raw {
+  background: var(--muted);
+}
+.dk-prof .k-b3 {
+  background: #2c7fb8;
+}
+.dk-prof .k-st {
+  background: var(--orange);
+}
+@media (max-width: 1280px) {
+  .dk-end {
+    grid-row: auto;
+    grid-column: auto;
+  }
+  .dk-alts,
+  .dk-prof {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 900px) {
+  .day-strip {
+    display: none;
+  }
+}

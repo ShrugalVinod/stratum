@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "preact/hooks";
-import type { DaySummary, FlaggedSegment, FlightFeature, Manifest } from "../data/contract";
+import { useLocation } from "preact-iso";
+import type { DaySummary, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
 import { RAMP } from "../data/ramp";
-import { clock, colourise, joules, type MapState, pad2, parseState, stateQuery } from "../data/format";
-import { gridUrl, loadCorridor, loadDay, loadGridBytes, loadManifest } from "../data/load";
+import { clock, colourise, colouriseObs, joules, tonnes, type MapState, type ModelKey, pad2, parseState, stateQuery, type ViewKey } from "../data/format";
+import { gridUrl, layerUrl, type Lists, loadCorridor, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
 import type { ContrailMap as ContrailMapT, Layers } from "../map/ContrailMap";
 import "../styles/map.css";
 
@@ -20,16 +21,49 @@ function getGrid(build: string, date: string, fl: number, h: number): Promise<Gr
   return p;
 }
 
-async function gridImage(build: string, date: string, fl: number, h: number, m: Manifest): Promise<string> {
-  const k = `${build}|${date}|${fl}|${h}`;
+/** Value shown at the top of the colour ramp per layer: STRATUM's probabilities of a contrail
+ *  the satellite would see are small (≈ 0.5 % on average), so 5 % already shows as the maximum. */
+const DISPLAY_MAX: Record<string, number> = { B1: 1, B3: 1, STRATUM: 0.05, STRATUM_spread: 0.05, observable: 1 };
+const spriteCache = new Map<string, Promise<{ data: Uint8Array; width: number; height: number }>>();
+
+/** One hour of a layer as display bytes (0–255 = 0 … DISPLAY_MAX). A v1 build has only the
+ *  B1 per-hour PNGs; a v2 build has hour sprites per layer and flight level. */
+function getView(build: string, date: string, layer: string, fl: number, h: number, m: Manifest): Promise<Grid> {
+  const info = m.layers?.find((l) => l.id === layer);
+  if (!info) return getGrid(build, date, fl, h);
+  const k = `${build}|${date}|${layer}|${fl}|${h}`;
+  let p = gridCache.get(k);
+  if (!p) {
+    const url = layerUrl(build, date, info.file, fl);
+    let sp = spriteCache.get(url);
+    if (!sp) {
+      sp = loadGridBytes(url);
+      spriteCache.set(url, sp);
+    }
+    const f = info.full_scale / (DISPLAY_MAX[layer] ?? 1);
+    p = sp.then((s) => {
+      const raw = spriteHour(s, h, m.grid.cols);
+      if (f === 1) return raw;
+      const out = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) out[i] = Math.min(255, Math.round(raw[i] * f));
+      return out;
+    });
+    gridCache.set(k, p);
+  }
+  return p;
+}
+
+async function gridImage(build: string, date: string, layer: string, fl: number, h: number, m: Manifest): Promise<string> {
+  const k = `${build}|${date}|${layer}|${fl}|${h}`;
   const hit = imgCache.get(k);
   if (hit) return hit;
-  const g = await getGrid(build, date, fl, h);
+  const g = await getView(build, date, layer, fl, h, m);
   const c = document.createElement("canvas");
   c.width = m.grid.cols;
   c.height = m.grid.rows;
   const ctx = c.getContext("2d")!;
-  ctx.putImageData(new ImageData(colourise(g) as Uint8ClampedArray<ArrayBuffer>, m.grid.cols, m.grid.rows), 0, 0);
+  const rgba = layer === "observable" ? colouriseObs(g) : colourise(g);
+  ctx.putImageData(new ImageData(rgba as Uint8ClampedArray<ArrayBuffer>, m.grid.cols, m.grid.rows), 0, 0);
   const url = c.toDataURL("image/png");
   imgCache.set(k, url);
   return url;
@@ -81,6 +115,12 @@ const GALLERY: GalleryItem[] = [
   },
 ];
 
+const MODEL_SHORT: Record<ModelKey, string> = { B1: "Physics", B3: "Published fix", STRATUM: "STRATUM" };
+const MODEL_BADGE: Record<ModelKey, string> = {
+  B1: "Uncorrected physics (B1)",
+  B3: "Published humidity correction (B3)",
+  STRATUM: "STRATUM: learned from Meteosat-9 contrails",
+};
 // Direction = overall heading compared with the Delhi–Mumbai route (not the actual origin/destination).
 const DIR_LABEL = { "DEL-BOM": "Southbound", "BOM-DEL": "Northbound", other: "Crossing" } as const;
 
@@ -98,7 +138,10 @@ export function MapPage() {
   const [man, setMan] = useState<Manifest | null>(null);
   const [corridor, setCorridor] = useState<GeoJSON.Feature | null>(null);
   const [st, setSt] = useState<MapState>({ date: null, hour: 6, fl: 360, seg: null });
-  const [dayData, setDayData] = useState<{ day: DaySummary; flights: FlightFeature[] | null; segments: FlaggedSegment[] } | null>(null);
+  const [dayData, setDayData] = useState<{ day: DaySummary; flights: FlightFeature[] | null; segments: FlaggedSegment[]; lists: Lists } | null>(null);
+  const [alertsByDay, setAlertsByDay] = useState<Record<string, number> | null>(null);
+  const [alertsOnly, setAlertsOnly] = useState(false);
+  const [conf, setConf] = useState<"all" | "covered" | "extrapolating">("all");
   const [riskImage, setRiskImage] = useState<string | null>(null);
   const [layers, setLayers] = useState<Layers>({ risk: true, flights: true, corridor: true, cities: true });
   const [playing, setPlaying] = useState(false);
@@ -135,19 +178,40 @@ export function MapPage() {
         setBuild(b);
         setMan(manifest);
         const def = manifest.days_with_flights[0] ?? manifest.days[0] ?? null;
-        const s = parseState(location.search, { date: def, hour: 6, fl: 360, seg: null });
+        const s = parseState(location.search, { date: def, hour: 6, fl: 360, seg: null, model: manifest.models ? "STRATUM" : "B1", view: "chance" });
+        if (!manifest.models) s.model = "B1";
         if (!s.date || !manifest.days.includes(s.date)) s.date = def;
         if (!manifest.flight_levels.some((f) => f.fl === s.fl)) s.fl = manifest.flight_levels[Math.floor(manifest.flight_levels.length / 2)].fl;
         setSt(s);
         loadCorridor(b).then(setCorridor).catch(() => setCorridor(null));
+        // alerts per flight day for the calendar strip (v2 builds)
+        if (manifest.models)
+          Promise.all(manifest.days_with_flights.map((d) => loadDay(b, d).then((x) => [d, x.day.n_alerts ?? 0] as const)))
+            .then((r) => setAlertsByDay(Object.fromEntries(r)))
+            .catch(() => setAlertsByDay(null));
       })
       .catch((e) => setErr(String(e.message ?? e)));
   }, []);
 
+  // the URL changed from outside (a link, back/forward or the booth tour): read it again
+  const loc = useLocation();
+  useEffect(() => {
+    if (!man) return;
+    const q = loc.url.includes("?") ? loc.url.slice(loc.url.indexOf("?")) : "";
+    if (!q) return;
+    setSt((cur) => {
+      const s = parseState(q, { ...cur, seg: null });
+      if (!s.date || !man.days.includes(s.date)) s.date = cur.date;
+      if (!man.models) s.model = "B1"; // a v1 build has physics only
+      return s;
+    });
+  }, [loc.url, man]);
+
   // URL state
   useEffect(() => {
     if (!man) return;
-    history.replaceState(null, "", `/map${stateQuery(st)}`);
+    const b = new URLSearchParams(location.search).get("build");
+    history.replaceState(null, "", `/map${stateQuery(st)}${b ? `&build=${encodeURIComponent(b)}` : ""}`);
   }, [st, man]);
 
   // day data
@@ -156,29 +220,36 @@ export function MapPage() {
     setDayData(null);
     setFlightSel(null);
     loadDay(build, st.date)
-      .then((d) => setDayData({ day: d.day, flights: d.flights?.features ?? null, segments: d.segments }))
+      .then((d) => setDayData({ day: d.day, flights: d.flights?.features ?? null, segments: d.segments, lists: d.lists }))
       .catch((e) => setErr(String(e.message ?? e)));
   }, [build, st.date]);
+
+  const model: ModelKey = st.model ?? "B1";
+  const view: ViewKey = st.view ?? "chance";
+  const v2 = !!man?.layers;
+  const hasObs = !!dayData?.day.has_observability;
+  const layer = !v2 ? "B1" : view === "obs" && hasObs ? "observable" : view === "spread" && model === "STRATUM" ? "STRATUM_spread" : model;
+  const dmax = DISPLAY_MAX[layer] ?? 1;
 
   // risk image for the current view + preload the day's hours for this FL
   useEffect(() => {
     if (!build || !man || !st.date) return;
     let live = true;
-    gridImage(build, st.date, st.fl, st.hour, man)
+    gridImage(build, st.date, layer, st.fl, st.hour, man)
       .then((u) => live && setRiskImage(u))
       .catch(() => live && setRiskImage(null));
-    for (let h = 0; h < 24; h++) gridImage(build, st.date, st.fl, h, man).catch(() => undefined);
+    for (let h = 0; h < 24; h++) gridImage(build, st.date, layer, st.fl, h, man).catch(() => undefined);
     return () => {
       live = false;
     };
-  }, [build, man, st.date, st.fl, st.hour]);
+  }, [build, man, st.date, st.fl, st.hour, layer]);
 
   // hourly share of the corridor / domain with persistent-contrail conditions (this FL)
   const mask = useMemo(() => (man ? corridorMask(man, corridor) : null), [man, corridor]);
   useEffect(() => {
     if (!build || !man || !st.date) return;
     let live = true;
-    Promise.all([...Array(24).keys()].map((h) => getGrid(build, st.date!, st.fl, h)))
+    Promise.all([...Array(24).keys()].map((h) => getView(build, st.date!, layer, st.fl, h, man)))
       .then((gs) => {
         if (!live) return;
         const corr: number[] = [];
@@ -192,8 +263,8 @@ export function MapPage() {
               n++;
             }
           }
-          corr.push(n ? s / n / 255 : 0);
-          dom.push(sd / g.length / 255);
+          corr.push(n ? (s / n / 255) * dmax : 0);
+          dom.push((sd / g.length / 255) * dmax);
         }
         setHourly({ corridor: corr, domain: dom });
       })
@@ -201,19 +272,19 @@ export function MapPage() {
     return () => {
       live = false;
     };
-  }, [build, man, st.date, st.fl, mask]);
+  }, [build, man, st.date, st.fl, mask, layer]);
 
   // share of the domain at every flight level for the chosen hour (altitude tape bars)
   useEffect(() => {
     if (!build || !man || !st.date) return;
     let live = true;
-    Promise.all(man.flight_levels.map((f) => getGrid(build, st.date!, f.fl, st.hour).then((g) => [f.fl, g.reduce((a, v) => a + v, 0) / g.length / 255] as const)))
+    Promise.all(man.flight_levels.map((f) => getView(build, st.date!, layer, f.fl, st.hour, man).then((g) => [f.fl, g.reduce((a, v) => a + v, 0) / g.length / 255] as const)))
       .then((r) => live && setByLevel(Object.fromEntries(r)))
       .catch(() => live && setByLevel(null));
     return () => {
       live = false;
     };
-  }, [build, man, st.date, st.hour]);
+  }, [build, man, st.date, st.hour, layer]);
 
   // sky column at the picked point: all flight levels × 24 hours
   useEffect(() => {
@@ -223,13 +294,13 @@ export function MapPage() {
     const c = Math.round((picked[0] - g.lon_west) / g.step_deg);
     if (r < 0 || c < 0 || r >= g.rows || c >= g.cols) return setColumn(null);
     let live = true;
-    Promise.all(man.flight_levels.map((f) => Promise.all([...Array(24).keys()].map((h) => getGrid(build, st.date!, f.fl, h)))))
-      .then((byFl) => live && setColumn(byFl.map((hrs) => hrs.map((gr) => gr[r * g.cols + c] / 255))))
+    Promise.all(man.flight_levels.map((f) => Promise.all([...Array(24).keys()].map((h) => getView(build, st.date!, layer, f.fl, h, man)))))
+      .then((byFl) => live && setColumn(byFl.map((hrs) => hrs.map((gr) => (gr[r * g.cols + c] / 255) * dmax))))
       .catch(() => live && setColumn(null));
     return () => {
       live = false;
     };
-  }, [build, man, st.date, picked]);
+  }, [build, man, st.date, picked, layer]);
 
   // playback
   useEffect(() => {
@@ -238,10 +309,27 @@ export function MapPage() {
     return () => clearInterval(id);
   }, [playing]);
 
-  const segments = dayData?.segments ?? [];
+  const segments = useMemo(() => (dayData ? (dayData.lists[model] ?? (model === "B1" ? dayData.segments : [])) : []), [dayData, model]);
   const airlines = useMemo(() => [...new Set(segments.map((s) => s.airline).filter(Boolean) as string[])].sort(), [segments]);
-  const shown = segments.filter((s) => (dir === "all" || s.direction === dir) && (airline === "all" || s.airline === airline) && (!nightOnly || s.night));
-  const maxEf = Math.max(1, ...segments.map((s) => Math.abs(s.ef_J ?? 0)));
+  const isS = model === "STRATUM";
+  const shown = segments.filter(
+    (s) =>
+      (dir === "all" || s.direction === dir) &&
+      (airline === "all" || s.airline === airline) &&
+      (!nightOnly || s.night) &&
+      (!isS || !alertsOnly || s.alert) &&
+      (!isS || conf === "all" || (conf === "covered" ? s.confidence_note.startsWith("well covered") : s.confidence_note.startsWith("extrapolating"))),
+  );
+  // bar length: warming of the contrail (physics lists) or the cautious warming avoided (STRATUM)
+  const metric = (s: FlaggedSegment) => (isS ? Math.max(0, s.net_warming_avoided_100y ?? 0) : Math.abs(s.ef_J ?? 0));
+  const maxEf = Math.max(1, ...segments.map(metric));
+  // planes and tracks: orange when the flight is in this model's list (STRATUM: when it has an alert)
+  const flightsView = useMemo(() => {
+    const fs = dayData?.flights ?? null;
+    if (!fs || !v2) return fs;
+    const ids = new Set(segments.filter((x) => !isS || x.alert).map((x) => x.flight_id));
+    return fs.map((f) => ({ ...f, properties: { ...f.properties, flagged: ids.has(f.properties.flight_id) } }));
+  }, [dayData, segments, isS, v2]);
   const selected = segments.find((s) => s.segment_id === st.seg) ?? null;
   const flInfo = man?.flight_levels.find((f) => f.fl === st.fl);
   const minutes = intro.active ? intro.t : st.hour * 60;
@@ -253,8 +341,16 @@ export function MapPage() {
 
   // what the lower detail bar shows: the selected segment's flight, or a clicked flight
   const detailId = selected?.flight_id ?? flightSel;
-  const detailFlight = detailId ? (dayData?.flights?.find((f) => f.properties.flight_id === detailId) ?? null) : null;
+  const detailFlight = detailId ? (flightsView?.find((f) => f.properties.flight_id === detailId) ?? null) : null;
   const detailSegs = useMemo(() => (detailId ? segments.filter((s) => s.flight_id === detailId).sort((a, b) => a.time_utc.localeCompare(b.time_utc)) : []), [detailId, segments]);
+
+  // ?seg=top opens the list's first item (STRATUM: the strongest alert) once the day has loaded
+  useEffect(() => {
+    if (st.seg !== "top" || !dayData) return;
+    const first = segments.find((x) => !isS || x.alert) ?? segments[0];
+    if (first) chooseSeg(first);
+    else setSt((x) => ({ ...x, seg: null }));
+  }, [st.seg, dayData, segments]);
 
   const chooseSeg = (s: FlaggedSegment) => {
     setFlightSel(null);
@@ -264,7 +360,7 @@ export function MapPage() {
     const segs = segments.filter((s) => s.flight_id === id);
     if (segs.length) {
       // a flight that makes a persistent contrail: open its strongest segment
-      chooseSeg(segs.reduce((a, b) => ((b.ef_J ?? 0) > (a.ef_J ?? 0) ? b : a)));
+      chooseSeg(segs.reduce((a, b) => (metric(b) > metric(a) ? b : a)));
     } else {
       setFlightSel(id);
       setSt((s) => ({ ...s, seg: null }));
@@ -273,6 +369,23 @@ export function MapPage() {
   const closeDetail = () => {
     setFlightSel(null);
     setSt({ ...st, seg: null });
+  };
+  const downloadCsv = () => {
+    const cols: [string, (s: FlaggedSegment) => unknown][] = [
+      ["model", () => model], ["flight_id_hashed", (s) => s.flight_id], ["callsign", (s) => s.callsign], ["airline", (s) => s.airline ?? ""],
+      ["direction", (s) => DIR_LABEL[s.direction]], ["start_utc", (s) => s.time_utc], ["end_utc", (s) => s.time_end_utc ?? ""], ["planned_fl", (s) => s.fl],
+      ["night", (s) => s.night], ["ef_J", (s) => s.ef_J ?? ""], ["ef_p05_J", (s) => s.ef_p05_J ?? ""], ["ef_p95_J", (s) => s.ef_p95_J ?? ""],
+      ["p_persistent_seen", (s) => s.p_persistent ?? ""], ["best_alternative_fl", (s) => s.best_alternative_fl ?? ""], ["extra_fuel_kg", (s) => s.extra_fuel_kg ?? ""],
+      ["extra_co2_kg", (s) => s.extra_co2_kg ?? ""], ["net_warming_avoided_20y_p05_kgCO2e", (s) => s.net_warming_avoided_20y ?? ""],
+      ["net_warming_avoided_100y_p05_kgCO2e", (s) => s.net_warming_avoided_100y ?? ""], ["alert", (s) => s.alert ?? ""], ["confidence", (s) => s.confidence_note.split(".")[0]],
+    ];
+    const esc = (v: unknown) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+    const csv = [cols.map((c) => c[0]).join(","), ...shown.map((s) => cols.map(([, f]) => esc(f(s))).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([`# STRATUM ${model} list, ${st.date}; commercial flights only, hashed ids; computational estimate, ATC feasibility not modelled\n${csv}\n`], { type: "text/csv" }));
+    a.download = `stratum_${model}_${st.date}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   const copyLink = async () => {
     try {
@@ -304,7 +417,7 @@ export function MapPage() {
       <div class="mp-bar" role="toolbar" aria-label="Map controls">
         <h1 class="mp-title mono-s">Contrail map · India 6–37°N 68–98°E</h1>
         <span class="mono-s warn">Computational estimate — no real flight was changed</span>
-        <span class="mono-s">Physics-only prototype (v0) · uncorrected B1</span>
+        <span class="mono-s">{v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1"}</span>
         <span class="mono-s">
           ADS-B coverage:{" "}
           {man?.coverage.adsb_coverage_pct != null ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights` : "audit pending (Nov 2026)"}
@@ -321,6 +434,42 @@ export function MapPage() {
               ))}
             </select>
           </label>
+          {alertsByDay && (
+            <span class="day-strip" role="group" aria-label="Alerts per flight day (STRATUM)">
+              {man!.days_with_flights.map((d) => {
+                const n = alertsByDay[d] ?? 0;
+                const mx = Math.max(1, ...Object.values(alertsByDay));
+                return (
+                  <button class={d === st.date ? "on" : ""} style={{ "--v": n ? 0.18 + 0.82 * Math.sqrt(n / mx) : 0 }} title={`${dayLabel(d)}: ${n} alert${n === 1 ? "" : "s"}`} aria-label={`${dayLabel(d)}, ${n} alerts`} onClick={() => setSt({ ...st, date: d, seg: null })}>
+                    <span class="mono">{MON[Number(d.slice(5, 7)) - 1].slice(0, 1)}</span>
+                  </button>
+                );
+              })}
+            </span>
+          )}
+          {v2 && (
+            <span class="seg-ctl model-ctl" role="radiogroup" aria-label="Model">
+              {(["B1", "B3", "STRATUM"] as const).map((m) => (
+                <button role="radio" aria-checked={model === m} class={model === m ? "on" : ""} title={man?.models?.find((x) => x.id === m)?.description} onClick={() => setSt({ ...st, model: m, seg: null, view: m === "STRATUM" ? view : view === "spread" ? "chance" : view })}>
+                  {MODEL_SHORT[m]}
+                </button>
+              ))}
+            </span>
+          )}
+          {v2 && (
+            <label class="date-pick">
+              <span class="sr-only">Map shows</span>
+              <select value={view} onChange={(e) => setSt({ ...st, view: (e.target as HTMLSelectElement).value as ViewKey })}>
+                <option value="chance">{model === "STRATUM" ? "Contrail chance" : "Contrail conditions"}</option>
+                <option value="spread" disabled={model !== "STRATUM"}>
+                  Uncertainty (model spread)
+                </option>
+                <option value="obs" disabled={!hasObs}>
+                  Where the satellite could see{hasObs ? "" : " (no images this day)"}
+                </option>
+              </select>
+            </label>
+          )}
           <span class="layers">
             <button class="tool" aria-expanded={layersOpen} onClick={() => setLayersOpen(!layersOpen)}>
               Layers
@@ -370,7 +519,8 @@ export function MapPage() {
                 manifest={man}
                 corridor={corridor}
                 riskImage={riskImage}
-                flights={dayData?.flights ?? null}
+                flights={flightsView}
+                modelLabel={v2 ? model : "B1"}
                 segments={segments}
                 hour={st.hour}
                 selected={selected}
@@ -389,32 +539,45 @@ export function MapPage() {
               Click a flight → details below · click anywhere → sky column
             </p>
             <div class="legend">
-              <div class="legend-title label ink">Persistent-contrail conditions</div>
-              <div class="ramp" aria-hidden="true" />
-              <div class="ramp-labels mono">
-                <span>0</span>
-                <span>share of the hour</span>
-                <span>1</span>
+              <div class="legend-title label ink">
+                {layer === "observable" ? "Satellite could not see (shaded)" : layer === "STRATUM_spread" ? "Model uncertainty" : layer === "STRATUM" ? "Chance of a contrail the satellite sees" : "Persistent-contrail conditions"}
               </div>
+              {layer === "observable" ? (
+                <div class="ramp-labels mono">
+                  <span>Grey: cloud or steep view in that hour</span>
+                </div>
+              ) : (
+                <>
+                  <div class="ramp" aria-hidden="true" />
+                  <div class="ramp-labels mono">
+                    <span>0</span>
+                    <span>{layer === "STRATUM" ? "probability" : layer === "STRATUM_spread" ? "spread of 4 season models" : "share of the hour"}</span>
+                    <span>{dmax < 1 ? `≥ ${Math.round(dmax * 100)} %` : "1"}</span>
+                  </div>
+                </>
+              )}
               <div class="legend-row">
                 <i class="sw track" /> Flight track (brighter near the chosen hour)
               </div>
               <div class="legend-row">
-                <i class="sw pred" /> Segment making a persistent contrail (CoCiP)
+                <i class="sw pred" /> {isS ? "Flagged warming contrail (corrected physics)" : `Warming persistent contrail (CoCiP, ${model})`}
               </div>
               <div class="legend-row">
                 <i class="sw plane" aria-hidden="true">
                   ✈
                 </i>{" "}
-                Aircraft (orange: makes a persistent contrail)
+                {isS ? "Aircraft (orange: an alert, a level change helps)" : "Aircraft (orange: makes a persistent contrail)"}
               </div>
               <div class="legend-row">
                 <i class="sw corr" /> Delhi–Mumbai corridor ±75 km
               </div>
               {hourly && (
                 <div class="legend-stat mono">
-                  FL{st.fl} {pad2(st.hour)}:00 UTC: {(hourly.domain[st.hour] * 100).toFixed(1)} % of the domain · {(hourly.corridor[st.hour] * 100).toFixed(1)} % of
-                  the corridor
+                  {layer === "STRATUM" || layer === "STRATUM_spread"
+                    ? `FL${st.fl} ${pad2(st.hour)}:00 UTC: mean ${(hourly.domain[st.hour] * 100).toFixed(2)} % over the domain · ${(hourly.corridor[st.hour] * 100).toFixed(2)} % in the corridor`
+                    : layer === "observable"
+                      ? `${pad2(st.hour)}:00 UTC: the satellite could see ${(hourly.domain[st.hour] * 100).toFixed(0)} % of the domain`
+                      : `FL${st.fl} ${pad2(st.hour)}:00 UTC: ${(hourly.domain[st.hour] * 100).toFixed(1)} % of the domain · ${(hourly.corridor[st.hour] * 100).toFixed(1)} % of the corridor`}
                 </div>
               )}
             </div>
@@ -426,6 +589,8 @@ export function MapPage() {
                 at={picked}
                 data={column}
                 fls={man?.flight_levels.map((f) => f.fl) ?? []}
+                dmax={dmax}
+                what={layer}
                 hour={st.hour}
                 fl={st.fl}
                 onClose={() => setPicked(null)}
@@ -452,9 +617,9 @@ export function MapPage() {
           <aside class="strips" aria-label="Flagged segments">
             <div class="strips-head">
               <div>
-                <p class="label red">Flagged segments</p>
+                <p class="label red">{isS ? "Avoidance candidates" : "Flagged segments"}</p>
                 <p class="label ink" style="margin-top:4px">
-                  Ranked by contrail warming
+                  {isS ? "Ranked by the cautious warming avoided" : "Ranked by contrail warming"}
                 </p>
               </div>
               {dayData?.day.has_flights && <span class="mono-s muted">{segments.length} segments</span>}
@@ -495,6 +660,28 @@ export function MapPage() {
                       Night only
                     </label>
                   </div>
+                  {isS && (
+                    <div class="filter-row">
+                      <label class="toggle">
+                        <input type="checkbox" checked={alertsOnly} onChange={() => setAlertsOnly(!alertsOnly)} />
+                        <span />
+                        Alerts only
+                      </label>
+                      <select value={conf} onChange={(e) => setConf((e.target as HTMLSelectElement).value as typeof conf)} aria-label="Confidence">
+                        <option value="all">Any confidence</option>
+                        <option value="covered">Well covered by labels</option>
+                        <option value="extrapolating">Extrapolating</option>
+                      </select>
+                    </div>
+                  )}
+                  <div class="filter-row">
+                    <span class="mono-s muted">
+                      {shown.length} of {segments.length} shown{isS ? ` · ${segments.filter((x) => x.alert).length} alerts` : ""}
+                    </span>
+                    <button class="tool" onClick={downloadCsv} disabled={!shown.length} title="Commercial flights only, hashed ids">
+                      CSV ↓
+                    </button>
+                  </div>
                 </div>
                 <ol class="strip-list">
                   {shown.length === 0 && <li class="muted empty-row">No segments match these filters.</li>}
@@ -513,14 +700,25 @@ export function MapPage() {
                               {c.utc} UTC / {c.ist} IST{s.night ? " · night" : ""}
                             </span>
                             <span class="bar" aria-hidden="true">
-                              <i style={{ transform: `scaleX(${Math.max(0.02, Math.abs(s.ef_J ?? 0) / maxEf)})` }} />
+                              <i style={{ transform: `scaleX(${Math.max(0.02, metric(s) / maxEf)})` }} />
                             </span>
                           </span>
-                          <span class="strip-r mono">
-                            <b>FL{s.fl}</b>
-                            <span>{joules(s.ef_J)}</span>
-                            <span>{s.contrail_age_h != null ? `lasts ${s.contrail_age_h.toFixed(1)} h` : ""}</span>
-                          </span>
+                          {isS ? (
+                            <span class="strip-r mono">
+                              <b>
+                                FL{s.fl}
+                                {s.best_alternative_fl ? ` → ${s.best_alternative_fl}` : ""}
+                              </b>
+                              <span>{s.alert ? <em class="alert-tag">alert</em> : "no alert"}</span>
+                              <span>{s.net_warming_avoided_100y != null ? `≥ ${tonnes(s.net_warming_avoided_100y)} CO₂e` : ""}</span>
+                            </span>
+                          ) : (
+                            <span class="strip-r mono">
+                              <b>FL{s.fl}</b>
+                              <span>{joules(s.ef_J)}</span>
+                              <span>{s.contrail_age_h != null ? `lasts ${s.contrail_age_h.toFixed(1)} h` : ""}</span>
+                            </span>
+                          )}
                         </button>
                       </li>
                     );
@@ -532,7 +730,7 @@ export function MapPage() {
         </div>
 
         <div class={`deck-wrap ${detailId ? "open" : ""}`}>
-          <div>{detailId && <DetailDeck key={detailId} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} />}</div>
+          <div>{detailId && <DetailDeck key={detailId} model={v2 ? model : "B1"} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} />}</div>
         </div>
       </div>
 
@@ -588,8 +786,8 @@ export function MapPage() {
         </div>
       </div>
       <p class="tl-caption wrap small muted">
-        Bars: share of the Delhi–Mumbai corridor with persistent-contrail conditions at FL{st.fl}, each hour (B1 physics, uncorrected). Drag along
-        the bars or use the arrow keys to change the hour.
+        Bars: {layer === "STRATUM" ? "mean STRATUM chance over the Delhi–Mumbai corridor" : layer === "observable" ? "share of the domain the satellite could see" : `share of the Delhi–Mumbai corridor with persistent-contrail conditions (${MODEL_BADGE[model === "STRATUM" ? "B1" : model]})`}{" "}
+        at FL{st.fl}, each hour. Drag along the bars or use the arrow keys to change the hour.
       </p>
 
       {dayData && (
@@ -651,8 +849,10 @@ function Digits(p: { text: string; suffix: string; big?: boolean }) {
   );
 }
 
-/** Lower detail bar: the flight, how long its contrail lasted, and the segment's contrail details. */
-function DetailDeck(p: { flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void }) {
+/** Lower detail bar: the flight and, for the selected list item, every field the model has.
+ *  Physics lists (B1, B3): how long the contrail lasted and its warming. STRATUM: the Table 3
+ *  fields of the decision layer, the alternatives and the humidity profile. */
+function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void }) {
   const s = p.seg;
   const head = s ?? p.segs[0] ?? null;
   const fp = p.flight?.properties;
@@ -665,6 +865,8 @@ function DetailDeck(p: { flight: FlightFeature | null; seg: FlaggedSegment | nul
   const step = (d: number) => p.segs.length && p.onStep(p.segs[(k + d + p.segs.length) % p.segs.length]);
   const age = s?.contrail_age_h ?? null;
   const c = s ? clock(s.time_utc) : null;
+  const isS = p.model === "STRATUM";
+  const rng = (r: number[] | null | undefined) => (r && r.length === 3 ? `${tonnes(r[0])} … ${tonnes(r[2])} (median ${tonnes(r[1])})` : "—");
   return (
     <section class="deck" aria-label={`Details for ${callsign}`} aria-live="polite">
       <div class="dk dk-flight">
@@ -682,85 +884,135 @@ function DetailDeck(p: { flight: FlightFeature | null; seg: FlaggedSegment | nul
         </span>
       </div>
 
-      <div class={`dk dk-life ${s ? "" : "none"}`}>
-        <p class="label red">Contrail lasted</p>
-        {s ? (
-          <>
-            <b class="mono life-num">{age != null ? `${age.toFixed(1)} h` : "—"}</b>
-            <span class="mono small">{age != null ? hm(age) : "not available"} · this segment</span>
-            {longest != null && p.segs.length > 1 && <span class="mono small muted">Longest in this flight: {longest.toFixed(1)} h</span>}
-            {age != null && (
-              <span class="life-bar" aria-hidden="true">
-                <i style={{ transform: `scaleX(${Math.min(1, age / 12)})` }} />
-                <em class="mono">0 h</em>
-                <em class="mono">12 h</em>
+      {isS ? (
+        <div class={`dk dk-life ${s?.alert ? "" : "none"}`}>
+          <p class="label red">{s ? (s.alert ? "Alert" : "No alert") : "STRATUM"}</p>
+          {s ? (
+            <>
+              <b class="mono life-num">{s.alert && s.best_alternative_fl ? `FL${s.best_alternative_fl}` : `FL${s.fl}`}</b>
+              <span class="small">
+                {s.alert
+                  ? `Fly FL${s.best_alternative_fl} instead of FL${s.fl} here: the cautious estimate of warming avoided is positive at both 20 and 100 years.`
+                  : s.best_alternative_fl
+                    ? `Best option FL${s.best_alternative_fl}, but its cautious estimate is not positive at both horizons: keep FL${s.fl}.`
+                    : "No feasible alternative level."}
               </span>
-            )}
-          </>
-        ) : (
-          <>
-            <b class="mono life-num">0 h</b>
-            <span class="small">No persistent contrail predicted for this flight (B1 physics, uncorrected).</span>
-          </>
-        )}
-      </div>
+              {s.alert && !s.alert_without_fuel_credit && <span class="small muted">This alert relies on a fuel saving at the new level (OpenAP).</span>}
+            </>
+          ) : (
+            <span class="small">No avoidance candidate for this flight.</span>
+          )}
+        </div>
+      ) : (
+        <div class={`dk dk-life ${s ? "" : "none"}`}>
+          <p class="label red">Contrail lasted</p>
+          {s ? (
+            <>
+              <b class="mono life-num">{age != null ? `${age.toFixed(1)} h` : "—"}</b>
+              <span class="mono small">{age != null ? hm(age) : "not available"} · this stretch</span>
+              {longest != null && p.segs.length > 1 && <span class="mono small muted">Longest in this flight: {longest.toFixed(1)} h</span>}
+              {age != null && (
+                <span class="life-bar" aria-hidden="true">
+                  <i style={{ transform: `scaleX(${Math.min(1, age / 12)})` }} />
+                  <em class="mono">0 h</em>
+                  <em class="mono">12 h</em>
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <b class="mono life-num">0 h</b>
+              <span class="small">No persistent contrail predicted for this flight ({p.model} physics).</span>
+            </>
+          )}
+        </div>
+      )}
 
       {s && c && (
         <>
           <div class="dk dk-seg">
-            <p class="label">Segment</p>
+            <p class="label">{isS ? "Flagged stretch" : "Segment"}</p>
             <div class="sc-nav">
-              <button class="tool" onClick={() => step(-1)} aria-label="Previous segment of this flight" disabled={p.segs.length < 2}>
+              <button class="tool" onClick={() => step(-1)} aria-label="Previous item of this flight" disabled={p.segs.length < 2}>
                 ‹
               </button>
               <span class="mono">
                 {k + 1} / {p.segs.length}
               </span>
-              <button class="tool" onClick={() => step(1)} aria-label="Next segment of this flight" disabled={p.segs.length < 2}>
+              <button class="tool" onClick={() => step(1)} aria-label="Next item of this flight" disabled={p.segs.length < 2}>
                 ›
               </button>
             </div>
             <span class="mono small">
-              {c.utc} UTC · {c.ist} IST{s.night ? " · night" : ""}
+              {c.utc}
+              {s.time_end_utc ? `–${clock(s.time_end_utc).utc}` : ""} UTC · {c.ist} IST{s.night ? " · night" : ""}
             </span>
-            <span class="mono small">Planned FL{s.fl}</span>
+            <span class="mono small">
+              Planned FL{s.fl}
+              {s.n_segments ? ` · ${s.n_segments} min` : ""}
+            </span>
           </div>
-          <dl class="dk dk-fields">
-            <div>
-              <dt>Contrail energy forcing (central)</dt>
-              <dd>{joules(s.ef_J)}</dd>
-            </div>
-            <div>
-              <dt>EF range (5th–95th %)</dt>
-              <dd>
-                {joules(s.ef_p05_J)} – {joules(s.ef_p95_J)}
-              </dd>
-            </div>
-            <div>
-              <dt>P(persistent contrail)</dt>
-              <dd>{s.p_persistent ?? <Pending />}</dd>
-            </div>
-            <div>
-              <dt>Best alternative level</dt>
-              <dd>{s.best_alternative_fl ? `FL${s.best_alternative_fl}` : <Pending />}</dd>
-            </div>
-            <div>
-              <dt>Extra fuel / CO₂</dt>
-              <dd>{s.extra_fuel_kg ?? <Pending />}</dd>
-            </div>
-            <div>
-              <dt>Net warming avoided</dt>
-              <dd>{s.net_warming_avoided_100y ?? <Pending />}</dd>
-            </div>
-          </dl>
+          {isS ? (
+            <dl class="dk dk-fields">
+              <div>
+                <dt>Chance the satellite sees a lasting contrail</dt>
+                <dd>{s.p_persistent != null ? `${(s.p_persistent * 100).toFixed(1)} %` : "—"}</dd>
+              </div>
+              <div>
+                <dt>Contrail warming at the planned level (5th–95th %)</dt>
+                <dd>
+                  {joules(s.ef_p05_J)} – {joules(s.ef_p95_J)}
+                </dd>
+              </div>
+              <div>
+                <dt>Fuel / CO₂ at the best level</dt>
+                <dd>
+                  {s.extra_fuel_kg == null
+                    ? "—"
+                    : s.extra_fuel_kg < 0
+                      ? `saves ${Math.round(-s.extra_fuel_kg)} kg fuel / ${tonnes(-(s.extra_co2_kg ?? 0))} CO₂`
+                      : `+${Math.round(s.extra_fuel_kg)} kg fuel / ${tonnes(s.extra_co2_kg)} CO₂`}
+                </dd>
+              </div>
+              <div>
+                <dt>Net warming avoided, 20 years</dt>
+                <dd>{rng(s.net_warming_avoided_20y_range)} CO₂e</dd>
+              </div>
+              <div>
+                <dt>Net warming avoided, 100 years</dt>
+                <dd>{rng(s.net_warming_avoided_100y_range)} CO₂e</dd>
+              </div>
+              <div>
+                <dt>Confidence</dt>
+                <dd class="small">{s.confidence_note.split(".")[0]}</dd>
+              </div>
+            </dl>
+          ) : (
+            <dl class="dk dk-fields">
+              <div>
+                <dt>Contrail energy forcing</dt>
+                <dd>{joules(s.ef_J)}</dd>
+              </div>
+              <div>
+                <dt>EF range (5th–95th %)</dt>
+                <dd>{s.ef_p05_J != null ? `${joules(s.ef_p05_J)} – ${joules(s.ef_p95_J)}` : "central run only"}</dd>
+              </div>
+              <div>
+                <dt>Avoidance advice</dt>
+                <dd class="small">Switch to STRATUM for alternatives, fuel and net warming.</dd>
+              </div>
+            </dl>
+          )}
+          {isS && s.alternatives && <AltTable s={s} />}
+          {isS && s.profile && <ProfileChart pr={s.profile} planned={s.fl} best={s.best_alternative_fl} />}
         </>
       )}
 
       <div class="dk dk-end">
-        <span class="badge-stamp mono-s">Physics-only estimate</span>
+        <span class="badge-stamp mono-s">{isS ? "Computational estimate · ATC feasibility not modelled" : `Physics only (${p.model})`}</span>
         {s && (
           <p class="small muted">
-            {s.confidence_note} {s.ef_note}
+            {isS ? s.confidence_note.split(".").slice(1).join(".").trim() : s.confidence_note} {s.ef_note}
           </p>
         )}
         <button class="tool" onClick={p.onClose}>
@@ -771,7 +1023,87 @@ function DetailDeck(p: { flight: FlightFeature | null; seg: FlaggedSegment | nul
   );
 }
 
-function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: number[]; hour: number; fl: number; onClose: () => void; onChoose: (fl: number, h: number) => void }) {
+/** The four alternatives: feasibility, extra fuel and net warming avoided (5th / median / 95th). */
+function AltTable({ s }: { s: FlaggedSegment }) {
+  const t = (r: number[] | null) => (r ? `${tonnes(r[0])} · ${tonnes(r[1])} · ${tonnes(r[2])}` : "—");
+  return (
+    <div class="dk dk-alts">
+      <p class="label">Alternatives (5th % · median · 95th % net warming avoided, CO₂e)</p>
+      <table class="alt-table mono small">
+        <thead>
+          <tr>
+            <th scope="col">Level</th>
+            <th scope="col">Extra fuel</th>
+            <th scope="col">20 years</th>
+            <th scope="col">100 years</th>
+          </tr>
+        </thead>
+        <tbody>
+          {s.alternatives!.map((a) => (
+            <tr class={a.fl === s.best_alternative_fl ? "best" : a.feasible ? "" : "no"}>
+              <th scope="row">
+                FL{a.fl} ({a.delta_ft > 0 ? "+" : ""}
+                {a.delta_ft} ft)
+              </th>
+              {a.feasible ? (
+                <>
+                  <td>{a.extra_fuel_kg != null ? (a.extra_fuel_kg < 0 ? `saves ${Math.round(-a.extra_fuel_kg)} kg` : `+${Math.round(a.extra_fuel_kg)} kg`) : "—"}</td>
+                  <td>{t(a.net_20y)}</td>
+                  <td>{t(a.net_100y)}</td>
+                </>
+              ) : (
+                <td colSpan={3}>not possible: {a.reason}</td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** RHi against flight level at the stretch (ERA5, nearest cell and hour): raw, published
+ *  correction (B3) and STRATUM (RHi / s); ice-supersaturated air (RHi ≥ 1) shaded. */
+function ProfileChart({ pr, planned, best }: { pr: Profile; planned: number; best: number | null }) {
+  const W = 260, H = 190, L = 44, R = 10, T = 10, B = 28;
+  const pts = pr.fl.map((f, i) => ({ f, raw: pr.rhi_raw[i], b3: pr.rhi_b3[i], st: pr.rhi_stratum[i] })).filter((d) => d.f >= 200 && d.f <= 450);
+  if (pts.length < 2) return null;
+  const fmin = 250, fmax = 440, xmax = 1.6;
+  const x = (v: number) => L + (Math.min(v, xmax) / xmax) * (W - L - R);
+  const y = (f: number) => T + (1 - (f - fmin) / (fmax - fmin)) * (H - T - B);
+  const line = (k: "raw" | "b3" | "st") =>
+    pts.filter((d) => d[k] != null && d.f >= fmin && d.f <= fmax).map((d, i) => `${i ? "L" : "M"}${x(d[k] as number).toFixed(1)},${y(d.f).toFixed(1)}`).join("");
+  return (
+    <figure class="dk dk-prof">
+      <p class="label">Humidity over ice at this point</p>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Relative humidity over ice against flight level, three versions">
+        <rect x={x(1)} y={T} width={x(xmax) - x(1)} height={H - T - B} class="issr" />
+        <line x1={x(1)} x2={x(1)} y1={T} y2={H - B} class="ax-line" />
+        {[0, 0.5, 1, 1.5].map((v) => (
+          <text x={x(v)} y={H - B + 14} text-anchor="middle" class="ax">
+            {Math.round(v * 100)}%
+          </text>
+        ))}
+        {[260, 300, 340, 380, 420].map((f) => (
+          <text x={L - 6} y={y(f) + 3} text-anchor="end" class="ax">
+            FL{f}
+          </text>
+        ))}
+        <path d={line("raw")} class="pr-raw" />
+        <path d={line("b3")} class="pr-b3" />
+        <path d={line("st")} class="pr-st" />
+        <line x1={L} x2={W - R} y1={y(planned)} y2={y(planned)} class="lvl-planned" />
+        {best && <line x1={L} x2={W - R} y1={y(best)} y2={y(best)} class="lvl-best" />}
+      </svg>
+      <figcaption class="mono small">
+        <i class="k k-raw" /> ERA5 <i class="k k-b3" /> published fix <i class="k k-st" /> STRATUM · shaded: RHi ≥ 100 % · solid: FL{planned}
+        {best ? ` · dashed: FL${best}` : ""}
+      </figcaption>
+    </figure>
+  );
+}
+
+function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: number[]; dmax: number; what: string; hour: number; fl: number; onClose: () => void; onChoose: (fl: number, h: number) => void }) {
   const cw = 13, ch = 17, left = 46, top = 6;
   const rows = [...p.fls].reverse();
   let best: { fl: number; h: number; v: number } | null = null;
@@ -808,7 +1140,7 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
                     FL{fl}
                   </text>
                   {p.data![i].map((v, h) => {
-                    const k = v > 0 ? Math.min(255, 70 + Math.round(v * 185)) : 0;
+                    const k = v > 0 ? Math.min(255, 70 + Math.round(Math.min(1, v / p.dmax) * 185)) : 0;
                     const fill = v > 0 ? `rgb(${RAMP[k * 3]},${RAMP[k * 3 + 1]},${RAMP[k * 3 + 2]})` : "var(--paper-2)";
                     return (
                       <rect
@@ -820,7 +1152,7 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
                         class={fl === p.fl && h === p.hour ? "cur" : ""}
                         onClick={() => p.onChoose(fl, h)}
                       >
-                        <title>{`FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(0)} % of the hour`}</title>
+                        <title>{p.dmax < 1 ? `FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(1)} %` : `FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(0)} % of the hour`}</title>
                       </rect>
                     );
                   })}
@@ -838,19 +1170,11 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
           </svg>
           <p class="small muted" style="margin:6px 0 0">
             {any && best
-              ? `Persistent-contrail conditions appear at ${p.fls.length > 1 ? "some levels" : "this level"} — strongest at FL${(best as { fl: number }).fl}, ${pad2((best as { h: number }).h)} UTC. Click a cell to show it on the map.`
-              : "No persistent-contrail conditions at any level above this point today (B1 physics)."}
+              ? `${p.what === "STRATUM" ? "Highest contrail chance" : p.what === "observable" ? "Best satellite view" : "Strongest persistent-contrail conditions"} at FL${(best as { fl: number }).fl}, ${pad2((best as { h: number }).h)} UTC. Click a cell to show it on the map.`
+              : `Nothing above this point today (${p.what}).`}
           </p>
         </>
       )}
     </div>
-  );
-}
-
-function Pending() {
-  return (
-    <span class="pending mono" title="Shown here in the final web app (Phase 8)">
-      — Phase 8
-    </span>
   );
 }

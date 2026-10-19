@@ -114,13 +114,14 @@ def observability_grid(
     plon = static["lon"].values.astype(float)
     vza = static["vza_deg"].values.astype(float)
     step = abs(float(lon[1] - lon[0]))
-    ri = (
-        np.rint((float(lat[0]) - plat) / step).astype(int)
-        if lat[0] > lat[-1]
-        else np.rint((plat - float(lat[0])) / step).astype(int)
-    )
-    ci = np.rint((plon - float(lon[0])) / step).astype(int)
-    inside = (ri >= 0) & (ri < len(lat)) & (ci >= 0) & (ci < len(lon)) & np.isfinite(vza)
+    # pixels off the Earth's disk have no coordinates: leave them out before converting to indices
+    on_disk = np.isfinite(plat) & np.isfinite(plon) & np.isfinite(vza)
+    rf = (float(lat[0]) - plat) / step if lat[0] > lat[-1] else (plat - float(lat[0])) / step
+    ri = np.where(on_disk, np.rint(np.where(on_disk, rf, 0.0)), -1).astype(int)
+    ci = np.where(
+        on_disk, np.rint(np.where(on_disk, (plon - float(lon[0])) / step, 0.0)), -1
+    ).astype(int)
+    inside = on_disk & (ri >= 0) & (ri < len(lat)) & (ci >= 0) & (ci < len(lon))
     cell = np.where(inside, ri * len(lon) + ci, -1).ravel()
     keep = cell >= 0
     n_cells = len(lat) * len(lon)

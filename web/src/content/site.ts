@@ -202,6 +202,52 @@ export const modelFeatures: { name: string; unit: string; why: string; mono?: "+
   { name: "Local solar time (sin, cos)", unit: "–", why: "Day and night: detection and humidity both follow the daily cycle" },
 ];
 
+// Paper Table 7 (threats to validity) with how each one turned out (source: docs/decisions.md,
+// gate reports). Shown on the Methods page.
+export const threats: { risk: string; effect: string; mitigation: string; outcome: string }[] = [
+  { risk: "Patchy ADS-B coverage", effect: "Missing flights; biased sample of routes", mitigation: "Coverage audit and decision rule; coverage reported with every result", outcome: "12 free sample days only; the coverage audit runs on 2 and 5 Nov 2026." },
+  { risk: "Limited satellite observability", effect: "Labels favour thick, long-lived contrails; monsoon under-represented", mitigation: "Observability mask; unobservable = missing; results by season and viewing angle", outcome: "Real and large: 1 contrail seen in 9,803 monsoon segments; only ~16 % of predicted contrails are detectable at all (H1)." },
+  { risk: "Wind advection error", effect: "True contrails fail to match, or false matches occur", mitigation: "Age window, distance and angle tolerances, each with a sensitivity analysis", outcome: "H1 verdict unchanged under all 8 variants; a wrong-day test showed a third of matches are chance, so a match now needs two images (D-004)." },
+  { risk: "Labeller subjectivity", effect: "Noisy ground truth", mitigation: "Written guide, double labelling, Cohen's κ", outcome: "Changed: the detector is tuned on expert-labelled scenes (D-002); India labels were drafted by AI and reviewed by the team (D-003), so κ does not apply." },
+  { risk: "Coarse reanalysis", effect: "Thin humid layers smeared across levels", mitigation: "Neighbouring-level features; results by flight level", outcome: "The humidity at, above and below the flight level are the model's most important inputs in every season." },
+  { risk: "Radiative uncertainty", effect: "Warming estimates off by a large factor", mitigation: "Ranges, two metric horizons, ranking on lower bounds", outcome: "Implemented: 100 Monte Carlo members, 20- and 100-year horizons, alerts only on a positive lower bound." },
+  { risk: "Operational realism", effect: "ATC may not allow a suggested level", mitigation: "Out of scope; stated plainly in all outputs", outcome: "Every card and download says it; OpenAP often finds the higher level cheaper, which we report separately." },
+  { risk: "Overfitting and leakage", effect: "Optimistic scores", mitigation: "Blocked splits; primary metric and hypotheses fixed in advance", outcome: "Seasons held out with no shared flight or image; models frozen before scoring; one logged final run per hypothesis." },
+];
+
+// Model card (same text as the evaluation report v2; docs/methods/model_card.md).
+export const modelCard: [string, string][] = [
+  ["Model", "Monotone gradient-boosted trees (LightGBM) on 18 ERA5 and position/time inputs, isotonic calibration; one model per held-out season and per side of 80°E. Fed back into the physics as a humidity factor per latitude band (with detection efficiency)."],
+  ["Intended use", "Research: where ERA5-based contrail physics is wrong over India, and which flight stretches a ±2,000/±4,000 ft change would most likely help, with uncertainty ranges, for discussion with airlines and air traffic experts."],
+  ["Out of scope", "Operational flight planning or ATC instructions; anything outside 6–37°N, 68–98°E or below FL250; seasons and conditions the labels do not cover; estimates of aviation's total climate impact."],
+  ["Data", "12 ADS-B days (Mar 2025–Feb 2026), ERA5, Meteosat-9 contrail labels from an automatic detector matched to wind-drifted flight segments (two images needed). About a third of positive labels are expected to be chance; almost no monsoon labels."],
+  ["Metrics", "Brier skill score vs B3 (pre-registered), vs the constant rate, climatology and a humidity-only model; AUROC; reliability; 1,000 day-bootstrap resamples."],
+  ["Limitations", "2–4 days per season; noisy, detection-limited labels; calibration did not help; probabilities barely beat the base rate; the feedback into physics is too blunt; ATC, traffic and airline constraints not modelled."],
+  ["Ethics", "Alerts can burn fuel for no benefit, so an alert needs a positive lower bound at both horizons. Commercial flights only, hashed identities. AI-assisted labels disclosed (D-003)."],
+];
+
+// Deviations from the pre-registration, each with the team's OK (docs/deviations.md).
+export const deviations: { id: string; date: string; title: string; why: string }[] = [
+  { id: "D-001", date: "15 Oct 2026", title: "Monte Carlo members 20 → 100", why: "The 5th percentile moved 28 % between 20 and 40 members; the decision layer ranks on it." },
+  { id: "D-002", date: "17 Oct 2026", title: "Detector tuned on expert-labelled scenes", why: "A published DLR dataset of Meteosat scenes labelled by three contrail experts replaced tuning on our own labels." },
+  { id: "D-003", date: "17 Oct 2026", title: "India labels drafted by AI, reviewed by the team", why: "The team could not find contrails reliably by eye; used only as a secondary, exploratory check." },
+  { id: "D-004", date: "18 Oct 2026", title: "A contrail counts as seen only in two satellite images", why: "A wrong-day test showed most single-image matches are chance; two images cut the chance share from 60 % to 33 %." },
+];
+
+// What did not work (the paper promises this list). Source: gate reports and docs/decisions.md.
+export const didntWork: string[] = [
+  "Our contrail detector is weak: on expert-labelled scenes it finds about a quarter of the contrails, and over India only about 1 in 20 of its lines is a contrail.",
+  "We could not label India's satellite scenes ourselves; AI drafted the lines and we reviewed them, which we disclose.",
+  "About a third of the satellite matches would happen by chance, even with two images required.",
+  "H1 went the other way: physics over-predicts the contrails the satellite sees about six times, mostly because thin contrails are invisible.",
+  "Calibrating the model (isotonic regression) did not improve it on validation days.",
+  "The model's probabilities barely beat a constant guess of the average contrail rate; it is only clearly better at ranking which flights are likely to make a visible contrail.",
+  "Feeding the correction back into the physics as one humidity factor per latitude band hit its limit everywhere and dried the air so much that almost no contrails formed.",
+  "The monsoon cannot be tested: cloud hides contrails from the satellite almost completely.",
+  "Most avoidance alerts fall on one humid day, and some rely on OpenAP finding the higher level cheaper rather than on the contrail.",
+  "Twelve flight days are too few for tight per-season uncertainty ranges.",
+];
+
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
   { date: "2026-10-19", phase: 7, title: "Phase 7 accepted: H2–H4 tested", body: "A machine-learning correction trained on the satellite labels ranks contrail-prone flight segments far better than any yes/no physics rule, and it passes H2 against the published correction. But a constant guess of the average contrail rate passes too, so we report that the model's probabilities barely beat the base rate. Feeding the correction back into the physics as one humidity factor turned out too blunt: it dried the air so much that almost no contrails formed. With standard physics, under 1 % of flying carries 80 % of contrail warming over India (H3, supported), and night flights carry about three quarters of it against half the distance (H4 not supported in the logged test, clear in the context runs). The avoidance layer flagged 402 stretches of flight on 12 days and would alert on 333 of them, mostly on one humid day in February." },

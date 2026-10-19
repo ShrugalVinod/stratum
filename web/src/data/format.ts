@@ -14,6 +14,14 @@ export function joules(v: number | null | undefined): string {
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
 
+/** kg CO₂e → "1.4 t", "320 kg"; null → "—". */
+export function tonnes(kg: number | null | undefined): string {
+  if (kg == null || !Number.isFinite(kg)) return "—";
+  const a = Math.abs(kg);
+  if (a >= 1000) return `${(kg / 1000).toFixed(a >= 10000 ? 0 : 1)} t`;
+  return `${Math.round(kg)} kg`;
+}
+
 /** "2026-01-01T06:12:30Z" → { utc: "06:12", ist: "11:42" } */
 export function clock(iso: string): { utc: string; ist: string; minutes: number } {
   const hh = Number(iso.slice(11, 13));
@@ -43,7 +51,23 @@ export function colourise(bytes: Uint8Array, maxAlpha = 0.72): Uint8ClampedArray
   return out;
 }
 
-export type MapState = { date: string | null; hour: number; fl: number; seg: string | null };
+/** Satellite observability (0–1 of the hour's images) → shade what the satellite could NOT see. */
+export function colouriseObs(bytes: Uint8Array): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(bytes.length * 4);
+  for (let i = 0; i < bytes.length; i++) {
+    const blind = 1 - bytes[i] / 255;
+    if (blind <= 0.02) continue;
+    out[i * 4] = 70;
+    out[i * 4 + 1] = 76;
+    out[i * 4 + 2] = 86;
+    out[i * 4 + 3] = Math.round(255 * 0.62 * blind);
+  }
+  return out;
+}
+
+export type ModelKey = "B1" | "B3" | "STRATUM";
+export type ViewKey = "chance" | "spread" | "obs";
+export type MapState = { date: string | null; hour: number; fl: number; seg: string | null; model?: ModelKey; view?: ViewKey };
 
 export function parseState(search: string, defaults: MapState): MapState {
   const q = new URLSearchParams(search);
@@ -54,6 +78,8 @@ export function parseState(search: string, defaults: MapState): MapState {
     hour: Number.isInteger(hour) && hour >= 0 && hour <= 23 && q.has("hour") ? hour : defaults.hour,
     fl: Number.isInteger(fl) && q.has("fl") ? fl : defaults.fl,
     seg: q.get("seg") ?? defaults.seg,
+    model: (["B1", "B3", "STRATUM"] as const).find((m) => m === q.get("m")) ?? defaults.model,
+    view: (["chance", "spread", "obs"] as const).find((v) => v === q.get("v")) ?? defaults.view,
   };
 }
 
@@ -63,5 +89,7 @@ export function stateQuery(s: MapState): string {
   q.set("hour", pad2(s.hour));
   q.set("fl", String(s.fl));
   if (s.seg) q.set("seg", s.seg);
+  if (s.model) q.set("m", s.model);
+  if (s.view && s.view !== "chance") q.set("v", s.view);
   return `?${q.toString()}`;
 }

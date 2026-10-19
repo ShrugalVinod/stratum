@@ -1,0 +1,10 @@
+{
+  "name": "STRATUM — contrail forecasts over India",
+  "short_name": "STRATUM",
+  "description": "Where flights over India make warming contrails, and which level changes would help. A student research project; computational estimates only.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3eee3",
+  "theme_color": "#13202f",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

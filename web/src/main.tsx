@@ -16,6 +16,7 @@ import {
   useLocation,
 } from "preact-iso";
 import { Footer } from "./components/Footer";
+import { Booth, boothRequested } from "./components/Booth";
 import { Header } from "./components/Header";
 import { startMotion } from "./components/motion";
 import { Home } from "./pages/Home";
@@ -54,6 +55,7 @@ const Progress = lazy(
 const Methods = lazy(
   reloadOnce(() => import("./pages/Methods").then((m) => m.Methods)),
 );
+const Results = lazy(reloadOnce(() => import("./pages/Results").then((m) => m.Results)));
 const Team = lazy(reloadOnce(() => import("./pages/Team").then((m) => m.Team)));
 const AboutData = lazy(
   reloadOnce(() => import("./pages/AboutData").then((m) => m.AboutData)),
@@ -86,6 +88,7 @@ function Shell() {
             <Route path="/map" component={MapPage} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
+            <Route path="/results" component={Results} />
             <Route path="/methods" component={Methods} />
             <Route path="/team" component={Team} />
             <Route path="/about-data" component={AboutData} />
@@ -95,6 +98,7 @@ function Shell() {
         </ErrorBoundary>
       </main>
       <Footer />
+      {boothRequested() && <Booth />}
     </>
   );
 }
@@ -112,3 +116,8 @@ export function App() {
 }
 
 render(<App />, document.getElementById("app")!);
+
+// offline support (build prompt §8.2): production builds only, so development never caches
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => undefined));
+}

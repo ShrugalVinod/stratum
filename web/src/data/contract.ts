@@ -1,5 +1,6 @@
-// Web data contract v1 — mirrors stratum/export/schemas.py (pydantic). Every file is
-// validated on load; a mismatch shows an error instead of silently wrong numbers.
+// Web data contract v2 — mirrors stratum/export/schemas.py (pydantic). Every file is
+// validated on load; a mismatch shows an error instead of silently wrong numbers. The v2
+// (Phase 8) fields are optional, so a v1 build still validates.
 import { z } from "zod";
 
 export const FlightLevelInfo = z.object({ fl: z.number().int(), pressure_hpa: z.number() });
@@ -12,7 +13,7 @@ export const GridMeta = z.object({
   rows: z.number().int(),
   cols: z.number().int(),
   step_deg: z.number(),
-  encoding: z.literal("png_uint8_fraction_of_hour"),
+  encoding: z.enum(["png_uint8_fraction_of_hour", "png_uint8_hour_sprite"]),
 });
 
 export const Manifest = z.object({
@@ -31,8 +32,14 @@ export const Manifest = z.object({
   eta_for_grids: z.number(),
   coverage: z.object({ adsb_coverage_pct: z.number().nullable(), note: z.string() }),
   credits: z.array(z.string()),
+  models: z.array(z.object({ id: z.enum(["B1", "B3", "STRATUM"]), label: z.string(), description: z.string() })).nullish(),
+  layers: z
+    .array(z.object({ id: z.string(), file: z.string(), per_flight_level: z.boolean(), full_scale: z.number(), meaning: z.string() }))
+    .nullish(),
+  results_file: z.string().nullish(),
 });
 export type Manifest = z.infer<typeof Manifest>;
+export type ModelId = "B1" | "B3" | "STRATUM";
 
 export const DaySummary = z.object({
   date: z.string(),
@@ -44,6 +51,10 @@ export const DaySummary = z.object({
   ef_negative_J: z.number().nullable(),
   grid_files: z.number().int(),
   quality_flags: z.array(z.string()),
+  n_flagged_by_model: z.record(z.string(), z.number().int()).nullish(),
+  n_alerts: z.number().int().nullish(),
+  has_observability: z.boolean().nullish(),
+  layers: z.array(z.string()).nullish(),
 });
 export type DaySummary = z.infer<typeof DaySummary>;
 
@@ -59,6 +70,8 @@ export const FlightProps = z.object({
   t_end: z.string(),
   minutes: z.array(z.number().int()),
   flagged: z.boolean(),
+  flagged_models: z.array(z.string()).nullish(),
+  alert: z.boolean().nullish(),
 });
 export type FlightProps = z.infer<typeof FlightProps>;
 
@@ -81,6 +94,27 @@ export const FlightCollectionLite = z.object({
     }),
   ),
 });
+
+export const Alternative = z.object({
+  delta_ft: z.number().int(),
+  fl: z.number().int(),
+  feasible: z.boolean(),
+  reason: z.string(),
+  extra_fuel_kg: z.number().nullable(),
+  net_20y: z.array(z.number()).nullable(),
+  net_100y: z.array(z.number()).nullable(),
+});
+export type Alternative = z.infer<typeof Alternative>;
+
+export const Profile = z.object({
+  pressure_hpa: z.array(z.number()),
+  fl: z.array(z.number()),
+  rhi_raw: z.array(z.number().nullable()),
+  rhi_b3: z.array(z.number().nullable()),
+  rhi_stratum: z.array(z.number().nullable()),
+  temperature_k: z.array(z.number().nullable()),
+});
+export type Profile = z.infer<typeof Profile>;
 
 export const FlaggedSegment = z.object({
   segment_id: z.string(),
@@ -110,5 +144,28 @@ export const FlaggedSegment = z.object({
   net_warming_avoided_20y: z.number().nullable(),
   net_warming_avoided_100y: z.number().nullable(),
   confidence_note: z.string(),
+  // v2 (Phase 8)
+  model: z.string().nullish(),
+  time_end_utc: z.string().nullish(),
+  n_segments: z.number().int().nullish(),
+  alert: z.boolean().nullish(),
+  alert_without_fuel_credit: z.boolean().nullish(),
+  net_warming_avoided_20y_range: z.array(z.number()).nullish(),
+  net_warming_avoided_100y_range: z.array(z.number()).nullish(),
+  alternatives: z.array(Alternative).nullish(),
+  alternatives_rejected: z.string().nullish(),
+  profile: Profile.nullish(),
+  commercial_only_note: z.string().nullish(),
 });
 export type FlaggedSegment = z.infer<typeof FlaggedSegment>;
+
+/** Build-wide results (results.json): numbers copied from the logged final runs. Loosely typed
+ *  beyond the fields the pages use, so a new field never breaks the site. */
+const Est = z.object({ value: z.number(), lo: z.number(), hi: z.number() }).partial().passthrough();
+export const Hypothesis = z
+  .object({ id: z.string(), verdict: z.string(), statistic: z.string(), rule: z.string(), estimate: Est.nullish(), run_id: z.string().nullish() })
+  .passthrough();
+export const Results = z
+  .object({ generated_from: z.array(z.string()), hypotheses: z.array(Hypothesis), final_runs: z.array(z.record(z.string(), z.unknown())) })
+  .passthrough();
+export type Results = z.infer<typeof Results>;

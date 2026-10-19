@@ -48,8 +48,10 @@ web/dist/
 web/node_modules/
 web/dist/
 web/public/data/dev-local/
+web/public/data/dev-v1/
 web/test-results/
 web/playwright-report/
 
 labeller/test-results/
 labeller/playwright-report/
+web/expo-build/

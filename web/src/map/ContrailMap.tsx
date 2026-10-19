@@ -47,6 +47,8 @@ type Props = {
   /** Intro replay of the whole day: "play" (re)starts it, "skip" ends it. */
   introCmd: { kind: "play" | "skip"; n: number };
   onIntro: (s: { active: boolean; t: number }) => void;
+  /** whose list the orange marks show (B1, B3 or STRATUM), for the hover text */
+  modelLabel?: string;
 };
 
 // ── animation state (one per map) ────────────────────────────────────────────
@@ -255,7 +257,10 @@ export function ContrailMap(p: Props) {
         if (f) {
           const t = h.properties.m !== undefined ? `${fmtMin(Number(h.properties.m))} UTC` : "";
           const ages = props.current.segments.filter((x) => x.flight_id === f.properties.flight_id && x.contrail_age_h != null).map((x) => x.contrail_age_h!);
-          const life = ages.length ? `Persistent contrail (B1) · up to ${Math.max(...ages).toFixed(1)} h` : f.properties.flagged ? "Makes a persistent contrail (B1)" : null;
+          const ml = props.current.modelLabel ?? "B1";
+          const life = ml === "STRATUM"
+            ? (f.properties.flagged ? "Alert: a level change would help (STRATUM)" : null)
+            : ages.length ? `Persistent contrail (${ml}) · up to ${Math.max(...ages).toFixed(1)} h` : f.properties.flagged ? `Makes a persistent contrail (${ml})` : null;
           tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(f.properties.callsign, f.properties.airline, [f.properties.aircraft_type, t].filter(Boolean).join(" · "), life)).addTo(m);
         }
       };

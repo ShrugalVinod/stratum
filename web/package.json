@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
-    "numbers": "node --experimental-strip-types scripts/check_numbers.ts"
+    "numbers": "node --experimental-strip-types scripts/check_numbers.ts",
+    "build:expo": "tsc --noEmit && vite build --outDir expo-build/site --emptyOutDir && node scripts/make_expo.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "5.3.0",

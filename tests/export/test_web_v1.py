@@ -33,23 +33,18 @@ def _segments(n_flights: int = 6, n: int = 30) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-@pytest.mark.slow
-@pytest.mark.skipif(not PL_15JAN.exists(), reason="needs the local 15 Jan 2026 ERA5 test day")
-def test_export_web_v1_end_to_end(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+def fake_root(tmp_path: Path) -> tuple[Path, object]:
+    """A fake Drive root around the local 15 Jan ERA5 day (also used by scripts/dev_build_v1.py)."""
     import xarray as xr
 
     from stratum import config as cfg
     from stratum.decide import run as dr
-    from stratum.export import grids
-    from stratum.export import web_v1 as wv
-    from stratum.export.schemas import DaySummary, FlaggedSegment, Manifest
     from stratum.model import correction as co
     from stratum.model import run as mr
 
     sys.path.insert(0, str(Path(__file__).parents[1] / "model"))
     import test_model as tm  # synthetic year with the real feature columns
 
-    monkeypatch.setenv("STRATUM_ID_SALT", "a-test-salt-that-is-long-enough")
     root = tmp_path / "drive"
     pre = cfg.load_preregistered()
     # ERA5: the local day as January; tropopause temperatures from the same levels
@@ -108,6 +103,18 @@ def test_export_web_v1_end_to_end(tmp_path: Path, monkeypatch) -> None:  # type:
     (root / "_locks").mkdir()
     shutil.copy("_locks/final_runs.jsonl", root / "_locks" / "final_runs.jsonl")
 
+    return root, pre
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not PL_15JAN.exists(), reason="needs the local 15 Jan 2026 ERA5 test day")
+def test_export_web_v1_end_to_end(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from stratum.export import grids
+    from stratum.export import web_v1 as wv
+    from stratum.export.schemas import DaySummary, FlaggedSegment, Manifest
+
+    monkeypatch.setenv("STRATUM_ID_SALT", "a-test-salt-that-is-long-enough")
+    root, pre = fake_root(tmp_path)
     res = wv.export_web_v1(root, tmp_path / "out", "v1-test", [DAY], pre, demo_month=None)
     out = tmp_path / "out" / "v1-test"
     assert res["days"] == 1 and res["days_with_flights"] == [DAY]

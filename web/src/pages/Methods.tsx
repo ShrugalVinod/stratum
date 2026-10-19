@@ -1,8 +1,38 @@
 import { PageHead } from "../components/PageHead";
 import { Split } from "../components/Split";
-import { hypotheses, methods, modelFeatures, site } from "../content/site";
+import { useEffect, useState } from "preact/hooks";
+import { deviations, didntWork, hypotheses, methods, modelCard, modelFeatures, site, threats } from "../content/site";
+import { loadManifest, loadResults } from "../data/load";
+
+/** Mean |SHAP| per input over the outer folds (from results.json; training rows only). */
+function useShap(): [string, number][] | null {
+  const [v, setV] = useState<[string, number][] | null>(null);
+  useEffect(() => {
+    loadManifest()
+      .then(({ build, manifest }) => (manifest.results_file ? loadResults(build, manifest.results_file) : null))
+      .then((r) => {
+        const val = (r as Record<string, any> | null)?.validation as Record<string, { shap_importance?: Record<string, number> }> | undefined;
+        if (!val) return;
+        const acc: Record<string, number[]> = {};
+        Object.values(val).forEach((f) => Object.entries(f.shap_importance ?? {}).forEach(([k, x]) => (acc[k] ??= []).push(x)));
+        const mean = Object.entries(acc).map(([k, xs]) => [k, xs.reduce((a, b) => a + b, 0) / xs.length] as [string, number]);
+        if (mean.length) setV(mean.sort((a, b) => b[1] - a[1]));
+      })
+      .catch(() => setV(null));
+  }, []);
+  return v;
+}
+
+const NICE: Record<string, string> = {
+  rhi_at_level: "Humidity (RHi) at the level", rhi_level_below: "RHi one level below", rhi_level_above: "RHi one level above",
+  rhi_vertical_gradient: "Vertical RHi gradient", temperature: "Temperature", temp_minus_TLM: "T − formation threshold", pressure: "Pressure",
+  cloud_ice_water_content: "Cloud ice", high_cloud_fraction: "High cloud", vertical_velocity: "Vertical velocity", vertical_wind_shear: "Wind shear",
+  distance_to_tropopause_wmo: "Distance to tropopause", latitude: "Latitude", longitude: "Longitude", month_sin: "Month (sin)", month_cos: "Month (cos)",
+  local_solar_time_sin: "Local time (sin)", local_solar_time_cos: "Local time (cos)",
+};
 
 export function Methods() {
+  const shap = useShap();
   return (
     <div class="page">
       <PageHead
@@ -105,6 +135,123 @@ export function Methods() {
             </table>
           </div>
           <p class="muted notam-note rv">Month and local solar time each enter as a sine and cosine pair, so 16 rows describe 18 inputs.</p>
+        </section>
+
+        {shap && (
+          <section class="section" aria-labelledby="shap">
+            <div class="sec-head rv">
+              <p class="label red" id="shap">
+                §4 · What the model relies on
+              </p>
+              <span class="mono-s">mean |SHAP| over 6 trained models · training rows</span>
+            </div>
+            <div class="shap-bars rv">
+              {shap.map(([k, v]) => (
+                <div class="shap-row">
+                  <span class="mono-s">{NICE[k] ?? k}</span>
+                  <i style={{ "--w": v / shap[0][1] }} />
+                  <span class="mono-s muted">{v.toFixed(3)}</span>
+                </div>
+              ))}
+            </div>
+            <p class="small muted">
+              TreeSHAP, in log-odds of a satellite-seen contrail. Humidity at and around the flight level dominates; the model rises with humidity and
+              falls as the air gets warmer than the formation threshold (checked: no wrong-way step in any model).
+            </p>
+          </section>
+        )}
+
+        <section class="section" aria-labelledby="card">
+          <div class="sec-head rv">
+            <p class="label red" id="card">
+              §5 · Model card
+            </p>
+            <span class="mono-s">intended use · limits · ethics</span>
+          </div>
+          <div class="table-wrap rv rv-fade">
+            <table class="src-table">
+              <tbody>
+                {modelCard.map(([k, v]) => (
+                  <tr>
+                    <th scope="row" class="display">
+                      {k}
+                    </th>
+                    <td>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="threats">
+          <div class="sec-head rv">
+            <p class="label red" id="threats">
+              §6 · Threats to validity
+            </p>
+            <span class="mono-s">paper Table 7 · and how each turned out</span>
+          </div>
+          <div class="table-wrap rv rv-fade">
+            <table class="src-table">
+              <thead>
+                <tr>
+                  <th scope="col">Risk</th>
+                  <th scope="col">Effect</th>
+                  <th scope="col">Planned response</th>
+                  <th scope="col">How it turned out</th>
+                </tr>
+              </thead>
+              <tbody class="rv stagger">
+                {threats.map((t, i) => (
+                  <tr style={{ "--i": i }}>
+                    <th scope="row" class="display">
+                      {t.risk}
+                    </th>
+                    <td>{t.effect}</td>
+                    <td class="muted">{t.mitigation}</td>
+                    <td>{t.outcome}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="devs">
+          <div class="sec-head rv">
+            <p class="label red" id="devs">
+              §7 · Changes to the plan
+            </p>
+            <span class="mono-s">{deviations.length} deviations · each with the team's OK before results</span>
+          </div>
+          <ol class="mrows">
+            {deviations.map((d) => (
+              <li class="rv">
+                <span class="mono red">{d.id}</span>
+                <div>
+                  <h3 class="display d-s">{d.title}</h3>
+                  <p>
+                    <span class="mono-s muted">{d.date} · </span>
+                    {d.why}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section class="section" aria-labelledby="dnw">
+          <div class="sec-head rv">
+            <p class="label red" id="dnw">
+              §8 · What didn't work
+            </p>
+            <span class="mono-s">the paper promises this list</span>
+          </div>
+          <ul class="dnw rv">
+            {didntWork.map((d) => (
+              <li>{d}</li>
+            ))}
+          </ul>
         </section>
       </div>
       <a class="dl-bar" href={site.paperPdf} target="_blank" rel="noopener">

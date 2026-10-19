@@ -6,9 +6,10 @@ const NAV = [
   ["/map", "Map"],
   ["/how-it-works", "How it works"],
   ["/progress", "Progress"],
+  ["/results", "Results"],
   ["/methods", "Methods"],
   ["/team", "Team"],
-  ["/about-data", "Data"],
+  ["/about-data", "Data & code"],
   ["/contact", "Contact"],
 ] as const;
 

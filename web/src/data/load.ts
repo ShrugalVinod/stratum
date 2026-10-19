@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest } from "./contract";
+import { DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest, type ModelId, Results } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -14,7 +14,11 @@ async function json<T>(url: string, schema: z.ZodType<T>): Promise<T> {
 
 let buildPromise: Promise<string> | null = null;
 export function currentBuild(): Promise<string> {
-  buildPromise ??= json(`${BASE}/data/current.json`, z.object({ build: z.string() })).then((c) => c.build);
+  // ?build=<id> opens another exported build (development and review); otherwise current.json
+  const override = typeof location !== "undefined" ? new URLSearchParams(location.search).get("build") : null;
+  buildPromise ??= override && /^[\w.-]+$/.test(override)
+    ? Promise.resolve(override)
+    : json(`${BASE}/data/current.json`, z.object({ build: z.string() })).then((c) => c.build);
   return buildPromise;
 }
 
@@ -25,14 +29,37 @@ export async function loadManifest() {
   return { build: b, manifest: await json(dataUrl(b, "manifest.json"), Manifest) };
 }
 
+export type Lists = Partial<Record<ModelId, z.infer<typeof FlaggedSegment>[]>>;
+
+/** One day: summary, flights and the flagged lists. A v2 build has one list per model
+ *  (segments_B1/B3/STRATUM.json); a v1 build has only the B1 list (segments_flagged.json). */
 export async function loadDay(build: string, date: string) {
   const day = await json(dataUrl(build, `days/${date}/day.json`), DaySummary);
-  if (!day.has_flights) return { day, flights: null, segments: [] as z.infer<typeof FlaggedSegment>[] };
-  const [flights, segments] = await Promise.all([
+  const lists: Lists = {};
+  if (!day.has_flights) return { day, flights: null, segments: [] as z.infer<typeof FlaggedSegment>[], lists };
+  const v2 = !!day.layers;
+  const files: [ModelId, string][] = v2 ? (["B1", "B3", "STRATUM"] as ModelId[]).map((m) => [m, `segments_${m}.json`]) : [["B1", "segments_flagged.json"]];
+  const [flights, ...ls] = await Promise.all([
     json(dataUrl(build, `days/${date}/flights.geojson`), FlightCollectionLite) as Promise<{ type: "FeatureCollection"; features: FlightFeature[] }>,
-    json(dataUrl(build, `days/${date}/segments_flagged.json`), z.array(FlaggedSegment)),
+    ...files.map(([, f]) => json(dataUrl(build, `days/${date}/${f}`), z.array(FlaggedSegment))),
   ]);
-  return { day, flights, segments };
+  files.forEach(([m], i) => (lists[m] = ls[i]));
+  return { day, flights, segments: lists.B1 ?? [], lists };
+}
+
+export async function loadResults(build: string, file = "results.json"): Promise<Results> {
+  return json(dataUrl(build, file), Results);
+}
+
+/** URL of a v2 layer sprite (all 24 hours of one flight level side by side). */
+export const layerUrl = (build: string, date: string, pattern: string, fl: number) =>
+  dataUrl(build, `days/${date}/${pattern.replace("{fl}", String(fl).padStart(3, "0"))}`);
+
+/** One hour of a decoded sprite (rows × cols bytes). */
+export function spriteHour(sprite: { data: Uint8Array; width: number; height: number }, hour: number, cols: number): Uint8Array {
+  const out = new Uint8Array(sprite.height * cols);
+  for (let r = 0; r < sprite.height; r++) out.set(sprite.data.subarray(r * sprite.width + hour * cols, r * sprite.width + (hour + 1) * cols), r * cols);
+  return out;
 }
 
 export async function loadCorridor(build: string): Promise<GeoJSON.Feature> {

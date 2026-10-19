@@ -50,7 +50,8 @@ export function AboutData() {
               Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many
               scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model
               estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study:
-              no real flight was changed. The only results are those of the logged final runs, on the Methods page; the map still shows physics alone (B1).
+              no real flight was changed. The results are those of the logged final runs (Results page); the map shows uncorrected physics, the published
+              correction and STRATUM side by side.
             </p>
           </section>
           <section class="note rv" id="privacy">
@@ -69,6 +70,24 @@ export function AboutData() {
               Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result).
               These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and
               no AI-generated observations or results are presented as data.
+            </p>
+          </section>
+          <section class="note rv" id="code">
+            <p class="label red">§5 · Code, data and how to cite</p>
+            <p>
+              <b>Code:</b> Apache-2.0. <b>Our derived data</b> (segment-level predictions and labels for commercial flights with hashed ids, model
+              files, evaluation reports, the pre-registration lock and the final-runs log) will be released with a DOI after the team's sign-off.
+              Raw data are not redistributed: ERA5 (Copernicus licence), Meteosat imagery (EUMETSAT), ADS-B Exchange tracks and the DLR expert
+              labels (CC BY-NC 4.0) are re-downloaded with the scripts in the repository.
+            </p>
+            <p>
+              <b>Reproduce:</b> install with <code>uv sync</code>; the pipeline runs as one command per step (<code>stratum --help</code>), each with
+              a Colab notebook in <code>colab/</code>; the website data come from <code>stratum export-web-v1</code>. Every final result can be checked
+              against <code>_locks/final_runs.jsonl</code>.
+            </p>
+            <p>
+              <b>Cite:</b> Vinod S., Harsoda A., Kupnur I., Shah A. (2026). <i>STRATUM: how well can persistent contrails be predicted over India?</i>{" "}
+              Research protocol v1.2 and results, Conrad Challenge 2026–27. DOI: to be minted with the release.
             </p>
           </section>
         </div>
