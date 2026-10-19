@@ -56,3 +56,17 @@ def test_release_bundle(tmp_path: Path) -> None:
     assert (out / "data_card.md").exists() and (out / "CITATION.cff").exists()
     with zipfile.ZipFile(info["zip"]) as z:
         assert "0.0.0-test/segments_predictions_labels.parquet" in z.namelist()
+
+
+@pytest.mark.slow
+def test_rescore_runs_on_a_bundle(tmp_path: Path) -> None:
+    """Level-2 reproduction: H1 and H2 recomputed from the released table alone."""
+    from stratum.release.rescore import rescore
+
+    test_release_bundle(tmp_path)  # builds tmp_path/release/0.0.0-test
+    rel = tmp_path / "release" / "0.0.0-test"
+    r = rescore(rel, n=50)
+    assert r["rows"]["labelled"] > 0
+    assert {"value", "lo", "hi"} <= set(r["H1"]["release"]) and r["H1"]["observed"] > 0
+    assert {"value", "lo", "hi"} <= set(r["H2"]["release"])
+    assert set(r["H2"]["per_season"]) == {"pre_monsoon", "monsoon", "post_monsoon", "winter"}

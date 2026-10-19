@@ -382,6 +382,31 @@ def reproduce_figures(
     _summary("reproduce-figures", {"figures": len(files), "out": str(out)})
 
 
+@app.command("rescore")
+def rescore_cmd(
+    release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],
+    n: Annotated[int, typer.Option(help="day resamples (pre-registered 1,000)")] = 1000,
+) -> None:
+    """Phase 8.3: recompute H1 and H2 from the released segment table and compare with the
+    logged final runs (release = commercial flights only, so expect close, not identical)."""
+    from stratum.release.rescore import fmt, rescore
+
+    r = rescore(release, n)
+    rows: dict[str, object] = {
+        "segments / labelled / flights": " / ".join(f"{v:,}" for v in r["rows"].values()),
+        "H1 ratio, release": fmt(r["H1"]["release"]),
+        "H1 ratio, logged run": fmt(r["H1"]["logged"]),
+        "H1 efficiency-adjusted, release": fmt(r["H1"]["efficiency_adjusted"]),
+        "H2 BSS vs B3, release": fmt(r["H2"]["release"]),
+        "H2 BSS vs B3, logged run": fmt(r["H2"]["logged"]),
+        "H2 vs constant rate, release": fmt(r["H2"]["vs_RATE"]),
+        "H2 vs climatology, release": fmt(r["H2"]["vs_B0"]),
+        "H2 vs humidity-only, release": fmt(r["H2"]["vs_LOGIT"]),
+        **{f"AUROC {s}": fmt(v["auroc"]) for s, v in r["H2"]["per_season"].items()},
+    }
+    _summary("rescore", rows)
+
+
 @app.command("release-bundle")
 def release_bundle(
     version: Annotated[str, typer.Option(help="release version (CITATION.cff)")] = "1.0.0-rc1",

@@ -52,23 +52,50 @@ Start with `colab/00_smoke_test.ipynb` (CPU runtime, ~5 min).
 
 ## Reproduce the results
 
-Three levels, from cheapest to most complete:
+Three levels, from quickest to most complete. Levels 1 and 2 run on a laptop (macOS or Linux;
+Windows: use WSL) and need only [`uv`](https://docs.astral.sh/uv/) and `git`.
 
-1. **Figures only (laptop, a minute, no data download).** Every results figure is redrawn from
-   `results.json`, which holds every H1–H4 number from the logged final runs:
-   ```bash
-   make reproduce-figures                                   # uses the website's current build
-   make reproduce-figures RESULTS=path/to/release/results.json
-   ```
-   Output: `reports/figures_reproduced/` (H1 ratio, H2 skill, H3 concentration, H4 night, reliability).
-2. **Scores from the released derived data (laptop).** The release bundle (`colab/08b_release_bundle.ipynb`,
-   see [`docs/data_card.md`](docs/data_card.md)) has every labelled commercial segment with its
-   satellite label, baselines B0–B3 and held-out STRATUM forecasts, so Brier scores, AUROC and the
-   H2 comparison can be recomputed from one parquet file.
-3. **Everything from raw data (Colab, days of compute).** Run the numbered notebooks in `colab/`
-   in order (01 → 08). They re-download ERA5, ADS-B and Meteosat data (raw data are not
-   redistributed), rebuild the labels, re-run the physics and the model, and check each final run
-   against the pre-registration lock. A re-run of a locked final run needs `--rerun-reason`.
+**Set up once (≈ 3 min):**
+```bash
+git clone https://github.com/ShrugalVinod/stratum.git
+cd stratum
+make setup
+```
+(`make setup` installs Python 3.12 and every pinned package into `.venv`. No `make`? Run
+`uv sync --frozen` instead, and replace each `make …` below with the `uv run stratum …` line
+shown in its comment.)
+
+### Level 1: every results figure from the logged numbers (≈ 1 min)
+```bash
+make reproduce-figures        # = uv run stratum reproduce-figures --results web/public/data/v1-d126083/results.json --out reports/figures_reproduced
+open reports/figures_reproduced   # Linux: xdg-open
+```
+Five PNGs: H1 ratio, H2 skill, H3 concentration, H4 night, reliability. `results.json` holds
+every H1–H4 number copied from the final runs logged in `_locks/final_runs.jsonl`; compare the
+figures with https://stratum.aerospaceonyx.workers.dev/results.
+
+### Level 2: recompute H1 and H2 from the released data (≈ 2 min)
+Download the release bundle (derived data only: every labelled commercial flight segment with
+its satellite label, baselines B0–B3 and held-out STRATUM forecasts; see
+[`docs/data_card.md`](docs/data_card.md)) and unzip it:
+```bash
+curl -LO https://github.com/ShrugalVinod/stratum/releases/download/v1.0.0/stratum-release-1.0.0.zip
+unzip stratum-release-1.0.0.zip -d release
+make rescore RELEASE=release/1.0.0            # = uv run stratum rescore --release release/1.0.0
+make reproduce-figures RESULTS=release/1.0.0/results.json
+```
+`rescore` runs the same evaluation code as the logged runs (1,000 paired day resamples, seed
+20261017) and prints each result next to the logged one. The release holds commercial flights
+only (privacy) while the logged runs used every labelled segment, so expect close, not identical,
+numbers. H3 and H4 need per-segment energy forcing from CoCiP, which is not in the release;
+they are reproduced at level 3.
+
+### Level 3: everything from raw data (Google Colab, days of compute)
+Run the numbered notebooks in [`colab/`](colab) in order (01 → 08); each one's first cell says
+the runtime, the keys it needs and how long it takes. They re-download ERA5, ADS-B and Meteosat
+data (raw data are not redistributed), rebuild the labels, re-run the physics and the model, and
+check each final run against the pre-registration lock (`make verify-lock`). A second final run
+of a locked hypothesis needs `--rerun-reason` and is logged next to the first.
 
 ## Cite
 
