@@ -143,5 +143,5 @@ def test_flights_privacy_and_contract() -> None:
 
 def test_json_schemas_exist() -> None:
     s = json_schemas()
-    assert set(s) == {"manifest", "day", "flight_props", "flagged_segment"}
+    assert set(s) == {"manifest", "day", "flight_props", "flagged_segment", "results"}
     assert "p_persistent" in s["flagged_segment"]["properties"]

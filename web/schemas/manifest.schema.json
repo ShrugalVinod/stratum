@@ -1,196 +1,307 @@
 {
- "$defs": {
-  "Coverage": {
-   "additionalProperties": false,
-   "properties": {
-    "adsb_coverage_pct": {
-     "anyOf": [
-      {
-       "type": "number"
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "adsb_coverage_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Share of scheduled corridor flights with continuous tracks (audit); null = pending",
+          "title": "Adsb Coverage Pct"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        }
       },
-      {
-       "type": "null"
-      }
-     ],
-     "description": "Share of scheduled corridor flights with continuous tracks (audit); null = pending",
-     "title": "Adsb Coverage Pct"
+      "required": [
+        "adsb_coverage_pct",
+        "note"
+      ],
+      "title": "Coverage",
+      "type": "object"
     },
-    "note": {
-     "title": "Note",
-     "type": "string"
+    "FlightLevelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "fl": {
+          "title": "Fl",
+          "type": "integer"
+        },
+        "pressure_hpa": {
+          "title": "Pressure Hpa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "fl",
+        "pressure_hpa"
+      ],
+      "title": "FlightLevelInfo",
+      "type": "object"
+    },
+    "GridMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "lat_north": {
+          "title": "Lat North",
+          "type": "number"
+        },
+        "lat_south": {
+          "title": "Lat South",
+          "type": "number"
+        },
+        "lon_west": {
+          "title": "Lon West",
+          "type": "number"
+        },
+        "lon_east": {
+          "title": "Lon East",
+          "type": "number"
+        },
+        "rows": {
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "title": "Cols",
+          "type": "integer"
+        },
+        "step_deg": {
+          "title": "Step Deg",
+          "type": "number"
+        },
+        "encoding": {
+          "enum": [
+            "png_uint8_fraction_of_hour",
+            "png_uint8_hour_sprite"
+          ],
+          "title": "Encoding",
+          "type": "string"
+        }
+      },
+      "required": [
+        "lat_north",
+        "lat_south",
+        "lon_west",
+        "lon_east",
+        "rows",
+        "cols",
+        "step_deg",
+        "encoding"
+      ],
+      "title": "GridMeta",
+      "type": "object"
+    },
+    "LayerInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "B1, B3, STRATUM, STRATUM_spread or observable",
+          "title": "Id",
+          "type": "string"
+        },
+        "file": {
+          "description": "path under days/<date>/, \"{fl}\" replaced by the flight level",
+          "title": "File",
+          "type": "string"
+        },
+        "per_flight_level": {
+          "title": "Per Flight Level",
+          "type": "boolean"
+        },
+        "full_scale": {
+          "description": "pixel 255 = this value; value = pixel / 255 \u00d7 full_scale",
+          "title": "Full Scale",
+          "type": "number"
+        },
+        "meaning": {
+          "title": "Meaning",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "file",
+        "per_flight_level",
+        "full_scale",
+        "meaning"
+      ],
+      "title": "LayerInfo",
+      "type": "object"
+    },
+    "ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "B1",
+            "B3",
+            "STRATUM"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "description"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
     }
-   },
-   "required": [
-    "adsb_coverage_pct",
-    "note"
-   ],
-   "title": "Coverage",
-   "type": "object"
   },
-  "FlightLevelInfo": {
-   "additionalProperties": false,
-   "properties": {
-    "fl": {
-     "title": "Fl",
-     "type": "integer"
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "default": "2.0.0",
+      "title": "Contract Version",
+      "type": "string"
     },
-    "pressure_hpa": {
-     "title": "Pressure Hpa",
-     "type": "number"
+    "build_id": {
+      "title": "Build Id",
+      "type": "string"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "git_commit": {
+      "title": "Git Commit",
+      "type": "string"
+    },
+    "config_hash": {
+      "title": "Config Hash",
+      "type": "string"
+    },
+    "pipeline_version": {
+      "title": "Pipeline Version",
+      "type": "string"
+    },
+    "model_version": {
+      "description": "e.g. \"B1-physics-v0\"",
+      "title": "Model Version",
+      "type": "string"
+    },
+    "days": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Days",
+      "type": "array"
+    },
+    "days_with_flights": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Days With Flights",
+      "type": "array"
+    },
+    "flight_levels": {
+      "items": {
+        "$ref": "#/$defs/FlightLevelInfo"
+      },
+      "title": "Flight Levels",
+      "type": "array"
+    },
+    "hours_utc": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Hours Utc",
+      "type": "array"
+    },
+    "grid": {
+      "$ref": "#/$defs/GridMeta"
+    },
+    "eta_for_grids": {
+      "title": "Eta For Grids",
+      "type": "number"
+    },
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "credits": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Credits",
+      "type": "array"
+    },
+    "models": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ModelInfo"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Models"
+    },
+    "layers": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/LayerInfo"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Layers"
+    },
+    "results_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Results File"
     }
-   },
-   "required": [
-    "fl",
-    "pressure_hpa"
-   ],
-   "title": "FlightLevelInfo",
-   "type": "object"
   },
-  "GridMeta": {
-   "additionalProperties": false,
-   "properties": {
-    "lat_north": {
-     "title": "Lat North",
-     "type": "number"
-    },
-    "lat_south": {
-     "title": "Lat South",
-     "type": "number"
-    },
-    "lon_west": {
-     "title": "Lon West",
-     "type": "number"
-    },
-    "lon_east": {
-     "title": "Lon East",
-     "type": "number"
-    },
-    "rows": {
-     "title": "Rows",
-     "type": "integer"
-    },
-    "cols": {
-     "title": "Cols",
-     "type": "integer"
-    },
-    "step_deg": {
-     "title": "Step Deg",
-     "type": "number"
-    },
-    "encoding": {
-     "const": "png_uint8_fraction_of_hour",
-     "title": "Encoding",
-     "type": "string"
-    }
-   },
-   "required": [
-    "lat_north",
-    "lat_south",
-    "lon_west",
-    "lon_east",
-    "rows",
-    "cols",
-    "step_deg",
-    "encoding"
-   ],
-   "title": "GridMeta",
-   "type": "object"
-  }
- },
- "additionalProperties": false,
- "properties": {
-  "contract_version": {
-   "default": "1.0.0",
-   "title": "Contract Version",
-   "type": "string"
-  },
-  "build_id": {
-   "title": "Build Id",
-   "type": "string"
-  },
-  "created_at": {
-   "title": "Created At",
-   "type": "string"
-  },
-  "git_commit": {
-   "title": "Git Commit",
-   "type": "string"
-  },
-  "config_hash": {
-   "title": "Config Hash",
-   "type": "string"
-  },
-  "pipeline_version": {
-   "title": "Pipeline Version",
-   "type": "string"
-  },
-  "model_version": {
-   "description": "e.g. \"B1-physics-v0\"",
-   "title": "Model Version",
-   "type": "string"
-  },
-  "days": {
-   "items": {
-    "type": "string"
-   },
-   "title": "Days",
-   "type": "array"
-  },
-  "days_with_flights": {
-   "items": {
-    "type": "string"
-   },
-   "title": "Days With Flights",
-   "type": "array"
-  },
-  "flight_levels": {
-   "items": {
-    "$ref": "#/$defs/FlightLevelInfo"
-   },
-   "title": "Flight Levels",
-   "type": "array"
-  },
-  "hours_utc": {
-   "items": {
-    "type": "integer"
-   },
-   "title": "Hours Utc",
-   "type": "array"
-  },
-  "grid": {
-   "$ref": "#/$defs/GridMeta"
-  },
-  "eta_for_grids": {
-   "title": "Eta For Grids",
-   "type": "number"
-  },
-  "coverage": {
-   "$ref": "#/$defs/Coverage"
-  },
-  "credits": {
-   "items": {
-    "type": "string"
-   },
-   "title": "Credits",
-   "type": "array"
-  }
- },
- "required": [
-  "build_id",
-  "created_at",
-  "git_commit",
-  "config_hash",
-  "pipeline_version",
-  "model_version",
-  "days",
-  "days_with_flights",
-  "flight_levels",
-  "hours_utc",
-  "grid",
-  "eta_for_grids",
-  "coverage",
-  "credits"
- ],
- "title": "Manifest",
- "type": "object"
+  "required": [
+    "build_id",
+    "created_at",
+    "git_commit",
+    "config_hash",
+    "pipeline_version",
+    "model_version",
+    "days",
+    "days_with_flights",
+    "flight_levels",
+    "hours_utc",
+    "grid",
+    "eta_for_grids",
+    "coverage",
+    "credits"
+  ],
+  "title": "Manifest",
+  "type": "object"
 }

@@ -327,6 +327,38 @@ def export_web_cmd(
     _summary(f"export-web {month}", {k: v for k, v in res.items() if k != "sizes"})
 
 
+@app.command("export-web-v1")
+def export_web_v1_cmd(
+    build_id: Annotated[str | None, typer.Option(help="default: v1-<git short sha>")] = None,
+    demo_month: Annotated[
+        str, typer.Option(help="month exported in full besides the 12 flight days")
+    ] = "2026-01",
+) -> None:
+    """Phase 8 (Colab 08a): web data v2 — B1/B3/STRATUM layers, per-model lists with the
+    decision fields, flights with alert status and results.json; zipped for download.
+
+    Needs STRATUM_ID_SALT (.env or Colab Secrets) for the hashed flight ids."""
+    import subprocess
+
+    from stratum.export.web_v1 import export_web_v1
+    from stratum.paths import repo_root
+
+    try:
+        sha = subprocess.run(["git", "-C", str(repo_root()), "rev-parse", "HEAD"],
+                             capture_output=True, text=True, check=True).stdout.strip()  # fmt: skip
+    except (OSError, subprocess.CalledProcessError):
+        sha = "unknown"
+    bid = build_id or f"v1-{sha[:7]}"
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    res = export_web_v1(root, root / "web_exports", bid, _eval_days(root), pre, git_commit=sha,
+                        config_hash=cfg.config_hash(), demo_month=demo_month or None)  # fmt: skip
+    z = shutil.make_archive(str(root / "web_exports" / bid), "zip", root / "web_exports", bid)
+    largest = max(res["sizes"].items(), key=lambda kv: kv[1])
+    _summary("export-web-v1", {**{k: v for k, v in res.items() if k != "sizes"}, "zip": z,
+                               "largest_day": largest})  # fmt: skip
+
+
 @app.command("phase3-showcase")
 def phase3_showcase(
     days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD satellite days")],

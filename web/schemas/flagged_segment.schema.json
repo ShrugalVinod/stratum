@@ -1,235 +1,537 @@
 {
- "additionalProperties": false,
- "properties": {
-  "segment_id": {
-   "title": "Segment Id",
-   "type": "string"
-  },
-  "flight_id": {
-   "title": "Flight Id",
-   "type": "string"
-  },
-  "callsign": {
-   "title": "Callsign",
-   "type": "string"
-  },
-  "airline": {
-   "anyOf": [
-    {
-     "type": "string"
+  "$defs": {
+    "Alternative": {
+      "additionalProperties": false,
+      "properties": {
+        "delta_ft": {
+          "title": "Delta Ft",
+          "type": "integer"
+        },
+        "fl": {
+          "title": "Fl",
+          "type": "integer"
+        },
+        "feasible": {
+          "title": "Feasible",
+          "type": "boolean"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "extra_fuel_kg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Extra Fuel Kg"
+        },
+        "net_20y": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "kg CO2e p05, p50, p95",
+          "title": "Net 20Y"
+        },
+        "net_100y": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Net 100Y"
+        }
+      },
+      "required": [
+        "delta_ft",
+        "fl",
+        "feasible",
+        "reason",
+        "extra_fuel_kg",
+        "net_20y",
+        "net_100y"
+      ],
+      "title": "Alternative",
+      "type": "object"
     },
-    {
-     "type": "null"
+    "Profile": {
+      "additionalProperties": false,
+      "description": "ERA5 column at the portion's middle point and hour (nearest 0.25\u00b0 cell).",
+      "properties": {
+        "pressure_hpa": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Pressure Hpa",
+          "type": "array"
+        },
+        "fl": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Fl",
+          "type": "array"
+        },
+        "rhi_raw": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Rhi Raw",
+          "type": "array"
+        },
+        "rhi_b3": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Rhi B3",
+          "type": "array"
+        },
+        "rhi_stratum": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Rhi Stratum",
+          "type": "array"
+        },
+        "temperature_k": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Temperature K",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pressure_hpa",
+        "fl",
+        "rhi_raw",
+        "rhi_b3",
+        "rhi_stratum",
+        "temperature_k"
+      ],
+      "title": "Profile",
+      "type": "object"
     }
-   ],
-   "title": "Airline"
   },
-  "direction": {
-   "enum": [
-    "DEL-BOM",
-    "BOM-DEL",
-    "other"
-   ],
-   "title": "Direction",
-   "type": "string"
-  },
-  "time_utc": {
-   "title": "Time Utc",
-   "type": "string"
-  },
-  "fl": {
-   "title": "Fl",
-   "type": "integer"
-  },
-  "lat": {
-   "title": "Lat",
-   "type": "number"
-  },
-  "lon": {
-   "title": "Lon",
-   "type": "number"
-  },
-  "lat_start": {
-   "title": "Lat Start",
-   "type": "number"
-  },
-  "lon_start": {
-   "title": "Lon Start",
-   "type": "number"
-  },
-  "lat_end": {
-   "title": "Lat End",
-   "type": "number"
-  },
-  "lon_end": {
-   "title": "Lon End",
-   "type": "number"
-  },
-  "night": {
-   "description": "local solar time 18\u201306 h",
-   "title": "Night",
-   "type": "boolean"
-  },
-  "ef_J": {
-   "anyOf": [
-    {
-     "type": "number"
+  "additionalProperties": false,
+  "properties": {
+    "segment_id": {
+      "title": "Segment Id",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "description": "CoCiP central run, B1",
-   "title": "Ef J"
-  },
-  "ef_p05_J": {
-   "anyOf": [
-    {
-     "type": "number"
+    "flight_id": {
+      "title": "Flight Id",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Ef P05 J"
-  },
-  "ef_p50_J": {
-   "anyOf": [
-    {
-     "type": "number"
+    "callsign": {
+      "title": "Callsign",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Ef P50 J"
-  },
-  "ef_p95_J": {
-   "anyOf": [
-    {
-     "type": "number"
+    "airline": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Airline"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Ef P95 J"
-  },
-  "ef_note": {
-   "title": "Ef Note",
-   "type": "string"
-  },
-  "contrail_age_h": {
-   "anyOf": [
-    {
-     "type": "number"
+    "direction": {
+      "enum": [
+        "DEL-BOM",
+        "BOM-DEL",
+        "other"
+      ],
+      "title": "Direction",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Contrail Age H"
-  },
-  "p_persistent": {
-   "anyOf": [
-    {
-     "type": "number"
+    "time_utc": {
+      "title": "Time Utc",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "default": null,
-   "title": "P Persistent"
-  },
-  "best_alternative_fl": {
-   "anyOf": [
-    {
-     "type": "integer"
+    "fl": {
+      "title": "Fl",
+      "type": "integer"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "default": null,
-   "title": "Best Alternative Fl"
-  },
-  "extra_fuel_kg": {
-   "anyOf": [
-    {
-     "type": "number"
+    "lat": {
+      "title": "Lat",
+      "type": "number"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "default": null,
-   "title": "Extra Fuel Kg"
-  },
-  "extra_co2_kg": {
-   "anyOf": [
-    {
-     "type": "number"
+    "lon": {
+      "title": "Lon",
+      "type": "number"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "default": null,
-   "title": "Extra Co2 Kg"
-  },
-  "net_warming_avoided_20y": {
-   "anyOf": [
-    {
-     "type": "number"
+    "lat_start": {
+      "title": "Lat Start",
+      "type": "number"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "default": null,
-   "title": "Net Warming Avoided 20Y"
-  },
-  "net_warming_avoided_100y": {
-   "anyOf": [
-    {
-     "type": "number"
+    "lon_start": {
+      "title": "Lon Start",
+      "type": "number"
     },
-    {
-     "type": "null"
+    "lat_end": {
+      "title": "Lat End",
+      "type": "number"
+    },
+    "lon_end": {
+      "title": "Lon End",
+      "type": "number"
+    },
+    "night": {
+      "description": "local solar time 18\u201306 h",
+      "title": "Night",
+      "type": "boolean"
+    },
+    "ef_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "CoCiP central run, B1",
+      "title": "Ef J"
+    },
+    "ef_p05_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ef P05 J"
+    },
+    "ef_p50_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ef P50 J"
+    },
+    "ef_p95_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ef P95 J"
+    },
+    "ef_note": {
+      "title": "Ef Note",
+      "type": "string"
+    },
+    "contrail_age_h": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Contrail Age H"
+    },
+    "p_persistent": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "P Persistent"
+    },
+    "best_alternative_fl": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Best Alternative Fl"
+    },
+    "extra_fuel_kg": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extra Fuel Kg"
+    },
+    "extra_co2_kg": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extra Co2 Kg"
+    },
+    "net_warming_avoided_20y": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Net Warming Avoided 20Y"
+    },
+    "net_warming_avoided_100y": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Net Warming Avoided 100Y"
+    },
+    "confidence_note": {
+      "title": "Confidence Note",
+      "type": "string"
+    },
+    "model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model"
+    },
+    "time_end_utc": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Time End Utc"
+    },
+    "n_segments": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "N Segments"
+    },
+    "alert": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alert"
+    },
+    "alert_without_fuel_credit": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alert Without Fuel Credit"
+    },
+    "net_warming_avoided_20y_range": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "kg CO2e p05, p50, p95",
+      "title": "Net Warming Avoided 20Y Range"
+    },
+    "net_warming_avoided_100y_range": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "kg CO2e p05, p50, p95",
+      "title": "Net Warming Avoided 100Y Range"
+    },
+    "alternatives": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Alternative"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alternatives"
+    },
+    "alternatives_rejected": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alternatives Rejected"
+    },
+    "profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Profile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "commercial_only_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Commercial Only Note"
     }
-   ],
-   "default": null,
-   "title": "Net Warming Avoided 100Y"
   },
-  "confidence_note": {
-   "title": "Confidence Note",
-   "type": "string"
-  }
- },
- "required": [
-  "segment_id",
-  "flight_id",
-  "callsign",
-  "airline",
-  "direction",
-  "time_utc",
-  "fl",
-  "lat",
-  "lon",
-  "lat_start",
-  "lon_start",
-  "lat_end",
-  "lon_end",
-  "night",
-  "ef_J",
-  "ef_p05_J",
-  "ef_p50_J",
-  "ef_p95_J",
-  "ef_note",
-  "contrail_age_h",
-  "confidence_note"
- ],
- "title": "FlaggedSegment",
- "type": "object"
+  "required": [
+    "segment_id",
+    "flight_id",
+    "callsign",
+    "airline",
+    "direction",
+    "time_utc",
+    "fl",
+    "lat",
+    "lon",
+    "lat_start",
+    "lon_start",
+    "lat_end",
+    "lon_end",
+    "night",
+    "ef_J",
+    "ef_p05_J",
+    "ef_p50_J",
+    "ef_p95_J",
+    "ef_note",
+    "contrail_age_h",
+    "confidence_note"
+  ],
+  "title": "FlaggedSegment",
+  "type": "object"
 }

@@ -1,78 +1,105 @@
 {
- "additionalProperties": false,
- "properties": {
-  "flight_id": {
-   "description": "salted hash, 12 hex characters",
-   "title": "Flight Id",
-   "type": "string"
-  },
-  "callsign": {
-   "title": "Callsign",
-   "type": "string"
-  },
-  "airline": {
-   "anyOf": [
-    {
-     "type": "string"
+  "additionalProperties": false,
+  "properties": {
+    "flight_id": {
+      "description": "salted hash, 12 hex characters",
+      "title": "Flight Id",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Airline"
-  },
-  "aircraft_type": {
-   "anyOf": [
-    {
-     "type": "string"
+    "callsign": {
+      "title": "Callsign",
+      "type": "string"
     },
-    {
-     "type": "null"
+    "airline": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Airline"
+    },
+    "aircraft_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Aircraft Type"
+    },
+    "direction": {
+      "enum": [
+        "DEL-BOM",
+        "BOM-DEL",
+        "other"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "t_start": {
+      "title": "T Start",
+      "type": "string"
+    },
+    "t_end": {
+      "title": "T End",
+      "type": "string"
+    },
+    "minutes": {
+      "description": "minutes after 00 UTC for each coordinate",
+      "items": {
+        "type": "integer"
+      },
+      "title": "Minutes",
+      "type": "array"
+    },
+    "flagged": {
+      "title": "Flagged",
+      "type": "boolean"
+    },
+    "flagged_models": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Flagged Models"
+    },
+    "alert": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alert"
     }
-   ],
-   "title": "Aircraft Type"
   },
-  "direction": {
-   "enum": [
-    "DEL-BOM",
-    "BOM-DEL",
-    "other"
-   ],
-   "title": "Direction",
-   "type": "string"
-  },
-  "t_start": {
-   "title": "T Start",
-   "type": "string"
-  },
-  "t_end": {
-   "title": "T End",
-   "type": "string"
-  },
-  "minutes": {
-   "description": "minutes after 00 UTC for each coordinate",
-   "items": {
-    "type": "integer"
-   },
-   "title": "Minutes",
-   "type": "array"
-  },
-  "flagged": {
-   "title": "Flagged",
-   "type": "boolean"
-  }
- },
- "required": [
-  "flight_id",
-  "callsign",
-  "airline",
-  "aircraft_type",
-  "direction",
-  "t_start",
-  "t_end",
-  "minutes",
-  "flagged"
- ],
- "title": "FlightProps",
- "type": "object"
+  "required": [
+    "flight_id",
+    "callsign",
+    "airline",
+    "aircraft_type",
+    "direction",
+    "t_start",
+    "t_end",
+    "minutes",
+    "flagged"
+  ],
+  "title": "FlightProps",
+  "type": "object"
 }

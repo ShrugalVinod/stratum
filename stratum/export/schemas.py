@@ -1,4 +1,9 @@
-"""Web data contract v1 (build prompt §4.3): pydantic models → JSON Schema → zod in the web app.
+"""Web data contract (build prompt §4.3, §8.1): pydantic models → JSON Schema → zod in the web app.
+
+v1.0.0 (Phase 4): B1 grids, corridor flights, B1-flagged segments. v2.0.0 (Phase 8) adds, all
+optional so a v1 build still validates: hour-sprite layers for B1, B3, STRATUM (probability) and
+its four-model spread, satellite observability, per-model segment lists with the Phase 7
+decision fields, flight alert status, and a build-wide ``results.json``.
 
 Files under ``web/public/data/<build_id>/``::
 
@@ -20,7 +25,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "2.0.0"
 
 
 class _M(BaseModel):
@@ -40,7 +45,7 @@ class GridMeta(_M):
     rows: int
     cols: int
     step_deg: float
-    encoding: Literal["png_uint8_fraction_of_hour"]
+    encoding: Literal["png_uint8_fraction_of_hour", "png_uint8_hour_sprite"]
 
 
 class Coverage(_M):
@@ -67,6 +72,26 @@ class Manifest(_M):
     eta_for_grids: float
     coverage: Coverage
     credits: list[str]
+    # v2 (Phase 8)
+    models: list[ModelInfo] | None = None
+    layers: list[LayerInfo] | None = None
+    results_file: str | None = None
+
+
+class ModelInfo(_M):
+    id: Literal["B1", "B3", "STRATUM"]
+    label: str
+    description: str
+
+
+class LayerInfo(_M):
+    id: str = Field(description="B1, B3, STRATUM, STRATUM_spread or observable")
+    file: str = Field(description='path under days/<date>/, "{fl}" replaced by the flight level')
+    per_flight_level: bool
+    full_scale: float = Field(
+        description="pixel 255 = this value; value = pixel / 255 × full_scale"
+    )
+    meaning: str
 
 
 class DaySummary(_M):
@@ -79,6 +104,11 @@ class DaySummary(_M):
     ef_negative_J: float | None
     grid_files: int
     quality_flags: list[str]
+    # v2 (Phase 8)
+    n_flagged_by_model: dict[str, int] | None = None
+    n_alerts: int | None = None
+    has_observability: bool | None = None
+    layers: list[str] | None = None
 
 
 class FlightProps(_M):
@@ -91,6 +121,9 @@ class FlightProps(_M):
     t_end: str
     minutes: list[int] = Field(description="minutes after 00 UTC for each coordinate")
     flagged: bool
+    # v2 (Phase 8)
+    flagged_models: list[str] | None = None
+    alert: bool | None = None
 
 
 class FlaggedSegment(_M):
@@ -122,6 +155,53 @@ class FlaggedSegment(_M):
     net_warming_avoided_20y: float | None = None
     net_warming_avoided_100y: float | None = None
     confidence_note: str
+    # v2 (Phase 8): which model's list, the alert rule and the card details
+    model: str | None = None
+    time_end_utc: str | None = None
+    n_segments: int | None = None
+    alert: bool | None = None
+    alert_without_fuel_credit: bool | None = None
+    net_warming_avoided_20y_range: list[float] | None = Field(
+        default=None, description="kg CO2e p05, p50, p95"
+    )
+    net_warming_avoided_100y_range: list[float] | None = Field(
+        default=None, description="kg CO2e p05, p50, p95"
+    )
+    alternatives: list[Alternative] | None = None
+    alternatives_rejected: str | None = None
+    profile: Profile | None = None
+    commercial_only_note: str | None = None
+
+
+class Alternative(_M):
+    delta_ft: int
+    fl: int
+    feasible: bool
+    reason: str
+    extra_fuel_kg: float | None
+    net_20y: list[float] | None = Field(description="kg CO2e p05, p50, p95")
+    net_100y: list[float] | None
+
+
+class Profile(_M):
+    """ERA5 column at the portion's middle point and hour (nearest 0.25° cell)."""
+
+    pressure_hpa: list[float]
+    fl: list[float]
+    rhi_raw: list[float | None]
+    rhi_b3: list[float | None]
+    rhi_stratum: list[float | None]
+    temperature_k: list[float | None]
+
+
+class Results(_M):
+    """Build-wide results (results.json): every number from a logged final run or a labelled
+    descriptive run; the site renders it, it never computes it."""
+
+    model_config = ConfigDict(extra="allow")
+    generated_from: list[str]
+    hypotheses: list[dict[str, object]]
+    final_runs: list[dict[str, object]]
 
 
 def json_schemas() -> dict[str, dict[str, object]]:
@@ -131,4 +211,10 @@ def json_schemas() -> dict[str, dict[str, object]]:
         "day": DaySummary.model_json_schema(),
         "flight_props": FlightProps.model_json_schema(),
         "flagged_segment": FlaggedSegment.model_json_schema(),
+        "results": Results.model_json_schema(),
     }
+
+
+# models referenced before their definition (v2 additions)
+Manifest.model_rebuild()
+FlaggedSegment.model_rebuild()

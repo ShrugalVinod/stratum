@@ -1,92 +1,146 @@
 {
- "additionalProperties": false,
- "properties": {
-  "date": {
-   "title": "Date",
-   "type": "string"
-  },
-  "has_flights": {
-   "title": "Has Flights",
-   "type": "boolean"
-  },
-  "n_flights": {
-   "anyOf": [
-    {
-     "type": "integer"
+  "additionalProperties": false,
+  "properties": {
+    "date": {
+      "title": "Date",
+      "type": "string"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "N Flights"
-  },
-  "n_segments": {
-   "anyOf": [
-    {
-     "type": "integer"
+    "has_flights": {
+      "title": "Has Flights",
+      "type": "boolean"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "N Segments"
-  },
-  "n_flagged": {
-   "anyOf": [
-    {
-     "type": "integer"
+    "n_flights": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "N Flights"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "N Flagged"
-  },
-  "ef_positive_J": {
-   "anyOf": [
-    {
-     "type": "number"
+    "n_segments": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "N Segments"
     },
-    {
-     "type": "null"
-    }
-   ],
-   "title": "Ef Positive J"
-  },
-  "ef_negative_J": {
-   "anyOf": [
-    {
-     "type": "number"
+    "n_flagged": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "N Flagged"
     },
-    {
-     "type": "null"
+    "ef_positive_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ef Positive J"
+    },
+    "ef_negative_J": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ef Negative J"
+    },
+    "grid_files": {
+      "title": "Grid Files",
+      "type": "integer"
+    },
+    "quality_flags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Quality Flags",
+      "type": "array"
+    },
+    "n_flagged_by_model": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "N Flagged By Model"
+    },
+    "n_alerts": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "N Alerts"
+    },
+    "has_observability": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Has Observability"
+    },
+    "layers": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Layers"
     }
-   ],
-   "title": "Ef Negative J"
   },
-  "grid_files": {
-   "title": "Grid Files",
-   "type": "integer"
-  },
-  "quality_flags": {
-   "items": {
-    "type": "string"
-   },
-   "title": "Quality Flags",
-   "type": "array"
-  }
- },
- "required": [
-  "date",
-  "has_flights",
-  "n_flights",
-  "n_segments",
-  "n_flagged",
-  "ef_positive_J",
-  "ef_negative_J",
-  "grid_files",
-  "quality_flags"
- ],
- "title": "DaySummary",
- "type": "object"
+  "required": [
+    "date",
+    "has_flights",
+    "n_flights",
+    "n_segments",
+    "n_flagged",
+    "ef_positive_J",
+    "ef_negative_J",
+    "grid_files",
+    "quality_flags"
+  ],
+  "title": "DaySummary",
+  "type": "object"
 }

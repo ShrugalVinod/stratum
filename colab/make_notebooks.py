@@ -1326,6 +1326,54 @@ paras = open(p_).read() if os.path.exists(p_) else ""
 """),
 ]
 
+PHASE8_EXPORT = [
+    header(
+        "08a · Phase 8: web data v2 (B1 / B3 / STRATUM layers, lists, alerts, results)",
+        """
+**What it does:** builds the data for the Phase 8 website: for the 12 held-out flight days and
+all of January 2026, map layers for raw physics (B1), the published correction (B3) and STRATUM
+(probability and model spread), satellite observability where Meteosat data exist; for the 12
+flight days, the B1/B3/STRATUM lists (STRATUM with every decision field, alternatives and a
+humidity profile) and flights with alert status; plus `results.json` with every H1–H4 number from
+the logged runs. Writes `web_exports/v1-<sha>/` and a zip.
+
+* **Runtime:** CPU, **High-RAM**. **Secrets** (🔑): `GITHUB_TOKEN` and **`STRATUM_ID_SALT`**
+  (the same one as for the Phase 4 export). **Time:** ≈ 20–40 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude and download
+  `web_exports/v1-<sha>.zip` from Drive into your Downloads folder.
+""",
+    ),
+    settings("08a_web_export_v1"),
+    *SETUP,
+    code('''
+# ── 7. Salt for hashed flight ids, from Colab Secrets (never printed) ───────
+salt = userdata.get("STRATUM_ID_SALT")
+assert salt and len(salt) >= 16, "Add a Colab secret STRATUM_ID_SALT (16+ characters) and enable notebook access"
+SECRETS.append(salt)
+run_env["STRATUM_ID_SALT"] = salt
+del salt
+print("Salt loaded.")
+'''),
+    code('''
+# ── 8. Export ────────────────────────────────────────────────────────────────
+rc_exp = stratum("export-web-v1", live=True)
+import glob
+builds = sorted(glob.glob(f"{DRIVE_ROOT}/web_exports/v1-*/manifest.json"), key=os.path.getmtime)
+man = json.load(open(builds[-1])) if builds and rc_exp == 0 else {}
+bdir = os.path.dirname(builds[-1]) if builds else None
+def mb(p): return round(sum(os.path.getsize(os.path.join(a, f)) for a, _, fs in os.walk(p) for f in fs) / 1e6, 2)
+'''),
+    summary_cell("""    "exit_code": rc_exp,
+    "build_id": man.get("build_id"),
+    "days": len(man.get("days", [])),
+    "days_with_flights": man.get("days_with_flights"),
+    "total_MB": mb(bdir) if bdir else None,
+    "files": sum(len(fs) for _, _, fs in os.walk(bdir)) if bdir else None,
+    "zip": (bdir + ".zip") if bdir and os.path.exists(bdir + ".zip") else None,
+    "per_flight_day": {d: json.load(open(f"{bdir}/days/{d}/day.json")).get("n_flagged_by_model") for d in man.get("days_with_flights", [])} if bdir else None,
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1364,4 +1412,5 @@ if __name__ == "__main__":
     write("07d_decide.ipynb", PHASE7_DECIDE)
     write("07e_h34_context.ipynb", PHASE7_CONTEXT)
     write("07f_report_v2.ipynb", PHASE7_REPORT)
+    write("08a_web_export_v1.ipynb", PHASE8_EXPORT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))

@@ -1,0 +1,36 @@
+{
+  "additionalProperties": true,
+  "description": "Build-wide results (results.json): every number from a logged final run or a labelled\ndescriptive run; the site renders it, it never computes it.",
+  "properties": {
+    "generated_from": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Generated From",
+      "type": "array"
+    },
+    "hypotheses": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Hypotheses",
+      "type": "array"
+    },
+    "final_runs": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Final Runs",
+      "type": "array"
+    }
+  },
+  "required": [
+    "generated_from",
+    "hypotheses",
+    "final_runs"
+  ],
+  "title": "Results",
+  "type": "object"
+}
