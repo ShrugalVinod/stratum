@@ -1302,6 +1302,30 @@ ctx = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(f"{DRIVE_
 """),
 ]
 
+PHASE7_REPORT = [
+    header(
+        "07f · Rebuild evaluation report v2 (wording/format fixes; no new numbers)",
+        """
+**What it does:** rebuilds `reports/evaluation_report_v2/` from the logged final runs and the
+saved summaries. Nothing is re-scored and nothing is logged as a final run.
+
+* **Runtime:** CPU (standard is fine). **Secrets** (🔑): `GITHUB_TOKEN` only. **Time:** ≈ 2 min.
+* **When finished:** copy the `=== STRATUM RUN SUMMARY ===` block back to Claude.
+""",
+    ),
+    settings("07f_report_v2"),
+    *SETUP,
+    code('''
+# ── 7. Rebuild report v2 ─────────────────────────────────────────────────────
+rc_rep = stratum("report-v2", live=True)
+p_ = f"{DRIVE_ROOT}/reports/evaluation_report_v2/paper_paragraphs_h2_h4.md"
+paras = open(p_).read() if os.path.exists(p_) else ""
+'''),
+    summary_cell("""    "exit_code": rc_rep,
+    "h3_paragraph_starts": paras.split("**H3.**")[1][:160] if "**H3.**" in paras else None,
+"""),
+]
+
 def write(name: str, cells: list[dict]) -> None:
     nb = {
         "cells": cells,
@@ -1339,4 +1363,5 @@ if __name__ == "__main__":
     write("07c_corrected_h34.ipynb", PHASE7_CORRECTED)
     write("07d_decide.ipynb", PHASE7_DECIDE)
     write("07e_h34_context.ipynb", PHASE7_CONTEXT)
+    write("07f_report_v2.ipynb", PHASE7_REPORT)
     print("written:", sorted(p.name for p in HERE.glob("*.ipynb")))
