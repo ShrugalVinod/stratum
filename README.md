@@ -52,8 +52,15 @@ Start with `colab/00_smoke_test.ipynb` (CPU runtime, ~5 min).
 
 ## Reproduce the results
 
-Three levels, from quickest to most complete. Levels 1 and 2 run on a laptop (macOS or Linux;
-Windows: use WSL) and need only [`uv`](https://docs.astral.sh/uv/) and `git`.
+Three levels, from quickest to most complete.
+
+**Easiest: Google Colab, nothing to install.** Open
+[`colab/reproduce_results.ipynb`](https://colab.research.google.com/github/ShrugalVinod/stratum/blob/main/colab/reproduce_results.ipynb)
+and choose *Runtime → Run all* (≈ 5 min, no keys). It runs levels 1 and 2 below. (Typing the
+commands below into Colab cells yourself? Start shell commands with `!` and use `%cd` for `cd`.)
+
+**On a laptop** (macOS or Linux; Windows: use WSL), levels 1 and 2 need only
+[`uv`](https://docs.astral.sh/uv/) and `git`.
 
 **Set up once (≈ 3 min):**
 ```bash
