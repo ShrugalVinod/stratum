@@ -2,6 +2,25 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-19 — Phase 8: web app v1 built on real data; release tooling ready
+
+**Done**
+- Web app v1: model switcher B1 / B3 / STRATUM, probability / uncertainty / satellite-coverage
+  views, per-model ranked lists with filters and CSV, STRATUM cards with alternatives and the
+  humidity profile, /results (H1–H4), Methods (SHAP, model card, threats, deviations, what didn't
+  work), Data & code. Booth mode, service worker, offline expo build (`make expo`).
+- Colab 08a: data export v1-d126083 (42 days: 12 held-out flight days + January 2026). It stopped
+  on its own 4 MB per-day check (2026-02-01: 4.14 MB) after writing every day; finished with the
+  new finish-only mode (results.json + manifest.json), budget now 5 MB.
+- Colab 07f: evaluation report v2 regenerated with the wording/format fixes (no new numbers).
+- Release tooling: `stratum release-bundle` (08b), `make reproduce-figures`, CITATION.cff,
+  data card, README reproduce path. Licences and DOI approved by the team (decisions.md).
+
+**Next**
+- Switch the site to v1-d126083, deploy, Playwright + Lighthouse; Colab 08b release bundle.
+- Team: photos for the Team page; booth-laptop test with Wi-Fi off; fresh-Colab README test;
+  make the repo public + Zenodo at v1.0.0.
+
 ## 2026-10-19 — Phase 7 accepted: H2 supported (with a caveat), H3 supported, H4 not supported
 
 **Done**
