@@ -359,6 +359,37 @@ def export_web_v1_cmd(
                                "largest_day": largest})  # fmt: skip
 
 
+@app.command("reproduce-figures")
+def reproduce_figures(
+    results: Annotated[
+        Path, typer.Option(help="results.json from a web build or the release bundle")
+    ],
+    out: Annotated[Path, typer.Option(help="output folder")] = Path("reports/figures_reproduced"),
+) -> None:
+    """Phase 8: regenerate every results figure from the released results.json (no raw data)."""
+    from stratum.release.figures import reproduce
+
+    files = reproduce(results, out)
+    _summary("reproduce-figures", {"figures": len(files), "out": str(out)})
+
+
+@app.command("release-bundle")
+def release_bundle(
+    version: Annotated[str, typer.Option(help="release version (CITATION.cff)")] = "1.0.0-rc1",
+) -> None:
+    """Phase 8.3 (Colab 08b): the derived-data release on Drive (release/<version>/ and a zip).
+    Commercial flights only, hashed ids, positions rounded to 0.25°; no raw or EUMETSAT data.
+
+    Needs STRATUM_ID_SALT (.env or Colab Secrets) for the hashed flight ids."""
+    from stratum.export.web_export import id_salt
+    from stratum.paths import repo_root
+    from stratum.release.bundle import build
+
+    root = drive_root()
+    info = build(root, repo_root(), root / "release", version, id_salt())
+    _summary("release-bundle", info)
+
+
 @app.command("phase3-showcase")
 def phase3_showcase(
     days: Annotated[str, typer.Option(help="comma-separated YYYY-MM-DD satellite days")],

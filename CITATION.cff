@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: "STRATUM: how well can persistent contrails be predicted over India?"
+message: "If you use this software or its derived data, please cite it as below."
+type: software
+authors:
+  - given-names: Shrugal
+    family-names: Vinod
+  - given-names: Aditya
+    family-names: Harsoda
+  - given-names: Ishaan
+    family-names: Kupnur
+  - given-names: Abeer
+    family-names: Shah
+contact:
+  - name: "STRATUM team, Indus International School, Bengaluru"
+abstract: >-
+  A pre-registered study of persistent aircraft contrails over India (6–37°N, 68–98°E): ERA5-based
+  contrail physics checked against contrails detected by Meteosat-9, a learned correction, and a
+  conservative ranking of altitude changes by the lower bound of net warming avoided.
+  Computational estimates only; air traffic control feasibility is not modelled.
+keywords:
+  - contrails
+  - aviation climate impact
+  - ERA5
+  - Meteosat
+  - India
+  - pre-registration
+license: Apache-2.0
+repository-code: "https://github.com/ShrugalVinod/stratum"
+url: "https://stratum.aerospaceonyx.workers.dev"
+version: "1.0.0-rc1"
+date-released: "2026-10-19"
+# identifiers: a Zenodo DOI is added when the release is minted (only after the team's OK).
