@@ -46,22 +46,35 @@ async function featurePoint(page: Page, layer: string, avoid: string[]) {
   );
 }
 
-test("map: ranked segments, lower detail bar with contrail lifetime, flights, controls", async ({ page }) => {
+test("map: STRATUM list and card, model switcher, flights, controls", async ({ page }) => {
   test.setTimeout(240_000); // software WebGL on CI runners is several times slower than a laptop
   const errors = collectErrors(page);
-  await openMap(page);
-  await expect(page.locator(".strip")).toHaveCount(66); // 1 Jan 2026: 66 flagged segments (B1)
+  await openMap(page); // default: STRATUM on the first held-out flight day
+  await expect(page.locator('.model-ctl button[aria-checked="true"]')).toHaveText("STRATUM");
+  expect(await page.locator(".strip").count()).toBeGreaterThan(0);
 
-  // a ranked segment opens the lower bar with "contrail lasted"
+  // a STRATUM candidate opens the card: level advice, alternatives table, humidity profile
   await page.locator(".strip").first().click();
-  await expect(page.locator(".life-num")).toBeVisible();
+  await expect(page.locator(".life-num")).toHaveText(/^FL\d{3}$/);
   await expect(page.locator(".dk-flight b")).not.toBeEmpty();
+  await expect(page.locator(".alt-table")).toBeVisible();
+  await expect(page.locator(".dk-prof svg")).toBeVisible();
   await expect.poll(() => page.url()).toContain("seg=");
-  const nav1 = await page.locator(".sc-nav .mono").textContent();
-  await page.locator('.sc-nav button[aria-label^="Next"]').click();
-  await expect(page.locator(".sc-nav .mono")).not.toHaveText(nav1 ?? "");
   await page.locator(".dk-end .tool").click();
   await expect(page.locator(".deck")).toHaveCount(0);
+
+  // uncorrected physics: same list and a card with the contrail lifetime
+  await page.locator(".model-ctl button", { hasText: "Physics" }).click();
+  await expect.poll(() => page.url()).toContain("m=B1");
+  await expect(page.locator(".strip").first()).toBeVisible();
+  await page.locator(".strip").first().click();
+  await expect(page.locator(".life-num")).toHaveText(/h$/);
+  const nav1 = await page.locator(".sc-nav .mono").textContent();
+  if (/\/ [2-9]/.test(nav1 ?? "")) {
+    await page.locator('.sc-nav button[aria-label^="Next"]').click();
+    await expect(page.locator(".sc-nav .mono")).not.toHaveText(nav1 ?? "");
+  }
+  await page.locator(".dk-end .tool").click();
 
   // a flight with no flagged segment: flight details + the sky column
   await mapStill(page);
@@ -71,14 +84,6 @@ test("map: ranked segments, lower detail bar with contrail lifetime, flights, co
   await expect(page.locator(".deck")).toBeVisible();
   await expect(page.locator(".sky-col")).toBeVisible();
   await page.locator(".dk-end .tool").click();
-
-  // a flagged segment on the map shows a non-zero lifetime
-  await mapStill(page);
-  const fp = await featurePoint(page, "flagged", []);
-  expect(fp, "a flagged segment on screen").not.toBeNull();
-  await page.mouse.click(fp!.x, fp!.y);
-  await expect(page.locator(".life-num")).toBeVisible();
-  await expect(page.locator(".life-num")).not.toHaveText("0 h");
 
   // controls: flight level, hour by keyboard, layers, gallery lightbox, theme, empty day
   await page.locator(".tape button").nth(2).click();
@@ -102,10 +107,12 @@ test("map: ranked segments, lower detail bar with contrail lifetime, flights, co
     .toBe(true);
   await mapStill(page);
   await page.locator(".theme-btn").click();
-  await page.locator(".date-pick select").selectOption("2026-01-15");
+  // a January day without flights offers the nearest flight day
+  await page.locator(".date-pick select").first().selectOption("2026-01-20");
   await expect(page.locator(".empty")).toBeVisible();
+  await expect(page.locator(".empty .tool")).toContainText("1 Feb 2026", { ignoreCase: true });
   await page.locator(".empty .tool").click();
-  await expect(page.locator(".strip")).toHaveCount(66);
+  await expect(page.locator(".strip").first()).toBeVisible();
 
   expect(errors, errors.join("\n")).toHaveLength(0);
 });

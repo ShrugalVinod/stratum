@@ -1457,3 +1457,33 @@
 .legend.compact .legend-stat {
   display: none;
 }
+
+/* the top bar never widens the page; on phones the date / model / view controls wrap onto
+   their own rows instead of hiding off-screen */
+.mp-bar {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  .mp-bar {
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+  .mp-bar > .warn {
+    white-space: normal;
+    flex: 1 1 100%;
+  }
+  .mp-bar > .mp-extra {
+    display: none; /* the coverage note is on About the data */
+  }
+  .mp-bar > .mp-tools {
+    margin-left: 0;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+    min-width: 0;
+  }
+  .mp-tools .date-pick select {
+    max-width: 100%;
+  }
+}

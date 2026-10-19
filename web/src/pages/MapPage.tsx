@@ -425,7 +425,7 @@ export function MapPage() {
         <h1 class="mp-title mono-s">Contrail map · India 6–37°N 68–98°E</h1>
         <span class="mono-s warn">Computational estimate — no real flight was changed</span>
         <span class="mono-s">{v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1"}</span>
-        <span class="mono-s">
+        <span class="mono-s mp-extra">
           ADS-B coverage:{" "}
           {man?.coverage.adsb_coverage_pct != null ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights` : "audit pending (Nov 2026)"}
         </span>
