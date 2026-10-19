@@ -333,6 +333,9 @@ def export_web_v1_cmd(
     demo_month: Annotated[
         str, typer.Option(help="month exported in full besides the 12 flight days")
     ] = "2026-01",
+    finish_only: Annotated[
+        bool, typer.Option(help="days already written: only results.json, manifest and the zip")
+    ] = False,
 ) -> None:
     """Phase 8 (Colab 08a): web data v2 — B1/B3/STRATUM layers, per-model lists with the
     decision fields, flights with alert status and results.json; zipped for download.
@@ -341,6 +344,7 @@ def export_web_v1_cmd(
     import subprocess
 
     from stratum.export.web_v1 import export_web_v1
+    from stratum.export.web_v1 import finish_only as finish_web_v1
     from stratum.paths import repo_root
 
     try:
@@ -351,8 +355,13 @@ def export_web_v1_cmd(
     bid = build_id or f"v1-{sha[:7]}"
     root = drive_root()
     pre = cfg.load_preregistered()
-    res = export_web_v1(root, root / "web_exports", bid, _eval_days(root), pre, git_commit=sha,
-                        config_hash=cfg.config_hash(), demo_month=demo_month or None)  # fmt: skip
+    if finish_only:
+        res = finish_web_v1(root, root / "web_exports" / bid, bid, git_commit=sha,
+                            config_hash=cfg.config_hash())  # fmt: skip
+    else:
+        res = export_web_v1(root, root / "web_exports", bid, _eval_days(root), pre,
+                            git_commit=sha, config_hash=cfg.config_hash(),
+                            demo_month=demo_month or None)  # fmt: skip
     z = shutil.make_archive(str(root / "web_exports" / bid), "zip", root / "web_exports", bid)
     largest = max(res["sizes"].items(), key=lambda kv: kv[1])
     _summary("export-web-v1", {**{k: v for k, v in res.items() if k != "sizes"}, "zip": z,

@@ -55,7 +55,7 @@ from stratum.export.web_export import (
     id_salt,
 )
 
-DAY_BUDGET_BYTES = 4_000_000
+DAY_BUDGET_BYTES = 5_000_000  # raw; JSON is served gzip-compressed (≈ 3–4× smaller)
 LIST_MAX = 300
 P_FULL = 0.255  # STRATUM probability sprites store 0–0.255 in steps of 0.001
 MODELS = [
@@ -501,7 +501,6 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
     from stratum.decide import humidity as hu
     from stratum.model import run as mr
     from stratum.paths import repo_root
-    from stratum.physics.units import flight_level_to_pressure
 
     salt = id_salt()
     dom = load_domain()
@@ -596,6 +595,16 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
         done.append(day)
     if meta is None:
         raise RuntimeError("no ERA5 found for any export day")
+    finish(root, out, build_id, meta, fls, done, with_flights, git_commit, config_hash)
+    return {"build_id": build_id, "days": len(done), "days_with_flights": with_flights, "sizes": sizes,
+            "total_MB": round(dir_size(out) / 1e6, 2), "files": sum(1 for _ in out.rglob("*") if _.is_file())}  # fmt: skip
+
+
+def finish(root: Path, out: Path, build_id: str, meta: dict[str, Any], fls: list[int], done: list[str],
+           with_flights: list[str], git_commit: str, config_hash: str) -> None:  # fmt: skip
+    """results.json and manifest.json for the days already written under ``out``."""
+    from stratum.physics.units import flight_level_to_pressure
+
     (out / "results.json").write_text(json.dumps(build_results(root), indent=1, default=str))
     man = Manifest(
         build_id=build_id, created_at=datetime.now(UTC).isoformat(timespec="seconds"),
@@ -608,5 +617,37 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
         credits=CREDITS, models=MODELS, layers=LAYERS, results_file="results.json",
     )  # fmt: skip
     (out / "manifest.json").write_text(man.model_dump_json(indent=1))
+
+
+def finish_only(root: Path, out: Path, build_id: str, git_commit: str = "unknown",
+                config_hash: str = "unknown") -> dict[str, Any]:  # fmt: skip
+    """Finish an export whose days are all written but which stopped before the manifest
+    (e.g. the per-day size check on the last day): reads the days back from ``day.json``,
+    checks each day's size, takes the grid from ERA5 and writes results.json + manifest.json."""
+    from stratum.config import load_domain
+    from stratum.phase2 import era5_window
+
+    dom = load_domain()
+    lo, hi = dom.flight_levels.dashboard_fl_range
+    fls = list(range(lo, hi + 1, dom.flight_levels.dashboard_fl_step))
+    done, with_flights, sizes = [], [], {}
+    for f in sorted((out / "days").glob("*/day.json")):
+        d = DaySummary.model_validate_json(f.read_text())
+        size = dir_size(f.parent)
+        if size > DAY_BUDGET_BYTES:
+            raise RuntimeError(f"{d.date}: {size / 1e6:.2f} MB exceeds the per-day budget")
+        sizes[d.date] = f"{size / 1e6:.2f} MB"
+        done.append(d.date)
+        if d.has_flights:
+            with_flights.append(d.date)
+    if not done:
+        raise RuntimeError(f"no exported days under {out}")
+    t0 = pd.Timestamp(done[0])
+    pl = era5_window(root, "pl", t0, t0 + pd.Timedelta(hours=1))
+    (la0, la1), (lo0, lo1) = tuple(dom.study_bbox.lat), tuple(dom.study_bbox.lon)
+    sub = pl.sel(latitude=slice(la0, la1), longitude=slice(lo0, lo1))
+    lat, lon = np.sort(sub["latitude"].values)[::-1], np.sort(sub["longitude"].values)
+    meta = {**grids.grid_meta(lat, lon), "encoding": "png_uint8_hour_sprite"}
+    finish(root, out, build_id, meta, fls, done, with_flights, git_commit, config_hash)
     return {"build_id": build_id, "days": len(done), "days_with_flights": with_flights, "sizes": sizes,
             "total_MB": round(dir_size(out) / 1e6, 2), "files": sum(1 for _ in out.rglob("*") if _.is_file())}  # fmt: skip

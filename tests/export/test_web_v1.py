@@ -153,3 +153,11 @@ def test_export_web_v1_end_to_end(tmp_path: Path, monkeypatch) -> None:  # type:
     results = json.loads((out / "results.json").read_text())
     assert [h["id"] for h in results["hypotheses"]] == [] or results["final_runs"]
     assert len(results["final_runs"]) == 3
+    # an export that stopped after the days (e.g. the size check on the last day) is finished
+    # from disk with the same manifest
+    (out / "manifest.json").unlink()
+    (out / "results.json").unlink()
+    fin = wv.finish_only(root, out, "v1-test")
+    man2 = Manifest.model_validate_json((out / "manifest.json").read_text())
+    assert fin["days"] == 1 and man2.days == man.days and man2.grid == man.grid
+    assert man2.days_with_flights == man.days_with_flights and (out / "results.json").exists()
