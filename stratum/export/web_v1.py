@@ -53,6 +53,7 @@ from stratum.export.web_export import (
     douglas_peucker,
     hash_id,
     id_salt,
+    web_json,
 )
 
 DAY_BUDGET_BYTES = 5_000_000  # raw; JSON is served gzip-compressed (≈ 3–4× smaller)
@@ -506,7 +507,7 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
     dom = load_domain()
     out = out_root / build_id
     out.mkdir(parents=True, exist_ok=True)
-    (out / "corridor.geojson").write_text(json.dumps(corridor_geojson(dom.corridor)))
+    (out / "corridor.geojson").write_text(web_json(corridor_geojson(dom.corridor)))
     names = airline_names(repo_root() / "configs" / "airlines.yaml")
     ap = dom.corridor.airports
     del_bom = _bearing(ap["VIDP"].lat, ap["VIDP"].lon, ap["VABB"].lat, ap["VABB"].lon)
@@ -566,7 +567,7 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
             )
             for model, items in lists.items():
                 (ddir / f"segments_{model}.json").write_text(
-                    json.dumps([i.model_dump() for i in items], separators=(",", ":"))
+                    web_json([i.model_dump() for i in items], separators=(",", ":"))
                 )
             # flights: corridor commercial flights + every flight in a list
             hid_to_fid = {hash_id(str(f), salt): f for f in seg["flight_id"].unique()}
@@ -579,7 +580,7 @@ def export_web_v1(root: Path, out_root: Path, build_id: str, eval_days: list[str
             )
             keep = corr_ids | set().union(*flagged_by.values())
             fc = flights_fc(seg, keep, salt, names, del_bom, day, flagged_by, alerts)
-            (ddir / "flights.geojson").write_text(json.dumps(fc, separators=(",", ":")))
+            (ddir / "flights.geojson").write_text(web_json(fc, separators=(",", ":")))
             summ.update({"has_flights": True, "n_flights": len(fc["features"]),
                          "n_segments": int(seg["commercial"].astype(bool).sum()),
                          "n_flagged": len(lists["B1"]), "n_flagged_by_model": {m: len(v) for m, v in lists.items()},
@@ -605,7 +606,7 @@ def finish(root: Path, out: Path, build_id: str, meta: dict[str, Any], fls: list
     """results.json and manifest.json for the days already written under ``out``."""
     from stratum.physics.units import flight_level_to_pressure
 
-    (out / "results.json").write_text(json.dumps(build_results(root), indent=1, default=str))
+    (out / "results.json").write_text(web_json(build_results(root), indent=1))
     man = Manifest(
         build_id=build_id, created_at=datetime.now(UTC).isoformat(timespec="seconds"),
         git_commit=git_commit, config_hash=config_hash, pipeline_version="phase8-v1",

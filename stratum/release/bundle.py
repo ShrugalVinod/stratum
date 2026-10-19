@@ -102,6 +102,7 @@ def labels(root: Path, dest: Path) -> int:
 
 
 def build(root: Path, repo: Path, out_root: Path, version: str, salt: str) -> dict[str, Any]:
+    from stratum.export.web_export import web_json
     from stratum.export.web_v1 import build_results
 
     out = out_root / version
@@ -126,7 +127,7 @@ def build(root: Path, repo: Path, out_root: Path, version: str, salt: str) -> di
     if val:
         n_rep += _copy(val[-1].parent, out / "reports" / "phase7_validation")
     info["report_files"] = n_rep
-    (out / "results.json").write_text(json.dumps(build_results(root), indent=1, default=str))
+    (out / "results.json").write_text(web_json(build_results(root), indent=1))
     _copy(repo / "_locks", out / "locks")
     _copy(repo / "configs", out / "configs")
     for f in DOCS:

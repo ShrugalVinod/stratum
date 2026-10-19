@@ -150,7 +150,10 @@ def test_export_web_v1_end_to_end(tmp_path: Path, monkeypatch) -> None:  # type:
     ids = {f["properties"]["flight_id"] for f in fc["features"]}
     assert all(len(i) == 12 and not i.startswith("F") for i in ids)  # hashed, never raw ids
     assert any(f["properties"]["alert"] is not None for f in fc["features"])
-    results = json.loads((out / "results.json").read_text())
+    results = json.loads(
+        (out / "results.json").read_text(),
+        parse_constant=lambda c: pytest.fail(f"{c} in results.json"),
+    )
     assert [h["id"] for h in results["hypotheses"]] == [] or results["final_runs"]
     assert len(results["final_runs"]) == 3
     # an export that stopped after the days (e.g. the size check on the last day) is finished

@@ -10,7 +10,16 @@ import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 RED, BLUE, ORANGE, GREY, INK = "#c0392b", "#2c7fb8", "#e67e22", "#888888", "#13202f"
+NAMES = {
+    "B0": "B0 climatology",
+    "LOGIT": "humidity only (logistic)",
+    "STRATUM_b": "STRATUM (b) scaling",
+    "STRATUM": "STRATUM",
+    "RATE": "constant rate",
+}
 
 
 def _plt() -> Any:
@@ -35,14 +44,16 @@ def reproduce(results: Path, out: Path) -> list[Path]:
     h1 = _hyp(res, "H1")
     if h1.get("estimate"):
         e = h1["estimate"]
-        fig, ax = plt.subplots(figsize=(5.5, 1.8))
+        fig, ax = plt.subplots(figsize=(5.5, 2.1))
         ax.axvline(1, color=GREY, ls="--", lw=1)
         ax.plot([e["lo"], e["hi"]], [0, 0], color=INK, lw=3)
         ax.plot([e["value"]], [0], "o", color=RED, ms=9)
         ax.set_xscale("log")
         ax.set_yticks([])
         ax.set_xlabel(
-            "B1-predicted / observed persistent contrails (log; 1 = physics matches the satellite)"
+            "B1-predicted / observed persistent contrails\n"
+            "(log scale; 1 = physics matches the satellite)",
+            fontsize=8,
         )
         ax.set_title(
             f"H1: ratio {e['value']:.2f} (95 % CI {e['lo']:.2f}–{e['hi']:.2f}) — {h1['verdict']}",
@@ -74,18 +85,25 @@ def reproduce(results: Path, out: Path) -> list[Path]:
 
     curves = res.get("concentration_curves") or {}
     if any(curves.values()):
-        fig, ax = plt.subplots(figsize=(5, 4.2))
+        fig, ax = plt.subplots(figsize=(5, 4.8))
         for (k, c), col in zip(curves.items(), (RED, BLUE, ORANGE), strict=False):
             if c:
-                ax.plot(c["distance_share"], c["ef_share"], color=col, lw=1.8, label=k)
-        ax.plot([0, 1], [0, 1], color=GREY, ls=":", lw=1)
+                dx, dy = np.asarray(c["distance_share"], float), np.asarray(c["ef_share"], float)
+                pos = dx > 0  # a log axis cannot draw 0
+                ax.plot(dx[pos], dy[pos], color=col, lw=1.8, label=k)
+        diag = np.logspace(-6, 0, 50)
+        ax.plot(diag, diag, color=GREY, ls=":", lw=1, label="no concentration")
         ax.axhline(0.8, color=INK, lw=0.6)
         ax.axvline(0.1, color=INK, lw=0.6, ls="--")
-        ax.set_xscale("symlog", linthresh=1e-3)
+        ax.text(0.1, 0.45, " H3 limit\n 10 %", fontsize=7, color=INK)
+        ax.set_xscale("log")
+        ax.set_xlim(1e-6, 1)
+        ax.set_ylim(0, 1.02)
         ax.set_xlabel("share of cruise distance (largest warming first)")
         ax.set_ylabel("share of positive energy forcing")
         ax.set_title("H3: concentration of contrail warming", fontsize=10)
-        ax.legend(frameon=False, fontsize=7, loc="lower right")
+        ax.legend(frameon=False, fontsize=7, loc="upper center", ncol=2,
+                  bbox_to_anchor=(0.5, -0.16))  # fmt: skip
         fig.tight_layout()
         files.append(_save(fig, out / "h3_concentration.png", plt))
 
@@ -95,7 +113,7 @@ def reproduce(results: Path, out: Path) -> list[Path]:
             ("logged (corrected)", h4["details"]),
             *[(f"{m} (descriptive)", c) for m, c in (h4.get("context") or {}).items() if c],
         ]
-        fig, ax = plt.subplots(figsize=(5.5, 2.2))
+        fig, ax = plt.subplots(figsize=(5.5, 2.6))
         for i, (_k, d) in enumerate(bars):
             ax.barh(
                 i + 0.18,
@@ -113,7 +131,9 @@ def reproduce(results: Path, out: Path) -> list[Path]:
             )
         ax.set_yticks(range(len(bars)), [k for k, _ in bars], fontsize=8)
         ax.set_xlim(0, 1)
-        ax.legend(frameon=False, fontsize=7)
+        ax.legend(
+            frameon=False, fontsize=7, loc="upper center", ncol=2, bbox_to_anchor=(0.4, -0.12)
+        )
         ax.set_title(f"H4 — {h4['verdict']} (logged run)", fontsize=10)
         fig.tight_layout()
         files.append(_save(fig, out / "h4_night.png", plt))
@@ -122,12 +142,12 @@ def reproduce(results: Path, out: Path) -> list[Path]:
     if rel:
         fig, ax = plt.subplots(figsize=(4.8, 4.4))
         top = 0.0
-        for (m, bins), col in zip(rel.items(), (GREY, ORANGE, BLUE, RED), strict=False):
+        for (m, bins), col in zip(rel.items(), (INK, ORANGE, BLUE, RED), strict=False):
             x = [b["mean_forecast"] for b in bins]
             y = [b["observed"] for b in bins]
             top = max(top, *x, *y)
-            ax.plot(x, y, marker="o", ms=3, color=col, label=m)
-        ax.plot([0, top], [0, top], color=GREY, ls=":")
+            ax.plot(x, y, marker="o", ms=3, color=col, label=NAMES.get(m, m))
+        ax.plot([0, top], [0, top], color=GREY, ls=":", label="perfectly calibrated")
         ax.set_xlabel("forecast probability (bin mean)")
         ax.set_ylabel("observed frequency")
         ax.set_title("Reliability on held-out seasons", fontsize=10)

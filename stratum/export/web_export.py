@@ -69,6 +69,24 @@ def id_salt() -> str:
     return salt
 
 
+def finite(obj: Any) -> Any:
+    """NaN / ±inf → None, recursively (browsers reject NaN in JSON); numpy scalars → Python."""
+    if isinstance(obj, dict):
+        return {k: finite(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [finite(v) for v in obj]
+    if isinstance(obj, np.generic):
+        obj = obj.item()
+    if isinstance(obj, float) and not np.isfinite(obj):
+        return None
+    return obj
+
+
+def web_json(obj: Any, **kw: Any) -> str:
+    """Strict JSON for the website: non-finite numbers become null; NaN can never slip through."""
+    return json.dumps(finite(obj), allow_nan=False, default=str, **kw)
+
+
 def hash_id(raw: str, salt: str) -> str:
     return hashlib.sha256(f"{salt}|{raw}".encode()).hexdigest()[:12]
 
@@ -274,7 +292,7 @@ def export_web(
     dom = load_domain()
     out = out_root / build_id
     out.mkdir(parents=True, exist_ok=True)
-    (out / "corridor.geojson").write_text(json.dumps(corridor_geojson(dom.corridor)))
+    (out / "corridor.geojson").write_text(web_json(corridor_geojson(dom.corridor)))
     names = airline_names(repo_root() / "configs" / "airlines.yaml")
     ap = dom.corridor.airports
     del_bom = _bearing(ap["VIDP"].lat, ap["VIDP"].lon, ap["VABB"].lat, ap["VABB"].lon)
@@ -329,9 +347,9 @@ def export_web(
             if cocip is None:
                 flags.append(f"no CoCiP {scaling} output")
             fc, flagged, stats = flights_and_segments(seg, cocip, salt, names, del_bom, d)
-            (ddir / "flights.geojson").write_text(json.dumps(fc, separators=(",", ":")))
+            (ddir / "flights.geojson").write_text(web_json(fc, separators=(",", ":")))
             (ddir / "segments_flagged.json").write_text(
-                json.dumps([f.model_dump() for f in flagged], separators=(",", ":"))
+                web_json([f.model_dump() for f in flagged], separators=(",", ":"))
             )
             with_flights.append(str(d))
         summ = DaySummary(
