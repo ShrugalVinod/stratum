@@ -50,7 +50,7 @@ export function AboutData() {
               Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many
               scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model
               estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study:
-              no real flight was changed, and nothing on this site is a result until Phase 7.
+              no real flight was changed. The only results are those of the logged final runs, on the Methods page; the map still shows physics alone (B1).
             </p>
           </section>
           <section class="note rv" id="privacy">

@@ -104,7 +104,7 @@ export function Home() {
                 <Split text="Departures" />
               </h2>
               <p class="lede rv" style={{ "--d": 200 }}>
-                Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. Results arrive in Phase 7.
+                Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. All four hypotheses are now tested; the results are on the Methods page.
               </p>
               <a class="link rv" style={{ "--d": 320 }} href="/progress">
                 Full progress log →
@@ -142,10 +142,45 @@ export function Home() {
       </section>
 
       {/* §4 */}
+      <section class="section pt0" aria-labelledby="ground-title">
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red">§4 · From the ground</p>
+            <span class="mono-s">Team photo · South India · 18 Oct 2026</span>
+          </div>
+          <div class="openly ground">
+            <figure class="sat rv rv-fade">
+              <div class="sat-frame">
+                <img
+                  src="/img/contrail_south_india_2026-10-18.webp"
+                  alt="A single long, straight white contrail crossing a clear blue sky diagonally, with palm fronds in the top left corner."
+                  loading="lazy"
+                  width="1600"
+                  height="1200"
+                />
+                <span class="sat-tl mono-s">Seen from below</span>
+              </div>
+              <figcaption class="caption">Fig. 3 — A contrail over South India, photographed by the team on 18 Oct 2026.</figcaption>
+            </figure>
+            <div class="open-text">
+              <h2 id="ground-title" class="display d-m">
+                <Split text="The line we are trying to predict." />
+              </h2>
+              <p class="rv" style={{ "--d": 200 }}>
+                A contrail like this one spreads into cirrus and lasts for hours only when the air is supersaturated with ice — and that is
+                exactly what weather models struggle to see. From 36,000 km up, Meteosat sees the same kind of line as a thin bright stroke
+                (Fig. 4).
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* §5 */}
       <section class="section pt0" aria-labelledby="open-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§4 · Built openly</p>
+            <p class="label red">§5 · Built openly</p>
             <span class="mono-s">Real satellite image · not a result</span>
           </div>
           <div class="openly">
@@ -163,7 +198,7 @@ export function Home() {
                 <span class="sat-scan" aria-hidden="true" />
               </div>
               <figcaption class="caption">
-                Fig. 3 — Two contrails over the Arabian Sea at night, found by the STRATUM detector. BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT
+                Fig. 4 — Two contrails over the Arabian Sea at night, found by the STRATUM detector. BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT
                 2026.
               </figcaption>
             </figure>

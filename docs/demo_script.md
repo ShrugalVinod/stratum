@@ -1,6 +1,6 @@
 # STRATUM: 4-minute demo script (Phase 4 open item d)
 
-Draft by Claude, 17 Oct 2026. The team edits the words; the **clicks** are tested by the Playwright
+Draft by Claude, 17 Oct 2026; updated 19 Oct 2026 with the Phase 5–7 results. The team edits the words; the **clicks** are tested by the Playwright
 end-to-end test (`web/e2e/site.spec.ts`), so they keep working when the site changes.
 
 **Set-up for the recording**
@@ -13,7 +13,7 @@ end-to-end test (`web/e2e/site.spec.ts`), so they keep working when the site cha
 | time | on screen / click | narration (draft) |
 |---|---|---|
 | 0:00–0:20 | Home page, let the hero animation play (FL380 vs FL360 through the humid layer). | "Contrails cause a large share of aviation's warming, but only the few that form in cold, humid air last for hours. Move the plane a little, and you can lose the cloud." |
-| 0:20–0:40 | Scroll slowly past the departures board to the **Phase** board. | "STRATUM is a research prototype over India. Our analysis plan was locked on 13 October 2026, before we had any result. Phases 0 to 4 are done; labels and matching are under way." |
+| 0:20–0:40 | Scroll slowly past the departures board to the **Phase** board. | "STRATUM is a research prototype over India. Our analysis plan was locked on 13 October 2026, before we had any result. Phases 0 to 7 are done: we tested all four hypotheses, and we publish every outcome." |
 | 0:40–1:00 | Click **Map** in the header. Wait for the replay (planes move, ≈ 7 s). | "This is 1 January 2026: 1,458 commercial flights, replayed from real tracking data, over the hourly physics forecast of where lasting contrails can form." |
 | 1:00–1:30 | Click the **top segment** in the list on the right. The detail bar opens under the map. | "Physics alone flags 66 one-minute segments from 6 flights. This one, the strongest: the bar shows how long CoCiP says the contrail lasted, and its warming estimate." |
 | 1:30–1:45 | Click the **›** (next segment) arrow twice, then **Close**. | "We can step through each flagged segment of that flight." |
@@ -21,13 +21,15 @@ end-to-end test (`web/e2e/site.spec.ts`), so they keep working when the site cha
 | 2:05–2:25 | Click the **flight-level** tape (FL400), then press **→** on the hour slider twice. | "The map changes with flight level and hour: the humid layers are thin, which is why a small altitude change can matter." |
 | 2:25–2:50 | Scroll to the **gallery**; open the first satellite image; press **Esc**. | "Physics is not enough. Meteosat-9 sees India every 15 minutes, and our detector finds real contrails in it. On 1 January, no predicted contrail lined up with a detected one." |
 | 2:50–3:15 | Click **How it works**; open one **For scientists** panel. | "STRATUM checks every prediction against the satellite, after correcting for wind drift and parallax, and learns where the physics is wrong." |
-| 3:15–3:35 | Click **Methods**; point at the hypotheses H1–H4 and the pre-registration badge. | "Four hypotheses, fixed in advance, each with a pass or fail rule. The results come in Phase 7; nothing on this site is a result yet." |
+| 3:15–3:35 | Click **Methods**; point at the hypothesis cards H1–H4 and their results. | "Four hypotheses, fixed in advance, each with a pass or fail rule. Physics predicts about six times more contrails than the satellite sees, mostly because thin ones are invisible. Under one percent of flying causes most of the warming, and night flights carry about three quarters of it. Not every test passed, and we say so." |
 | 3:35–3:50 | Click the **Chart / Night** button (theme switch). | "The site works in day and night themes and on a phone." |
 | 3:50–4:00 | Click **Team**. Hold. | "We are four students from Indus International School, Bengaluru, with Dr. Varsha Pant. STRATUM: move the plane, lose the cloud." |
 
 **Checks before the final take**
 - Detail bar shows "Contrail lasted" with a number, not "0 h", for the top segment.
-- No "— Phase 7" field is described as a result.
+- Fields still marked "— (Phase 8)" are not described as results.
+- Results spoken are exactly those on the Methods cards (H1–H4) and the Progress diary.
 - Credits visible in the footer when scrolling (EUMETSAT, Copernicus, ADS-B Exchange, OpenSky,
   Natural Earth).
-- If the Phase 5 numbers are mentioned, use only those on the Progress page.
+- If label or detector numbers are mentioned, use only those on the Progress page.
+- Home §4 now shows the team's contrail photo; it can be the opening shot (scroll to it at 0:20).

@@ -849,8 +849,8 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
 
 function Pending() {
   return (
-    <span class="pending mono" title="Available when the correction model is finished (Phase 7)">
-      — Phase 7
+    <span class="pending mono" title="Shown here in the final web app (Phase 8)">
+      — Phase 8
     </span>
   );
 }

@@ -94,7 +94,7 @@ Fixed after the final run (wording only, no result changes): the auto paragraph 
                  code and paper draft now say June–September.
 Open questions:  H1 reported as not supported (accepted 18 Oct). Website updated 18 Oct
                    (H1 card result, ticker, diary entry with the limits).
-                 ⚑ Q5 still open before Phase 7 step 7.6.4.
+                 Q5 settled 18 Oct 2026 (option A; see the Phase 7 gate report).
 Risks:           Phase 7 (H2) uses the same 12 days and noisy labels; power is low. More
                  ADS-B days would help most.
 Next phase:      Phase 7 — correction model (H2), avoidance layer (H3, H4).

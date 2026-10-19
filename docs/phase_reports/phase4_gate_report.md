@@ -53,13 +53,13 @@ Deviations from the build-prompt wording (none touch pre-registered values):
   2. Style: §4.4 suggests IBM Plex + one blue accent; the team chose the chart design
      (decisions.md, 17 Oct). Contrast, accessibility and Lighthouse targets still met.
   3. Copy lives in web/src/content/site.ts (one file) rather than web/content/*.md.
-  4. The Bangalore contrail photo on Home is not provided yet; the hero uses an animated
-     illustration and the Meteosat Arabian Sea figure is shown in §4.
+  4. The contrail photo is on Home since 19 Oct 2026 (§4 "From the ground", team photo, South
+     India, location data stripped); the hero keeps its animated illustration.
 Decisions made:  docs/decisions.md (16–17 Oct). Deviations (pre-registration): none new.
 
 Open items carried forward (due before 18 Dec 2026):
-  a. Playwright e2e in CI (port the 19 local checks).          — Claude
-  b. Number-consistency list from site data + copy → team.     — Claude, then team
+  a. Playwright e2e in CI (port the 19 local checks).          — done (CI runs it)
+  b. Number-consistency list from site data + copy → team.     — updated 19 Oct (docs/web_numbers.md); team to read
   c. Team photos into the boarding passes.                     — Shrugal sends
   d. 4-minute demo script + recording on a clean profile.      — Claude drafts, team records
   e. Old site: DELETED 18 Oct 2026 (Cloudflare, old account).  — done

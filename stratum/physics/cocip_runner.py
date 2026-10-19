@@ -64,7 +64,8 @@ def humidity_scaling(name: str) -> Any:
     if name == "B2":
         return ConstantHumidityScaling(rhi_adj=0.95)
     if name == "B3":
-        return ExponentialBoostLatitudeCorrectionHumidityScaling()
+        # pressure levels, as every run so far used (the pycontrails default, which will change)
+        return ExponentialBoostLatitudeCorrectionHumidityScaling(level_type="pressure")
     raise ValueError(f"unknown scaling {name!r}; expected one of {SCALINGS}")
 
 

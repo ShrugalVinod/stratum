@@ -568,6 +568,12 @@
   object-fit: cover;
   transition: transform 1.6s var(--ease);
 }
+.ground .sat-frame img {
+  aspect-ratio: 4 / 3;
+}
+.ground {
+  align-items: center;
+}
 .sat:hover .sat-frame img {
   transform: scale(1.04);
 }
