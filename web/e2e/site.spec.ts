@@ -95,6 +95,12 @@ test("map: ranked segments, lower detail bar with contrail lifetime, flights, co
   await expect(page.locator(".lightbox")).toHaveCount(0);
   await page.locator(".theme-btn").click();
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
+  // the map restyles for night mode; with software WebGL (CI) that keeps the page busy, so wait
+  // until the new style has loaded before toggling back
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__map?.isStyleLoaded?.() ?? true), { timeout: 120_000 })
+    .toBe(true);
+  await mapStill(page);
   await page.locator(".theme-btn").click();
   await page.locator(".date-pick select").selectOption("2026-01-15");
   await expect(page.locator(".empty")).toBeVisible();
