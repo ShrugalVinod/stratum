@@ -1131,6 +1131,14 @@
   overflow: hidden;
   min-height: 0;
 }
+/* desktop: the deck never takes more than about half the map stage; it scrolls inside */
+@media (min-width: 901px) {
+  .deck-wrap.open > div {
+    max-height: min(50vh, 440px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
 .deck {
   display: grid;
   grid-template-columns: minmax(170px, 1fr) minmax(200px, 1.1fr) minmax(150px, 0.8fr) minmax(320px, 2.2fr) minmax(180px, 1fr);
@@ -1377,6 +1385,7 @@
   width: 100%;
   max-width: 320px;
   height: auto;
+  max-height: 200px;
 }
 .dk-prof .issr {
   fill: color-mix(in srgb, var(--blue, #2c7fb8) 12%, transparent);
@@ -1441,4 +1450,10 @@
   .day-strip {
     display: none;
   }
+}
+
+/* while a detail card is open the map is shorter: the legend keeps only its colour ramp */
+.legend.compact .legend-row,
+.legend.compact .legend-stat {
+  display: none;
 }

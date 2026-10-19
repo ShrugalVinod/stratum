@@ -341,6 +341,13 @@ export function MapPage() {
 
   // what the lower detail bar shows: the selected segment's flight, or a clicked flight
   const detailId = selected?.flight_id ?? flightSel;
+  // the flight day closest to the chosen date (for the "no flights on this day" button)
+  const nearestFlightDay = useMemo(() => {
+    const t = st.date ? Date.parse(st.date) : NaN;
+    const ds = man?.days_with_flights ?? [];
+    if (!ds.length || isNaN(t)) return ds[0] ?? null;
+    return ds.reduce((a, b) => (Math.abs(Date.parse(b) - t) < Math.abs(Date.parse(a) - t) ? b : a));
+  }, [man, st.date]);
   const detailFlight = detailId ? (flightsView?.find((f) => f.properties.flight_id === detailId) ?? null) : null;
   const detailSegs = useMemo(() => (detailId ? segments.filter((s) => s.flight_id === detailId).sort((a, b) => a.time_utc.localeCompare(b.time_utc)) : []), [detailId, segments]);
 
@@ -538,7 +545,7 @@ export function MapPage() {
             <p class="map-hint mono-s" aria-hidden="true">
               Click a flight → details below · click anywhere → sky column
             </p>
-            <div class="legend">
+            <div class={`legend ${detailId ? "compact" : ""}`}>
               <div class="legend-title label ink">
                 {layer === "observable" ? "Satellite could not see (shaded)" : layer === "STRATUM_spread" ? "Model uncertainty" : layer === "STRATUM" ? "Chance of a contrail the satellite sees" : "Persistent-contrail conditions"}
               </div>
@@ -629,9 +636,9 @@ export function MapPage() {
               <div class="empty">
                 <p>No flight data for {st.date ? dayLabel(st.date) : ""}.</p>
                 <p class="muted">Free flight data exist for the 1st of each month. The contrail conditions on the map are still real for every January day.</p>
-                {man?.days_with_flights[0] && (
-                  <button class="tool" onClick={() => setSt({ ...st, date: man.days_with_flights[0], seg: null })}>
-                    Show {dayLabel(man.days_with_flights[0])} ✈
+                {nearestFlightDay && (
+                  <button class="tool" onClick={() => setSt({ ...st, date: nearestFlightDay, seg: null })}>
+                    Show {dayLabel(nearestFlightDay)} ✈
                   </button>
                 )}
               </div>
