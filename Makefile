@@ -30,8 +30,16 @@ lock-env:  ## re-resolve dependencies and regenerate requirements-colab.txt
 	uv lock
 	uv export --frozen --no-dev --no-hashes --no-emit-project --format requirements-txt -o requirements-colab.txt
 
-web-dev web-test export:  ## web app commands (arrive in Phase 4)
-	@echo "'$@' is added in Phase 4 (web app)."; exit 1
+web-dev:  ## website dev server (http://localhost:5173)
+	npm --prefix web run dev
+
+web-test:  ## website type-check, unit tests and number check
+	npm --prefix web run typecheck
+	npm --prefix web test
+	npm --prefix web run numbers
+
+export:  ## web data export (needs Drive data: run colab/08a_web_export_v1.ipynb instead)
+	uv run stratum export-web-v1
 
 RESULTS ?= web/public/data/$(shell python3 -c "import json;print(json.load(open('web/public/data/current.json'))['build'])")/results.json
 

@@ -8,8 +8,9 @@ Indian airspace. Team STRATUM, Indus International School, Bangalore · Conrad C
 > feasibility is not modelled. The method is pre-registered in
 > [`docs/STRATUM_Research_Paper.pdf`](docs/STRATUM_Research_Paper.pdf) (v1.0, 12 Oct 2026).
 
-**Status:** Phase 0 (setup and guard-rails). No data has been downloaded and no results exist yet.
-Progress: [`docs/progress.md`](docs/progress.md).
+**Status:** Phases 0–7 complete; Phase 8 (web app v1, expo build, open release) in progress.
+Results (H1–H4) are logged in [`_locks/final_runs.jsonl`](_locks/final_runs.jsonl) and shown at
+**https://stratum.aerospaceonyx.workers.dev/results**. Progress: [`docs/progress.md`](docs/progress.md).
 
 ---
 
@@ -46,6 +47,30 @@ in CI and on Colab.
 4. Paste the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
 
 Start with `colab/00_smoke_test.ipynb` (CPU runtime, ~5 min).
+
+## Reproduce the results
+
+Three levels, from cheapest to most complete:
+
+1. **Figures only (laptop, a minute, no data download).** Every results figure is redrawn from
+   `results.json`, which holds every H1–H4 number from the logged final runs:
+   ```bash
+   make reproduce-figures                                   # uses the website's current build
+   make reproduce-figures RESULTS=path/to/release/results.json
+   ```
+   Output: `reports/figures_reproduced/` (H1 ratio, H2 skill, H3 concentration, H4 night, reliability).
+2. **Scores from the released derived data (laptop).** The release bundle (`colab/08b_release_bundle.ipynb`,
+   see [`docs/data_card.md`](docs/data_card.md)) has every labelled commercial segment with its
+   satellite label, baselines B0–B3 and held-out STRATUM forecasts, so Brier scores, AUROC and the
+   H2 comparison can be recomputed from one parquet file.
+3. **Everything from raw data (Colab, days of compute).** Run the numbered notebooks in `colab/`
+   in order (01 → 08). They re-download ERA5, ADS-B and Meteosat data (raw data are not
+   redistributed), rebuild the labels, re-run the physics and the model, and check each final run
+   against the pre-registration lock. A re-run of a locked final run needs `--rerun-reason`.
+
+## Cite
+
+See [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button).
 
 ## Where data lives (Google Drive)
 
@@ -91,22 +116,26 @@ CI runs `verify-lock` on every push.
 | `colab/` | Thin Colab launcher notebooks, numbered by phase |
 | `notebooks/` | Exploration only (never imported; outputs stripped) |
 | `tests/` | Tests mirroring `stratum/`; tiny fixtures in `tests/fixtures/` |
+| `web/` | The website (Preact + MapLibre); `npm run dev`, `npm run build:expo` for the offline booth build |
+| `_locks/` | Pre-registration lock and the append-only log of final runs |
 | `docs/` | Progress, decisions, deviations, data sources, storage, methods notes, phase reports, source PDFs |
 
 ## Phases
 
-| Phase | What | Target |
+| Phase | What | Status |
 |---|---|---|
-| 0 | Setup, CI, secrets, Colab bridge, pre-registration lock | 27 Oct 2026 |
-| 1 | Data access, ingestion, coverage audit | 22 Nov 2026 |
-| 2 | Physics baseline (B1) for Delhi–Mumbai, Jan 2026 | 6 Dec 2026 |
-| 3 | Satellite contrail detector and overlays | 13 Dec 2026 |
-| 4 | Web app v0 + Innovation Website | 18 Dec 2026 |
-| 5 | Labelling, matching, observability → labels for the year | 7 Feb 2027 |
-| 6 | Evaluation harness, baselines B0–B4, H1 | 28 Feb 2027 |
-| 7 | Correction model (H2), avoidance layer (H3, H4) | 31 Mar 2027 |
-| 8 | Web app v1, expo build, open release | Apr–May 2027 |
+| 0 | Setup, CI, secrets, Colab bridge, pre-registration lock | done |
+| 1 | Data access, ingestion, coverage audit | done (November audit pending) |
+| 2 | Physics baseline (B1) for Delhi–Mumbai, Jan 2026 | done |
+| 3 | Satellite contrail detector and overlays | done |
+| 4 | Web app v0 + Innovation Website | done |
+| 5 | Labelling, matching, observability → labels for the year | done |
+| 6 | Evaluation harness, baselines B0–B4, H1 | done |
+| 7 | Correction model (H2), avoidance layer (H3, H4) | done |
+| 8 | Web app v1, expo build, open release | in progress |
 
 ## Licence
 
-Code: [Apache-2.0](LICENSE). Data licences are set per source at release (Phase 8).
+Code: [Apache-2.0](LICENSE). Derived data: licence per source, listed in
+[`docs/data_card.md`](docs/data_card.md) (DLR-derived parts stay CC BY-NC 4.0; EUMETSAT and ADS-B
+raw data are never redistributed). Satellite data © EUMETSAT.
