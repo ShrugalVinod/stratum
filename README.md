@@ -41,7 +41,9 @@ they mount Drive, clone this repo at a given commit, install the pinned environm
 `stratum` commands. All logic lives in the `stratum` package, so it is identical on a laptop,
 in CI and on Colab.
 
-1. Create the `GITHUB_TOKEN` Colab secret once (see [`docs/data_sources.md`](docs/data_sources.md) §5).
+1. No GitHub token is needed (the repository is public). Notebooks that download raw data need
+   that source's key as a Colab secret (🔑); each notebook's first cell lists them, and
+   [`docs/data_sources.md`](docs/data_sources.md) says how to get each key.
 2. Open a notebook via the link Claude gives you (`https://colab.research.google.com/github/ShrugalVinod/stratum/blob/<commit>/colab/<name>.ipynb`).
 3. Set the runtime it asks for, then *Runtime → Run all*. If the session disconnects, run all again: jobs resume where they stopped.
 4. Paste the block starting `=== STRATUM RUN SUMMARY ===` back to Claude.
