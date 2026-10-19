@@ -1487,3 +1487,22 @@
     max-width: 100%;
   }
 }
+
+/* side-panel filters never spill past the panel */
+.filters .seg-ctl button {
+  min-width: 0;
+  padding: 0 4px;
+}
+.filter-row {
+  flex-wrap: wrap;
+}
+.filter-row select {
+  flex: 1 1 150px;
+}
+/* a short altitude tape (detail card open): levels only, no hPa line */
+.mp:has(.deck-wrap.open) .tape button span {
+  display: none;
+}
+.mp:has(.deck-wrap.open) .tape button b {
+  font-size: 14px;
+}

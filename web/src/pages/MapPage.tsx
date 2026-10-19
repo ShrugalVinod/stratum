@@ -123,6 +123,7 @@ const MODEL_BADGE: Record<ModelKey, string> = {
 };
 // Direction = overall heading compared with the Delhi–Mumbai route (not the actual origin/destination).
 const DIR_LABEL = { "DEL-BOM": "Southbound", "BOM-DEL": "Northbound", other: "Crossing" } as const;
+const DIR_SHORT = { "DEL-BOM": "South", "BOM-DEL": "North", other: "Crossing" } as const; // fits the 380 px side panel
 
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const dayLabel = (iso: string) => `${Number(iso.slice(8, 10))} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
@@ -650,7 +651,7 @@ export function MapPage() {
                   <div class="seg-ctl" role="radiogroup" aria-label="Direction">
                     {(["all", "DEL-BOM", "BOM-DEL", "other"] as const).map((d) => (
                       <button role="radio" aria-checked={dir === d} class={dir === d ? "on" : ""} onClick={() => setDir(d)}>
-                        {d === "all" ? "All" : DIR_LABEL[d]}
+                        {d === "all" ? "All" : DIR_SHORT[d]}
                       </button>
                     ))}
                   </div>
