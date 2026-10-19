@@ -28,6 +28,6 @@ keywords:
 license: Apache-2.0
 repository-code: "https://github.com/ShrugalVinod/stratum"
 url: "https://stratum.aerospaceonyx.workers.dev"
-version: "1.0.0-rc1"
+version: "1.0.0"
 date-released: "2026-10-19"
 # identifiers: a Zenodo DOI is added when the release is minted (only after the team's OK).

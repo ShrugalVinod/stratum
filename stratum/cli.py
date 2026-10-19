@@ -409,7 +409,7 @@ def rescore_cmd(
 
 @app.command("release-bundle")
 def release_bundle(
-    version: Annotated[str, typer.Option(help="release version (CITATION.cff)")] = "1.0.0-rc1",
+    version: Annotated[str, typer.Option(help="release version (CITATION.cff)")] = "1.0.0",
 ) -> None:
     """Phase 8.3 (Colab 08b): the derived-data release on Drive (release/<version>/ and a zip).
     Commercial flights only, hashed ids, positions rounded to 0.25°; no raw or EUMETSAT data.
