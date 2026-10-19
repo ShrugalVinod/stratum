@@ -13,14 +13,16 @@ start scripts. Copy the **whole folder** to:
 - [ ] two USB sticks (one in hand luggage, one with the posters).
 
 ## Test with Wi-Fi OFF (on every laptop, at home)
-- [ ] Turn Wi-Fi off (and unplug Ethernet).
-- [ ] macOS: double-click `start-expo.command` (first time: right-click → Open). Windows: `start-expo.bat`.
-- [ ] Chrome opens full-screen on `http://127.0.0.1:8765/?booth=1` and the tour starts.
-- [ ] The tour reaches the map, opens an avoidance card, then Results and Methods, and loops.
-- [ ] Touch/click anything: the tour pauses ("Tour paused…"); after 1 minute it resumes.
-- [ ] Map: switch Physics / Published fix / STRATUM; change hour and flight level; open a card.
-- [ ] Results page shows H1–H4 with numbers and figures; Methods shows the model card.
-- [ ] Leave kiosk mode: Cmd+Q (macOS) / Alt+F4 (Windows).
+Done on Shrugal's Mac, 19 Oct 2026 (build ca9e684+ / data v1-d126083): all checks below passed.
+Repeat on the backup laptop and, if it is Windows, with Python 3 installed.
+- [x] Turn Wi-Fi off (and unplug Ethernet).
+- [x] macOS: double-click `start-expo.command` (first time: right-click → Open). Windows: `start-expo.bat`.
+- [x] Chrome opens full-screen on `http://127.0.0.1:8765/?booth=1` and the tour starts.
+- [x] The tour reaches the map, opens an avoidance card, then Results and Methods, and loops.
+- [x] Touch/click anything: the tour pauses ("Tour paused…"); after 1 minute it resumes.
+- [x] Map: switch Physics / Published fix / STRATUM; change hour and flight level; open a card.
+- [x] Results page shows H1–H4 with numbers and figures; Methods shows the model card.
+- [x] Leave kiosk mode: Cmd+Q (macOS) / Alt+F4 (Windows).
 - [ ] Python 3 is installed on the Windows laptop (python.org) — macOS has it.
 - [ ] Chrome is installed (the scripts fall back to the default browser, without kiosk mode).
 

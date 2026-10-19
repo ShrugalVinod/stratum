@@ -1,6 +1,6 @@
 ```
 ═══ PHASE 8 GATE REPORT — Web app v1, expo build, open release — 19 Oct 2026 ═══
-Status:          OPEN only on [team] items (booth laptop, fresh-Colab README test, 08b run,
+Status:          OPEN only on [team] items (fresh-Colab README test, 08b run,
                  repo public + DOI at v1.0.0). Everything else is built, tested and live.
 Calendar:        far ahead (plan: Phase 8 by the Summit, 21–24 Apr 2027)
 Code:            main ≥ 655b339; ruff + mypy --strict clean; Python tests pass (slow ones
@@ -26,7 +26,8 @@ Done-when checklist (build prompt §8.5):
       Checked by Claude: the 72 MB folder served by serve.py with every non-local request
       blocked — all 9 pages load, the map shows 298 candidates and the card, booth mode starts,
       0 external requests, 0 errors.
-      [team] the same test on the booth laptop with Wi-Fi off; tick the checklist.
+      Booth test with Wi-Fi off passed on Shrugal's Mac (19 Oct; checklist ticked). Still to do:
+      the backup laptop, the USB sticks and the hardware list in docs/expo_checklist.md.
   [~] Release: `stratum release-bundle` (colab/08b) — commercial flights only, salted-hash ids,
       positions rounded to 0.25°, labellers pseudonymised, no raw ADS-B / ERA5 / Meteosat data;
       `make reproduce-figures` redraws every results figure from results.json alone;
