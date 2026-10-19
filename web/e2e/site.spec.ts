@@ -112,7 +112,7 @@ test("map: ranked segments, lower detail bar with contrail lifetime, flights, co
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/methods", "/team", "/about-data", "/contact"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -149,4 +149,20 @@ test("a page whose code fails to load is opened by a full reload, not left on Ho
   await expect(page.locator("h1")).toContainText("before results", { timeout: 15_000 });
   expect(page.url()).toContain("/methods");
   expect(blocked).toBeGreaterThanOrEqual(2);
+});
+
+test("results page shows the four pre-registered hypotheses from results.json", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/results");
+  for (const h of ["H1", "H2", "H3", "H4"]) await expect(page.getByText(h, { exact: true }).first()).toBeVisible();
+  await expect(page.locator("body")).toContainText("20261018T113902Z_4a82cfa"); // final-runs log
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("booth mode tours the site and pauses on interaction", async ({ page }) => {
+  await page.goto("/?booth=1");
+  const chip = page.locator(".booth-chip");
+  await expect(chip).toContainText("Tour 1/");
+  await page.mouse.click(5, 300);
+  await expect(chip).toContainText("paused");
 });
