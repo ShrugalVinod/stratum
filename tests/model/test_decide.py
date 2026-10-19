@@ -294,3 +294,22 @@ def test_portion_with_no_feasible_alternative_is_kept_but_not_flown() -> None:
     g = _flight().assign(segment_id=[f"F1_{i:04d}" for i in range(40)])
     frames, _ = dr._variant_frames(g, {"F1_0039"}, [2000])
     assert frames.groupby("flight_id").size().min() >= 2
+
+
+def test_locked_days_are_waited_for_not_skipped() -> None:
+    import typer
+
+    import stratum.cli as cli
+
+    calls: dict[str, int] = {}
+
+    def one(d: str) -> dict[str, str]:
+        calls[d] = calls.get(d, 0) + 1
+        if d == "2025-10-01" and calls[d] < 3:  # another process holds it for two checks
+            return {"status": cli.LOCKED}
+        return {"status": "done"}
+
+    cli._run_days(["2025-09-01", "2025-10-01", "2025-11-01"], one, "B1", wait_s=0)
+    assert calls == {"2025-09-01": 1, "2025-10-01": 3, "2025-11-01": 1}
+    with pytest.raises(typer.Exit):
+        cli._run_days(["d"], lambda d: {"status": cli.LOCKED}, "B1", wait_s=0, max_wait_s=0.01)

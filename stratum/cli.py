@@ -962,12 +962,51 @@ def run_corrected_cocip(
         )
         raise typer.Exit(1)
     days = [day] if day else _eval_days(root)
-    for d in days:
-        r = dr.corrected_domain_day(root, d, bands, cdir, force=force)
+    _run_days(
+        days,
+        lambda d: dr.corrected_domain_day(root, d, bands, cdir, force=force),
+        "corrected CoCiP",
+    )
+
+
+LOCKED = "locked by another run"
+
+
+def _run_days(
+    days: list[str], run_one: Any, label: str, wait_s: float = 60.0, max_wait_s: float = 4 * 3600
+) -> None:
+    """Run every day; days another process holds (a fresh ``.lock``) are retried until that
+    process finishes them or its lock goes stale (10 min after it died), instead of skipped."""
+    import time
+
+    def show(d: str, r: dict[str, Any]) -> None:
         console.print(
-            f"corrected CoCiP {d}: {r.get('status')} "
-            f"(share_persistent_1 {r.get('share_persistent_1')}, EF+ {r.get('ef_positive_J')})"
+            f"{label} {d}: {r.get('status')} (persistent share {r.get('share_persistent_1')})"
         )
+
+    waiting = []
+    for d in days:
+        r = run_one(d)
+        show(d, r)
+        if r.get("status") == LOCKED:
+            waiting.append(d)
+    start = time.time()
+    while waiting and time.time() - start < max_wait_s:
+        console.print(
+            f"[yellow]waiting for {len(waiting)} day(s) held by another process: {waiting}[/yellow]"
+        )
+        time.sleep(wait_s)
+        still = []
+        for d in waiting:
+            r = run_one(d)
+            if r.get("status") == LOCKED:
+                still.append(d)
+            else:
+                show(d, r)
+        waiting = still
+    if waiting:
+        console.print(f"[red]Still locked after {max_wait_s / 3600:.0f} h: {waiting}[/red]")
+        raise typer.Exit(1)
 
 
 def _ci(r: dict[str, float], supported: bool) -> str:
@@ -1095,13 +1134,13 @@ def run_context_cocip(
         console.print(f"[red]scaling must be one of {CONTEXT_SCALINGS}[/red]")
         raise typer.Exit(1)
     root = drive_root()
-    for d in [day] if day else _eval_days(root):
-        r = cocip_day(root, _date.fromisoformat(d), scaling, members=0, max_age_h=24.0,
-                      corridor_only=False, kind="cocip_domain24", chunk=CHUNK_FLIGHTS,
-                      keep_contrail=False)  # fmt: skip
-        console.print(
-            f"{scaling} {d}: {r.get('status')} (persistent share {r.get('share_persistent_1')})"
-        )
+
+    def one(d: str) -> dict[str, Any]:
+        return cocip_day(root, _date.fromisoformat(d), scaling, members=0, max_age_h=24.0,
+                         corridor_only=False, kind="cocip_domain24", chunk=CHUNK_FLIGHTS,
+                         keep_contrail=False)  # fmt: skip
+
+    _run_days([day] if day else _eval_days(root), one, scaling)
 
 
 @app.command("h34-context")
