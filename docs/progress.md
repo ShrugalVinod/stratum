@@ -2,6 +2,21 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-19 — Phase 7 accepted: H2 supported (with a caveat), H3 supported, H4 not supported
+
+**Done**
+- Colab 07a–07e all exit 0. Final runs logged: H2 (20261018T140654Z_7559cda), H3/H4
+  (20261019T034442Z_5f31ccd); repo `_locks/final_runs.jsonl` = Drive.
+- H2: BSS vs B3 0.86 [0.82, 0.91] → supported; a constant-rate forecast scores the same; STRATUM
+  ranks much better than physics (AUROC 0.65–0.83 vs 0.42–0.66). H3: 0.0044 % → supported (corrected
+  physics too dry); context B1 0.48 %, B3 0.54 %. H4: 0.36 [−0.03, 0.45] → not supported; context
+  B1 0.24, B3 0.27 (clear). Decisions: 333 alerts / 402 portions, 578 t CO₂e avoided at 100 yr.
+- Evaluation report v2 on Drive; H2–H4 paper draft `docs/paper/h2_h4_result_draft.md`; gate report
+  `docs/phase_reports/phase7_gate_report.md`; website updated with H2–H4 results.
+
+**Next**
+- Phase 8 (web app v1, expo build, release).
+
 ## 2026-10-18 — Phase 7: all code built; Colab runs 07a–07d next
 
 **Done (tested, pushed, main ≥ bbd9d02, 255 Python tests)**

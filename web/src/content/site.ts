@@ -50,12 +50,13 @@ export const facts = [
   "31 days × 8 flight levels × 24 hours of contrail conditions",
   "Meteosat-9 checks every 15 minutes",
   "Analysis plan locked 13 Oct 2026",
-  "H1 tested 18 Oct 2026: not supported — physics predicts ~6× more persistent contrails than the satellite sees",
+  "H1 not supported — physics predicts ~6× more persistent contrails than the satellite sees",
+  "Under 1 % of flying carries 80 % of contrail warming over India (H3)",
 ];
 
 // Phase status: update as phases are accepted (source: docs/phase_reports).
 export type PhaseState = "done" | "current" | "upcoming";
-export const statusUpdated = "18 Oct 2026";
+export const statusUpdated = "19 Oct 2026";
 // logged = date of the progress-log entry that finished the phase (docs/progress.md)
 export const phases: { n: number; name: string; state: PhaseState; logged?: string }[] = [
   { n: 0, name: "Setup & pre-registration", state: "done", logged: "13 OCT" },
@@ -65,8 +66,8 @@ export const phases: { n: number; name: string; state: PhaseState; logged?: stri
   { n: 4, name: "Web app v0", state: "done", logged: "17 OCT" },
   { n: 5, name: "Labels & matching", state: "done", logged: "18 OCT" },
   { n: 6, name: "Evaluation (H1)", state: "done", logged: "18 OCT" },
-  { n: 7, name: "Correction & decisions", state: "current" },
-  { n: 8, name: "Final web app", state: "upcoming" },
+  { n: 7, name: "Correction & decisions", state: "done", logged: "19 OCT" },
+  { n: 8, name: "Final web app", state: "current" },
 ];
 
 export const pipeline = [
@@ -144,16 +145,31 @@ export const hypotheses: { id: string; plain: string; test: string; result?: { v
     id: "H2",
     plain: "STRATUM's corrected forecast is clearly more skilful than the best existing correction (B3).",
     test: "Mean held-out-season Brier skill score vs B3 ≥ 0.10 with lower 95 % CI > 0. Primary endpoint.",
+    result: {
+      verdict: "Supported",
+      date: "18 Oct 2026",
+      body: "Skill vs B3 0.86 (95 % CI 0.82–0.91). But a constant guess of the average contrail rate scores the same, because B3 only says yes or no; against that constant the model is not better overall (−0.19). Where it does help is ranking which flights are likely to make a visible contrail (AUROC 0.65–0.83 vs 0.42–0.66 for physics rules).",
+    },
   },
   {
     id: "H3",
     plain: "A small share of flying causes most contrail warming.",
     test: "Share of cruise distance carrying 80 % of positive modelled energy forcing ≤ 10 %.",
+    result: {
+      verdict: "Supported",
+      date: "19 Oct 2026",
+      body: "Under 1 % of flying carries 80 % of contrail warming: 0.48 % of cruise distance with raw ERA5 physics and 0.54 % with the published correction (descriptive). The logged test used our humidity correction, which turned out far too dry, and gave 0.0044 %.",
+    },
   },
   {
     id: "H4",
     plain: "Night flights cause a larger share of contrail warming than their share of distance.",
     test: "Night EF share minus night distance share (18:00–06:00 local solar time); lower 95 % CI > 0.",
+    result: {
+      verdict: "Not supported",
+      date: "19 Oct 2026",
+      body: "Night flights carried 84 % of warming against 49 % of distance, but the logged test (too-dry corrected physics, only 1,583 warming segments) has an interval that reaches below zero (−0.03 to 0.45). With standard physics the night excess is clear: 73–75 % of warming vs 49 % of distance (descriptive).",
+    },
   },
 ];
 
@@ -162,7 +178,7 @@ export const methods = [
   { title: "Physics baseline", body: "Schmidt–Appleman formation check, then CoCiP for persistence and energy forcing, with three humidity baselines and Monte Carlo ranges." },
   { title: "Satellite detection", body: "A transparent line-filter detector on the 10.8 − 12.0 µm brightness-temperature difference, tuned on 51 Meteosat scenes labelled by three contrail experts (DLR dataset) and checked on 89 others (precision 0.22, recall 0.23). Over India it is also checked against 100 scenes whose labels Claude drafted and team members reviewed: a secondary, exploratory check." },
   { title: "Matching and labels", body: "Each predicted contrail is advected with the wind for 20–120 min, parallax-corrected and matched within 2 px and 20°. A segment counts as observed only if it matches in at least two satellite images; cloudy or steep-angle scenes are labelled unknown, never \"no contrail\". A wrong-day check measures how many matches are chance." },
-  { title: "Correction and decision", body: "A calibrated model learns where physics is wrong; the decision layer ranks altitude changes by their lower-bound net warming avoided." },
+  { title: "Correction and decision", body: "A calibrated model (monotone gradient-boosted trees) learns where physics is wrong, trained on some seasons and tested on another. The decision layer tries flying 2,000 or 4,000 ft higher or lower, reruns the contrail physics 100 times with different humidity, model and climate-metric assumptions, adds the extra fuel, and alerts only when the cautious end of the warming avoided is positive at both 20 and 100 years." },
 ];
 
 // Correction-model inputs (source: docs/methods/features.md; pre-registered set, paper §4.6).
@@ -188,6 +204,7 @@ export const modelFeatures: { name: string; unit: string; why: string; mono?: "+
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-10-19", phase: 7, title: "Phase 7 accepted: H2–H4 tested", body: "A machine-learning correction trained on the satellite labels ranks contrail-prone flight segments far better than any yes/no physics rule, and it passes H2 against the published correction. But a constant guess of the average contrail rate passes too, so we report that the model's probabilities barely beat the base rate. Feeding the correction back into the physics as one humidity factor turned out too blunt: it dried the air so much that almost no contrails formed. With standard physics, under 1 % of flying carries 80 % of contrail warming over India (H3, supported), and night flights carry about three quarters of it against half the distance (H4 not supported in the logged test, clear in the context runs). The avoidance layer flagged 402 stretches of flight on 12 days and would alert on 333 of them, mostly on one humid day in February." },
   { date: "2026-10-18", phase: 6, title: "Phase 6 accepted: H1 is not supported", body: "The one logged test of H1: over 334,211 flight segments on 12 days, raw ERA5 physics predicted 10,076 persistent contrails and Meteosat-9 saw 1,564 — a ratio of 6.44 (95 % range 4.92–12.12). We expected physics to predict too few; it predicts about six times too many. Most predicted contrails are too thin or narrow for the satellite: only 16 % pass the detectability thresholds, and allowing for that the two agree (1.05). The answer is the same under every alternative label rule and matching tolerance. Limits: only 2–4 days per season, no monsoon contrails seen, and about a third of the satellite labels are chance matches. A refuted hypothesis is a result, and we report it as one." },
   { date: "2026-10-18", phase: 6, title: "Evaluation harness built", body: "One harness that every model goes through the same way: four baselines (climatology, raw ERA5, constant humidity scaling, latitude-dependent correction), seasons held out one at a time, no flight or satellite image on both sides of a split, and 1,000 day-resamples for every uncertainty range. The H1 test runs once, logged, before the results are seen." },
   { date: "2026-10-18", phase: 5, title: "Phase 5 accepted: satellite labels for the whole year", body: "680,387 contrail-forming flight segments over India checked against Meteosat-9: 421 contrails observed from 369 flights (the pre-registered minimum is 300). A wrong-day check shows about a third of these matches would happen by chance, so the labels are noisy. Almost all observations are from winter and spring: monsoon cloud hides contrails from June to October. Over India the detector finds about 1 in 3 labelled contrails, but only about 1 in 20 of its lines is a contrail." },

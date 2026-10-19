@@ -12,8 +12,8 @@ forecast and the Brier score rewards any sensible probability for an event seen 
 segments. Against that constant forecast STRATUM's mean skill was −0.19 (−1.07 to −0.08): slightly
 better in the pre-monsoon, post-monsoon and winter seasons (by 0.3–1.1 %), much worse in the monsoon,
 when the satellite saw one contrail in 9,803 segments. Where the model does add something is in
-ranking: its AUROC was 0.78–0.83 against 0.46–0.57 for the physics baselines, and a logistic
-regression on RHi alone came close (0.78–0.79). Treating humidity as a continuous predictor instead
+ranking: its AUROC was 0.65–0.83 by season against 0.42–0.66 for the physics baselines, and a logistic
+regression on RHi alone came close (0.78–0.80). Treating humidity as a continuous predictor instead
 of a threshold at ice saturation does most of the work; the other 17 features add little
 (skill vs the RHi-only logistic 0.05, 0.02–0.10), and isotonic calibration did not improve the
 validation score.
