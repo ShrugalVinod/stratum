@@ -1,0 +1,1 @@
+{"date":"2026-02-01","has_flights":true,"n_flights":2141,"n_segments":372163,"n_flagged":300,"ef_positive_J":null,"ef_negative_J":null,"grid_files":33,"quality_flags":[],"n_flagged_by_model":{"B1":300,"B3":300,"STRATUM":298},"n_alerts":249,"has_observability":true,"layers":["B1","B3","STRATUM","STRATUM_spread","observable"]}

@@ -8,9 +8,9 @@ repos:
       - id: check-toml
       - id: check-json
       - id: end-of-file-fixer
-        exclude: ^BUILD_PROMPT\.md$   # the team's own document: never auto-edited
+        exclude: ^(BUILD_PROMPT\.md|web/public/data/.*)$   # the team's document; exported web data are never rewritten
       - id: trailing-whitespace
-        exclude: ^BUILD_PROMPT\.md$
+        exclude: ^(BUILD_PROMPT\.md|web/public/data/.*)$
       - id: check-merge-conflict
       - id: check-added-large-files   # data belongs on Drive, not in git
         args: ["--maxkb=2048"]
@@ -23,7 +23,7 @@ repos:
         language: system
         # web data manifests and the append-only run logs (_locks/*_runs.jsonl, byte-identical to
         # Drive) hold git commit, config and results hashes (public fingerprints, not secrets)
-        exclude: ^(uv\.lock|_locks/(final|peek)_runs\.jsonl|docs/.*\.pdf|(web|labeller)/package-lock\.json|web/public/data/[^/]+/manifest\.json|web/public/.*\.(pdf|mp4|webp|png))$
+        exclude: ^(uv\.lock|_locks/(final|peek)_runs\.jsonl|docs/.*\.pdf|(web|labeller)/package-lock\.json|web/public/data/[^/]+/(manifest|results)\.json|web/public/.*\.(pdf|mp4|webp|png))$
       - id: ruff
         name: ruff (lint)
         entry: uv run ruff check --fix --force-exclude
