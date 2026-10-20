@@ -1,35 +1,36 @@
-# STRATUM: 4-minute demo script (Phase 4 open item d)
+# STRATUM: 4-minute demo video script (v1, 20 Oct 2026)
 
-Draft by Claude, 17 Oct 2026; updated 19 Oct 2026 with the Phase 5–7 results. The team edits the words; the **clicks** are tested by the Playwright
-end-to-end test (`web/e2e/site.spec.ts`), so they keep working when the site changes.
+Draft by Claude for the v1 site (data build v1-d126083, release v1.0.0). The team edits the words;
+every number below is on the live site (Map, Results, Methods, Data & code) or in
+`docs/web_numbers.md`. Say nothing that is not.
 
 **Set-up for the recording**
-- Chrome, a **new clean profile** (no extensions, no bookmarks bar), window 1440 × 900, zoom 100 %.
-- Open https://stratum.aerospaceonyx.workers.dev once before recording so the fonts and map tiles
-  are cached, then reload.
-- Screen recorder at 1080p, system sounds off. Narrator reads from this page on a second screen.
-- Every number spoken below is on the site or in `docs/web_numbers.md`. Say nothing that is not.
+- Chrome, a **new clean profile** (no extensions, no bookmarks bar), window 1440 × 900, zoom 100 %,
+  **light theme** (the button top right says "Night").
+- Open each URL below once before recording (fonts, map and data get cached), then start.
+- Screen recorder at 1080p, system sounds off; read from this page on a second screen or phone.
+- Let every page settle 2–3 s before speaking over it. Slow mouse movements.
 
-| time | on screen / click | narration (draft) |
+| time | on screen / click | narration |
 |---|---|---|
-| 0:00–0:20 | Home page, let the hero animation play (FL380 vs FL360 through the humid layer). | "Contrails cause a large share of aviation's warming, but only the few that form in cold, humid air last for hours. Move the plane a little, and you can lose the cloud." |
-| 0:20–0:40 | Scroll slowly past the departures board to the **Phase** board. | "STRATUM is a research prototype over India. Our analysis plan was locked on 13 October 2026, before we had any result. Phases 0 to 7 are done: we tested all four hypotheses, and we publish every outcome." |
-| 0:40–1:00 | Click **Map** in the header. Wait for the replay (planes move, ≈ 7 s). | "This is 1 January 2026: 1,458 commercial flights, replayed from real tracking data, over the hourly physics forecast of where lasting contrails can form." |
-| 1:00–1:30 | Click the **top segment** in the list on the right. The detail bar opens under the map. | "Physics alone flags 66 one-minute segments from 6 flights. This one, the strongest: the bar shows how long CoCiP says the contrail lasted, and its warming estimate." |
-| 1:30–1:45 | Click the **›** (next segment) arrow twice, then **Close**. | "We can step through each flagged segment of that flight." |
-| 1:45–2:05 | Click a **grey flight track** with no flagged segment. Point at the sky column. | "Most flights make no lasting contrail. Click any flight and the column shows the humidity and temperature it flew through." |
-| 2:05–2:25 | Click the **flight-level** tape (FL400), then press **→** on the hour slider twice. | "The map changes with flight level and hour: the humid layers are thin, which is why a small altitude change can matter." |
-| 2:25–2:50 | Scroll to the **gallery**; open the first satellite image; press **Esc**. | "Physics is not enough. Meteosat-9 sees India every 15 minutes, and our detector finds real contrails in it. On 1 January, no predicted contrail lined up with a detected one." |
-| 2:50–3:15 | Click **How it works**; open one **For scientists** panel. | "STRATUM checks every prediction against the satellite, after correcting for wind drift and parallax, and learns where the physics is wrong." |
-| 3:15–3:35 | Click **Methods**; point at the hypothesis cards H1–H4 and their results. | "Four hypotheses, fixed in advance, each with a pass or fail rule. Physics predicts about six times more contrails than the satellite sees, mostly because thin ones are invisible. Under one percent of flying causes most of the warming, and night flights carry about three quarters of it. Not every test passed, and we say so." |
-| 3:35–3:50 | Click the **Chart / Night** button (theme switch). | "The site works in day and night themes and on a phone." |
-| 3:50–4:00 | Click **Team**. Hold. | "We are four students from Indus International School, Bengaluru, with Dr. Varsha Pant. STRATUM: move the plane, lose the cloud." |
+| 0:00–0:20 | **Home** (https://stratum.aerospaceonyx.workers.dev). Let the hero animation play. | "Contrails cause a large share of aviation's warming, but only the few that form in cold, humid air last for hours. Move the plane a little, and you can lose the cloud. We are team STRATUM." |
+| 0:20–0:35 | Scroll slowly to the team's **contrail photo** and the **Phase** board. | "We photographed this one over Bengaluru. STRATUM asks a simple question: how well can we predict lasting contrails over India? We locked our analysis plan on 13 October 2026, before we had any result." |
+| 0:35–1:00 | Open **/map?date=2026-02-01&fl=360&m=STRATUM**. Wait for the replay (planes move, ≈ 7 s). | "This is 1 February 2026: 2,141 commercial flights from real tracking data. The green shading is our model's chance of a contrail the satellite would see, learned from Meteosat-9 contrails." |
+| 1:00–1:35 | Click the **top card** in the list (XAX601). The card opens under the map. | "The list ranks flights by the cautious estimate of warming they could avoid. Top today: an AirAsia X flight. Climbing from FL390 to FL410 would avoid between 43 and 115 tonnes of CO₂-equivalent warming over 100 years, and save 86 kilograms of fuel. Every range comes from 100 Monte Carlo runs, and the card says plainly: air traffic control feasibility is not modelled." |
+| 1:35–1:50 | Point at the **humidity profile** chart in the card. | "Here is why: the humid layer is thin. FL390 sits inside it; FL410 is above it." |
+| 1:50–2:10 | Click **Close**, then the **Physics** model button, then **STRATUM** again. | "Switch to raw physics and the map looks completely different. That disagreement is the problem STRATUM exists to measure." |
+| 2:10–2:40 | Click **Results**. Scroll through H1 → H4 slowly. | "Four hypotheses, each tested once. H1: raw physics predicts about six times more contrails than the satellite sees, the opposite of what we expected; most are too thin to detect. H2: our model beats the published correction, but a constant guess scores the same, so its real strength is ranking. H3: under one percent of flying causes eighty percent of contrail warming. H4: night flights carry about three quarters of the warming on half the distance, but the logged test's interval reached below zero, so we report it as not supported." |
+| 2:40–3:05 | Click **Methods**, scroll to **What didn't work**. | "We publish what didn't work too. Our satellite detector is simple: it finds about a quarter of contrails. We measured exactly how weak it is before testing, and every result accounts for it. A learned detector is our next step." |
+| 3:05–3:30 | Click **Data & code** (About the data, §5). Show the DOI link. | "Everything is open: the code, the derived data and a one-click notebook that recomputes our results, archived on Zenodo with a DOI. A teammate who didn't write the code reproduced every figure from scratch." |
+| 3:30–3:45 | Click the **Night** theme button; then back. | "The site also runs offline for our booth, in day and night themes and on a phone." |
+| 3:45–4:00 | Click **Team**. Hold. | "We are students from Indus International School, Bengaluru, with Dr. Varsha Pant. STRATUM: move the plane, lose the cloud." |
 
 **Checks before the final take**
-- Detail bar shows "Contrail lasted" with a number, not "0 h", for the top segment.
-- Fields still marked "— (Phase 8)" are not described as results.
-- Results spoken are exactly those on the Methods cards (H1–H4) and the Progress diary.
+- The top STRATUM card on 1 Feb 2026 is XAX601 with "FL410", "saves 86 kg fuel", 100-year range
+  43–115 t. If the data build changes, re-read the numbers from the card and fix the narration.
+- Results narration matches the four cards on /results word for word in substance (6.44; 0.86 and
+  the constant-rate caveat; under 1 % with standard physics; H4 interval −0.03 to 0.45).
+- Detector: "about a quarter" = recall 0.23 on the expert-labelled scenes (Methods, gate reports).
+- The team photo slide and Team page show only photos the team supplied.
 - Credits visible in the footer when scrolling (EUMETSAT, Copernicus, ADS-B Exchange, OpenSky,
   Natural Earth).
-- If label or detector numbers are mentioned, use only those on the Progress page.
-- Home §4 now shows the team's contrail photo; it can be the opening shot (scroll to it at 0:20).
