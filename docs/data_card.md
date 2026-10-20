@@ -43,6 +43,10 @@ Research on contrail prediction and observation over India; teaching; checking o
 **Not** for operational flight planning, air traffic control, or claims of verified emissions
 reductions.
 
+## Where to get it
+GitHub release v1.0.0 (https://github.com/ShrugalVinod/stratum/releases/tag/v1.0.0), file `stratum-release-1.0.0.zip`; archived with the code on
+Zenodo, DOI 10.5281/zenodo.23480202 (all versions: 10.5281/zenodo.23480201).
+
 ## Licences
 - Our code: Apache-2.0. Our derived data: **CC BY 4.0** (team decision, 19 Oct 2026); anything
   derived from the DLR expert labels stays CC BY-NC 4.0.

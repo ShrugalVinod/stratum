@@ -76,18 +76,21 @@ export function AboutData() {
             <p class="label red">§5 · Code, data and how to cite</p>
             <p>
               <b>Code:</b> Apache-2.0. <b>Our derived data</b> (segment-level predictions and labels for commercial flights with hashed ids, model
-              files, evaluation reports, the pre-registration lock and the final-runs log) will be released with a DOI after the team's sign-off.
+              files, evaluation reports, the pre-registration lock and the final-runs log) are released under CC BY 4.0 (parts derived from the DLR
+              expert labels: CC BY-NC 4.0) as <a href="https://github.com/ShrugalVinod/stratum/releases/tag/v1.0.0">stratum-release-1.0.0.zip</a>.
               Raw data are not redistributed: ERA5 (Copernicus licence), Meteosat imagery (EUMETSAT), ADS-B Exchange tracks and the DLR expert
               labels (CC BY-NC 4.0) are re-downloaded with the scripts in the repository.
             </p>
             <p>
-              <b>Reproduce:</b> install with <code>uv sync</code>; the pipeline runs as one command per step (<code>stratum --help</code>), each with
-              a Colab notebook in <code>colab/</code>; the website data come from <code>stratum export-web-v1</code>. Every final result can be checked
+              <b>Reproduce:</b> open <a href="https://colab.research.google.com/github/ShrugalVinod/stratum/blob/main/colab/reproduce_results.ipynb">the
+              one-click Colab notebook</a> (every results figure, then H1 and H2 recomputed from the released data, ≈ 5 min, no keys), or follow
+              "Reproduce the results" in the <a href="https://github.com/ShrugalVinod/stratum">repository</a>. Every final result can be checked
               against <code>_locks/final_runs.jsonl</code>.
             </p>
             <p>
               <b>Cite:</b> Vinod S., Harsoda A., Kupnur I., Shah A. (2026). <i>STRATUM: how well can persistent contrails be predicted over India?</i>{" "}
-              Research protocol v1.2 and results, Conrad Challenge 2026–27. DOI: to be minted with the release.
+              Version 1.0.0, Zenodo.{" "}
+              <a href="https://doi.org/10.5281/zenodo.23480202">doi.org/10.5281/zenodo.23480202</a>
             </p>
           </section>
         </div>

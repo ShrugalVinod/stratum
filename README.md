@@ -1,5 +1,7 @@
 # STRATUM
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23480202.svg)](https://doi.org/10.5281/zenodo.23480202)
+
 **Move the plane. Lose the cloud.** Satellite-checked prediction of persistent contrails over
 Indian airspace. Team STRATUM, Indus International School, Bangalore · Conrad Challenge
 2026–27 (Aerospace & Aviation) · Supervisor Dr. Varsha Pant.
@@ -106,7 +108,11 @@ of a locked hypothesis needs `--rerun-reason` and is logged next to the first.
 
 ## Cite
 
-See [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button).
+Vinod S., Harsoda A., Kupnur I., Shah A. (2026). *STRATUM: how well can persistent contrails be
+predicted over India?* Version 1.0.0. Zenodo. https://doi.org/10.5281/zenodo.23480202
+
+All versions: https://doi.org/10.5281/zenodo.23480201. Derived data: `stratum-release-1.0.0.zip` on the
+[v1.0.0 release](https://github.com/ShrugalVinod/stratum/releases/tag/v1.0.0). See also [`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository").
 
 ## Where data lives (Google Drive)
 

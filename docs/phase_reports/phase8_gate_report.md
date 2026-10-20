@@ -1,9 +1,9 @@
 ```
-═══ PHASE 8 GATE REPORT — Web app v1, expo build, open release — 19 Oct 2026 ═══
-Status:          OPEN only on [team] items (fresh-Colab README test, 08b run,
-                 repo public + DOI at v1.0.0). Everything else is built, tested and live.
+═══ PHASE 8 GATE REPORT — Web app v1, expo build, open release — 20 Oct 2026 ═══
+Status:          COMPLETE — every done-when item met; awaiting Shrugal's acceptance.
+                 Released: v1.0.0, DOI 10.5281/zenodo.23480202 (all versions 10.5281/zenodo.23480201).
 Calendar:        far ahead (plan: Phase 8 by the Summit, 21–24 Apr 2027)
-Code:            main ≥ 655b339; ruff + mypy --strict clean; Python tests pass (slow ones
+Code:            main = v1.0.0 (03d7484) + DOI commit; ruff + mypy --strict clean; Python tests pass (slow ones
                  included: web export end to end, finish-only, release bundle); lock verifies.
                  No new deviation in Phase 8.
 
@@ -19,23 +19,31 @@ Done-when checklist (build prompt §8.5):
       /results, booth mode); CI green. Lighthouse (mobile, live): accessibility, best practices
       and SEO 100 on /, /map, /results, /methods; performance / 97 (after the font preload),
       /map 87, /results 94, /methods 95.
-  [~] Expo build: `npm run build:expo` / `make expo` → web/expo-build/ with start-expo.command,
+  [x] Expo build: `npm run build:expo` / `make expo` → web/expo-build/ with start-expo.command,
       .bat and .sh (local server, no internet calls at runtime), service worker, booth mode
       (?booth=1: tours map → top alert and its card → B1 for contrast → results → threats;
       pauses on any touch, resumes after 60 s). docs/expo_checklist.md written.
       Checked by Claude: the 72 MB folder served by serve.py with every non-local request
       blocked — all 9 pages load, the map shows 298 candidates and the card, booth mode starts,
       0 external requests, 0 errors.
-      Booth test with Wi-Fi off passed on Shrugal's Mac (19 Oct; checklist ticked). Still to do:
-      the backup laptop, the USB sticks and the hardware list in docs/expo_checklist.md.
-  [~] Release: `stratum release-bundle` (colab/08b) — commercial flights only, salted-hash ids,
+      Booth test with Wi-Fi off passed on Shrugal's Mac (19 Oct; checklist ticked). Before the
+      Summit (not a Phase 8 item): backup laptop, USB sticks, hardware list in the checklist.
+  [x] Release: `stratum release-bundle` (colab/08b) — commercial flights only, salted-hash ids,
       positions rounded to 0.25°, labellers pseudonymised, no raw ADS-B / ERA5 / Meteosat data;
       `make reproduce-figures` redraws every results figure from results.json alone;
       CITATION.cff; docs/data_card.md; README "reproduce" path (three levels).
       Decided by the team 19 Oct (decisions.md): CC BY 4.0 for derived data, DLR-derived parts
       CC BY-NC 4.0, no EUMETSAT scene packages, positions at 0.25°, DOI approved for v1.0.0.
-      [team] run 08b; a team member runs the README path in a fresh Colab; make the repo public
-      and switch it on in Zenodo, then publish the v1.0.0 GitHub release (mints the DOI).
+      08b run 19 Oct: 312,276 labelled segments from 12,515 commercial flights, 388 avoidance
+      candidates, 223 files, 27.9 MB; privacy checks passed. Repository made public after a
+      history scan (159 commits: no keys, tokens or salt; no raw data). README tested by a team
+      member who did not write the code, in a fresh Colab: level 1 reproduced all 5 figures
+      byte-identically. Level 2 (`make rescore` on the release) reproduces the logged runs on
+      commercial flights only: H1 6.58 [5.02, 12.4] vs logged 6.44 [4.92, 12.1]; H2 0.860
+      [0.825, 0.911] vs logged 0.859 [0.822, 0.909]; same verdicts.
+      GitHub release v1.0.0 (stratum-release-1.0.0.zip attached) published 19 Oct after the
+      team's OK; Zenodo archived it: DOI 10.5281/zenodo.23480202. DOI added to CITATION.cff,
+      README, data card and the website's Data & code section.
   [x] Final gate report with what didn't work: below.
 
 What didn't work, and why (the paper promises this list):

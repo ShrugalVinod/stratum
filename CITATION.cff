@@ -30,4 +30,14 @@ repository-code: "https://github.com/ShrugalVinod/stratum"
 url: "https://stratum.aerospaceonyx.workers.dev"
 version: "1.0.0"
 date-released: "2026-10-19"
-# identifiers: a Zenodo DOI is added when the release is minted (only after the team's OK).
+doi: "10.5281/zenodo.23480201"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23480201"
+    description: "All versions (resolves to the latest)"
+  - type: doi
+    value: "10.5281/zenodo.23480202"
+    description: "Version 1.0.0"
+  - type: url
+    value: "https://github.com/ShrugalVinod/stratum/releases/tag/v1.0.0"
+    description: "Release with the derived-data bundle (stratum-release-1.0.0.zip)"

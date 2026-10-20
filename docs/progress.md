@@ -2,6 +2,19 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-20 — Phase 8 complete: v1.0.0 released with a DOI
+
+**Done**
+- Release bundle 1.0.0 (Colab 08b); repository public after a history scan; README reproduce path
+  tested by a team member in a fresh Colab (figures identical); `make rescore` on the release
+  reproduces H1 and H2 (same verdicts).
+- GitHub release v1.0.0 with the derived data; Zenodo DOI 10.5281/zenodo.23480202.
+- Phase 8 gate report closed (`docs/phase_reports/phase8_gate_report.md`).
+
+**Next**
+- Demo video (team). After it: learned contrail detector as a disclosed sensitivity analysis.
+- Before the Summit: backup laptop, USB sticks, hardware list (`docs/expo_checklist.md`).
+
 ## 2026-10-19 — Phase 8: web app v1 built on real data; release tooling ready
 
 **Done**
