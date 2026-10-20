@@ -155,6 +155,24 @@ export function MapPage() {
   const [airline, setAirline] = useState("all");
   const [nightOnly, setNightOnly] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [legendOpen, setLegendOpen] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("stratum-legend");
+      if (v) return v === "open";
+    } catch {
+      /* storage blocked: fall back to the screen size */
+    }
+    return typeof window === "undefined" || window.innerWidth > 900;
+  });
+  const toggleLegend = () => {
+    const next = !legendOpen;
+    setLegendOpen(next);
+    try {
+      localStorage.setItem("stratum-legend", next ? "open" : "closed");
+    } catch {
+      /* not remembered: fine */
+    }
+  };
   const [copied, setCopied] = useState(false);
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null);
   const [flightSel, setFlightSel] = useState<string | null>(null); // a clicked flight without a selected segment
@@ -546,10 +564,17 @@ export function MapPage() {
             <p class="map-hint mono-s" aria-hidden="true">
               Click a flight → details below · click anywhere → sky column
             </p>
-            <div class={`legend ${detailId ? "compact" : ""}`}>
-              <div class="legend-title label ink">
-                {layer === "observable" ? "Satellite could not see (shaded)" : layer === "STRATUM_spread" ? "Model uncertainty" : layer === "STRATUM" ? "Chance of a contrail the satellite sees" : "Persistent-contrail conditions"}
+            <div class={`legend ${detailId ? "compact" : ""} ${legendOpen ? "" : "closed"}`}>
+              <div class="legend-head">
+                <div class="legend-title label ink">
+                  {layer === "observable" ? "Satellite could not see (shaded)" : layer === "STRATUM_spread" ? "Model uncertainty" : layer === "STRATUM" ? "Chance of a contrail the satellite sees" : "Persistent-contrail conditions"}
+                </div>
+                <button class="legend-toggle mono" aria-expanded={legendOpen} aria-controls="legend-body" title={legendOpen ? "Hide the legend" : "Show the legend"} onClick={toggleLegend}>
+                  {legendOpen ? "−" : "+"}
+                  <span class="sr-only">{legendOpen ? "Hide the legend" : "Show the legend"}</span>
+                </button>
               </div>
+              <div id="legend-body" class="legend-body" hidden={!legendOpen}>
               {layer === "observable" ? (
                 <div class="ramp-labels mono">
                   <span>Grey: cloud or steep view in that hour</span>
@@ -588,6 +613,7 @@ export function MapPage() {
                       : `FL${st.fl} ${pad2(st.hour)}:00 UTC: ${(hourly.domain[st.hour] * 100).toFixed(1)} % of the domain · ${(hourly.corridor[st.hour] * 100).toFixed(1)} % of the corridor`}
                 </div>
               )}
+              </div>
             </div>
             <div class="cursor mono" aria-hidden="true">
               {cursor ? `${cursor[1].toFixed(2)}°N  ${cursor[0].toFixed(2)}°E` : "6–37°N · 68–98°E"}

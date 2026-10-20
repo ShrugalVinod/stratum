@@ -1506,3 +1506,38 @@
 .mp:has(.deck-wrap.open) .tape button b {
   font-size: 14px;
 }
+
+/* collapsible legend: the title row stays, the rest folds away (remembered per viewer) */
+.legend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.legend-toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.legend-toggle:hover,
+.legend-toggle:focus-visible {
+  border-color: var(--ink);
+}
+.legend-body {
+  display: grid;
+  gap: 7px;
+}
+.legend-body[hidden] {
+  display: none;
+}
+.legend.closed {
+  padding: 8px 10px;
+}
