@@ -164,3 +164,12 @@ The first EUMETSAT account accepted the General Licence on 2026-10-14 and could 
 the browser, but its API key kept returning `403 "GeneralLicense required"` (helpdesk ticket
 sent to ops@eumetsat.int). A second account, where the licence was accepted **before** the
 API key was created, works. Its key is the one in `.env` and Colab Secrets.
+
+## OpenContrails (learned detector pre-training, D-005)
+- What: ~27,000 GOES-16 ABI scenes (256 × 256 px, 2 km) with human-labelled contrail masks;
+  snapshot `20250305`, public bucket `gs://goes_contrails_dataset` (read over HTTPS, no account).
+- Licence: **CC BY 4.0** (Google Research); GOES-16 data have no restrictions.
+- Cite: Ng et al. (2024), *Contrail Detection on GOES-16 ABI With the OpenContrails Dataset*,
+  IEEE TGRS 62.
+- Use: pre-training only (3 infrared channels at the labelled time + the mask); nothing is
+  redistributed. Reader: `stratum/detect/tfrecord.py` (no TensorFlow needed).

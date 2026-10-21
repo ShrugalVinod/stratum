@@ -382,6 +382,68 @@ def reproduce_figures(
     _summary("reproduce-figures", {"figures": len(files), "out": str(out)})
 
 
+def _shards(spec: str) -> list[int]:
+    """'0-29' or '0,5,7' → shard numbers."""
+    out: list[int] = []
+    for part in spec.split(","):
+        a, _, b = part.strip().partition("-")
+        out += list(range(int(a), int(b) + 1)) if b else [int(a)]
+    return out
+
+
+@app.command("detector-nn-data")
+def detector_nn_data(
+    dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
+    train_shards: Annotated[str, typer.Option(help="OpenContrails train shards (0-29)")] = "0-29",
+    val_shards: Annotated[str, typer.Option(help="OpenContrails validation shards")] = "0-3",
+) -> None:
+    """D-005 (Colab 09a): OpenContrails (streamed) + DLR scenes → training data on Drive."""
+    from stratum.detect import nn_run
+
+    res = nn_run.prepare(drive_root(), Path(dlr_dir), _shards(train_shards), _shards(val_shards),
+                         log=console.print)  # fmt: skip
+    _summary("detector-nn-data", {
+        "oc_train_examples": sum(r["n"] for r in res["oc_train"]),
+        "oc_val_examples": sum(r["n"] for r in res["oc_val"]),
+        "dlr_train_scenes": res["dlr_train"]["n"], "dlr_eval_scenes": res["dlr_eval"]["n"],
+    })  # fmt: skip
+
+
+@app.command("detector-nn-train")
+def detector_nn_train(
+    dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
+    pretrain_epochs: Annotated[int, typer.Option()] = 15,
+    finetune_epochs: Annotated[int, typer.Option()] = 150,
+) -> None:
+    """D-005 (Colab 09b, GPU): pre-train, 5-fold fine-tune for the settings, final model.
+    Uses only the DLR training scenes; the evaluation scenes are not read."""
+    from stratum.detect import nn, nn_run
+
+    cfg = nn.TrainConfig(pretrain_epochs=pretrain_epochs, finetune_epochs=finetune_epochs)
+    meta = nn_run.train(drive_root(), Path(dlr_dir), cfg, log=console.print)
+    _summary("detector-nn-train", {k: meta[k] for k in (
+        "oc_train_examples", "oc_validation_dice", "hysteresis", "max_line_residual_px",
+        "max_orientation_spread_deg", "oof_train", "model_sha256")})  # fmt: skip
+
+
+@app.command("detector-nn-eval")
+def detector_nn_eval(
+    dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
+    rerun_reason: Annotated[str | None, typer.Option(help="needed for a 2nd evaluation")] = None,
+) -> None:
+    """D-005 (Colab 09b): the ONE check of the learned detector on the 89 DLR evaluation
+    scenes, old and new side by side; logged in _locks/detector_runs.jsonl."""
+    from stratum.detect import nn_run
+
+    res = nn_run.evaluate(drive_root(), Path(dlr_dir), rerun_reason, log=console.print)
+    _summary("detector-nn-eval", {
+        "scenes / expert lines": f"{res['scenes']} / {res['expert_lines']}",
+        **{f"{w} {k}": f"{res[w][k]:.3f} {res[w]['ci95'][k]}" for w in ("new", "old")
+           for k in ("precision", "recall", "f1", "recall_lenient")},
+        "pixel Dice (new)": res["pixel_dice_new"],
+    })  # fmt: skip
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],

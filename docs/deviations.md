@@ -95,3 +95,22 @@ both runs (build prompt §6.8).
   the wrong-day null and parallax summaries (Phase 5 data-quality checks), and the 05e
   diagnostics above. No correction model, baseline, hypothesis test or H1–H4 result exists.
 - Team OK: Shrugal Vinod, 2026-10-18 (chat: "D-004 Team OK")
+
+## D-005 — 2026-10-21 — A learned contrail detector, as a disclosed second analysis
+- Keys: none of the pre-registered values change. New: `stratum/detect/nn*.py`,
+  `colab/09a_detector_data.ipynb`, `colab/09b_detector_train_eval.ipynb`.
+- Reason: the pre-registered line-filter detector is weak. On the DLR expert evaluation scenes
+  it finds about a quarter of the contrails (precision 0.22, recall 0.23, F1 0.22; reproduced
+  exactly by the new evaluation code on 21 Oct). Every satellite label, and so every H1/H2
+  number, inherits that weakness.
+- Change: a small U-Net, pre-trained on OpenContrails (Google Research, GOES-16, CC BY 4.0) and
+  fine-tuned on the 51 DLR training scenes only. Its probabilities replace the line-filter
+  response inside the existing detector; objects, matching, labels and scoring are unchanged.
+  Settings are chosen by 5-fold out-of-fold F1 on the training scenes; the 89 evaluation scenes
+  are scored **once**, old and new side by side, logged in `_locks/detector_runs.jsonl`.
+- What never changes: the logged final runs (H1–H4) and their numbers. If the new detector is
+  better, the year is re-labelled with it and H1/H2 are recomputed as a **descriptive second
+  analysis**, shown next to the logged results and labelled as such.
+- Results seen before the change: all of Phases 0–8 (H1–H4 logged 18–19 Oct). This is a
+  post-hoc analysis and is reported as one.
+- Team OK: _pending_

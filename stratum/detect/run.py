@@ -125,11 +125,19 @@ def detect_slot(
     p: DetectorParams,
     coast: npt.NDArray[np.bool_] | None = None,
     image_time: Any = None,
+    response: Array | None = None,
 ) -> tuple[pd.DataFrame, ObjectLog]:
-    """Detect line objects in one slot (all inputs on the same native pixel grid)."""
+    """Detect line objects in one slot (all inputs on the same native pixel grid).
+
+    ``response``: a per-pixel contrail probability from the learned detector (D-005). It then
+    replaces the line-filter response (``p.hysteresis`` must be in probability units) and each
+    object's confidence is its mean probability; the filter bank still supplies the per-pixel
+    line direction for ridge thinning, and every other step is unchanged."""
     f = contrail_field(t108, t120, p.background_px, p.noise_px, p.t120_weight)
     bank = _bank(p.orientations, tuple(p.lengths_px), p.core_sigma_px, p.flank_px)
     resp, theta = line_response(f["field"], bank)
+    if response is not None:
+        resp = np.asarray(response, float)
     valid = np.isfinite(t108) & np.isfinite(t120) & (np.nan_to_num(vza, nan=90.0) <= p.max_vza_deg)
     objs, log = extract_objects(resp, f["field"], theta, valid, coast, p)
     rows = [_row(o, i, f, lat, lon, vza, p, image_time) for i, o in enumerate(objs)]
@@ -138,6 +146,8 @@ def detect_slot(
     log.rejected["cloud_edge"] += int(edge.sum())
     df = df[~edge].reset_index(drop=True)
     df["object_id"] = np.arange(len(df))
+    if response is not None:
+        df["confidence"] = df["mean_response"].astype(float)
     return df, log
 
 

@@ -58,6 +58,11 @@ dependencies = [
 [project.scripts]
 stratum = "stratum.cli:app"
 
+[project.optional-dependencies]
+detector = [
+    "torch>=2.5",
+]
+
 [dependency-groups]
 dev = [
     "pytest",
@@ -129,3 +134,13 @@ branch = true
 # satpy and eumdac ship partial type hints that strict mypy can't use; treat them as untyped.
 module = ["satpy", "satpy.*", "eumdac", "eumdac.*", "pyresample", "pyresample.*"]
 follow_imports = "skip"
+
+# The learned detector (D-005) trains on Colab GPUs. The default Linux torch wheel targets
+# CUDA 13 (needs a very new NVIDIA driver); the CUDA 12.6 build runs on Colab's drivers.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
