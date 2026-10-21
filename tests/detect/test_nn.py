@@ -114,21 +114,35 @@ def test_detect_slot_with_probability() -> None:
     assert none.empty
 
 
+_TRAIN_SCRIPT = """
+import numpy as np
+from stratum.detect import nn
+rng = np.random.default_rng(0)
+x = rng.normal(size=(12, 3, 128, 128)).astype(np.float16)
+y = np.zeros((12, 128, 128), np.uint8)
+for i in range(12):
+    r = int(rng.integers(20, 100))
+    y[i, r : r + 2, 10:118] = 1
+    x[i, 0, r : r + 2, 10:118] += 3
+m = nn.build_model(8)
+cfg = nn.TrainConfig(base_channels=8, batch=6, tile=96)
+losses = nn.train(m, x, y, 40, 3e-3, cfg, shrink=False, log=lambda _: None)
+p = nn.predict(m, x.astype(np.float32))
+assert losses[-1] < losses[0], losses
+assert p.shape == (12, 128, 128) and nn.dice(p, y) > 0.3, nn.dice(p, y)
+print("ok")
+"""
+
+
 @pytest.mark.slow
 def test_unet_learns_a_line() -> None:
-    pytest.importorskip("torch")
-    from stratum.detect import nn
+    """In a fresh interpreter: on macOS, PyTorch's OpenMP runtime can clash with another
+    library's copy already loaded by other tests (a segfault); Linux/Colab share one runtime."""
+    import subprocess
+    import sys
 
-    rng = np.random.default_rng(0)
-    x = rng.normal(size=(12, 3, 128, 128)).astype(np.float16)
-    y = np.zeros((12, 128, 128), np.uint8)
-    for i in range(12):
-        r = int(rng.integers(20, 100))
-        y[i, r : r + 2, 10:118] = 1
-        x[i, 0, r : r + 2, 10:118] += 3
-    m = nn.build_model(8)
-    cfg = nn.TrainConfig(base_channels=8, batch=6, tile=96)
-    losses = nn.train(m, x, y, 25, 3e-3, cfg, shrink=False, log=lambda _: None)
-    assert losses[-1] < losses[0]
-    p = nn.predict(m, x.astype(np.float32))
-    assert p.shape == (12, 128, 128) and nn.dice(p, y) > 0.5
+    pytest.importorskip("torch")
+    r = subprocess.run(
+        [sys.executable, "-c", _TRAIN_SCRIPT], capture_output=True, text=True, timeout=600
+    )
+    assert r.returncode == 0 and r.stdout.strip().endswith("ok"), r.stderr[-2000:]

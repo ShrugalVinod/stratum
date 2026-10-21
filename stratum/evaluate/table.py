@@ -57,7 +57,7 @@ def age_window_labels(per: pd.DataFrame, k: int = 2) -> pd.DataFrame:
     return out
 
 
-def day_rows(root: Path, day_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+def day_rows(root: Path, day_dir: Path, sens: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Labelled rows of one matched day + its (segment, image) pairs."""
     day = day_dir.name
     lab = pd.read_parquet(day_dir / "labels.parquet", columns=LAB_COLS)
@@ -76,7 +76,10 @@ def day_rows(root: Path, day_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     seg_dir = root / "interim" / "segments_met" / day[:7] / day
     seg = pd.read_parquet(seg_dir / "segments_met.parquet", columns=SEG_FEATURES)
     t = lab.merge(seg, on="segment_id", how="left").merge(vza, on="segment_id", how="left")
-    for vdir in sorted((root / "interim" / "matches_sens").glob(f"*/{day[:7]}/{day}")):
+    sens_dirs = (
+        sorted((root / "interim" / "matches_sens").glob(f"*/{day[:7]}/{day}")) if sens else []
+    )
+    for vdir in sens_dirs:
         if is_done(vdir):
             name = vdir.parent.parent.name
             v = pd.read_parquet(vdir / "labels.parquet", columns=["segment_id", "y"])
@@ -164,12 +167,15 @@ def add_cocip(root: Path, t: pd.DataFrame, min_age_min: float, max_age_min: floa
 
 
 def build(
-    root: Path, min_age_min: float = 20.0, max_age_min: float = 120.0
+    root: Path, min_age_min: float = 20.0, max_age_min: float = 120.0, track: str = "line"
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    days = [d for d in sorted((root / "interim" / "matches").glob("*/*")) if is_done(d)]
+    """The evaluation table. ``track="nn"``: labels from the learned detector (D-005,
+    ``interim/matches_nn``); the tolerance-sensitivity labels belong to the line track only."""
+    sub = "matches" if track == "line" else f"matches_{track}"
+    days = [d for d in sorted((root / "interim" / sub).glob("*/*")) if is_done(d)]
     parts, imgs = [], []
     for d in days:
-        t, im = day_rows(root, d)
+        t, im = day_rows(root, d, sens=track == "line")
         parts.append(t)
         imgs.append(im)
     t = pd.concat(parts, ignore_index=True)

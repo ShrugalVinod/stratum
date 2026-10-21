@@ -444,6 +444,26 @@ def detector_nn_eval(
     })  # fmt: skip
 
 
+@app.command("second-analysis-nn")
+def second_analysis_nn() -> None:
+    """D-005 (Colab 09c): re-label the flight days with the learned detector, wrong-day null,
+    H1 and H2 recomputed DESCRIPTIVELY next to the logged final runs (which never change)."""
+    from stratum.evaluate import second_nn
+    from stratum.release.rescore import fmt
+
+    r = second_nn.run(drive_root(), cfg.load_preregistered(), cfg.config_hash(), log=console.print)
+    lab = r["labels"]
+    _summary("second-analysis-nn", {
+        "labelled / y1 (line → nn)": f"{lab['line']['labelled']:,} / {lab['line']['y1']:,} → "
+                                     f"{lab['nn']['labelled']:,} / {lab['nn']['y1']:,}",
+        "chance share (line → nn)": f"{lab['line']['chance_share']} → {lab['nn']['chance_share']}",
+        "H1 ratio nn / logged": f"{fmt(r['H1']['nn'])} / {fmt(r['H1']['logged'])}",
+        "H1 efficiency-adjusted nn": fmt(r["H1"]["efficiency_adjusted"]),
+        "H2 BSS vs B3 nn / logged": f"{fmt(r['H2']['nn'])} / {fmt(r['H2']['logged'])}",
+        "H2 vs constant rate nn": fmt(r["H2"]["vs_RATE"]),
+    })  # fmt: skip
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],

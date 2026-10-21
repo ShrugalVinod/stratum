@@ -201,20 +201,45 @@ def _row(
     }
 
 
+def detections_dir(root: Path, track: str = "line") -> Path:
+    """``interim/detections`` (pre-registered line filter) or ``interim/detections_nn`` (D-005)."""
+    return root / "interim" / ("detections" if track == "line" else f"detections_{track}")
+
+
+def nn_detector(root: Path, params: DetectorParams | None = None) -> tuple[Any, DetectorParams]:
+    """The learned detector (D-005) and the object settings chosen with it on the DLR
+    training scenes; every object that passes them is kept (operating threshold 0)."""
+    from stratum.detect import nn
+    from stratum.detect.nn_run import nn_dir, nn_params
+
+    model, meta = nn.load(nn_dir(root) / "model.pt")
+    geom = (meta["max_line_residual_px"], meta["max_orientation_spread_deg"])
+    p = nn_params(params or load_detector_params(), tuple(meta["hysteresis"]), geom)
+    return model, p.model_copy(update={"operating_threshold": 0.0})
+
+
 def detect_day(
     root: Path,
     day: date,
     params: DetectorParams | None = None,
     config_hash: str | None = None,
     force: bool = False,
+    track: str = "line",
 ) -> dict[str, Any]:
-    """All slots of one stored Meteosat day → ``interim/detections/YYYY-MM-DD/objects.parquet``."""
+    """All slots of one stored Meteosat day → ``<detections dir>/YYYY-MM-DD/objects.parquet``.
+
+    ``track="nn"``: the learned detector (D-005) supplies the per-pixel probability; output in
+    ``interim/detections_nn`` so the pre-registered detections are never overwritten."""
     from stratum.io.meteosat_plots import area_from_attrs
     from stratum.manifest import SUCCESS_MARKER
 
-    p = params or load_detector_params()
+    model = None
+    if track == "nn":
+        model, p = nn_detector(root, params)
+    else:
+        p = params or load_detector_params()
     src = root / "raw" / "meteosat" / "l15_crop" / f"{day:%Y-%m-%d}"
-    out_dir = root / "interim" / "detections" / f"{day:%Y-%m-%d}"
+    out_dir = detections_dir(root, track) / f"{day:%Y-%m-%d}"
     if force:
         (out_dir / SUCCESS_MARKER).unlink(missing_ok=True)
     if is_done(out_dir):
@@ -229,18 +254,27 @@ def detect_day(
         return {"day": str(day), "status": "locked by another run"}
     try:
         man = RunManifest.start(
-            "detect", unit=str(day), config_hash=config_hash, params=p.model_dump()
-        )
+            "detect" if track == "line" else f"detect-{track}", unit=str(day),
+            config_hash=config_hash, params=p.model_dump(),
+        )  # fmt: skip
         ds = xr.open_zarr(src / "data.zarr")
         grid = xr.open_zarr(root / "raw" / "meteosat" / "static_grid.zarr").load()
         lat, lon, vza = (grid[v].values.astype(float) for v in ("lat", "lon", "vza_deg"))
         coast = coast_mask(area_from_attrs(ds), lat.shape, p.coast_buffer_px)
         frames, rejected, cand = [], ObjectLog().rejected, 0
         for t in ds["time"].values:
-            s = ds.sel(time=t)[["IR_108", "IR_120"]].load()
+            chans = ["IR_108", "IR_120"] + (["IR_087"] if model is not None else [])
+            s = ds.sel(time=t)[chans].load()
+            prob = None
+            if model is not None:
+                from stratum.detect import nn
+                from stratum.detect.nn_data import channels
+
+                x = channels(s["IR_087"].values, s["IR_108"].values, s["IR_120"].values)
+                prob = nn.predict(model, x[None])[0]
             df, log = detect_slot(
                 s["IR_108"].values, s["IR_120"].values, lat, lon, vza, p, coast,
-                pd.Timestamp(t),
+                pd.Timestamp(t), response=prob,
             )  # fmt: skip
             frames.append(df)
             rejected.update(log.rejected)

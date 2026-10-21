@@ -378,14 +378,15 @@ def summarise(lab: pd.DataFrame, per: pd.DataFrame) -> dict[str, Any]:
     return out
 
 
-def _stale_detections(root: Path, d: str, p: Any) -> bool:
+def _stale_detections(root: Path, d: str, p: Any, track: str = "line") -> bool:
     """True if stored detections of day ``d`` were made with other detector settings (e.g.
     the Phase 3 provisional ones): they are then recomputed, never silently reused."""
     import json
 
+    from stratum.detect.run import detections_dir
     from stratum.manifest import MANIFEST_NAME
 
-    mf = root / "interim" / "detections" / d / MANIFEST_NAME
+    mf = detections_dir(root, track) / d / MANIFEST_NAME
     if not (is_done(mf.parent) and mf.exists()):
         return False
     old = json.loads(json.dumps(json.loads(mf.read_text()).get("params") or {}))
@@ -439,6 +440,7 @@ def match_day(
     max_segments: int | None = None,
     image_day: date | None = None,
     variant: str | None = None,
+    track: str = "line",
 ) -> dict[str, Any]:
     """Labels for the flights of ``day``.
 
@@ -446,14 +448,22 @@ def match_day(
     time to ``image_day`` and matched against that day's images and ERA5. No real contrail of
     these flights can be in those images, so every y = 1 is a chance match; the y = 1 rate
     estimates how many of the real labels are coincidences. Written to ``interim/matches_null``.
+
+    ``track="nn"``: detections of the learned detector (D-005); labels go to
+    ``interim/matches_nn`` (null: ``matches_null_nn``), never over the pre-registered ones.
     """
     from stratum import phase2
     from stratum.detect.params import load_detector_params
-    from stratum.detect.run import detect_day
+    from stratum.detect.run import detect_day, detections_dir, nn_detector
     from stratum.manifest import SUCCESS_MARKER
     from stratum.met.interp import MetGrid
 
-    p = det_params or load_detector_params()
+    p = (
+        nn_detector(root, det_params)[1]
+        if track == "nn"
+        else (det_params or load_detector_params())
+    )
+    sfx = "" if track == "line" else f"_{track}"
     seg_d = f"{day:%Y-%m-%d}"
     seg_dir = root / "interim" / "segments_met" / f"{day:%Y-%m}" / seg_d
     null = image_day is not None and image_day != day
@@ -461,9 +471,9 @@ def match_day(
     d = f"{img_day:%Y-%m-%d}"
     met = root / "raw" / "meteosat"
     out_dir = (
-        root / "interim" / "matches_null" / f"{seg_d}_on_{d}"
+        root / "interim" / f"matches_null{sfx}" / f"{seg_d}_on_{d}"
         if null
-        else root / "interim" / "matches" / f"{day:%Y-%m}" / d
+        else root / "interim" / f"matches{sfx}" / f"{day:%Y-%m}" / d
     )
     if variant is not None and not null:  # sensitivity analysis: other tolerances, kept apart
         out_dir = root / "interim" / "matches_sens" / variant / f"{day:%Y-%m}" / d
@@ -476,7 +486,8 @@ def match_day(
         return {"day": seg_d, "status": "segments_met missing"}
     if not (is_done(met / "l15_crop" / d) and is_done(met / "clm" / d)):
         return {"day": d, "status": "Meteosat day missing"}
-    det = detect_day(root, img_day, p, config_hash, force=_stale_detections(root, d, p))
+    stale = _stale_detections(root, d, p, track)
+    det = detect_day(root, img_day, det_params, config_hash, force=stale, track=track)
     if det.get("status") not in ("done", "already done"):
         return {"day": d, "status": f"detection: {det.get('status')}"}
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -517,7 +528,7 @@ def match_day(
             t: np.isin(np.asarray(clm.isel(time=i).values), (CLM_CLOUDY, *CLM_NODATA))
             for i, t in enumerate(slots)
         }
-        objs = pd.read_parquet(root / "interim" / "detections" / d / "objects.parquet")
+        objs = pd.read_parquet(detections_dir(root, track) / d / "objects.parquet")
         objs["image_time"] = pd.to_datetime(objs["image_time"])
         by_slot = {
             pd.Timestamp(t): SlotObjects(g, p.operating_threshold)
