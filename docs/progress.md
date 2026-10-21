@@ -2,6 +2,19 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-21 — Learned contrail detector (D-005): F1 0.22 → 0.48 on expert scenes
+
+**Done**
+- A small U-Net, pre-trained on 6,067 OpenContrails scenes (Google, GOES-16) and fine-tuned on
+  the 51 DLR expert training scenes; its probabilities feed the existing object and matching
+  steps. Checked once on the 89 DLR evaluation scenes: precision 0.64 (was 0.22), recall 0.38
+  (was 0.23), F1 0.48 [0.44, 0.52] (was 0.22 [0.18, 0.26]).
+- The logged H1–H4 results are unchanged; the new labels give a descriptive second analysis.
+
+**Next**
+- Colab 09c: re-label the 12 flight days with the new detector, chance check, H1/H2 recomputed.
+- Then the zoom-in contrail viewer on the new detections.
+
 ## 2026-10-20 — Phase 8 complete: v1.0.0 released with a DOI
 
 **Done**

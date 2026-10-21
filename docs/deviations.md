@@ -114,3 +114,10 @@ both runs (build prompt §6.8).
 - Results seen before the change: all of Phases 0–8 (H1–H4 logged 18–19 Oct). This is a
   post-hoc analysis and is reported as one.
 - Team OK: Shrugal Vinod, 2026-10-21 (chat: "D-005 Team OK")
+- Result (Colab 09b, 21 Oct; `_locks/detector_runs.jsonl`, model sha256 234d501f…): settings
+  chosen on the 51 training scenes (out-of-fold F1 0.56: hysteresis 0.5/0.6 in probability,
+  line residual ≤ 2.0 px, orientation spread ≤ 25°). The one check on the 89 evaluation scenes
+  (520 expert lines): precision 0.64 [0.57, 0.71], recall 0.38 [0.33, 0.43], **F1 0.48
+  [0.44, 0.52]**, against the line filter's 0.22 / 0.23 / **0.22 [0.18, 0.26]**; pixel Dice 0.55.
+  OpenContrails validation Dice 0.41 (2 km, pre-training only). Next: re-label the flight days
+  and recompute H1/H2 descriptively (Colab 09c).
