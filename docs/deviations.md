@@ -113,4 +113,4 @@ both runs (build prompt §6.8).
   analysis**, shown next to the logged results and labelled as such.
 - Results seen before the change: all of Phases 0–8 (H1–H4 logged 18–19 Oct). This is a
   post-hoc analysis and is reported as one.
-- Team OK: _pending_
+- Team OK: Shrugal Vinod, 2026-10-21 (chat: "D-005 Team OK")
