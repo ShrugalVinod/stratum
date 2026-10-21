@@ -85,6 +85,7 @@ def write_shard(path: Path, xs: list[Array], ys: list[npt.NDArray[np.uint8]], **
 def oc_shard(split: str, k: int, out_dir: Path) -> dict[str, Any]:
     """One OpenContrails shard → ``out_dir/oc_<split>_<k>.npz`` (skipped if it exists)."""
     path = out_dir / f"oc_{split}_{k:03d}.npz"
+    path.with_suffix(".tmp.npz").unlink(missing_ok=True)  # left over from a stopped run
     if path.exists():
         with np.load(path) as z:
             return {"path": str(path), "n": int(z["y"].shape[0]), "skipped": True}

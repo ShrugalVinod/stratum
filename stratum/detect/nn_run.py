@@ -131,8 +131,11 @@ def select(
 def train(root: Path, dlr_dir: Path, cfg: nn.TrainConfig, log: Any = print) -> dict[str, Any]:
     d = nn_dir(root)
     data = d / "data"
-    oc_tr = sorted(data.glob("oc_train_*.npz"))
-    oc_va = sorted(data.glob("oc_validation_*.npz"))
+
+    def done(pattern: str) -> list[Path]:  # a stopped 09a can leave a half-written *.tmp.npz
+        return sorted(f for f in data.glob(pattern) if not f.name.endswith(".tmp.npz"))
+
+    oc_tr, oc_va = done("oc_train_*.npz"), done("oc_validation_*.npz")
     x, y = _load(oc_tr)
     log(f"Pre-training on {len(x)} OpenContrails examples ({len(oc_tr)} shards)")
     base_model = nn.build_model(cfg.base_channels)
