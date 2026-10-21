@@ -291,3 +291,47 @@ def test_tolerance_variant_goes_to_its_own_folder(root: Path) -> None:
     assert not (
         root / "interim" / "matches" / "2026-01" / "2026-01-01"
     ).exists()  # primary untouched
+
+
+def test_learned_detector_track_uses_its_own_folders(root: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """D-005: track="nn" reads IR_087 too, runs the network's probability through the same
+    object and matching steps, and writes detections_nn / matches_nn only."""
+    from stratum.detect import nn
+    from stratum.detect.btd import contrail_field
+    from stratum.detect.nn_data import BTD_OFF, BTD_SCALE, T108_OFF, T108_SCALE
+    from stratum.detect.nn_run import nn_dir
+
+    met = root / "raw" / "meteosat"
+    ds = xr.open_zarr(met / "l15_crop" / "2026-01-01" / "data.zarr").load()
+    ds["IR_087"] = ds["IR_108"] - 1.5  # the network's third channel
+    ds.to_zarr(met / "l15_crop" / "2026-01-01" / "data.zarr", mode="w")
+    nn_dir(root).mkdir(parents=True)
+    (nn_dir(root) / "model.pt").write_bytes(b"stand-in")  # no PyTorch in this test (see below)
+    meta = {"base_channels": 8, "hysteresis": [0.5, 0.6], "max_line_residual_px": 2.0,
+            "max_orientation_spread_deg": 25.0}  # fmt: skip
+    # A real network is not needed to test the plumbing, and loading PyTorch next to the
+    # libraries other tests load can crash on macOS (two OpenMP runtimes).
+    monkeypatch.setattr(nn, "load", lambda path: (object(), meta))
+    seen = []
+
+    def fake_predict(model, x, batch=8):  # type: ignore[no-untyped-def]
+        """A stand-in network: the planted line's normalised contrast as a probability."""
+        seen.append(x.shape)
+        t108 = x[0, 1] * T108_SCALE + T108_OFF
+        t120 = t108 - (x[0, 0] * BTD_SCALE + BTD_OFF)
+        f = contrail_field(t108, t120, 21, 41, 0.5)["field"]
+        return np.clip(np.nan_to_num(f) / 6.0, 0, 1)[None].astype(np.float32)
+
+    monkeypatch.setattr(nn, "predict", fake_predict)
+    res = mr.match_day(root, DAY, track="nn")
+    assert res["status"] == "done", res
+    assert seen and seen[0][1] == 3  # 3 input channels per slot
+    assert (root / "interim" / "detections_nn" / "2026-01-01" / "objects.parquet").exists()
+    lab = pd.read_parquet(
+        root / "interim" / "matches_nn" / "2026-01" / "2026-01-01" / "labels.parquet"
+    )
+    assert lab.set_index("segment_id").loc["A", "y"] == 1.0  # the planted contrail is still found
+    assert not (root / "interim" / "matches").exists()  # pre-registered folders untouched
+    assert not (root / "interim" / "detections").exists()
+    objs = pd.read_parquet(root / "interim" / "detections_nn" / "2026-01-01" / "objects.parquet")
+    assert np.allclose(objs["confidence"], objs["mean_response"])

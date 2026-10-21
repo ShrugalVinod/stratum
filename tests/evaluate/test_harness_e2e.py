@@ -107,3 +107,20 @@ def test_b0_uses_training_months_only(tmp_path: Path) -> None:
     w = t1["season"] == "winter"
     assert np.allclose(t1.loc[w, "B0"], t2.loc[w, "B0"])
     assert not np.allclose(t1.loc[~w, "B0"], t2.loc[~w, "B0"])
+
+
+def test_table_for_the_learned_detector_track(tmp_path: Path) -> None:
+    """D-005: the same table from interim/matches_nn; the line track is untouched."""
+    import shutil
+
+    root = _fake_root(tmp_path)
+    shutil.copytree(root / "interim" / "matches", root / "interim" / "matches_nn")
+    first = root / "interim" / "matches_nn" / DAYS[0][:7] / DAYS[0] / "labels.parquet"
+    lab = pd.read_parquet(first)
+    lab.loc[lab.index[:5], "y"] = 1.0  # the new detector labels a few more contrails
+    lab.to_parquet(first)
+    t_line, _, _ = tb.build(root)
+    t_nn, _, info = tb.build(root, track="nn")
+    assert len(t_nn) >= len(t_line) and info["days"] == list(DAYS)
+    assert (t_nn["y"] == 1).sum() > (t_line["y"] == 1).sum()
+    assert tb.build(root)[0]["y"].equals(t_line["y"])  # line track unchanged
