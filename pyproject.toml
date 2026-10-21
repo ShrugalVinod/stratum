@@ -115,6 +115,7 @@ module = [
     "pycontrails.*", "openap.*", "satpy.*", "pyresample.*", "eumdac.*", "cdsapi.*",
     "shapely.*", "skimage.*", "sklearn.*", "cv2.*", "lightgbm.*", "xgboost.*", "shap.*", "zarr.*", "scipy.*",
     "pandas.*", "pandera.*", "requests.*", "urllib3.*", "orjson.*",
+    "torch", "torch.*",  # optional extra (detector): absent in CI
 ]
 ignore_missing_imports = true
 
