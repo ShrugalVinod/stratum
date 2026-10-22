@@ -1513,6 +1513,61 @@ a.contact-big:hover {
 .res-table th {
   font-size: 13px;
 }
+.lit-table th[scope="row"] {
+  font-size: 17px;
+  line-height: 1.2;
+  min-width: 170px;
+}
+.lit-table th[scope="row"] a {
+  color: inherit;
+  text-decoration-color: var(--red);
+  text-underline-offset: 3px;
+}
+.lit-table .lit-ref {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+}
+.lit-table td {
+  min-width: 180px;
+  vertical-align: top;
+}
+@media (max-width: 700px) {
+  .src-table.lit-table,
+  .lit-table tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .lit-table thead {
+    display: none;
+  }
+  .lit-table tr,
+  .lit-table th[scope="row"],
+  .lit-table td {
+    display: block;
+    min-width: 0;
+    width: auto;
+  }
+  .lit-table tr {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .lit-table th[scope="row"],
+  .lit-table td {
+    border: 0;
+    padding: 4px 0;
+  }
+  .lit-table td::before {
+    content: attr(data-k);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
 @media (max-width: 900px) {
   .res-cards {
     grid-template-columns: 1fr;

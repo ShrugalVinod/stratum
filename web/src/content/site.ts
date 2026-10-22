@@ -304,3 +304,64 @@ export const secondAnalysis = [
   { labels: "Learned v1", seen: "942", chance: "12 %", h1: "10.7 [6.6, 54.6]", h2: "0.92 [0.90, 0.97]" },
   { labels: "Learned v3", seen: "1,109", chance: "14 %", h1: "9.1 [5.5, 46.5]", h2: "0.92 [0.89, 0.97]" },
 ];
+
+// How our results compare with published studies (Results §5). Every study number was checked
+// against the paper's abstract on 22 Oct 2026. Their concentration numbers are shares of
+// *flights*; our H3 is a share of cruise *distance* (pre-registered), so the two are not the same
+// measure: a flight is many segments, and only its humid stretch warms.
+export const literature = [
+  {
+    topic: "Concentration",
+    study: "Teoh et al. 2020",
+    ref: "Environ. Sci. Technol. 54, 2941",
+    url: "https://doi.org/10.1021/acs.est.9b05608",
+    where: "Japan, 1 year",
+    theirs: "2.2 % of flights cause 80 % of contrail warming",
+    ours: "0.48 % of cruise distance carries 80 % of warming (raw ERA5 physics; 0.54 % with the published correction)",
+  },
+  {
+    topic: "Concentration",
+    study: "Teoh et al. 2022",
+    ref: "Atmos. Chem. Phys. 22, 10919",
+    url: "https://doi.org/10.5194/acp-22-10919-2022",
+    where: "North Atlantic, 2016–2021",
+    theirs: "About 12 % of flights cause 80 % of yearly contrail warming; most of it from night flights in winter",
+    ours: "Same pattern over India: winter nights dominate (H4 context runs)",
+  },
+  {
+    topic: "Concentration",
+    study: "Teoh et al. 2024",
+    ref: "Atmos. Chem. Phys. 24, 6071",
+    url: "https://doi.org/10.5194/acp-24-6071-2024",
+    where: "Global, 2019–2021",
+    theirs: "14 % of flights form a warming contrail; 2 % of flights cause 80 % of the warming",
+    ours: "Under 1 % of distance carries 80 %: as concentrated, measured by distance",
+  },
+  {
+    topic: "Night",
+    study: "Stuber & Forster 2007",
+    ref: "Atmos. Chem. Phys. 7, 3153",
+    url: "https://doi.org/10.5194/acp-7-3153-2007",
+    where: "Global model",
+    theirs: "Night flights: under 40 % of distance, 60 % of contrail forcing",
+    ours: "Night: 49 % of distance, 73–75 % of warming (standard physics; descriptive)",
+  },
+  {
+    topic: "Avoidance",
+    study: "Martín Frías et al. 2024",
+    ref: "Environ. Res.: Infrastruct. Sustain. 4 (2024)",
+    url: "https://doi.org/10.1088/2634-4505/ad310c",
+    where: "Commercial flight planner, ~85,000 simulated flights",
+    theirs: "Contrail forcing −73 % for +0.11 % fuel (simulation)",
+    ours: "Our alerts need a positive cautious (5th-percentile) estimate at 20 and 100 years, so we flag fewer flights than a central-estimate planner would",
+  },
+  {
+    topic: "Avoidance",
+    study: "Sonabend-W et al. 2024",
+    ref: "Commun. Eng. 3, 184",
+    url: "https://doi.org/10.1038/s44172-024-00329-7",
+    where: "Randomised trial with American Airlines, 22 adjusted and 22 control flights",
+    theirs: "Satellites saw 64 % fewer contrails on adjusted flights; about 2 % more fuel per adjusted flight",
+    ours: "We use the same kind of check: satellite images confirm which predicted contrails really formed",
+  },
+];

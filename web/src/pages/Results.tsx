@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Results as ResultsT } from "../data/contract";
 import { loadManifest, loadResults } from "../data/load";
-import { detectorCheck as DC, hypotheses as HYP, secondAnalysis as SA } from "../content/site";
+import { detectorCheck as DC, hypotheses as HYP, literature as LIT, secondAnalysis as SA } from "../content/site";
 
 type Est = { value?: number; lo?: number; hi?: number } | null | undefined;
 type Curve = { distance_share: number[]; ef_share: number[] } | null | undefined;
@@ -212,10 +212,52 @@ export function Results() {
               </div>
             </section>
 
+            <section class="section" aria-labelledby="lit">
+              <div class="sec-head rv">
+                <p class="label red" id="lit">
+                  §5 · How this compares with published studies
+                </p>
+                <span class="mono-s">abstracts checked 22 Oct 2026</span>
+              </div>
+              <p class="lede rv">
+                Our numbers point the same way as studies of Japan, the North Atlantic and the whole world: a small share of flying makes most of
+                the contrail warming, and night flights matter most. One difference to keep in mind: those studies count <em>flights</em>, while
+                our pre-registered H3 counts <em>cruise distance</em>. Only the humid stretch of a flight warms, so a share of distance comes out
+                smaller than a share of flights.
+              </p>
+              <div class="table-wrap rv rv-fade">
+                <table class="src-table res-table lit-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Study</th>
+                      <th scope="col">Where</th>
+                      <th scope="col">They found</th>
+                      <th scope="col">STRATUM over India</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LIT.map((l) => (
+                      <tr>
+                        <th scope="row">
+                          <a href={l.url} target="_blank" rel="noopener">
+                            {l.study}
+                          </a>
+                          <span class="mono-s muted lit-ref">{l.ref}</span>
+                        </th>
+                        <td data-k="Where">{l.where}</td>
+                        <td data-k="They found">{l.theirs}</td>
+                        <td data-k="STRATUM over India">{l.ours}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
             <section class="section" aria-labelledby="runs">
               <div class="sec-head rv">
                 <p class="label red" id="runs">
-                  §5 · Final-runs log
+                  §6 · Final-runs log
                 </p>
                 <span class="mono-s">append-only · _locks/final_runs.jsonl</span>
               </div>
