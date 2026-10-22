@@ -171,11 +171,7 @@ def advisories(
             t0 = datetime.fromisoformat(day).replace(tzinfo=UTC) + timedelta(hours=w0)
             t1 = t0 + timedelta(hours=6)
             city, dist = nearest_city(clat, clon)
-            near = (
-                f"NEAR {city.upper()}"
-                if dist < 200
-                else f"{round(dist, -1):.0f} KM FROM {city.upper()}"
-            )
+            near = _where(clat, clon, city, dist)
             alt = " OR ".join(f"FL{fl:03d}" for fl in sorted(drier))
             text = (
                 f"ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY {_band_text(band)} WI AREA "

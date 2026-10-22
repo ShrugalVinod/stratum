@@ -39,3 +39,13 @@ def test_dry_day_gives_no_advisory_and_places_are_named() -> None:
     assert ol._where(12.9, 77.6, *ol.nearest_city(12.9, 77.6)) == "NEAR BENGALURU"
     assert ol._where(15.0, 65.0, "Goa", 900.0) == "OVER THE ARABIAN SEA"
     assert ol._fmt_lat(21.5) == "2130N" and ol._fmt_lon(77.25) == "07715E"
+
+
+def test_an_area_far_out_at_sea_is_named_by_its_sea() -> None:
+    lat, lon = _grid()
+    frac = {fl: np.zeros((24, len(lat), len(lon))) for fl in ol.FLS}
+    r = np.arange(96, 108)  # 13.0–10.25 °N
+    c = np.arange(12, 24)  # 71.0–73.75 °E: the Arabian Sea west of Kerala
+    frac[400][0:6, r[0] : r[-1] + 1, c[0] : c[-1] + 1] = 1.0
+    (a,) = ol.advisories(frac, lat, lon, "2026-10-23")
+    assert "(OVER THE ARABIAN SEA)" in a["text"]

@@ -6,6 +6,7 @@ const NAV = [
   ["/", "Home", "Move the plane. Lose the cloud."],
   ["/map", "Map", "Contrails, flights and the satellite proof"],
   ["/live", "Live sky", "Which plane made that contrail?"],
+  ["/advisory", "Advisories", "Tomorrow's contrail notices"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
   ["/methods", "Methods", "Written down before results"],
