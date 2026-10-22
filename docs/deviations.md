@@ -146,3 +146,11 @@ both runs (build prompt §6.8).
 - If v3 is better, the second analysis is repeated with it (Colab 10c, track `nn3`); v1's
   results and the logged H1–H4 stay as they are.
 - Team OK: Shrugal Vinod, 2026-10-22 (chat: "go with expert-level v3")
+- Result (Colab 10b, 22 Oct; second entry in `_locks/detector_runs.jsonl`, ensemble sha256
+  33652428…): settings chosen on the training scenes (out-of-fold F1 0.60; hysteresis 0.3/0.5).
+  On the 89 evaluation scenes: **pixel Dice 0.64** (v1 0.55; expert reference ≤ 0.72);
+  **unanimous recall 82.5 %** (v1 72.6 %); object precision 0.66 [0.60, 0.71], recall 0.39
+  [0.33, 0.45], **F1 0.49 [0.44, 0.54]** (v1 0.48, line filter 0.22). Reading: the network marks
+  contrail pixels clearly better, but object F1 hardly moved: turning pixels into line objects
+  (tuned for the line filter) and the strict one-to-one line scoring now limit it. The
+  evaluation scenes have now been used twice; no further tuning against them.

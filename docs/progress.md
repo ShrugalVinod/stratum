@@ -2,6 +2,19 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-22 — Detector v3: near expert level at the pixel level
+
+**Done**
+- v3 (6 infrared channels, soft labels from the labellers' votes, 2× upsampling, all 20,088
+  OpenContrails scenes, an ensemble of 5 models) checked on the 89 expert scenes as declared in
+  D-005: pixel Dice 0.64 (v1 0.55; a single expert scores ≤ 0.72 against the experts' consensus),
+  finds 82.5 % of the contrails all three experts agreed on (v1 72.6 %); object F1 0.49 (v1 0.48).
+- The evaluation scenes have now been used twice; no further tuning against them.
+
+**Next**
+- Colab 10c: re-label the flight days with v3 (second analysis, track nn3).
+- The zoom-in contrail viewer on v3's detections.
+
 ## 2026-10-22 — Second analysis with the learned detector (descriptive)
 
 **Done**
