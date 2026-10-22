@@ -120,6 +120,11 @@ NOTE_STRATUM = ("Corrected physics (learned humidity factor at its 1.20 bound: t
                 "ranges from 100 Monte Carlo members. ATC feasibility not modelled.")  # fmt: skip
 
 
+EF_NOTE_STRATUM = (
+    "Planned-level EF, 5th–95th percentile of 100 Monte Carlo members (corrected physics)."
+)
+
+
 def export_days(eval_days: list[str], month: str | None = "2026-01") -> list[str]:
     """The held-out flight days plus every day of the demo month."""
     if month is None:
@@ -206,32 +211,34 @@ def _base_item(part: pd.DataFrame, hid: str, k: int, names: dict[str, str], del_
     }  # fmt: skip
 
 
-def physics_list(seg: pd.DataFrame, cocip: pd.DataFrame, salt: str, names: dict[str, str],
-                 del_bom: float, model: str) -> list[FlaggedSegment]:  # fmt: skip
-    """Warming persistent-contrail portions under one physics, strongest first (top LIST_MAX)."""
+def physics_parts(seg: pd.DataFrame, cocip: pd.DataFrame) -> list[pd.DataFrame]:
+    """Warming persistent-contrail portions (commercial) under one physics, strongest first
+    (top LIST_MAX): the rows behind ``physics_list``, in its order."""
     s = seg[seg["commercial"].astype(bool)].merge(
         cocip[["segment_id", "ef", "persistent_1", "contrail_age"]], on="segment_id", how="inner"
     )
-    s = s.assign(flagged=(s["persistent_1"].fillna(0) > 0) & (s["ef"].fillna(0) > 0))
-    s = s[s["flagged"]]
-    items = []
-    for part in _portions(s.assign(flagged=True)):
+    s = s[(s["persistent_1"].fillna(0) > 0) & (s["ef"].fillna(0) > 0)]
+    parts = _portions(s.assign(flagged=True))
+    parts.sort(key=lambda part: -float(part["ef"].sum()))  # stable: ties keep flight order
+    return parts[:LIST_MAX]
+
+
+def physics_list(seg: pd.DataFrame, cocip: pd.DataFrame, salt: str, names: dict[str, str],
+                 del_bom: float, model: str) -> list[FlaggedSegment]:  # fmt: skip
+    """Warming persistent-contrail portions under one physics, strongest first (top LIST_MAX)."""
+    out = []
+    for k, part in enumerate(physics_parts(seg, cocip)):
         hid = hash_id(str(part["flight_id"].iloc[0]), salt)
-        base = _base_item(part, hid, 0, names, del_bom, model)
+        base = _base_item(part, hid, k, names, del_bom, model)
         age = (
             pd.to_timedelta(part["contrail_age"], errors="coerce").max()
             if "contrail_age" in part
             else None
         )
-        items.append((float(part["ef"].sum()), {**base, "ef_J": float(part["ef"].sum()),
+        out.append(FlaggedSegment(**{**base, "ef_J": float(part["ef"].sum()),
                       "ef_p05_J": None, "ef_p50_J": None, "ef_p95_J": None, "ef_note": EF_NOTE_V1,
                       "contrail_age_h": round(age.total_seconds() / 3600, 2) if age is not None and pd.notna(age) else None,
                       "confidence_note": "Physics only; no satellite correction.", "commercial_only_note": None}))  # fmt: skip
-    items.sort(key=lambda x: -x[0])
-    out = []
-    for k, (_, it) in enumerate(items[:LIST_MAX]):
-        it["segment_id"] = f"{it['flight_id']}_{model}_{k:03d}"
-        out.append(FlaggedSegment(**it))
     return out
 
 
@@ -240,21 +247,29 @@ def _rng(row: Any, h: int) -> list[float] | None:
     return [round(float(v), 1) for v in vals] if all(np.isfinite(vals)) else None
 
 
-def stratum_list(seg: pd.DataFrame, tab: pd.DataFrame, cands: pd.DataFrame, salt: str,
-                 names: dict[str, str], del_bom: float, profile_of: Any) -> list[FlaggedSegment]:  # fmt: skip
-    """Phase 7 decision-layer portions (commercial only), ranked by the lower bound."""
+def stratum_parts(seg: pd.DataFrame, tab: pd.DataFrame, cands: pd.DataFrame) -> list[tuple[Any, pd.DataFrame, pd.DataFrame]]:  # fmt: skip
+    """(Table 3 row, its candidates, its segment rows) of every commercial flagged portion, in
+    the decision layer's order: the rows behind ``stratum_list``."""
     if tab.empty:
         return []
     seg = seg.sort_values(["flight_id", "time_start"])
-    out = []
     t = tab[tab["commercial"].fillna(False).astype(bool)] if "commercial" in tab else tab
-    for k, r in enumerate(t.itertuples()):
+    out = []
+    for r in t.itertuples():
         c = cands[cands["portion_id"] == r.portion_id]
         g = seg[seg["flight_id"] == r.flight_id].reset_index(drop=True)
-        first, last = int(c["first"].iloc[0]), int(c["last"].iloc[0])
-        part = g.iloc[first : last + 1]
+        out.append((r, c, g.iloc[int(c["first"].iloc[0]) : int(c["last"].iloc[0]) + 1]))
+    return out
+
+
+def stratum_list(seg: pd.DataFrame, tab: pd.DataFrame, cands: pd.DataFrame, salt: str,
+                 names: dict[str, str], del_bom: float, profile_of: Any, model: str = "STRATUM",
+                 note: str = NOTE_STRATUM, ef_note: str = EF_NOTE_STRATUM) -> list[FlaggedSegment]:  # fmt: skip
+    """Phase 7 decision-layer portions (commercial only), ranked by the lower bound."""
+    out = []
+    for k, (r, c, part) in enumerate(stratum_parts(seg, tab, cands)):
         hid = hash_id(str(r.flight_id), salt)
-        base = _base_item(part, hid, k, names, del_bom, "STRATUM")
+        base = _base_item(part, hid, k, names, del_bom, model)
         planned_fl = int(r.planned_fl)
         alts = []
         for a in c.sort_values("delta_ft").itertuples():
@@ -266,7 +281,7 @@ def stratum_list(seg: pd.DataFrame, tab: pd.DataFrame, cands: pd.DataFrame, salt
         out.append(FlaggedSegment(
             **{**base, "fl": planned_fl},
             ef_J=None, ef_p05_J=_num(r.ef_planned_p05_J), ef_p50_J=None, ef_p95_J=_num(r.ef_planned_p95_J),
-            ef_note="Planned-level EF, 5th–95th percentile of 100 Monte Carlo members (corrected physics).",
+            ef_note=ef_note,
             contrail_age_h=None, p_persistent=_num(r.p_persistent_contrail_max),
             best_alternative_fl=int(best) if best is not None and np.isfinite(best) else None,
             extra_fuel_kg=_num(r.extra_fuel_kg), extra_co2_kg=_num(r.extra_co2_kg),
@@ -275,8 +290,8 @@ def stratum_list(seg: pd.DataFrame, tab: pd.DataFrame, cands: pd.DataFrame, salt
             net_warming_avoided_20y_range=_trio(r, 20), net_warming_avoided_100y_range=_trio(r, 100),
             alert=bool(r.alert), alert_without_fuel_credit=bool(r.alert_without_fuel_credit),
             alternatives=alts, alternatives_rejected=str(r.alternatives_rejected or "") or None,
-            confidence_note=f"{r.confidence_note}. {NOTE_STRATUM}",
-            profile=profile_of(float(base["lat"]), float(base["lon"]), pd.Timestamp(part.iloc[len(part) // 2]["time_mid"])),
+            confidence_note=f"{r.confidence_note}. {note}",
+            profile=profile_of(float(base["lat"]), float(base["lon"]), pd.Timestamp(part.iloc[len(part) // 2]["time_mid"])) if profile_of else None,
             commercial_only_note=None,
         ))  # fmt: skip
     return out

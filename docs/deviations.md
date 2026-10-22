@@ -159,3 +159,29 @@ both runs (build prompt §6.8).
   H1 9.1 [5.5, 46.5] (efficiency-adjusted 1.48 [0.94, 7.1]); H2 vs B3 0.92 [0.89, 0.97], vs
   constant rate −0.12, vs RHi-only logistic +0.03 [0.02, 0.21]. Same conclusions as the logged
   runs and as v1.
+
+## D-006 — 2026-10-22 — Probability-weighted physics for the decision layer, as a disclosed second analysis
+- Keys: none of the pre-registered values change. New: `stratum/decide/weighted.py`,
+  `stratum weighted-decide | weighted-summary`, `colab/12a_web_extras.ipynb`.
+- Reason: the pre-registered feedback (RHi → RHi / s) keeps only the fitted divisor s, which
+  sits on its 1.20 bound in every band and fold, so the corrected physics is far too dry
+  (1,583 warming segments in 3.9 M; decisions log, 19 Oct). The logged H3/H4 and alerts rest on
+  it.
+- Change: the physics stays raw ERA5 (B1 CoCiP, 24 h lifetimes; its persistent-contrail count
+  matches the satellites once detection efficiency is counted, efficiency-adjusted H1 ratio
+  1.05), and STRATUM weights each contrail by the probability that it really forms:
+  w = min(1, p / ε), p = the calibrated held-out STRATUM probability (fold model that holds the
+  day out), ε = that fold's detection efficiency (07c). Expected EF = w × B1 EF. Decision layer:
+  the 60 strongest commercial warming portions per held-out day by weighted EF, ±2,000 /
+  ±4,000 ft (pre-registered alternatives and fuel model), w recomputed at each new level from
+  ERA5 there, 50 Monte Carlo members (CoCiP parameters, efficacy, ε bootstrap draw) — fewer
+  than the logged 100 to fit Colab, so the 5th percentiles are noisier. Alert rule unchanged
+  (lower bound > 0 under both horizons). H3/H4-style statistics recomputed on weighted EF with
+  the logged code.
+- What never changes: the logged final runs (H1–H4), the logged decision layer and their
+  numbers. Shown next to them, labelled "second analysis (D-006)".
+- Limitation: w only re-weights contrails B1 already forms. Where ERA5 is too dry for B1 to
+  form a persistent contrail at all, the weighted physics still has none.
+- Results seen before the change: all of Phases 0–8. Post hoc, reported as such.
+- Team OK: Shrugal Vinod, 2026-10-22 (chat: "do it in this order dont ask me anything in the
+  middle … 2. 2", item 2 = fix the too-dry physics feedback)

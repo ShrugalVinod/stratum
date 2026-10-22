@@ -105,6 +105,41 @@ def test_h4_night_share_difference() -> None:
     ]
 
 
+def _issr_flight() -> pd.DataFrame:
+    """One A20N crossing the 15 Jan ISSR at FL340 (40 one-minute segments)."""
+    n = 40
+    t = pd.date_range("2026-01-15T05:40", periods=n + 1, freq="1min", tz="UTC")
+    lon = np.linspace(85.5, 87.5, n + 1)
+    return pd.DataFrame(
+        {
+            "flight_id": "TEST",
+            "segment_id": [f"TEST_{i:04d}" for i in range(n)],
+            "time_start": t[:-1],
+            "time_end": t[1:],
+            "duration_s": 60.0,
+            "lon_start": lon[:-1],
+            "lon_end": lon[1:],
+            "lat_start": 38.9,
+            "lat_end": 38.9,
+            "time_mid": t[:-1] + pd.Timedelta(seconds=30),
+            "lat_mid": 38.9,
+            "lon_mid": (lon[:-1] + lon[1:]) / 2,
+            "length_km": 4.3,
+            "heading_deg": 90.0,
+            "alt_ft_start": 34000.0,
+            "alt_ft_end": 34000.0,
+            "alt_ft_mid": 34000.0,
+            "fuel_flow_kg_s": 0.7,
+            "engine_efficiency": 0.35,
+            "aircraft_mass_kg": 63200.0,
+            "openap_type": "a20n",
+            "typecode": "A20N",
+            "wingspan_m": 35.8,
+            "true_airspeed_ms": 230.0,
+        }
+    )
+
+
 PL_15JAN = Path("data/drive_local/raw/era5/pl/2026-01_days-15-15/data.zarr")
 
 
@@ -122,32 +157,7 @@ def test_decision_chain_on_the_15_jan_issr_crossing() -> None:
 
     met = MetDataset(xr.open_zarr(PL_15JAN).load())
     rad = MetDataset(xr.open_zarr(str(PL_15JAN).replace("/pl/", "/sl/")).load())
-    n = 40
-    t = pd.date_range("2026-01-15T05:40", periods=n + 1, freq="1min", tz="UTC")
-    lon = np.linspace(85.5, 87.5, n + 1)
-    seg = pd.DataFrame(
-        {
-            "flight_id": "TEST",
-            "segment_id": [f"TEST_{i:04d}" for i in range(n)],
-            "time_start": t[:-1],
-            "time_end": t[1:],
-            "duration_s": 60.0,
-            "lon_start": lon[:-1],
-            "lon_end": lon[1:],
-            "lat_start": 38.9,
-            "lat_end": 38.9,
-            "alt_ft_start": 34000.0,
-            "alt_ft_end": 34000.0,
-            "alt_ft_mid": 34000.0,
-            "fuel_flow_kg_s": 0.7,
-            "engine_efficiency": 0.35,
-            "aircraft_mass_kg": 63200.0,
-            "openap_type": "a20n",
-            "typecode": "A20N",
-            "wingspan_m": 35.8,
-            "true_airspeed_ms": 230.0,
-        }
-    )
+    seg = _issr_flight()
     flagged = {f"TEST_{i:04d}" for i in range(15, 25)}
     frames, cands = dr._variant_frames(seg, flagged, [-4000, -2000, 2000, 4000])
     assert set(cands["delta_ft"]) == {-4000, -2000, 2000, 4000} and cands["feasible"].all()

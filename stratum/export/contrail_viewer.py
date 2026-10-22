@@ -89,15 +89,119 @@ def _xy(
     return [[round(float(x), 2), round(float(y), 2)] for x, y in zip(c, r, strict=True)]
 
 
+class Scene:
+    """One day's Meteosat crop source: grid geometry, the L1.5 cube and the detected lines."""
+
+    def __init__(self, root: Path, day: str, track: str = "nn3") -> None:
+        import xarray as xr
+
+        from stratum.detect.run import detections_dir
+
+        met = root / "raw" / "meteosat"
+        static = xr.open_zarr(met / "static_grid.zarr").load()
+        lat_g, lon_g = static["lat"].values.astype(float), static["lon"].values.astype(float)
+        self.proj4, self.extent = str(static.attrs["area_proj4"]), list(static.attrs["area_extent"])
+        self.shape = (int(lat_g.shape[0]), int(lat_g.shape[1]))
+        self.flip = _orient(lat_g, lon_g)
+        self.ds = xr.open_zarr(met / "l15_crop" / day / "data.zarr")
+        self.have87 = "IR_087" in self.ds
+        self.objs = pd.read_parquet(detections_dir(root, track) / day / "objects.parquet")
+        self.objs["image_time"] = pd.to_datetime(self.objs["image_time"])
+
+    def track_px(self, ev: pd.DataFrame) -> tuple[Any, Any]:
+        """Native pixel coords of the segments' start and end points (parallax at the FL)."""
+        from stratum.match.geometry import point_to_pixel
+
+        alt_m = (
+            ev["alt_ft_mid"].to_numpy(float) * 0.3048
+            if "alt_ft_mid" in ev
+            else np.full(len(ev), 11000.0)
+        )
+        g = (self.proj4, self.extent, self.shape)
+        return (
+            point_to_pixel(ev["lat_start"], ev["lon_start"], alt_m, *g),
+            point_to_pixel(ev["lat_end"], ev["lon_end"], alt_m, *g),
+        )
+
+    def slot(
+        self, q: pd.DataFrame, t: Any, tr: tuple[Any, Any], path: Path
+    ) -> dict[str, Any] | None:
+        """Render the crop around ``q`` (per-slot rows of one image time) to ``path`` and return
+        its overlays (track, drift, detected lines) in crop pixels."""
+        import imageio.v2 as imageio
+
+        shape, flip = self.shape, self.flip
+        rr = np.concatenate([q["row_a"], q["row_b"]]).astype(float)
+        cc = np.concatenate([q["col_a"], q["col_b"]]).astype(float)
+        if not np.isfinite(rr).any():
+            return None
+        r0 = int(np.clip(round(np.nanmean(rr)) - CROP // 2, 0, max(0, shape[0] - CROP)))
+        c0 = int(np.clip(round(np.nanmean(cc)) - CROP // 2, 0, max(0, shape[1] - CROP)))
+        h, w = min(CROP, shape[0]), min(CROP, shape[1])
+        s = self.ds.sel(time=np.datetime64(t)).load()
+        win = (slice(r0, r0 + h), slice(c0, c0 + w))
+        img = ash_rgb(
+            s["IR_087"].values[win] if self.have87 else None,
+            s["IR_108"].values[win],
+            s["IR_120"].values[win],
+        )
+        if flip[0]:
+            img = img[::-1]
+        if flip[1]:
+            img = img[:, ::-1]
+        imageio.imwrite(path, np.ascontiguousarray(img))
+        drift = [
+            _xy([a, b], [c, d], r0, c0, h, w, flip)
+            for a, b, c, d in zip(q["row_a"], q["row_b"], q["col_a"], q["col_b"], strict=True)
+            if np.isfinite([a, b, c, d]).all()
+        ]
+        (tr_a, tr_b) = tr
+        trk = [
+            _xy([a, b], [c, d], r0, c0, h, w, flip)
+            for a, b, c, d in zip(tr_a[0], tr_b[0], tr_a[1], tr_b[1], strict=True)
+            if np.isfinite([a, b, c, d]).all()
+        ]
+        o = self.objs[self.objs["image_time"] == t]
+        det, best, best_d = [], None, np.inf
+        pred = np.column_stack([rr, cc])[np.isfinite(rr) & np.isfinite(cc)]
+        for _, row in o.iterrows():
+            pr, pc = np.asarray(row["poly_row"], float), np.asarray(row["poly_col"], float)
+            inside = (pr >= r0) & (pr < r0 + h) & (pc >= c0) & (pc < c0 + w)
+            if not inside.any():
+                continue
+            dist = float(np.min(np.hypot(pred[:, None, 0] - pr[None], pred[:, None, 1] - pc[None])))
+            det.append(
+                {
+                    "pts": _xy(pr, pc, r0, c0, h, w, flip),
+                    "matched": False,
+                    "lat": [round(float(v), 4) for v in row["poly_lat"]],
+                    "lon": [round(float(v), 4) for v in row["poly_lon"]],
+                }
+            )
+            if dist < best_d:
+                best, best_d = len(det) - 1, dist
+        if best is not None:
+            det[best]["matched"] = True
+        return {
+            "t": f"{pd.Timestamp(t):%Y-%m-%dT%H:%M}Z",
+            "img": path.name,
+            "w": w,
+            "h": h,
+            "age_min": round(float(q["age_min"].mean()), 1),
+            "vza_deg": round(float(np.nanmean(q["vza_deg"])), 1)
+            if q["vza_deg"].notna().any()
+            else None,
+            "track": trk,
+            "drift": drift,
+            "detected": det,
+            "match_px": round(best_d, 2) if np.isfinite(best_d) else None,
+        }
+
+
 def export_day(
     root: Path, day: str, out: Path, salt: str, names: dict[str, str], track: str = "nn3"
 ) -> list[dict[str, Any]]:
-    import imageio.v2 as imageio
-    import xarray as xr
-
-    from stratum.detect.run import detections_dir
     from stratum.export.web_export import hash_id
-    from stratum.match.geometry import point_to_pixel
 
     sfx = "" if track == "line" else f"_{track}"
     md = root / "interim" / f"matches{sfx}" / day[:7] / day
@@ -129,16 +233,7 @@ def export_day(
         y1 = y1[y1["commercial"].fillna(False).astype(bool)]
     if y1.empty:
         return []
-    met = root / "raw" / "meteosat"
-    static = xr.open_zarr(met / "static_grid.zarr").load()
-    lat_g, lon_g = static["lat"].values.astype(float), static["lon"].values.astype(float)
-    proj4, extent = str(static.attrs["area_proj4"]), list(static.attrs["area_extent"])
-    shape = (int(lat_g.shape[0]), int(lat_g.shape[1]))
-    flip = _orient(lat_g, lon_g)
-    ds = xr.open_zarr(met / "l15_crop" / day / "data.zarr")
-    have87 = "IR_087" in ds
-    objs = pd.read_parquet(detections_dir(root, track) / day / "objects.parquet")
-    objs["image_time"] = pd.to_datetime(objs["image_time"])
+    sc = Scene(root, day, track)
     per["image_time"] = pd.to_datetime(per["image_time"])
     ddir = out / "days" / day
     ddir.mkdir(parents=True, exist_ok=True)
@@ -152,13 +247,7 @@ def export_day(
         slot_order = (
             good.groupby("image_time").size().sort_values(ascending=False).index[:MAX_SLOTS]
         )
-        alt_m = (
-            ev["alt_ft_mid"].to_numpy(float) * 0.3048
-            if "alt_ft_mid" in ev
-            else np.full(len(ev), 11000.0)
-        )
-        tr_a = point_to_pixel(ev["lat_start"], ev["lon_start"], alt_m, proj4, extent, shape)
-        tr_b = point_to_pixel(ev["lat_end"], ev["lon_end"], alt_m, proj4, extent, shape)
+        tr = sc.track_px(ev)
         fid = str(ev["flight_id"].iloc[0])
         cs = (
             str(ev["callsign"].iloc[0])
@@ -168,76 +257,9 @@ def export_day(
         eid = f"{hash_id(fid, salt)}_{k:03d}"
         slots: list[dict[str, Any]] = []
         for t in sorted(slot_order):
-            q = p[p["image_time"] == t]
-            rr = np.concatenate([q["row_a"], q["row_b"]]).astype(float)
-            cc = np.concatenate([q["col_a"], q["col_b"]]).astype(float)
-            if not np.isfinite(rr).any():
-                continue
-            r0 = int(np.clip(round(np.nanmean(rr)) - CROP // 2, 0, max(0, shape[0] - CROP)))
-            c0 = int(np.clip(round(np.nanmean(cc)) - CROP // 2, 0, max(0, shape[1] - CROP)))
-            h, w = min(CROP, shape[0]), min(CROP, shape[1])
-            s = ds.sel(time=np.datetime64(t)).load()
-            win = (slice(r0, r0 + h), slice(c0, c0 + w))
-            img = ash_rgb(
-                s["IR_087"].values[win] if have87 else None,
-                s["IR_108"].values[win],
-                s["IR_120"].values[win],
-            )
-            if flip[0]:
-                img = img[::-1]
-            if flip[1]:
-                img = img[:, ::-1]
-            name = f"{eid}_{len(slots)}.png"
-            imageio.imwrite(ddir / name, np.ascontiguousarray(img))
-            drift = [
-                _xy([a, b], [c, d], r0, c0, h, w, flip)
-                for a, b, c, d in zip(q["row_a"], q["row_b"], q["col_a"], q["col_b"], strict=True)
-                if np.isfinite([a, b, c, d]).all()
-            ]
-            trk = [
-                _xy([a, b], [c, d], r0, c0, h, w, flip)
-                for a, b, c, d in zip(tr_a[0], tr_b[0], tr_a[1], tr_b[1], strict=True)
-                if np.isfinite([a, b, c, d]).all()
-            ]
-            o = objs[objs["image_time"] == t]
-            det, best, best_d = [], None, np.inf
-            pred = np.column_stack([rr, cc])[np.isfinite(rr) & np.isfinite(cc)]
-            for _, row in o.iterrows():
-                pr, pc = np.asarray(row["poly_row"], float), np.asarray(row["poly_col"], float)
-                inside = (pr >= r0) & (pr < r0 + h) & (pc >= c0) & (pc < c0 + w)
-                if not inside.any():
-                    continue
-                dist = float(
-                    np.min(np.hypot(pred[:, None, 0] - pr[None], pred[:, None, 1] - pc[None]))
-                )
-                det.append(
-                    {
-                        "pts": _xy(pr, pc, r0, c0, h, w, flip),
-                        "matched": False,
-                        "lat": [round(float(v), 4) for v in row["poly_lat"]],
-                        "lon": [round(float(v), 4) for v in row["poly_lon"]],
-                    }
-                )
-                if dist < best_d:
-                    best, best_d = len(det) - 1, dist
-            if best is not None:
-                det[best]["matched"] = True
-            slots.append(
-                {
-                    "t": f"{pd.Timestamp(t):%Y-%m-%dT%H:%M}Z",
-                    "img": name,
-                    "w": w,
-                    "h": h,
-                    "age_min": round(float(q["age_min"].mean()), 1),
-                    "vza_deg": round(float(np.nanmean(q["vza_deg"])), 1)
-                    if q["vza_deg"].notna().any()
-                    else None,
-                    "track": trk,
-                    "drift": drift,
-                    "detected": det,
-                    "match_px": round(best_d, 2) if np.isfinite(best_d) else None,
-                }
-            )
+            one = sc.slot(p[p["image_time"] == t], t, tr, ddir / f"{eid}_{len(slots)}.png")
+            if one is not None:
+                slots.append(one)
         if not slots:
             continue
         ts = pd.to_datetime(ev["time_mid"])

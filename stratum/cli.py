@@ -504,6 +504,133 @@ def export_contrail_viewer(
                                         "days": json.dumps(idx["days"]), "zip": z})  # fmt: skip
 
 
+@app.command("weighted-decide")
+def weighted_decide_cmd(
+    day: Annotated[
+        str, typer.Option(help="one day YYYY-MM-DD (default: every evaluation day)")
+    ] = "",
+    members: Annotated[int, typer.Option(help="Monte Carlo members (logged layer: 100)")] = 50,
+    top: Annotated[int, typer.Option(help="portions per day, strongest weighted EF first")] = 60,
+    force: Annotated[bool, typer.Option(help="recompute days already done")] = False,
+) -> None:
+    """D-006 (Colab 12a, descriptive second analysis): the decision layer on probability-weighted
+    physics — raw-ERA5 CoCiP weighted by STRATUM's P(persistent contrail). Resumable per day."""
+    import time
+
+    from stratum.decide import run as dr
+    from stratum.decide import weighted as wd
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    seed = pre.detection.labelled_split.seed or 0
+    bands = [(float(a), float(b)) for a, b in pre.correction_model.latitude_bands_deg]
+    t, _ = _eval_table(root)
+    lab = t[t["y"].notna()]
+    days = [day] if day else _eval_days(root)
+    for d in days:
+        cells = dr.confidence_cells(lab[lab["day"] != d], bands)
+        t0 = time.time()
+        r = wd.weighted_day(root, d, pre, members, seed, cells, top=top, force=force)
+        console.print(f"weighted {d}: {r} ({(time.time() - t0) / 60:.1f} min)")
+
+
+@app.command("weighted-summary")
+def weighted_summary_cmd() -> None:
+    """D-006: decision summary and H3/H4-style statistics on weighted EF, next to the logged
+    numbers (reports/second_analysis_weighted/summary.json). Descriptive only."""
+    from stratum.decide import report as drep
+    from stratum.decide import weighted as wd
+    from stratum.manifest import is_done
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    days = _eval_days(root)
+    missing = [d for d in days if not is_done(wd.day_dir(root, d))]
+    if missing:
+        console.print(f"[red]{len(missing)} days unfinished: run weighted-decide first[/red]")
+        raise typer.Exit(1)
+    seed = pre.detection.labelled_split.seed or 0
+    conc = wd.concentration(root, days, pre, pre.bootstrap.n_resamples, seed)
+    dec = drep.summary([wd.day_dir(root, d) for d in days])
+    logged = root / "reports" / "phase7_decisions" / "summary.json"
+    ctx = root / "reports" / "phase7_h34_context" / "B1.json"
+    res = {
+        "deviation": "D-006",
+        "descriptive_only": True,
+        "decisions": dec,
+        "concentration": conc,
+        "logged_decisions": json.loads(logged.read_text()) if logged.exists() else None,
+        "context_B1": json.loads(ctx.read_text()) if ctx.exists() else None,
+    }
+    out = root / "reports" / "second_analysis_weighted"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "summary.json").write_text(json.dumps(res, indent=1, default=str))
+    h3, h4 = conc["h3"], conc["h4"]
+    _summary("weighted-summary (D-006, descriptive)", {
+        "portions / alerts": f"{dec.get('portions', 0)} / {dec.get('alerts', 0)}",
+        "alerts without fuel credit": dec.get("alerts_without_fuel_credit"),
+        "alerts per day": json.dumps(dec.get("alerts_per_day")),
+        "net warming avoided h100 p50": dec.get("alerts_net_warming_avoided_h100_p50_kgCO2e"),
+        "H3-style share": _ci(h3["share"], h3["supported"]),
+        "H4-style difference": _ci(h4["difference"], h4["supported"]),
+        "warming segments (weighted)": f"{conc['warming_segments_weighted']:,}",
+        "mean w where B1 warms": round(conc["mean_w_where_b1_warms"], 3),
+    })  # fmt: skip
+
+
+@app.command("export-extras")
+def export_extras_cmd(
+    skip: Annotated[
+        str, typer.Option(help="comma list of parts to skip: explain,weighted,game")
+    ] = "",
+) -> None:
+    """Website extras (Colab 12a): "Why this prediction?" (per-card TreeSHAP), the weighted
+    decision lists (D-006) and the "Beat STRATUM" rounds → web_exports/extras (+ zip).
+    Needs STRATUM_ID_SALT."""
+    from stratum.config import configs_dir, load_domain
+    from stratum.decide import weighted as wd
+    from stratum.export import explain as xp
+    from stratum.export import game
+    from stratum.export.web_export import _bearing, airline_names, id_salt, web_json
+
+    root = drive_root()
+    pre = cfg.load_preregistered()
+    salt = id_salt()
+    out = root / "web_exports" / "extras"
+    out.mkdir(parents=True, exist_ok=True)
+    parts = {p.strip() for p in skip.split(",") if p.strip()}
+    names = airline_names(configs_dir() / "airlines.yaml")
+    ap = load_domain().corridor.airports
+    del_bom = _bearing(ap["VIDP"].lat, ap["VIDP"].lon, ap["VABB"].lat, ap["VABB"].lon)
+    rows: dict[str, object] = {}
+    if "weighted" not in parts or "explain" not in parts:
+        made, explained = {}, {}
+        for d in _eval_days(root):
+            extra: list[Any] = []
+            if "weighted" not in parts:
+                items, extra = wd.web_list(root, d, salt, names, del_bom)
+                if items is not None:
+                    (out / "weighted" / "days" / d).mkdir(parents=True, exist_ok=True)
+                    (out / "weighted" / "days" / d / "segments_STRATUMw.json").write_text(
+                        web_json([i.model_dump() for i in items], separators=(",", ":"))
+                    )
+                    made[d] = len(items)
+            if "explain" not in parts:
+                r = xp.explain_day(root, d, pre, out / "explain", salt, extra)
+                explained[d] = r["explained"]
+        rows["weighted cards per day"] = json.dumps(made)
+        rows["explained cards per day"] = json.dumps(explained)
+        summ = root / "reports" / "second_analysis_weighted" / "summary.json"
+        if "weighted" not in parts and summ.exists():
+            shutil.copy(summ, out / "weighted" / "summary.json")
+    if "game" not in parts:
+        g = game.export(root, out / "game", salt)
+        rows.update({f"game {k}": v for k, v in g.items()})
+    z = shutil.make_archive(str(out), "zip", out.parent, out.name)
+    rows["zip"] = z
+    _summary("export-extras", rows)
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],
