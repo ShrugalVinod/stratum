@@ -16,6 +16,7 @@ const OUTLOOK_RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/outl
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
 const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
+const STALE_MIN = 30;
 const TYPES = { json: "application/json; charset=utf-8", png: "image/png", geojson: "application/geo+json" };
 
 export default {
@@ -42,7 +43,11 @@ async function live(url, env, ctx) {
   const lat = cell(url.searchParams.get("lat"), 4, 39);
   const lon = cell(url.searchParams.get("lon"), 66, 100);
   if (lat == null || lon == null) return json({ error: "lat/lon outside India's region" }, 400, 0);
-  const [snap, lol] = await Promise.all([snapshot(ctx), near(lat, lon, ctx)]);
+  const [snap0, lol] = await Promise.all([snapshot(ctx), near(lat, lon, ctx)]);
+  // a snapshot older than STALE_MIN (the Action did not run) would show planes where they were,
+  // not where they are: leave it out and say so
+  const age = snap0.t ? (Date.now() - snap0.t) / 60_000 : null;
+  const snap = age != null && age > STALE_MIN ? { ...snap0, status: `stale (${Math.round(age)} min)`, list: [] } : snap0;
   const ac = merge(snap.list, lol.list);
   if (!ac.length && snap.status !== "ok" && lol.status !== "ok") return json({ error: "live feeds busy, try again in a minute" }, 503, 0);
   return json(

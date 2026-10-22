@@ -252,7 +252,7 @@ export const LiveAircraft = z.object({
   t: z.number(),
 });
 export type LiveAircraft = z.infer<typeof LiveAircraft>;
-export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), sources: z.record(z.string(), z.union([z.number(), z.string()])).nullish(), ac: z.array(LiveAircraft) });
+export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), snapshot_t: z.number().nullish(), sources: z.record(z.string(), z.union([z.number(), z.string()])).nullish(), ac: z.array(LiveAircraft) });
 
 // "Beat STRATUM" rounds (stratum/export/game.py → data/game/index.json + img/).
 export const GameRound = z.object({

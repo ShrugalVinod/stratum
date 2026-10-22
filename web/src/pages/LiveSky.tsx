@@ -77,6 +77,7 @@ export function LiveSky() {
   const [ac, setAc] = useState<LiveAircraft[] | null>(null);
   const [fetched, setFetched] = useState(0);
   const [sources, setSources] = useState<Record<string, unknown> | null>(null);
+  const [snapT, setSnapT] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [ol, setOl] = useState<{ manifest: Manifest; info: OutlookInfo } | null | undefined>(undefined);
   const [now, setNow] = useState(Date.now());
@@ -93,7 +94,7 @@ export function LiveSky() {
     let alive = true;
     const get = () =>
       loadLive(place.lat, place.lon)
-        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setErr(null)))
+        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setSnapT(r.snapshot_t ?? null), setErr(null)))
         .catch((e) => alive && setErr(String(e.message ?? e).includes("503") ? "The live feed is busy. Trying again in a minute." : "The live feed cannot be reached right now."));
     get();
     const t = setInterval(get, 60_000);
@@ -460,7 +461,9 @@ export function LiveSky() {
               )}
               {sources && (
                 <p class="mono-s muted">
-                  Sources: OpenSky snapshot {String(sources.opensky)} (every 5 min) · adsb.lol live {String(sources.adsb_lol)} (merged by callsign)
+                  Sources: OpenSky snapshot {String(sources.opensky)}
+                  {snapT ? ` (taken ${Math.max(0, Math.round((now - snapT) / 60_000))} min ago)` : ""} · adsb.lol live {String(sources.adsb_lol)} (merged by
+                  callsign)
                 </p>
               )}
             </div>
