@@ -119,5 +119,10 @@ both runs (build prompt §6.8).
   line residual ≤ 2.0 px, orientation spread ≤ 25°). The one check on the 89 evaluation scenes
   (520 expert lines): precision 0.64 [0.57, 0.71], recall 0.38 [0.33, 0.43], **F1 0.48
   [0.44, 0.52]**, against the line filter's 0.22 / 0.23 / **0.22 [0.18, 0.26]**; pixel Dice 0.55.
-  OpenContrails validation Dice 0.41 (2 km, pre-training only). Next: re-label the flight days
-  and recompute H1/H2 descriptively (Colab 09c).
+  OpenContrails validation Dice 0.41 (2 km, pre-training only).
+- Second analysis (Colab 09c, 22 Oct; `reports/second_analysis_nn/results.json`; descriptive):
+  labels from the learned detector: 942 contrails seen (203 flights) vs 1,564 (369); chance
+  share in the wrong-day null **12 %** vs 33 %. H1: 10.7 [6.6, 54.6] (logged 6.44 [4.92, 12.1];
+  not supported either way), efficiency-adjusted 1.73 [1.11, 8.2]. H2: BSS vs B3 **0.92
+  [0.90, 0.97]** (logged 0.86 [0.82, 0.91]), vs constant rate −0.13, vs RHi-only logistic +0.04
+  [0.02, 0.12]; winter AUROC 0.83. Frozen Phase 7 models (trained on the line-filter labels).

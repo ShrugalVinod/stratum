@@ -2,6 +2,18 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-22 — Second analysis with the learned detector (descriptive)
+
+**Done**
+- Colab 09c re-labelled the 12 flight days with the learned detector: 942 contrails seen (was
+  1,564); chance matches in the wrong-day check 12 % (was 33 %).
+- H1 recomputed: 10.7 [6.6, 54.6] (logged 6.44), the same conclusion with cleaner labels.
+  H2 recomputed: 0.92 [0.90, 0.97] (logged 0.86), stronger. Logged results unchanged.
+
+**Next**
+- Detector v3 ("expert level"): 6 infrared channels, all OpenContrails data, soft labels from
+  the experts' agreement, 2× upsampling, an ensemble; one more logged check on the 89 scenes.
+
 ## 2026-10-21 — Learned contrail detector (D-005): F1 0.22 → 0.48 on expert scenes
 
 **Done**
