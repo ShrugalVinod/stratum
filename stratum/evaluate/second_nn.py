@@ -69,12 +69,23 @@ def run(
     n, seed = pre.bootstrap.n_resamples, pre.detection.labelled_split.seed or 0
     rules = rules_from_preregistered()
     days = phase5._segment_days(root)
+    unfinished = []
     for d in days:
         r = match_day(root, d, None, rules, lo, hi, config_hash, track=track)
         log(f"  labels {d}: {r.get('status')} y1={r.get('y1')} y0={r.get('y0')}")
+        if r.get("status") not in ("done", "already done"):
+            unfinished.append(f"labels {d}: {r.get('status')}")
     for d, other in zip(days, [*days[1:], days[0]], strict=True):
         r = match_day(root, d, None, rules, lo, hi, config_hash, image_day=other, track=track)
         log(f"  wrong-day null {d} on {other}: {r.get('status')}")
+        if r.get("status") not in ("done", "already done"):
+            unfinished.append(f"null {d} on {other}: {r.get('status')}")
+    if unfinished:  # never score H1/H2 on a partial set of days
+        raise RuntimeError(
+            "Not every day finished (a stopped run leaves a lock for 10 minutes): "
+            + "; ".join(unfinished)
+            + ". Wait 10 minutes, then Run all again: finished days are skipped."
+        )
     counts = {"line": label_counts(root, "line"), "nn": label_counts(root, track)}
     log(f"  labels: {counts}")
 
