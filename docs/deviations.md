@@ -185,3 +185,13 @@ both runs (build prompt §6.8).
 - Results seen before the change: all of Phases 0–8. Post hoc, reported as such.
 - Team OK: Shrugal Vinod, 2026-10-22 (chat: "do it in this order dont ask me anything in the
   middle … 2. 2", item 2 = fix the too-dry physics feedback)
+- Result (Colab 12a, 22 Oct; `reports/second_analysis_weighted/summary.json`; descriptive, all
+  12 days, 50 members): where raw physics forms a warming contrail, STRATUM's weight averages
+  0.115 (no weight reached the cap of 1). Of the 720 stretches checked (the 60 strongest per
+  day), 666 get an alert, 658 of them without any fuel-saving credit, with a median 8,640 t
+  CO₂e of warming avoided at 100 years (logged layer: 333 of 402, 207 without fuel credit,
+  578 t). The high alert rate describes the strongest stretches only. H3-style share 0.43 %
+  [0.28, 0.67] of cruise distance (raw physics 0.48 %, logged 0.0044 %); H4-style night
+  excess 0.27 [0.24, 0.34] (raw physics 0.24 [0.21, 0.31], logged 0.36 [−0.03, 0.45]): with
+  STRATUM-weighted physics the night effect is clear and concentration is as strong as with
+  raw physics.

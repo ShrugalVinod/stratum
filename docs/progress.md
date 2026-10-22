@@ -21,9 +21,13 @@ Newest first. What was done, what's next, blockers.
 - Code for Colab 12a: per-card TreeSHAP ("Why this prediction?"), the probability-weighted
   decision layer (D-006, descriptive) and the game rounds; the site shows them once exported.
 
+- Colab 12a done (66 min): "Why this prediction?" for all 7,036 map cards, the weighted decision
+  layer (D-006: 666 alerts in the 60 strongest stretches per day, 658 without fuel credit;
+  night excess 0.27 [0.24, 0.34]) and 40 game rounds (STRATUM 26/40 right, physics 20/40).
+- Live sky fixed: adsb.lol alone saw few aircraft over India; a 5-minute GitHub Action now
+  publishes an OpenSky snapshot (~200 airliners), merged with adsb.lol near the visitor.
+
 **Next**
-- Colab 12a, then copy `extras.zip` into the site (explain/, weighted/, game/) and write the
-  D-006 result into deviations.md.
 - Coverage audit (2 and 5 Nov).
 
 ## 2026-10-22 — Contrail proof viewer live

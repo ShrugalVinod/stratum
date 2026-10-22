@@ -487,7 +487,7 @@ function WeightedSection({ ws, h3, h4 }: { ws: Record<string, any>; h3: Est; h4:
   const b1 = ws.context_B1 ?? {};
   const rows = [
     { name: "Logged (corrected physics, too dry)", d: L },
-    { name: "Weighted by STRATUM (D-006)", d },
+    { name: "Weighted by STRATUM (D-006; the 60 strongest stretches per day)", d },
   ];
   return (
     <section class="section" aria-labelledby="wtd">
