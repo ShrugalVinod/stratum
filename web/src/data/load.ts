@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest, type ModelId, Results } from "./contract";
+import { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest, type ModelId, Results } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -82,3 +82,20 @@ export async function loadGridBytes(url: string): Promise<{ data: Uint8Array; wi
   for (let i = 0; i < out.length; i++) out[i] = rgba[i * 4];
   return { data: out, width: bmp.width, height: bmp.height };
 }
+
+// ── contrail proof viewer (data/contrails-<track>/) ─────────────────────────
+/** Folder of the viewer data: contrails-nn3 (detector v3); ?contrails=<folder> for review. */
+export function contrailsDir(): string {
+  const o = typeof location !== "undefined" ? new URLSearchParams(location.search).get("contrails") : null;
+  return o && /^[\w.-]+$/.test(o) ? o : "contrails-nn3";
+}
+let contrailIndex: Promise<ContrailIndex | null> | null = null;
+/** The viewer index, or null if this deployment has no viewer data (the layer then hides). */
+export function loadContrailIndex(): Promise<ContrailIndex | null> {
+  contrailIndex ??= json(`${BASE}/data/${contrailsDir()}/index.json`, ContrailIndex).catch(() => null);
+  return contrailIndex;
+}
+export async function loadContrailDay(date: string): Promise<ContrailEvent[]> {
+  return json(`${BASE}/data/${contrailsDir()}/days/${date}/contrails.json`, z.array(ContrailEvent));
+}
+export const contrailImg = (date: string, name: string) => `${BASE}/data/${contrailsDir()}/days/${date}/${name}`;

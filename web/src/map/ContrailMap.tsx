@@ -17,7 +17,7 @@ import {
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "preact/hooks";
-import type { FlaggedSegment, FlightFeature, Manifest } from "../data/contract";
+import type { ContrailEvent, FlaggedSegment, FlightFeature, Manifest } from "../data/contract";
 import { clock } from "../data/format";
 
 setWorkerUrl(workerUrl); // MapLibre 6 runs its worker from a separate module file
@@ -25,7 +25,7 @@ setWorkerUrl(workerUrl); // MapLibre 6 runs its worker from a separate module fi
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
-export type Layers = { risk: boolean; flights: boolean; corridor: boolean; cities: boolean };
+export type Layers = { risk: boolean; flights: boolean; corridor: boolean; cities: boolean; seen?: boolean };
 
 type Props = {
   manifest: Manifest;
@@ -49,7 +49,29 @@ type Props = {
   onIntro: (s: { active: boolean; t: number }) => void;
   /** whose list the orange marks show (B1, B3 or STRATUM), for the hover text */
   modelLabel?: string;
+  /** satellite-confirmed contrails of the day (contrail proof viewer) and their click handler */
+  seen?: ContrailEvent[] | null;
+  onSeen?: (id: string) => void;
 };
+
+const SEEN = "#36d1f0";
+
+/** Satellite-confirmed contrails: a marker each, and the matched detected lines (map coords). */
+function seenFeatures(ev: ContrailEvent[] | null | undefined): [GeoJSON.FeatureCollection, GeoJSON.FeatureCollection] {
+  const pts: GeoJSON.Feature[] = [];
+  const lines: GeoJSON.Feature[] = [];
+  for (const e of ev ?? []) {
+    pts.push({ type: "Feature", properties: { id: e.id, n: e.slots.length }, geometry: { type: "Point", coordinates: [e.lon, e.lat] } });
+    for (const s of e.slots) {
+      for (const d of s.detected) {
+        if (d.matched && d.lat.length > 1) {
+          lines.push({ type: "Feature", properties: { id: e.id }, geometry: { type: "LineString", coordinates: d.lon.map((lo, i) => [lo, d.lat[i]]) } });
+        }
+      }
+    }
+  }
+  return [{ type: "FeatureCollection", features: pts }, { type: "FeatureCollection", features: lines }];
+}
 
 // ── animation state (one per map) ────────────────────────────────────────────
 type Anim = {
@@ -192,6 +214,8 @@ export function ContrailMap(p: Props) {
       m.addSource("planes", { type: "geojson", data: EMPTY });
       m.addSource("selected", { type: "geojson", data: EMPTY });
       m.addSource("pick", { type: "geojson", data: EMPTY });
+      m.addSource("seen", { type: "geojson", data: EMPTY });
+      m.addSource("seen-lines", { type: "geojson", data: EMPTY });
 
       m.addLayer({ id: "land", type: "fill", source: "countries", paint: { "fill-color": col.land } });
       m.addLayer({ id: "grat", type: "line", source: "grat", paint: { "line-color": col.grat, "line-width": 1 } });
@@ -222,6 +246,9 @@ export function ContrailMap(p: Props) {
         },
         paint: { "icon-color": ["case", ["get", "flagged"], col.pred, col.plane], "icon-halo-color": col.land, "icon-halo-width": 1.2, "icon-halo-blur": 0.4 },
       });
+      // satellite-confirmed contrails: detected lines from zoom 5, a ringed marker each
+      m.addLayer({ id: "seen-lines", type: "line", source: "seen-lines", minzoom: 5, layout: { "line-cap": "round" }, paint: { "line-color": SEEN, "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.5, 9, 3.5], "line-opacity": 0.9 } });
+      m.addLayer({ id: "seen", type: "circle", source: "seen", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 5, 8, 9], "circle-color": "transparent", "circle-stroke-color": SEEN, "circle-stroke-width": 2.5 } });
       m.addLayer({ id: "pick", type: "circle", source: "pick", paint: { "circle-radius": 7, "circle-color": "transparent", "circle-stroke-color": col.corr, "circle-stroke-width": 2 } });
 
       // city labels as HTML markers (crisp, no glyph server needed)
@@ -239,6 +266,15 @@ export function ContrailMap(p: Props) {
       tip.current = new Popup({ closeButton: false, closeOnClick: false, className: "map-tip", offset: 10 });
       const onMove = (e: MapMouseEvent) => {
         props.current.onHover?.([e.lngLat.lng, e.lngLat.lat]);
+        const seenHit = m.getLayer("seen") ? m.queryRenderedFeatures([[e.point.x - 7, e.point.y - 7], [e.point.x + 7, e.point.y + 7]], { layers: ["seen"] }) : [];
+        if (seenHit.length) {
+          const ev = props.current.seen?.find((x) => x.id === seenHit[0].properties.id);
+          if (ev) {
+            m.getCanvas().style.cursor = "pointer";
+            tip.current!.setLngLat(e.lngLat).setHTML(tipHtml(ev.callsign ?? "", ev.airline ?? null, `FL${ev.fl ?? "?"} · ${ev.t_start.slice(11, 16)} UTC`, `Contrail confirmed by the satellite · ${ev.slots.length} images · click for the proof`)).addTo(m);
+            return;
+          }
+        }
         const hits = m.queryRenderedFeatures([[e.point.x - 5, e.point.y - 5], [e.point.x + 5, e.point.y + 5]], { layers: ["flagged", "legs", "planes"] });
         const fl = props.current.flights;
         if (!hits.length || !fl) {
@@ -270,6 +306,8 @@ export function ContrailMap(p: Props) {
         props.current.onHover?.(null);
       });
       m.on("click", (e: MapMouseEvent) => {
+        const seenHit = m.getLayer("seen") ? m.queryRenderedFeatures([[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]], { layers: ["seen"] }) : [];
+        if (seenHit.length && props.current.onSeen) return props.current.onSeen(String(seenHit[0].properties.id));
         const hits = m.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ["flagged"] });
         if (hits.length) {
           const s = props.current.segments.find((x) => x.segment_id === hits[0].properties.id);
@@ -338,6 +376,7 @@ function sync(m: MLMap, p: Props) {
   vis("legs-head", p.layers.flights);
   ["legs", "planes", "flagged", "flagged-glow"].forEach((id) => vis(id, p.layers.flights));
   ["corridor-fill", "corridor-line"].forEach((id) => vis(id, p.layers.corridor));
+  ["seen", "seen-lines"].forEach((id) => vis(id, p.layers.seen !== false && !!p.seen?.length));
   document.querySelectorAll<HTMLElement>(".city").forEach((d) => (d.style.display = p.layers.cities ? "" : "none"));
 
   const a = ANIM.get(m);
@@ -353,6 +392,12 @@ function sync(m: MLMap, p: Props) {
   if (key.flights !== p.flights) {
     key.flights = p.flights;
     setData("legs", p.flights ? trackLegs(p.flights) : EMPTY);
+  }
+  if (key.seen !== p.seen) {
+    key.seen = p.seen;
+    const [pts, lines] = seenFeatures(p.seen);
+    setData("seen", pts);
+    setData("seen-lines", lines);
   }
   if (key.segments !== p.segments) {
     key.segments = p.segments;

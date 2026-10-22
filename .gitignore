@@ -55,3 +55,4 @@ web/playwright-report/
 labeller/test-results/
 labeller/playwright-report/
 web/expo-build/
+web/public/data/contrails-dev/

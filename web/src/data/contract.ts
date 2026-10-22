@@ -169,3 +169,43 @@ export const Results = z
   .object({ generated_from: z.array(z.string()), hypotheses: z.array(Hypothesis), final_runs: z.array(z.record(z.string(), z.unknown())) })
   .passthrough();
 export type Results = z.infer<typeof Results>;
+
+/** Contrail proof viewer (data/contrails-<track>/): satellite-confirmed contrails, each with
+ *  Meteosat crops and three overlays in the crop's pixel grid ([x, y] = [column, row]). */
+const XY = z.array(z.tuple([z.number(), z.number()]));
+export const ContrailSlot = z.object({
+  t: z.string(),
+  img: z.string(),
+  w: z.number().int(),
+  h: z.number().int(),
+  age_min: z.number(),
+  vza_deg: z.number().nullish(),
+  track: z.array(XY),
+  drift: z.array(XY),
+  detected: z.array(z.object({ pts: XY, matched: z.boolean(), lat: z.array(z.number()), lon: z.array(z.number()) })),
+  match_px: z.number().nullish(),
+});
+export const ContrailEvent = z.object({
+  id: z.string(),
+  flight_id: z.string(),
+  callsign: z.string().nullish(),
+  airline: z.string().nullish(),
+  aircraft_type: z.string().nullish(),
+  fl: z.number().nullish(),
+  t_start: z.string(),
+  t_end: z.string(),
+  segments: z.number().int(),
+  lat: z.number(),
+  lon: z.number(),
+  slots: z.array(ContrailSlot),
+});
+export type ContrailEvent = z.infer<typeof ContrailEvent>;
+export const ContrailIndex = z.object({
+  track: z.string(),
+  detector: z.string(),
+  days: z.record(z.string(), z.number()),
+  events: z.number(),
+  credit: z.string(),
+  note: z.string().nullish(),
+});
+export type ContrailIndex = z.infer<typeof ContrailIndex>;

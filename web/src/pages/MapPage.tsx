@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
-import type { DaySummary, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
+import type { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
 import { RAMP } from "../data/ramp";
 import { clock, colourise, colouriseObs, joules, tonnes, type MapState, type ModelKey, pad2, parseState, stateQuery, type ViewKey } from "../data/format";
-import { gridUrl, layerUrl, type Lists, loadCorridor, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
+import { gridUrl, layerUrl, type Lists, loadContrailDay, loadContrailIndex, loadCorridor, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
+import { ContrailProof } from "../components/ContrailProof";
 import type { ContrailMap as ContrailMapT, Layers } from "../map/ContrailMap";
 import "../styles/map.css";
 
@@ -144,7 +145,10 @@ export function MapPage() {
   const [alertsOnly, setAlertsOnly] = useState(false);
   const [conf, setConf] = useState<"all" | "covered" | "extrapolating">("all");
   const [riskImage, setRiskImage] = useState<string | null>(null);
-  const [layers, setLayers] = useState<Layers>({ risk: true, flights: true, corridor: true, cities: true });
+  const [layers, setLayers] = useState<Layers>({ risk: true, flights: true, corridor: true, cities: true, seen: true });
+  const [cIdx, setCIdx] = useState<ContrailIndex | null>(null);
+  const [seen, setSeen] = useState<ContrailEvent[] | null>(null);
+  const [proofId, setProofId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [picked, setPicked] = useState<[number, number] | null>(null);
   const [column, setColumn] = useState<number[][] | null>(null);
@@ -229,9 +233,24 @@ export function MapPage() {
   // URL state
   useEffect(() => {
     if (!man) return;
-    const b = new URLSearchParams(location.search).get("build");
-    history.replaceState(null, "", `/map${stateQuery(st)}${b ? `&build=${encodeURIComponent(b)}` : ""}`);
+    // review overrides (another data build, other viewer data) stay in the URL
+    const q = new URLSearchParams(location.search);
+    const keep = ["build", "contrails"].flatMap((k) => (q.get(k) ? [`&${k}=${encodeURIComponent(q.get(k)!)}`] : [])).join("");
+    history.replaceState(null, "", `/map${stateQuery(st)}${keep}`);
   }, [st, man]);
+
+  // satellite-confirmed contrails (contrail proof viewer), if this deployment has them
+  useEffect(() => {
+    loadContrailIndex().then(setCIdx);
+  }, []);
+  useEffect(() => {
+    setSeen(null);
+    setProofId(null);
+    if (!cIdx || !st.date || !cIdx.days[st.date]) return;
+    loadContrailDay(st.date)
+      .then(setSeen)
+      .catch(() => setSeen(null));
+  }, [cIdx, st.date]);
 
   // day data
   useEffect(() => {
@@ -508,10 +527,11 @@ export function MapPage() {
                     ["flights", "Flights"],
                     ["corridor", "Delhi–Mumbai corridor"],
                     ["cities", "City labels"],
+                    ...(cIdx ? ([["seen", "Satellite-confirmed contrails"]] as const) : []),
                   ] as const
                 ).map(([k, label]) => (
                   <label>
-                    <input type="checkbox" checked={layers[k]} onChange={() => setLayers({ ...layers, [k]: !layers[k] })} /> {label}
+                    <input type="checkbox" checked={layers[k] !== false} onChange={() => setLayers({ ...layers, [k]: layers[k] === false })} /> {label}
                   </label>
                 ))}
               </span>
@@ -559,6 +579,8 @@ export function MapPage() {
                 onHover={setCursor}
                 introCmd={introCmd}
                 onIntro={setIntro}
+                seen={seen}
+                onSeen={setProofId}
               />
             )}
             <p class="map-hint mono-s" aria-hidden="true">
@@ -764,7 +786,7 @@ export function MapPage() {
         </div>
 
         <div class={`deck-wrap ${detailId ? "open" : ""}`}>
-          <div>{detailId && <DetailDeck key={detailId} model={v2 ? model : "B1"} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} />}</div>
+          <div>{detailId && <DetailDeck key={detailId} model={v2 ? model : "B1"} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} proof={seen?.find((e) => e.flight_id === detailId) ?? null} onProof={setProofId} />}</div>
         </div>
       </div>
 
@@ -852,6 +874,9 @@ export function MapPage() {
         </div>
       </section>
       )}
+      {proofId && cIdx && st.date && seen?.find((e) => e.id === proofId) && (
+        <ContrailProof ev={seen.find((e) => e.id === proofId)!} day={st.date} detector={cIdx.detector} credit={cIdx.credit} onClose={() => setProofId(null)} />
+      )}
       {lightbox && (
         <div class="lightbox" role="dialog" aria-modal="true" aria-label={lightbox.title} onClick={() => setLightbox(null)} onKeyDown={(e) => e.key === "Escape" && setLightbox(null)}>
           <figure onClick={(e) => e.stopPropagation()}>
@@ -886,7 +911,7 @@ function Digits(p: { text: string; suffix: string; big?: boolean }) {
 /** Lower detail bar: the flight and, for the selected list item, every field the model has.
  *  Physics lists (B1, B3): how long the contrail lasted and its warming. STRATUM: the Table 3
  *  fields of the decision layer, the alternatives and the humidity profile. */
-function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void }) {
+function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void; proof?: ContrailEvent | null; onProof?: (id: string) => void }) {
   const s = p.seg;
   const head = s ?? p.segs[0] ?? null;
   const fp = p.flight?.properties;
@@ -916,6 +941,11 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
             </>
           )}
         </span>
+        {p.proof && p.onProof && (
+          <button class="tool btn-proof" onClick={() => p.onProof!(p.proof!.id)}>
+            Satellite proof · {p.proof.slots.length} images
+          </button>
+        )}
       </div>
 
       {isS ? (
