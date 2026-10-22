@@ -126,3 +126,23 @@ both runs (build prompt §6.8).
   not supported either way), efficiency-adjusted 1.73 [1.11, 8.2]. H2: BSS vs B3 **0.92
   [0.90, 0.97]** (logged 0.86 [0.82, 0.91]), vs constant rate −0.13, vs RHi-only logistic +0.04
   [0.02, 0.12]; winter AUROC 0.83. Frozen Phase 7 models (trained on the line-filter labels).
+
+### D-005 addendum — 2026-10-22 — Detector v3, declared before its run
+- What changes (all chosen on the 51 DLR training scenes only): 6 input channels (adds WV 6.2,
+  WV 7.3 and T13.4 − T10.8; available in OpenContrails, DLR and our Meteosat-9 files); soft
+  labels (share of labellers per pixel: OpenContrails' 4, DLR's 3 experts); the network sees
+  the image upsampled 2×; all 100 OpenContrails training files (streamed); the 5 fold models are
+  the detector (ensemble, each prediction averaged over 4 mirrored copies). Colab 10a–10c.
+- The check: the **second** look at the 89 DLR evaluation scenes (the first was v1, 21 Oct),
+  logged with its reason in `_locks/detector_runs.jsonl`. Reported side by side for the old line
+  filter, v1 and v3, with 95 % scene-bootstrap intervals:
+  1. **object F1** (primary, the same one-to-one scoring as D-002 and v1);
+  2. **pixel Dice** against the experts' majority (probability ≥ 0.5);
+  3. **unanimous recall**: the share of pixels all three experts marked that v3 finds (≥ 0.5).
+- Reference for "expert level", computed 22 Oct from the dataset's own certainty masks (89
+  evaluation scenes): a typical single expert matches the experts' majority at a pixel Dice of
+  ≈ 0.72 at most (an upper bound: the expert is part of that majority); 57 % of the pixels any
+  expert marked were marked by only one of the three.
+- If v3 is better, the second analysis is repeated with it (Colab 10c, track `nn3`); v1's
+  results and the logged H1–H4 stay as they are.
+- Team OK: Shrugal Vinod, 2026-10-22 (chat: "go with expert-level v3")

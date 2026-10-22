@@ -396,12 +396,13 @@ def detector_nn_data(
     dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
     train_shards: Annotated[str, typer.Option(help="OpenContrails train shards (0-29)")] = "0-29",
     val_shards: Annotated[str, typer.Option(help="OpenContrails validation shards")] = "0-3",
+    version: Annotated[str, typer.Option(help="v1 (3 channels) or v3 (6 + soft labels)")] = "v1",
 ) -> None:
-    """D-005 (Colab 09a): OpenContrails (streamed) + DLR scenes → training data on Drive."""
+    """D-005 (Colab 09a / 10a): OpenContrails (streamed) + DLR scenes → training data on Drive."""
     from stratum.detect import nn_run
 
     res = nn_run.prepare(drive_root(), Path(dlr_dir), _shards(train_shards), _shards(val_shards),
-                         log=console.print)  # fmt: skip
+                         log=console.print, version=version)  # fmt: skip
     _summary("detector-nn-data", {
         "oc_train_examples": sum(r["n"] for r in res["oc_train"]),
         "oc_val_examples": sum(r["n"] for r in res["oc_val"]),
@@ -412,15 +413,22 @@ def detector_nn_data(
 @app.command("detector-nn-train")
 def detector_nn_train(
     dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
-    pretrain_epochs: Annotated[int, typer.Option()] = 15,
+    pretrain_epochs: Annotated[int | None, typer.Option(help="default: 15 (v1), 12 (v3)")] = None,
     finetune_epochs: Annotated[int, typer.Option()] = 150,
+    version: Annotated[str, typer.Option(help="v1 or v3")] = "v1",
 ) -> None:
-    """D-005 (Colab 09b, GPU): pre-train, 5-fold fine-tune for the settings, final model.
-    Uses only the DLR training scenes; the evaluation scenes are not read."""
+    """D-005 (Colab 09b / 10b, GPU): pre-train, 5-fold fine-tune for the settings; v1 adds a
+    final model, v3 uses the 5 fold models as an ensemble. Only the DLR training scenes."""
     from stratum.detect import nn, nn_run
 
-    cfg = nn.TrainConfig(pretrain_epochs=pretrain_epochs, finetune_epochs=finetune_epochs)
-    meta = nn_run.train(drive_root(), Path(dlr_dir), cfg, log=console.print)
+    kw: dict[str, Any] = {"finetune_epochs": finetune_epochs}
+    if pretrain_epochs is not None:
+        kw["pretrain_epochs"] = pretrain_epochs
+    root, dd = drive_root(), Path(dlr_dir)
+    if version == "v3":
+        meta = nn_run.train_v3(root, dd, nn.TrainConfig.for_v3(**kw), log=console.print)
+    else:
+        meta = nn_run.train(root, dd, nn.TrainConfig(**kw), log=console.print)
     _summary("detector-nn-train", {k: meta[k] for k in (
         "oc_train_examples", "oc_validation_dice", "hysteresis", "max_line_residual_px",
         "max_orientation_spread_deg", "oof_train", "model_sha256")})  # fmt: skip
@@ -430,11 +438,23 @@ def detector_nn_train(
 def detector_nn_eval(
     dlr_dir: Annotated[str, typer.Option(help="folder with the DLR dataset's data/ and geojson/")],
     rerun_reason: Annotated[str | None, typer.Option(help="needed for a 2nd evaluation")] = None,
+    version: Annotated[str, typer.Option(help="v1 or v3")] = "v1",
 ) -> None:
-    """D-005 (Colab 09b): the ONE check of the learned detector on the 89 DLR evaluation
+    """D-005 (Colab 09b / 10b): the check of the learned detector on the 89 DLR evaluation
     scenes, old and new side by side; logged in _locks/detector_runs.jsonl."""
     from stratum.detect import nn_run
 
+    if version == "v3":
+        r3 = nn_run.evaluate_v3(drive_root(), Path(dlr_dir), rerun_reason, log=console.print)
+        keys = ("precision", "recall", "f1", "pixel_dice", "unanimous_recall")
+        rows3: dict[str, object] = {}
+        for w in ("v3", "v1", "old"):
+            for k in keys:
+                if k in r3[w]:
+                    ci = r3[w].get("ci95", {}).get(k)
+                    rows3[f"{w} {k}"] = f"{r3[w][k]:.3f} {ci}" if ci else r3[w][k]
+        _summary("detector-nn-eval v3", rows3)
+        return
     res = nn_run.evaluate(drive_root(), Path(dlr_dir), rerun_reason, log=console.print)
     _summary("detector-nn-eval", {
         "scenes / expert lines": f"{res['scenes']} / {res['expert_lines']}",
@@ -445,13 +465,16 @@ def detector_nn_eval(
 
 
 @app.command("second-analysis-nn")
-def second_analysis_nn() -> None:
+def second_analysis_nn(
+    track: Annotated[str, typer.Option(help="nn (detector v1) or nn3 (detector v3)")] = "nn",
+) -> None:
     """D-005 (Colab 09c): re-label the flight days with the learned detector, wrong-day null,
     H1 and H2 recomputed DESCRIPTIVELY next to the logged final runs (which never change)."""
     from stratum.evaluate import second_nn
     from stratum.release.rescore import fmt
 
-    r = second_nn.run(drive_root(), cfg.load_preregistered(), cfg.config_hash(), log=console.print)
+    pre = cfg.load_preregistered()
+    r = second_nn.run(drive_root(), pre, cfg.config_hash(), console.print, track)
     lab = r["labels"]
     _summary("second-analysis-nn", {
         "labelled / y1 (line → nn)": f"{lab['line']['labelled']:,} / {lab['line']['y1']:,} → "

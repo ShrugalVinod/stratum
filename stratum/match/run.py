@@ -454,13 +454,13 @@ def match_day(
     """
     from stratum import phase2
     from stratum.detect.params import load_detector_params
-    from stratum.detect.run import detect_day, detections_dir, nn_detector
+    from stratum.detect.run import NN_TRACKS, detect_day, detections_dir, nn_detector
     from stratum.manifest import SUCCESS_MARKER
     from stratum.met.interp import MetGrid
 
     p = (
-        nn_detector(root, det_params)[1]
-        if track == "nn"
+        nn_detector(root, det_params, track)[2]
+        if track in NN_TRACKS
         else (det_params or load_detector_params())
     )
     sfx = "" if track == "line" else f"_{track}"

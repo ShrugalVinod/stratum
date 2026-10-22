@@ -146,3 +146,63 @@ def test_unet_learns_a_line() -> None:
         [sys.executable, "-c", _TRAIN_SCRIPT], capture_output=True, text=True, timeout=600
     )
     assert r.returncode == 0 and r.stdout.strip().endswith("ok"), r.stderr[-2000:]
+
+
+def test_soft_labels_from_individual_masks() -> None:
+    """v3: soft label = share of the labellers who marked a pixel; -1 (not labelled) ignored."""
+    rng = np.random.default_rng(3)
+    bands = {b: rng.uniform(200, 300, (4, 4, 1)) for b in nd.OC_BANDS6}
+    ind = np.zeros((4, 4, 1, 4), np.int32)
+    ind[0, 0, 0, :3] = 1  # 3 of 3 valid labellers
+    ind[1, 1, 0, 0] = 1  # 1 of 3
+    ind[..., 3] = -1  # the 4th did not label this scene
+    feats = {b: _feature_bytes(_tensor(a)) for b, a in bands.items()}
+    feats["human_pixel_masks"] = _feature_bytes(
+        _tensor((ind[..., 0, :3].sum(-1, keepdims=True) >= 2).astype(np.int32))
+    )
+    feats["human_individual_masks"] = _feature_bytes(_tensor(ind))
+    feats["n_times_before"] = _feature_int(0)
+    feats["timestamp"] = _feature_int(1)
+    s = tr.sample(_example(feats), nd.OC_BANDS6)
+    assert s["soft"][0, 0] == 1.0 and np.isclose(s["soft"][1, 1], 1 / 3) and s["soft"][2, 2] == 0.0
+    x = nd.channels6(*(s[b] for b in nd.OC_BANDS6))
+    assert x.shape == (6, 4, 4) and np.allclose(
+        x[:3], nd.channels(s["cloud_top"], s["data_11um"], s["data_12um"])
+    )
+    t108 = s["data_11um"]
+    assert np.allclose(x[5], (s["co2"] - t108 - nd.D134_OFF) / nd.D134_SCALE, atol=1e-5)
+    assert np.allclose(nd.inputs("c3", [s[b] for b in nd.OC_BANDS6]), x[:3])
+
+
+_V3_SCRIPT = """
+import numpy as np, tempfile
+from pathlib import Path
+from stratum.detect import nn, nn_data as nd
+rng = np.random.default_rng(0)
+with tempfile.TemporaryDirectory() as d:
+    paths = []
+    for k in range(2):
+        x = rng.normal(size=(6, 6, 64, 64)).astype(np.float32)
+        y = np.zeros((6, 64, 64), np.uint8); y[:, 30:32, 5:60] = 1
+        p = Path(d) / f"s{k}.npz"; nd.write_shard(p, list(x), list(y), soft=(y * 100).astype(np.uint8)); paths.append(p)
+    cfg = nn.TrainConfig.for_v3(base_channels=8, batch=4, tile=48, shard_group=1)
+    m = nn.build_model(8, 6, 2)
+    ls = nn.train_shards(m, paths, [6, 6], 2, 1e-3, cfg, log=lambda _: None)
+    p = nn.predict_ensemble([m, m], rng.normal(size=(2, 6, 70, 90)).astype(np.float32))
+    assert len(ls) == 2 and p.shape == (2, 70, 90) and np.isfinite(p).all()
+    nn.save(m, Path(d) / "m.pt", {"base_channels": 8, "in_channels": 6, "upscale": 2})
+    assert nn.load(Path(d) / "m.pt")[1]["in_channels"] == 6
+print("ok")
+"""
+
+
+@pytest.mark.slow
+def test_v3_model_streams_shards_and_ensembles() -> None:
+    import subprocess
+    import sys
+
+    pytest.importorskip("torch")
+    r = subprocess.run(
+        [sys.executable, "-c", _V3_SCRIPT], capture_output=True, text=True, timeout=600
+    )
+    assert r.returncode == 0 and r.stdout.strip().endswith("ok"), r.stderr[-2000:]

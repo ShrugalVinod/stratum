@@ -11,6 +11,14 @@ Same discipline as the line-filter tuning (D-002, ``tuning.py``):
 3. ``evaluate``: **once**, on the 89 evaluation scenes, new and old detector side by side, with
    95 % scene-bootstrap intervals. Logged in ``<Drive>/_locks/detector_runs.jsonl``; a second
    run needs a written reason (like a final run).
+
+**v3** (``version="v3"``, own folder ``interim/detector_nn_v3``): 6 channels, soft labels, 2×
+upsampling, all OpenContrails shards streamed; the **5 fold models are the ensemble** (each
+evaluation scene is unseen by all five), every prediction averaged over 4 mirrored copies.
+Its check is the second look at the evaluation scenes, so it needs a written reason, and it
+reports the old line filter, v1 and v3 side by side plus two measures declared before the run
+(D-005 addendum): pixel Dice against the experts' majority, and recall of the pixels all three
+experts marked (``unanimous_recall``).
 """
 
 from __future__ import annotations
@@ -39,8 +47,8 @@ HYSTERESIS = [
 GEOMETRY = [(res, spread) for res in (1.2, 2.0) for spread in (15.0, 25.0)]
 
 
-def nn_dir(root: Path) -> Path:
-    return root / "interim" / "detector_nn"
+def nn_dir(root: Path, version: str = "v1") -> Path:
+    return root / "interim" / ("detector_nn" if version == "v1" else f"detector_nn_{version}")
 
 
 def runs_log(root: Path) -> Path:
@@ -52,18 +60,24 @@ def runs_log(root: Path) -> Path:
 
 
 def prepare(
-    root: Path, dlr_dir: Path, train_shards: list[int], val_shards: list[int], log: Any = print
+    root: Path,
+    dlr_dir: Path,
+    train_shards: list[int],
+    val_shards: list[int],
+    log: Any = print,
+    version: str = "v1",
 ) -> dict[str, Any]:
-    out = nn_dir(root) / "data"
+    kind = "c3" if version == "v1" else "c6"
+    out = nn_dir(root, version) / "data"
     res: dict[str, Any] = {"oc_train": [], "oc_val": []}
     for split, ks in (("train", train_shards), ("validation", val_shards)):
         for k in ks:
-            r = nd.oc_shard(split, k, out)
+            r = nd.oc_shard(split, k, out, kind)
             res["oc_train" if split == "train" else "oc_val"].append(r)
             done = " (done before)" if r["skipped"] else ""
             log(f"  OpenContrails {split} {k:03d}: {r['n']} examples{done}")
-    res["dlr_train"] = nd.dlr_shard(dlr_dir, dlr.TRAINING, out / "dlr_train.npz")
-    res["dlr_eval"] = nd.dlr_shard(dlr_dir, dlr.EVALUATION, out / "dlr_eval.npz")
+    res["dlr_train"] = nd.dlr_shard(dlr_dir, dlr.TRAINING, out / "dlr_train.npz", kind)
+    res["dlr_eval"] = nd.dlr_shard(dlr_dir, dlr.EVALUATION, out / "dlr_eval.npz", kind)
     res["credit"] = [nd.CREDIT_OC, dlr.CREDIT]
     (out / "summary.json").write_text(json.dumps(res, indent=1))
     return res
@@ -285,3 +299,182 @@ def evaluate(
     }
     out.write_text(json.dumps(full, indent=1))
     return res
+
+
+# ── v3: ensemble of soft-label, 6-channel, 2×-upsampled models ───────────────
+
+
+def _done(data: Path, pattern: str) -> list[Path]:
+    return sorted(f for f in data.glob(pattern) if not f.name.endswith(".tmp.npz"))
+
+
+def _counts(paths: list[Path]) -> list[int]:
+    out = []
+    for p in paths:
+        with np.load(p) as z:
+            out.append(int(z["y"].shape[0]))
+    return out
+
+
+def train_v3(root: Path, dlr_dir: Path, cfg: nn.TrainConfig, log: Any = print) -> dict[str, Any]:
+    """Pre-train (streamed), 5-fold fine-tune on the DLR training scenes with soft labels, choose
+    the object settings on out-of-fold probabilities; the 5 fold models are the ensemble."""
+    d = nn_dir(root, "v3")
+    data = d / "data"
+    oc_tr, oc_va = _done(data, "oc_train_*.npz"), _done(data, "oc_validation_*.npz")
+    counts = _counts(oc_tr)
+    log(f"Pre-training v3 on {sum(counts)} OpenContrails examples ({len(oc_tr)} shards, streamed)")
+    base_model = nn.build_model(cfg.base_channels, cfg.in_channels, cfg.upscale)
+    nn.train_shards(base_model, oc_tr, counts, cfg.pretrain_epochs, cfg.pretrain_lr, cfg, log=log)
+    xv, yv = _load(oc_va)
+    oc_dice = nn.dice(nn.predict(base_model, xv.astype(np.float32), tta=True), yv)
+    log(f"OpenContrails validation Dice (2 km, before fine-tuning): {oc_dice:.3f}")
+    del xv, yv
+    state0 = {k: v.detach().clone() for k, v in base_model.state_dict().items()}
+
+    with np.load(data / "dlr_train.npz") as z:
+        xt, soft, sid = z["x"], z["soft"], z["scene"].tolist()
+    rng = np.random.default_rng(cfg.seed)
+    fold = rng.permutation(len(sid)) % FOLDS
+    oof: dict[int, np.ndarray] = {}
+    names = []
+    d.mkdir(parents=True, exist_ok=True)
+    for f in range(FOLDS):
+        m = nn.build_model(cfg.base_channels, cfg.in_channels, cfg.upscale)
+        m.load_state_dict(state0)
+        tr = np.flatnonzero(fold != f)
+        log(f"Fine-tune fold {f + 1}/{FOLDS} on {len(tr)} DLR training scenes (soft labels)")
+        nn.train(m, xt[tr], soft[tr], cfg.finetune_epochs, cfg.finetune_lr, cfg, shrink=False,
+                 crops_per_item=cfg.finetune_crops_per_scene, log=lambda _: None,
+                 seed_offset=f + 1, y_scale=0.01)  # fmt: skip
+        te = np.flatnonzero(fold == f)
+        for i, p in zip(te, nn.predict(m, xt[te].astype(np.float32), tta=True), strict=True):
+            oof[sid[i]] = p
+        name = f"model_fold{f + 1}.pt"
+        nn.save(m, d / name, {**cfg.as_dict(), "fold": f + 1})
+        names.append(name)
+    scenes = [tu.load_scene(dlr_dir, k) for k in sid]
+    sel = select(scenes, oof, load_detector_params(), log)
+    b = sel["best"]
+    sha = hashlib.sha256(b"".join((d / n).read_bytes() for n in names)).hexdigest()
+    meta = {
+        **cfg.as_dict(),
+        "version": "v3",
+        "inputs": "c6",
+        "models": names,
+        "tta": True,
+        "hysteresis": b["hysteresis"],
+        "max_line_residual_px": b["max_line_residual_px"],
+        "max_orientation_spread_deg": b["max_orientation_spread_deg"],
+        "oof_train": {k: b[k] for k in ("precision", "recall", "f1", "recall_lenient")},
+        "oc_validation_dice": round(oc_dice, 4),
+        "oc_train_examples": int(sum(counts)),
+        "dlr_train_scenes": sid,
+        "created_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "credit": [nd.CREDIT_OC, dlr.CREDIT],
+        "model_sha256": sha,
+    }
+    (d / "meta.json").write_text(json.dumps(meta, indent=1))
+    (d / "train_summary.json").write_text(
+        json.dumps({**meta, "selection_grid": sel["grid"]}, indent=1)
+    )
+    return meta
+
+
+def load_detector(root: Path, version: str) -> tuple[Any, dict[str, Any]]:
+    """(predict function on [N, C, H, W] inputs, meta) for the v1 model or the v3 ensemble."""
+    d = nn_dir(root, version)
+    if version == "v1":
+        model, meta = nn.load(d / "model.pt")
+        return (lambda x: nn.predict(model, x)), {**meta, "inputs": "c3"}
+    meta = json.loads((d / "meta.json").read_text())
+    models = [nn.load(d / name)[0] for name in meta["models"]]
+    return (lambda x: nn.predict_ensemble(models, x, tta=bool(meta.get("tta", True)))), meta
+
+
+def _pixel_scores(prob: np.ndarray, majority: np.ndarray, cert: np.ndarray) -> dict[str, float]:
+    p = prob >= 0.5
+    inter = float(np.logical_and(p, majority > 0).sum())
+    unanimous = cert >= 3
+    return {
+        "pixel_dice": round(2 * inter / max(1.0, float(p.sum() + (majority > 0).sum())), 4),
+        "unanimous_recall": round(
+            float(p[unanimous].mean()) if unanimous.any() else float("nan"), 4
+        ),
+    }
+
+
+def evaluate_v3(
+    root: Path, dlr_dir: Path, rerun_reason: str | None, log: Any = print
+) -> dict[str, Any]:
+    """The v3 check on the 89 evaluation scenes: line filter, v1 and v3 side by side."""
+    logf = runs_log(root)
+    prior = (
+        [json.loads(x) for x in logf.read_text().splitlines() if x.strip()] if logf.exists() else []
+    )
+    if prior and not rerun_reason:
+        raise RuntimeError(
+            "The DLR evaluation scenes were already used (see _locks/detector_runs.jsonl); "
+            "this check needs --rerun-reason."
+        )
+    d3 = nn_dir(root, "v3")
+    pred3, meta3 = load_detector(root, "v3")
+    with np.load(d3 / "data" / "dlr_eval.npz") as z:
+        x6, sid, cert = z["x"], z["scene"].tolist(), z["certainty"]
+    with np.load(nn_dir(root, "v1") / "data" / "dlr_eval.npz") as z:
+        x3 = z["x"]
+    scenes = [tu.load_scene(dlr_dir, k) for k in sid]
+    majority = np.stack([(np.nan_to_num(s.arrays["ground_truth"]) > 0.5) for s in scenes]).astype(
+        np.uint8
+    )
+    base = load_detector_params()
+    seed = 20261017
+    out: dict[str, Any] = {"scenes": len(sid)}
+    for name, prob, meta in (
+        ("v3", pred3(x6.astype(np.float32)), meta3),
+        ("v1", *_v1_eval_probs(root, x3)),
+    ):
+        p = nn_params(
+            base,
+            tuple(meta["hysteresis"]),
+            (meta["max_line_residual_px"], meta["max_orientation_spread_deg"]),
+        )
+        c = score(scenes, dict(zip(sid, prob, strict=True)), p)
+        out[name] = {
+            **{k: round(v, 4) for k, v in tu.prf(c).items()},
+            "ci95": tu.bootstrap_ci(c, seed),
+            **_pixel_scores(prob, majority, cert),
+        }
+        out[f"per_scene_{name}"] = c.to_dict(orient="records")
+    old = pd.concat([tu.detect_scene(s, base) for s in scenes], ignore_index=True)
+    c_old = tu.scene_counts(
+        old, scenes, old["confidence"].to_numpy(float), base.operating_threshold
+    )
+    out["old"] = {
+        **{k: round(v, 4) for k, v in tu.prf(c_old).items()},
+        "ci95": tu.bootstrap_ci(c_old, seed),
+    }
+    out["expert_lines"] = int(c_old["exp"].sum())
+    entry = {
+        "time_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "version": "v3",
+        "model_sha256": meta3["model_sha256"],
+        "rerun_reason": rerun_reason,
+        "v3_f1": out["v3"]["f1"],
+        "v1_f1": out["v1"]["f1"],
+        "old_f1": out["old"]["f1"],
+        "v3_pixel_dice": out["v3"]["pixel_dice"],
+        "v3_unanimous_recall": out["v3"]["unanimous_recall"],
+    }
+    logf.parent.mkdir(parents=True, exist_ok=True)
+    with logf.open("a") as f:
+        f.write(json.dumps(entry) + "\n")
+    (d3 / "eval_summary.json").write_text(
+        json.dumps({**out, "log_entry": entry}, indent=1, default=str)
+    )
+    return out
+
+
+def _v1_eval_probs(root: Path, x3: np.ndarray) -> tuple[np.ndarray, dict[str, Any]]:
+    pred1, meta1 = load_detector(root, "v1")
+    return pred1(x3.astype(np.float32)), meta1

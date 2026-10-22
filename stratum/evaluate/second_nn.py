@@ -52,7 +52,9 @@ def label_counts(root: Path, track: str) -> dict[str, Any]:
     }
 
 
-def run(root: Path, pre: Any, config_hash: str, log: Any = print) -> dict[str, Any]:
+def run(
+    root: Path, pre: Any, config_hash: str, log: Any = print, track: str = "nn"
+) -> dict[str, Any]:
     from stratum import phase5
     from stratum.evaluate import h2 as h2m
     from stratum.evaluate import hypotheses as hy
@@ -68,16 +70,16 @@ def run(root: Path, pre: Any, config_hash: str, log: Any = print) -> dict[str, A
     rules = rules_from_preregistered()
     days = phase5._segment_days(root)
     for d in days:
-        r = match_day(root, d, None, rules, lo, hi, config_hash, track="nn")
+        r = match_day(root, d, None, rules, lo, hi, config_hash, track=track)
         log(f"  labels {d}: {r.get('status')} y1={r.get('y1')} y0={r.get('y0')}")
     for d, other in zip(days, [*days[1:], days[0]], strict=True):
-        r = match_day(root, d, None, rules, lo, hi, config_hash, image_day=other, track="nn")
+        r = match_day(root, d, None, rules, lo, hi, config_hash, image_day=other, track=track)
         log(f"  wrong-day null {d} on {other}: {r.get('status')}")
-    counts = {"line": label_counts(root, "line"), "nn": label_counts(root, "nn")}
+    counts = {"line": label_counts(root, "line"), "nn": label_counts(root, track)}
     log(f"  labels: {counts}")
 
-    t, images, info = tb.build(root, lo, hi, track="nn")
-    ev = root / "interim" / "evaluation_nn"
+    t, images, info = tb.build(root, lo, hi, track=track)
+    ev = root / "interim" / f"evaluation_{track}"
     ev.mkdir(parents=True, exist_ok=True)
     t.to_parquet(ev / "table.parquet", index=False)
     images.to_parquet(ev / "images.parquet", index=False)
@@ -90,6 +92,7 @@ def run(root: Path, pre: Any, config_hash: str, log: Any = print) -> dict[str, A
     h2 = h2m.evaluate_h2(t, images, n, seed)
     logged = {h["id"]: h.get("estimate") for h in build_results(root).get("hypotheses", [])}
     res = {
+        "track": track,
         "note": "Descriptive second analysis (D-005): labels from the learned detector. "
         "The logged final runs are unchanged.",
         "labels": counts,
@@ -102,7 +105,7 @@ def run(root: Path, pre: Any, config_hash: str, log: Any = print) -> dict[str, A
                "auroc": {f: (x.get("models") or {}).get("STRATUM", {}).get("auroc")
                          for f, x in h2["folds"].items()}},
     }  # fmt: skip
-    out = root / "reports" / "second_analysis_nn"
+    out = root / "reports" / f"second_analysis_{track}"
     out.mkdir(parents=True, exist_ok=True)
     (out / "results.json").write_text(json.dumps(res, indent=1, default=str))
     return res

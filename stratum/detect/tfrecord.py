@@ -141,4 +141,11 @@ def sample(rec: bytes, bands: tuple[str, ...]) -> dict[str, Any]:
     out: dict[str, Any] = {b: tensor(ex[b][0])[..., t].astype(np.float32) for b in bands}
     out["mask"] = tensor(ex["human_pixel_masks"][0])[..., 0].astype(np.uint8)
     out["timestamp"] = int(ex["timestamp"][0])
+    if "human_individual_masks" in ex:  # (H, W, 1, K); -1 = this labeller did not label
+        ind = tensor(ex["human_individual_masks"][0])[..., 0, :].astype(np.float32)
+        valid = (ind >= 0).any(axis=(0, 1))
+        k = int(valid.sum())
+        out["soft"] = (
+            (np.clip(ind[..., valid], 0, 1).sum(-1) / k) if k else out["mask"].astype(np.float32)
+        )
     return out

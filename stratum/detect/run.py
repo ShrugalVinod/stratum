@@ -206,16 +206,28 @@ def detections_dir(root: Path, track: str = "line") -> Path:
     return root / "interim" / ("detections" if track == "line" else f"detections_{track}")
 
 
-def nn_detector(root: Path, params: DetectorParams | None = None) -> tuple[Any, DetectorParams]:
-    """The learned detector (D-005) and the object settings chosen with it on the DLR
-    training scenes; every object that passes them is kept (operating threshold 0)."""
-    from stratum.detect import nn
-    from stratum.detect.nn_run import nn_dir, nn_params
+NN_TRACKS = {"nn": "v1", "nn3": "v3"}  # detector track → learned-detector version (D-005)
 
-    model, meta = nn.load(nn_dir(root) / "model.pt")
+
+def nn_detector(
+    root: Path, params: DetectorParams | None = None, track: str = "nn"
+) -> tuple[Any, str, DetectorParams]:
+    """The learned detector of ``track`` (D-005): a predict function on [N, C, H, W] inputs,
+    its input kind ("c3"/"c6") and the object settings chosen with it on the DLR training
+    scenes; every object that passes them is kept (operating threshold 0)."""
+    from stratum.detect import nn
+    from stratum.detect.nn_run import load_detector, nn_dir, nn_params
+
+    version = NN_TRACKS[track]
+    if version == "v1":
+        model, meta = nn.load(nn_dir(root) / "model.pt")
+        predict, kind = (lambda x: nn.predict(model, x)), "c3"
+    else:
+        predict, meta = load_detector(root, version)
+        kind = str(meta["inputs"])
     geom = (meta["max_line_residual_px"], meta["max_orientation_spread_deg"])
     p = nn_params(params or load_detector_params(), tuple(meta["hysteresis"]), geom)
-    return model, p.model_copy(update={"operating_threshold": 0.0})
+    return predict, kind, p.model_copy(update={"operating_threshold": 0.0})
 
 
 def detect_day(
@@ -228,16 +240,19 @@ def detect_day(
 ) -> dict[str, Any]:
     """All slots of one stored Meteosat day → ``<detections dir>/YYYY-MM-DD/objects.parquet``.
 
-    ``track="nn"``: the learned detector (D-005) supplies the per-pixel probability; output in
-    ``interim/detections_nn`` so the pre-registered detections are never overwritten."""
+    ``track="nn"`` / ``"nn3"``: the learned detector v1 / v3 (D-005) supplies the per-pixel
+    probability; output in ``interim/detections_<track>``, so the pre-registered detections are
+    never overwritten."""
+    from stratum.detect.nn_data import METEOSAT_BANDS6, inputs
     from stratum.io.meteosat_plots import area_from_attrs
     from stratum.manifest import SUCCESS_MARKER
 
-    model = None
-    if track == "nn":
-        model, p = nn_detector(root, params)
+    predict, kind = None, "c3"
+    if track in NN_TRACKS:
+        predict, kind, p = nn_detector(root, params, track)
     else:
         p = params or load_detector_params()
+    bands = list(METEOSAT_BANDS6) if kind == "c6" else ["IR_087", "IR_108", "IR_120"]
     src = root / "raw" / "meteosat" / "l15_crop" / f"{day:%Y-%m-%d}"
     out_dir = detections_dir(root, track) / f"{day:%Y-%m-%d}"
     if force:
@@ -263,15 +278,12 @@ def detect_day(
         coast = coast_mask(area_from_attrs(ds), lat.shape, p.coast_buffer_px)
         frames, rejected, cand = [], ObjectLog().rejected, 0
         for t in ds["time"].values:
-            chans = ["IR_108", "IR_120"] + (["IR_087"] if model is not None else [])
+            chans = sorted({"IR_108", "IR_120", *(bands if predict is not None else [])})
             s = ds.sel(time=t)[chans].load()
             prob = None
-            if model is not None:
-                from stratum.detect import nn
-                from stratum.detect.nn_data import channels
-
-                x = channels(s["IR_087"].values, s["IR_108"].values, s["IR_120"].values)
-                prob = nn.predict(model, x[None])[0]
+            if predict is not None:
+                x = inputs(kind, [s[b].values for b in bands])
+                prob = predict(x[None])[0]
             df, log = detect_slot(
                 s["IR_108"].values, s["IR_120"].values, lat, lon, vza, p, coast,
                 pd.Timestamp(t), response=prob,
