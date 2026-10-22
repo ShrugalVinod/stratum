@@ -152,7 +152,8 @@ test("a page whose code fails to load is opened by a full reload, not left on Ho
     if (blocked++ === 0) return route.abort();
     return route.continue();
   });
-  await page.locator('header a[href="/methods"]').first().click();
+  await page.locator(".menu-btn").click();
+  await page.locator('#side-nav a[href="/methods"]').click();
   await expect(page.locator("h1")).toContainText("before results", { timeout: 15_000 });
   expect(page.url()).toContain("/methods");
   expect(blocked).toBeGreaterThanOrEqual(2);
