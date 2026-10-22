@@ -1,9 +1,10 @@
 // Helpers of the /api/live route (worker/index.js), kept out of the entry module: a Worker's
 // main module may only export handlers. Unit-tested in tests/worker.test.ts.
 //
-// Three live sources, merged: the OpenSky Network (one request covers all of India; the best
-// coverage over India), adsb.fi and adsb.lol (community feeders, near the visitor). The ICAO24
-// address is used only here, to drop duplicates, and is never sent to the browser.
+// Live sources, merged: the OpenSky Network (all of India, the best coverage; fetched every 5 min
+// by the `live` GitHub Action because OpenSky does not answer Cloudflare's servers) and adsb.lol
+// (community feeders, live, near the visitor). Duplicates are matched by callsign; no ICAO24
+// address is used or sent.
 
 // adsb.lol and adsb.fi refuse generic clients: say who we are and where to reach us
 export const USER_AGENT = "STRATUM-research/1.0 (+https://stratum.aerospaceonyx.workers.dev/contact)";
@@ -31,7 +32,7 @@ export function fromReadsb(ac, now) {
     const alt = typeof a.alt_baro === "number" ? a.alt_baro : null;
     if (!COMMERCIAL.test(cs) || alt == null || alt < MIN_ALT_FT || typeof a.lat !== "number" || typeof a.lon !== "number") continue;
     out.push({
-      key: String(a.hex ?? cs).toLowerCase().replace(/^~/, ""),
+      key: cs,
       cs,
       type: typeof a.t === "string" ? a.t : null,
       alt,
@@ -56,7 +57,7 @@ export function fromOpenSky(states) {
     const alt = Math.round(altM * FT_PER_M);
     if (alt < MIN_ALT_FT) continue;
     out.push({
-      key: String(s[0]).toLowerCase(),
+      key: cs,
       cs,
       type: null,
       alt,
@@ -70,12 +71,13 @@ export function fromOpenSky(states) {
   return out;
 }
 
-/** One record per aircraft: the freshest position, the aircraft type from whichever source has
- *  it; the match key is dropped. */
+/** One record per aircraft (callsign): the freshest position, the aircraft type from whichever
+ *  source has it; the match key is dropped. Snapshot records (no key) are keyed by callsign. */
 export function merge(...lists) {
   const by = new Map();
   for (const list of lists)
-    for (const a of list) {
+    for (const a0 of list) {
+      const a = a0.key ? a0 : { ...a0, key: a0.cs };
       const b = by.get(a.key);
       if (!b) by.set(a.key, a);
       else by.set(a.key, { ...(a.t > b.t ? a : b), type: a.type ?? b.type });

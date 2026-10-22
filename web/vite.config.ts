@@ -26,7 +26,8 @@ function preloadFonts(): Plugin {
 }
 
 // In development there is no Worker: answer /api/live like worker/index.js does (OpenSky for
-// India, anonymous, cached 10 min here; adsb.fi and adsb.lol near the point, 60 s), merged.
+// India, anonymous, cached 10 min here, like the `live` Action's snapshot; adsb.lol near the
+// point, 60 s), merged by callsign.
 function devLiveApi(): Plugin {
   const memo = new Map<string, { until: number; v: Promise<unknown[]> }>();
   const once = (key: string, ttl: number, load: () => Promise<unknown[]>) => {
@@ -57,13 +58,12 @@ function devLiveApi(): Plugin {
           return r.json();
         };
         const box = new URLSearchParams(Object.entries(INDIA_BOX).map(([k, v]) => [k, String(v)]));
-        const [os, fi, lol] = await Promise.all([
+        const [os, lol] = await Promise.all([
           once("opensky", 600, async () => fromOpenSky((await get(`https://opensky-network.org/api/states/all?${box}`)).states)),
-          once(`fi/${lat}/${lon}`, 60, async () => fromReadsb((await get(`https://opendata.adsb.fi/api/v2/lat/${lat}/lon/${lon}/dist/250`)).aircraft, Date.now())),
           once(`lol/${lat}/${lon}`, 60, async () => fromReadsb((await get(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/250`)).ac, Date.now())),
         ]);
-        const ac = merge(os as never, fi as never, lol as never);
-        res.end(JSON.stringify({ t: Date.now(), centre: [lat, lon], radius_nm: 250, credit: "Live aircraft: The OpenSky Network, adsb.fi, adsb.lol (ODbL)", sources: { opensky: os.length, adsb_fi: fi.length, adsb_lol: lol.length }, ac }));
+        const ac = merge(os as never, lol as never);
+        res.end(JSON.stringify({ t: Date.now(), centre: [lat, lon], radius_nm: 250, credit: "Live aircraft: The OpenSky Network, adsb.lol (ODbL)", sources: { opensky: os.length, adsb_lol: lol.length }, ac }));
       });
     },
   };

@@ -36,12 +36,13 @@ describe("live aircraft proxy", () => {
     ];
     const out = fromOpenSky(st);
     expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({ key: "800abc", cs: "IGO519P", alt: 36000, gs: 450, trk: 42, t: 1_000_000 });
+    expect(out[0]).toMatchObject({ key: "IGO519P", cs: "IGO519P", alt: 36000, gs: 450, trk: 42, t: 1_000_000 });
   });
 
-  it("merges sources: one record per aircraft, the freshest position, the known type, no address", () => {
+  it("merges sources by callsign: the freshest position, the known type, no address", () => {
     const now = 2_000_000;
-    const os = fromOpenSky([["800abc", "IGO519P", "India", 1990, 1990, 77.5, 13.0, 10972.8, false, 231.5, 41.6, 0, null, 0, null, false, 0]]);
+    // the Action's snapshot: plain records without a key
+    const os = [{ cs: "IGO519P", type: null, alt: 36000, lat: 13.0, lon: 77.5, trk: 42, gs: 450, t: 1_990_000 }];
     const fi = fromReadsb([{ hex: "800abc", flight: "IGO519P", alt_baro: 36000, lat: 13.1, lon: 77.6, t: "A20N", track: 42, gs: 452, seen_pos: 1 }], now);
     const lol = fromReadsb([{ hex: "800def", flight: "AXB639", alt_baro: 36000, lat: 14, lon: 76, t: "B738", seen_pos: 5 }], now);
     const m = merge(os, fi, lol);

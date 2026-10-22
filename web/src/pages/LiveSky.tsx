@@ -63,7 +63,7 @@ export function distBearing(lat1: number, lon1: number, lat2: number, lon2: numb
 /** Where the aircraft is now: its last position moved on along its track at its ground speed. */
 function deadReckon(a: LiveAircraft, now: number): [number, number] {
   if (a.gs == null || a.trk == null) return [a.lat, a.lon];
-  const km = (a.gs * 1.852 * Math.max(0, Math.min(now - a.t, 180_000))) / 3_600_000;
+  const km = (a.gs * 1.852 * Math.max(0, Math.min(now - a.t, 900_000))) / 3_600_000;
   const dLat = (km / 111.2) * Math.cos(rad(a.trk));
   const dLon = ((km / 111.2) * Math.sin(rad(a.trk))) / Math.cos(rad(a.lat));
   return [a.lat + dLat, a.lon + dLon];
@@ -372,7 +372,7 @@ export function LiveSky() {
         <section class="section live-india">
           <div class="sec-head rv">
             <p class="label red">Over India now</p>
-            <span class="mono-s">{all.length} airliners above FL200 · positions moved on every second</span>
+            <span class="mono-s">{all.length} airliners above FL200 · positions moved on by speed and heading</span>
           </div>
           <div class="live-grid">
             <figure class="adv-map live-map rv rv-fade">
@@ -444,7 +444,7 @@ export function LiveSky() {
               )}
               {sources && (
                 <p class="mono-s muted">
-                  Sources this minute: OpenSky {String(sources.opensky)} · adsb.fi {String(sources.adsb_fi)} · adsb.lol {String(sources.adsb_lol)} (merged, duplicates removed)
+                  Sources: OpenSky snapshot {String(sources.opensky)} (every 5 min) · adsb.lol live {String(sources.adsb_lol)} (merged by callsign)
                 </p>
               )}
             </div>
@@ -463,8 +463,8 @@ export function LiveSky() {
             STRATUM's learned correction is not applied, because the open forecast data lack the cloud fields it needs. Not for operational use.
           </p>
           <p class="mono-s muted">
-            {ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)"} · Live aircraft: The OpenSky Network, adsb.fi and adsb.lol (ODbL), airline flights above FL200
-            only; no aircraft addresses are kept.
+            {ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)"} · Live aircraft: The OpenSky Network (every 5 minutes, positions moved on by speed and heading)
+            and adsb.lol (ODbL, live); airline flights above FL200 only; no aircraft addresses are kept.
           </p>
         </section>
       </div>

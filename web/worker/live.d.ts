@@ -8,5 +8,5 @@ export type LiveAircraft = { cs: string; type: string | null; alt: number; lat: 
 export type Keyed = LiveAircraft & { key: string };
 export function fromReadsb(ac: unknown[] | undefined, now: number): Keyed[];
 export function fromOpenSky(states: unknown[][] | undefined | null): Keyed[];
-export function merge(...lists: Keyed[][]): LiveAircraft[];
+export function merge(...lists: (Keyed | LiveAircraft)[][]): LiveAircraft[];
 export function slim(ac: unknown[] | undefined, now: number): LiveAircraft[];
