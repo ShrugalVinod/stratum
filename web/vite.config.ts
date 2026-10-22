@@ -25,9 +25,36 @@ function preloadFonts(): Plugin {
   };
 }
 
+// In development there is no Worker: answer /api/live the same way worker/index.js does
+// (adsb.lol, commercial flights above FL200, no ICAO24), without its cache.
+function devLiveApi(): Plugin {
+  return {
+    name: "stratum-dev-live-api",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/live", async (req, res) => {
+        const { cell, slim, USER_AGENT } = await import("./worker/live.js");
+        const q = new URL(req.url ?? "", "http://x").searchParams;
+        const lat = cell(q.get("lat"), 4, 39);
+        const lon = cell(q.get("lon"), 66, 100);
+        res.setHeader("content-type", "application/json");
+        if (lat == null || lon == null) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: "lat/lon outside India's region" }));
+          return;
+        }
+        const r = await fetch(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/160`, { headers: { "user-agent": USER_AGENT } });
+        const now = Date.now();
+        const ac = r.ok ? slim(((await r.json()) as { ac?: unknown[] }).ac, now) : [];
+        res.end(JSON.stringify({ t: now, centre: [lat, lon], radius_nm: 160, credit: "Live aircraft: adsb.lol (ODbL)", ac }));
+      });
+    },
+  };
+}
+
 // `base` is set per host at deploy time (e.g. "/" for Cloudflare Pages).
 export default defineConfig({
-  plugins: [preact(), preloadFonts()],
+  plugins: [preact(), preloadFonts(), devLiveApi()],
   base: BASE,
   build: { target: "es2022", sourcemap: false },
   test: { environment: "node", include: ["tests/**/*.test.ts"] },

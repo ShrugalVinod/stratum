@@ -117,6 +117,9 @@ const GALLERY: GalleryItem[] = [
 ];
 
 const MODEL_SHORT: Record<ModelKey, string> = { B1: "Physics", B3: "Published fix", STRATUM: "STRATUM" };
+/** The models a build has (a v1 build: physics only; the forecast outlook: B1 and B3). */
+const modelsOf = (m: Manifest): ModelKey[] => (m.models ? m.models.map((x) => x.id as ModelKey) : ["B1"]);
+const defaultModel = (m: Manifest): ModelKey => (modelsOf(m).includes("STRATUM") ? "STRATUM" : modelsOf(m)[0]);
 const MODEL_BADGE: Record<ModelKey, string> = {
   B1: "Uncorrected physics (B1)",
   B3: "Published humidity correction (B3)",
@@ -201,8 +204,8 @@ export function MapPage() {
         setBuild(b);
         setMan(manifest);
         const def = manifest.days_with_flights[0] ?? manifest.days[0] ?? null;
-        const s = parseState(location.search, { date: def, hour: 6, fl: 360, seg: null, model: manifest.models ? "STRATUM" : "B1", view: "chance" });
-        if (!manifest.models) s.model = "B1";
+        const s = parseState(location.search, { date: def, hour: 6, fl: 360, seg: null, model: defaultModel(manifest), view: "chance" });
+        if (!modelsOf(manifest).includes(s.model ?? "B1")) s.model = defaultModel(manifest);
         if (!s.date || !manifest.days.includes(s.date)) s.date = def;
         if (!manifest.flight_levels.some((f) => f.fl === s.fl)) s.fl = manifest.flight_levels[Math.floor(manifest.flight_levels.length / 2)].fl;
         setSt(s);
@@ -225,7 +228,7 @@ export function MapPage() {
     setSt((cur) => {
       const s = parseState(q, { ...cur, seg: null });
       if (!s.date || !man.days.includes(s.date)) s.date = cur.date;
-      if (!man.models) s.model = "B1"; // a v1 build has physics only
+      if (!modelsOf(man).includes(s.model ?? "B1")) s.model = defaultModel(man); // e.g. a v1 build has physics only
       return s;
     });
   }, [loc.url, man]);
@@ -461,7 +464,7 @@ export function MapPage() {
     <div class="mp">
       <div class="mp-bar" role="toolbar" aria-label="Map controls">
         <h1 class="mp-title mono-s">Contrail map · India 6–37°N 68–98°E</h1>
-        <span class="mono-s warn">Computational estimate — no real flight was changed</span>
+        <span class="mono-s warn">{build === "outlook" ? `Forecast (experimental) · ${man?.model_version ?? ""}` : "Computational estimate — no real flight was changed"}</span>
         <span class="mono-s">{v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1"}</span>
         <span class="mono-s mp-extra">
           ADS-B coverage:{" "}
@@ -494,7 +497,7 @@ export function MapPage() {
           )}
           {v2 && (
             <span class="seg-ctl model-ctl" role="radiogroup" aria-label="Model">
-              {(["B1", "B3", "STRATUM"] as const).map((m) => (
+              {(["B1", "B3", "STRATUM"] as const).filter((m) => !man || modelsOf(man).includes(m)).map((m) => (
                 <button role="radio" aria-checked={model === m} class={model === m ? "on" : ""} title={man?.models?.find((x) => x.id === m)?.description} onClick={() => setSt({ ...st, model: m, seg: null, view: m === "STRATUM" ? view : view === "spread" ? "chance" : view })}>
                   {MODEL_SHORT[m]}
                 </button>
@@ -686,7 +689,17 @@ export function MapPage() {
               {dayData?.day.has_flights && <span class="mono-s muted">{segments.length} segments</span>}
             </div>
 
-            {dayData && !dayData.day.has_flights && (
+            {dayData && !dayData.day.has_flights && build === "outlook" && (
+              <div class="empty">
+                <p>Forecast: no flights yet.</p>
+                <p class="muted">
+                  This is tomorrow's sky from the ECMWF open-data forecast, run through our physics. For the aircraft flying right now and whether they
+                  are leaving contrails, open <a href="/live">Live sky</a>; for the areas to avoid, the <a href="/advisory">contrail advisories</a>.
+                </p>
+              </div>
+            )}
+
+            {dayData && !dayData.day.has_flights && build !== "outlook" && (
               <div class="empty">
                 <p>No flight data for {st.date ? dayLabel(st.date) : ""}.</p>
                 <p class="muted">Free flight data exist for the 1st of each month. The contrail conditions on the map are still real for every January day.</p>

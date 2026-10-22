@@ -5,6 +5,7 @@ import { currentTheme, setTheme, type Theme } from "./motion";
 const NAV = [
   ["/", "Home", "Move the plane. Lose the cloud."],
   ["/map", "Map", "Contrails, flights and the satellite proof"],
+  ["/live", "Live sky", "Which plane made that contrail?"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
   ["/methods", "Methods", "Written down before results"],
@@ -90,25 +91,28 @@ export function Header() {
         </div>
         <span class="scroll-meter" aria-hidden="true" />
       </header>
-      <div class={`nav-backdrop ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
-      <nav ref={panel} id="side-nav" class={`side-nav ${open ? "open" : ""}`} aria-label="Main" aria-hidden={!open} inert={!open}>
-        <p class="label red side-nav-label">Navigate</p>
-        <ul>
-          {NAV.map(([href, label, sub], i) => {
-            const on = isOn(path, href);
-            return (
-              <li style={{ "--i": i }}>
-                <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
-                  <span class="nav-n mono-s">{String(i + 1).padStart(2, "0")}</span>
-                  <span class="nav-t">{label}</span>
-                  <span class="nav-sub">{sub}</span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-        <p class="mono-s muted side-nav-foot">Conrad Challenge 2026–27 · Indus International School, Bengaluru</p>
-      </nav>
+      {/* a fixed, clipping layer: the closed panel waits off-screen without widening the page */}
+      <div class="nav-layer">
+        <div class={`nav-backdrop ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
+        <nav ref={panel} id="side-nav" class={`side-nav ${open ? "open" : ""}`} aria-label="Main" aria-hidden={!open} inert={!open}>
+          <p class="label red side-nav-label">Navigate</p>
+          <ul>
+            {NAV.map(([href, label, sub], i) => {
+              const on = isOn(path, href);
+              return (
+                <li style={{ "--i": i }}>
+                  <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
+                    <span class="nav-n mono-s">{String(i + 1).padStart(2, "0")}</span>
+                    <span class="nav-t">{label}</span>
+                    <span class="nav-sub">{sub}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+          <p class="mono-s muted side-nav-foot">Conrad Challenge 2026–27 · Indus International School, Bengaluru</p>
+        </nav>
+      </div>
     </>
   );
 }

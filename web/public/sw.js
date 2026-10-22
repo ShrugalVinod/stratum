@@ -1,7 +1,8 @@
 // STRATUM service worker (build prompt §8.2): a visited site keeps working offline.
 // Pages: network first, falling back to the cached app shell. Hashed assets, data builds
 // (their paths carry the build id), images, media and fonts: cache first — they never change
-// under the same URL. Anything else goes to the network as usual.
+// under the same URL; the daily outlook (/data/outlook/) is network first. Anything else goes to
+// the network as usual.
 const CACHE = "stratum-v1";
 const SHELL = "/index.html";
 
@@ -18,15 +19,15 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-const IMMUTABLE = /^\/(assets|img|media|geo)\/|^\/data\/[^/]+\//;
+const IMMUTABLE = /^\/(assets|img|media|geo)\/|^\/data\/(?!outlook\/)[^/]+\//;
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  // the pointer to the current data build must stay fresh
-  if (url.pathname === "/data/current.json") {
+  // the pointer to the current data build and the daily outlook must stay fresh
+  if (url.pathname === "/data/current.json" || url.pathname.startsWith("/data/outlook/")) {
     e.respondWith(fetch(req).then((r) => put(req, r)).catch(() => caches.match(req)));
     return;
   }

@@ -63,6 +63,7 @@ const AboutData = lazy(
 const Contact = lazy(
   reloadOnce(() => import("./pages/Contact").then((m) => m.Contact)),
 );
+const LiveSky = lazy(reloadOnce(() => import("./pages/LiveSky").then((m) => m.LiveSky)));
 const NotFound = lazy(
   reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
 );
@@ -86,6 +87,7 @@ function Shell() {
           <Router>
             <Route path="/" component={Home} />
             <Route path="/map" component={MapPage} />
+            <Route path="/live" component={LiveSky} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
             <Route path="/results" component={Results} />

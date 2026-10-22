@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, Manifest, type ModelId, Results } from "./contract";
+import { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, LiveResponse, Manifest, type ModelId, OutlookInfo, Results } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -99,3 +99,43 @@ export async function loadContrailDay(date: string): Promise<ContrailEvent[]> {
   return json(`${BASE}/data/${contrailsDir()}/days/${date}/contrails.json`, z.array(ContrailEvent));
 }
 export const contrailImg = (date: string, name: string) => `${BASE}/data/${contrailsDir()}/days/${date}/${name}`;
+
+// ── the daily forecast outlook and live aircraft ────────────────────────────
+export const OUTLOOK = "outlook";
+
+/** The outlook build's manifest and outlook.json (advisories), or null when none is published. */
+export async function loadOutlook(): Promise<{ manifest: Manifest; info: OutlookInfo } | null> {
+  try {
+    const [manifest, info] = await Promise.all([json(dataUrl(OUTLOOK, "manifest.json"), Manifest), json(dataUrl(OUTLOOK, "outlook.json"), OutlookInfo)]);
+    return { manifest, info };
+  } catch {
+    return null;
+  }
+}
+
+const sprites = new Map<string, Promise<{ data: Uint8Array; width: number; height: number }>>();
+
+/** A layer's value (0–1) at a point, from the outlook's hour sprites; null outside the grid. */
+export async function outlookValue(m: Manifest, layer: string, date: string, hour: number, fl: number, lat: number, lon: number): Promise<number | null> {
+  const info = m.layers?.find((l) => l.id === layer);
+  const g = m.grid;
+  if (!info || !m.days.includes(date)) return null;
+  const r = Math.round((g.lat_north - lat) / g.step_deg);
+  const c = Math.round((lon - g.lon_west) / g.step_deg);
+  if (r < 0 || c < 0 || r >= g.rows || c >= g.cols) return null;
+  const url = layerUrl(OUTLOOK, date, info.file, fl);
+  let p = sprites.get(url);
+  if (!p) {
+    p = loadGridBytes(url);
+    sprites.set(url, p);
+    p.catch(() => sprites.delete(url));
+  }
+  const s = await p;
+  return (s.data[r * s.width + hour * g.cols + c] / 255) * info.full_scale;
+}
+
+/** Aircraft near a point from the site's Worker (rounded to its 0.5° cache cell before sending). */
+export async function loadLive(lat: number, lon: number) {
+  const q = (v: number) => (Math.round(v * 2) / 2).toFixed(1);
+  return json(`${BASE}/api/live?lat=${q(lat)}&lon=${q(lon)}`, LiveResponse);
+}

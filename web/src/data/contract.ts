@@ -209,3 +209,47 @@ export const ContrailIndex = z.object({
   note: z.string().nullish(),
 });
 export type ContrailIndex = z.infer<typeof ContrailIndex>;
+
+// The daily forecast outlook (build "outlook", served from the `outlook-data` branch by the
+// Worker): outlook.json next to the build's manifest.
+export const Advisory = z.object({
+  id: z.string(),
+  valid_from: z.string(),
+  valid_to: z.string(),
+  b: z.string(),
+  c: z.string(),
+  fl_low: z.number().int(),
+  fl_high: z.number().int(),
+  bbox: z.array(z.number()).length(4),
+  centre: z.array(z.number()).length(2),
+  near: z.string(),
+  near_km: z.number(),
+  mean_fraction: z.number(),
+  drier_fls: z.array(z.number().int()),
+  text: z.string(),
+});
+export type Advisory = z.infer<typeof Advisory>;
+export const OutlookInfo = z.object({
+  run: z.string(),
+  issued: z.string(),
+  days: z.array(z.string()),
+  credit: z.string(),
+  threshold: z.number(),
+  note: z.string(),
+  advisories: z.array(Advisory),
+});
+export type OutlookInfo = z.infer<typeof OutlookInfo>;
+
+// /api/live (worker/index.js): commercial aircraft above FL200 near a point.
+export const LiveAircraft = z.object({
+  cs: z.string(),
+  type: z.string().nullable(),
+  alt: z.number(),
+  lat: z.number(),
+  lon: z.number(),
+  trk: z.number().nullable(),
+  gs: z.number().nullable(),
+  t: z.number(),
+});
+export type LiveAircraft = z.infer<typeof LiveAircraft>;
+export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), ac: z.array(LiveAircraft) });

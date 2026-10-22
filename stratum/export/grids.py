@@ -58,8 +58,12 @@ def persistence_fraction(
     bbox: tuple[tuple[float, float], tuple[float, float]],
     eta: float = ETA_MAP,
     scaling: str | None = None,
+    field: str = "persists",
 ) -> tuple[Array, Array, Array]:
     """Fraction-of-hour grids (24, lat, lon), north-up, with the lat and lon axes.
+
+    ``field`` "persists" (default: Schmidt–Appleman and RHi ≥ 1) or "forms" (any contrail, also
+    short-lived ones).
 
     ``scaling`` "B3" applies the published latitude-dependent humidity correction (pycontrails,
     pressure levels) before the SAC, as the B3 baseline does; None = raw ERA5 (B1).
@@ -115,7 +119,7 @@ def persistence_fraction(
             else:
                 rhi_k = rhi_from_q(qk, Tk, p)
             res = schmidt_appleman(Tk, rhi_k, p, eta)
-            out[h] += res.persists
+            out[h] += getattr(res, field)
         out[h] /= SUBSTEPS
     if held:
         log.warning("FL%d: %d sub-steps held the last ERA5 hour (next day not loaded)", fl, held)

@@ -1621,3 +1621,206 @@ a.contact-big:hover {
   pointer-events: none;
   opacity: 0.88;
 }
+
+/* ── Live sky (/live) ─────────────────────────────────────────────────────── */
+.live-places {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 18px;
+}
+.tool.on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.live-err {
+  color: var(--orange-text);
+}
+.live-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.live-dome {
+  margin: 0;
+}
+.live-dome svg {
+  width: 100%;
+  max-width: 620px;
+  display: block;
+  margin: 0 auto;
+  overflow: visible;
+}
+.dome-ring {
+  fill: none;
+  stroke: var(--rule);
+}
+.dome-ring:first-child {
+  fill: var(--card);
+  stroke: var(--ink);
+}
+.dome-axis {
+  stroke: var(--rule-2);
+}
+.dome-dir {
+  font: 600 11px var(--font-mono);
+  fill: var(--ink);
+}
+.dome-el {
+  font: 8px var(--font-mono);
+  fill: var(--faint);
+}
+.dome-you {
+  fill: var(--red);
+}
+.dome-ac {
+  cursor: pointer;
+  --k: var(--faint);
+}
+.dome-ac path {
+  fill: var(--k);
+  stroke: var(--paper);
+  stroke-width: 0.8;
+}
+.dome-ac text {
+  font: 8px var(--font-mono);
+  fill: var(--muted);
+}
+.dome-ac.sel text,
+.dome-ac:hover text,
+.dome-ac:focus-visible text {
+  fill: var(--ink);
+  font-weight: 700;
+}
+.dome-ac.sel path {
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+.dome-trail {
+  stroke: var(--k);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.k-lasting {
+  --k: var(--orange);
+}
+.k-short {
+  --k: var(--teal);
+}
+.k-none,
+.k-unknown {
+  --k: var(--faint);
+}
+.live-count {
+  font-size: 20px;
+  margin: 4px 0 10px;
+}
+.live-count b {
+  font: 700 34px var(--font-display);
+}
+.live-key {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+.live-key i,
+.live-list i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--k);
+  margin-right: 8px;
+}
+.live-key .mono-s {
+  float: right;
+}
+.live-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  border-top: 1px solid var(--rule);
+}
+.live-list button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.live-list button:hover {
+  background: var(--card);
+}
+.live-list .mono-s {
+  justify-self: end;
+}
+.live-card {
+  border: 1px solid var(--ink);
+  background: var(--card);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.live-card p {
+  margin: 0 0 8px;
+}
+.live-cs {
+  font: 700 30px var(--font-display);
+}
+.live-verdict {
+  font-weight: 700;
+  color: var(--k);
+}
+.live-verdict.k-none,
+.live-verdict.k-unknown {
+  color: var(--muted);
+}
+.live-column {
+  display: grid;
+  gap: 3px;
+}
+.lc-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.lc-bar {
+  position: relative;
+  height: 10px;
+  background: var(--paper-2);
+}
+.lc-bar i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+.lc-sac {
+  background: var(--teal);
+  opacity: 0.45;
+}
+.lc-b1 {
+  background: var(--orange);
+}
+.live-more a {
+  color: inherit;
+  text-decoration-color: var(--red);
+}
+@media (max-width: 900px) {
+  .live-grid {
+    grid-template-columns: 1fr;
+  }
+}

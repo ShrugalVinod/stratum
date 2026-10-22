@@ -415,10 +415,19 @@ main {
 }
 
 /* ── side navigation (slides in from the right, every screen size) ──────── */
-.nav-backdrop {
+.nav-layer {
   position: fixed;
   inset: 0;
   z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+.nav-layer > * {
+  pointer-events: auto;
+}
+.nav-backdrop {
+  position: absolute;
+  inset: 0;
   background: color-mix(in srgb, var(--ink) 35%, transparent);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
@@ -434,11 +443,10 @@ main {
   transition: opacity 0.55s var(--ease);
 }
 .side-nav {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: 71;
   width: min(420px, 92vw);
   background: var(--paper);
   border-left: 1px solid var(--ink);

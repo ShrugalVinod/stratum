@@ -631,6 +631,37 @@ def export_extras_cmd(
     _summary("export-extras", rows)
 
 
+@app.command("outlook")
+def outlook_cmd(
+    out: Annotated[Path, typer.Option(help="folder for the outlook build (replaced)")],
+    grib: Annotated[Path | None, typer.Option(help="use this GRIB instead of downloading")] = None,
+    run: Annotated[str, typer.Option(help="run time for --grib, e.g. 2026-10-22T00")] = "",
+) -> None:
+    """Live outlook (GitHub Action, daily): the latest ECMWF open-data forecast as a small web
+    build (B1, B3, SAC layers for today and tomorrow) plus NOTAM-style advisories."""
+    import tempfile
+    from datetime import UTC, datetime
+
+    from stratum.config import load_domain
+    from stratum.export import outlook as ol
+
+    dom = load_domain()
+    bbox = (tuple(dom.study_bbox.lat), tuple(dom.study_bbox.lon))
+    with tempfile.TemporaryDirectory() as tmp:
+        if grib is None:
+            grib, t_run = ol.fetch(Path(tmp))
+        else:
+            t_run = datetime.fromisoformat(run).replace(tzinfo=UTC)
+        ds = ol.load(grib, bbox).load()  # type: ignore[arg-type]
+    if out.exists():
+        shutil.rmtree(out)
+    sha, _ = git_commit()
+    r = ol.build(ds, t_run, out, sha or "unknown")
+    mb = round(sum(r["bytes"].values()) / 1e6, 2)
+    _summary("outlook", {"run": r["run"], "days": ", ".join(r["days"]),
+                         "advisories": r["advisories"], "MB": mb})  # fmt: skip
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],

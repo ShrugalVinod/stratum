@@ -1,0 +1,46 @@
+# Live contrail outlook (experimental): every morning, the latest 00 UTC ECMWF open-data forecast
+# (CC BY 4.0) becomes a small web build (today + tomorrow, physics only) with NOTAM-style
+# advisories. Published as ONE commit on the `outlook-data` branch, replaced every day, so the
+# main history does not grow; the website's Worker serves it at /data/outlook/.
+name: outlook
+
+on:
+  schedule:
+    - cron: "20 9 * * *" # 09:20 UTC: the 00 UTC run's open data are out by about 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: outlook
+  cancel-in-progress: true
+
+jobs:
+  outlook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install pinned environment
+        run: uv sync --frozen --python 3.12 --no-dev
+
+      - name: Build the outlook
+        run: uv run --no-sync stratum outlook --out "$RUNNER_TEMP/outlook"
+
+      - name: Publish to the outlook-data branch (one commit, replaced daily)
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd "$RUNNER_TEMP/outlook"
+          git init -q -b outlook-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Outlook $(jq -r .run outlook.json)"
+          git push -q --force "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" outlook-data

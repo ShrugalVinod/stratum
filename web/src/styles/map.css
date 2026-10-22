@@ -1464,6 +1464,9 @@
   min-width: 0;
   max-width: 100%;
 }
+.mp-bar .date-pick {
+  position: relative; /* keeps its screen-reader label inside the scrolling bar, not past the page edge */
+}
 @media (max-width: 900px) {
   .mp-bar {
     flex-wrap: wrap;

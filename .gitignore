@@ -56,3 +56,5 @@ labeller/test-results/
 labeller/playwright-report/
 web/expo-build/
 web/public/data/contrails-dev/
+web/public/data/outlook/
+web/.wrangler/
