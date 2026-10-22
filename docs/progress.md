@@ -11,8 +11,10 @@ Newest first. What was done, what's next, blockers.
   finds 82.5 % of the contrails all three experts agreed on (v1 72.6 %); object F1 0.49 (v1 0.48).
 - The evaluation scenes have now been used twice; no further tuning against them.
 
+- Colab 10c re-labelled the flight days with v3: 1,109 contrails seen, 14 % chance matches;
+  H1 9.1 (logged 6.44), H2 0.92 (logged 0.86). Every detector version gives the same answers.
+
 **Next**
-- Colab 10c: re-label the flight days with v3 (second analysis, track nn3).
 - The zoom-in contrail viewer on v3's detections.
 
 ## 2026-10-22 — Second analysis with the learned detector (descriptive)

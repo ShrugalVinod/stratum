@@ -154,3 +154,8 @@ both runs (build prompt §6.8).
   contrail pixels clearly better, but object F1 hardly moved: turning pixels into line objects
   (tuned for the line filter) and the strict one-to-one line scoring now limit it. The
   evaluation scenes have now been used twice; no further tuning against them.
+- Second analysis with v3 (Colab 10c, 22 Oct; `reports/second_analysis_nn3/results.json`;
+  descriptive, all 12 days finished): 1,109 contrails seen (245 flights); chance share 14 %.
+  H1 9.1 [5.5, 46.5] (efficiency-adjusted 1.48 [0.94, 7.1]); H2 vs B3 0.92 [0.89, 0.97], vs
+  constant rate −0.12, vs RHi-only logistic +0.03 [0.02, 0.21]. Same conclusions as the logged
+  runs and as v1.
