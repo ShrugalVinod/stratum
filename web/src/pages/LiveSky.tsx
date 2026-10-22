@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { LiveAircraft, Manifest, OutlookInfo } from "../data/contract";
-import { loadLive, loadOutlook, outlookValue } from "../data/load";
+import { layerUrl, loadGridBytes, loadLive, loadOutlook, OUTLOOK, outlookValue, spriteHour } from "../data/load";
 
 /** /live — "Which plane made that contrail?": commercial aircraft above you right now (adsb.lol,
  *  via the site's Worker), each judged against today's forecast at its level (ECMWF open data,
@@ -21,7 +21,22 @@ const PLACES: Place[] = [
   { name: "Chennai", lat: 13.08, lon: 80.27 },
   { name: "Hyderabad", lat: 17.39, lon: 78.49 },
 ];
-const MAX_KM = 160;
+const MAX_KM = 200;
+const MIN_EL = 3;
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+// the India map (same frame as the advisories page)
+const BOX = { w: 66, e: 100, s: 4, n: 39 };
+const MW = 340;
+const MK = MW / (BOX.e - BOX.w);
+const MH = (BOX.n - BOX.s) * MK;
+const mp = (lon: number, lat: number) => [(lon - BOX.w) * MK, (BOX.n - lat) * MK] as const;
+const HUBS: [string, number, number][] = [
+  ["Delhi", 28.61, 77.21], ["Mumbai", 19.08, 72.88], ["Kolkata", 22.57, 88.36], ["Chennai", 13.08, 80.27], ["Bengaluru", 12.97, 77.59],
+  ["Hyderabad", 17.39, 78.49], ["Ahmedabad", 23.02, 72.57], ["Nagpur", 21.15, 79.09], ["Bhopal", 23.26, 77.41], ["Lucknow", 26.85, 80.95],
+  ["Jaipur", 26.91, 75.79], ["Varanasi", 25.32, 82.97], ["Patna", 25.59, 85.14], ["Bhubaneswar", 20.3, 85.82], ["Visakhapatnam", 17.69, 83.22],
+  ["Goa", 15.38, 73.83], ["Kochi", 9.93, 76.27], ["Guwahati", 26.14, 91.74], ["Amritsar", 31.63, 74.87], ["Raipur", 21.25, 81.63],
+  ["Karachi", 24.86, 67.0], ["Lahore", 31.55, 74.34], ["Dhaka", 23.81, 90.41], ["Kathmandu", 27.72, 85.32], ["Colombo", 6.93, 79.85],
+];
 const R_EARTH = 6371;
 const KIND_LABEL: Record<Kind, string> = {
   lasting: "Likely leaving a lasting contrail",
@@ -61,6 +76,7 @@ export function LiveSky() {
   const [mine, setMine] = useState(false);
   const [ac, setAc] = useState<LiveAircraft[] | null>(null);
   const [fetched, setFetched] = useState(0);
+  const [sources, setSources] = useState<Record<string, unknown> | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [ol, setOl] = useState<{ manifest: Manifest; info: OutlookInfo } | null | undefined>(undefined);
   const [now, setNow] = useState(Date.now());
@@ -77,7 +93,7 @@ export function LiveSky() {
     let alive = true;
     const get = () =>
       loadLive(place.lat, place.lon)
-        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setErr(null)))
+        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setErr(null)))
         .catch((e) => alive && setErr(String(e.message ?? e).includes("503") ? "The live feed is busy. Trying again in a minute." : "The live feed cannot be reached right now."));
     get();
     const t = setInterval(get, 60_000);
@@ -127,7 +143,7 @@ export function LiveSky() {
     ).then(setColumn);
   }, [ol, place.lat, place.lon, date, hour]);
 
-  const judged: Judged[] = useMemo(() => {
+  const all: Judged[] = useMemo(() => {
     if (!ac) return [];
     return ac
       .map((a) => {
@@ -137,9 +153,68 @@ export function LiveSky() {
         const [b1, sac] = vals[a.cs] ?? [null, null];
         return { ...a, lat2, lon2, dist_km: d, az, el, fl: nearestFl(a.alt), b1, sac, kind: classify(b1, sac) };
       })
-      .filter((a) => a.dist_km <= MAX_KM && a.el >= 4)
       .sort((x, y) => y.el - x.el);
   }, [ac, now, place, vals]);
+  const judged = useMemo(() => all.filter((a) => a.dist_km <= MAX_KM && a.el >= MIN_EL), [all]);
+  const [shapes, setShapes] = useState<{ india: boolean; d: string }[]>([]);
+  useEffect(() => {
+    fetch(`${BASE}/geo/countries.geojson`)
+      .then((r) => r.json())
+      .then((g: GeoJSON.FeatureCollection) =>
+        setShapes(
+          g.features.flatMap((f) => {
+            const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.type === "MultiPolygon" ? f.geometry.coordinates : [];
+            return polys.map((pp) => ({ india: f.properties?.iso === "IND", d: pp[0].map(([lo, la], i) => `${i ? "L" : "M"}${mp(lo, la)[0].toFixed(1)},${mp(lo, la)[1].toFixed(1)}`).join("") + "Z" }));
+          }),
+        ),
+      )
+      .catch(() => setShapes([]));
+  }, []);
+  // this hour's lasting-contrail air anywhere between FL320 and FL400 (0.5° cells), for the map
+  const [humid, setHumid] = useState<{ x: number; y: number; v: number; lv: string }[]>([]);
+  useEffect(() => {
+    if (!ol) return;
+    const m = ol.manifest;
+    const info = m.layers?.find((l) => l.id === "B1");
+    if (!info || !m.days.includes(date)) return setHumid([]);
+    const levels = m.flight_levels.map((f) => f.fl).filter((f) => f >= 320 && f <= 400);
+    Promise.all(levels.map((fl) => loadGridBytes(layerUrl(OUTLOOK, date, info.file, fl)).then((sp) => [fl, spriteHour(sp, hour, m.grid.cols)] as const)))
+      .then((grids) => {
+        const g = m.grid;
+        const out: { x: number; y: number; v: number; lv: string }[] = [];
+        for (let r = 0; r + 2 <= g.rows; r += 2)
+          for (let c = 0; c + 2 <= g.cols; c += 2) {
+            let best = 0;
+            const at: number[] = [];
+            for (const [fl, v] of grids) {
+              const f = (v[r * g.cols + c] + v[r * g.cols + c + 1] + v[(r + 1) * g.cols + c] + v[(r + 1) * g.cols + c + 1]) / 4 / 255;
+              if (f >= 0.5) at.push(fl);
+              best = Math.max(best, f);
+            }
+            if (best < 0.5) continue;
+            const [x, y] = mp(g.lon_west + (c + 0.5) * g.step_deg, g.lat_north - (r + 0.5) * g.step_deg);
+            out.push({ x, y, v: best, lv: `FL${Math.min(...at)}–${Math.max(...at)}` });
+          }
+        setHumid(out);
+      })
+      .catch(() => setHumid([]));
+  }, [ol, date, hour]);
+  // where the airliners flying through lasting-contrail air are right now (nearest hub)
+  const hotspots = useMemo(() => {
+    const c = new Map<string, number>();
+    for (const a of all) {
+      if (a.kind !== "lasting") continue;
+      let best = "";
+      let bd = Infinity;
+      for (const [n, la, lo] of HUBS) {
+        const d = distBearing(a.lat2, a.lon2, la, lo)[0];
+        if (d < bd) [best, bd] = [n, d];
+      }
+      const k = bd < 250 ? best : "elsewhere";
+      c.set(k, (c.get(k) ?? 0) + 1);
+    }
+    return [...c.entries()].filter(([k]) => k !== "elsewhere").sort((x, y) => y[1] - x[1]).slice(0, 6);
+  }, [all]);
 
   const useMyLocation = () => {
     if (!("geolocation" in navigator)) return;
@@ -157,7 +232,8 @@ export function LiveSky() {
   };
 
   const counts = judged.reduce((c, a) => ((c[a.kind] = (c[a.kind] ?? 0) + 1), c), {} as Record<Kind, number>);
-  const chosen = judged.find((a) => a.cs === sel) ?? null;
+  const nat = all.reduce((c, a) => ((c[a.kind] = (c[a.kind] ?? 0) + 1), c), {} as Record<Kind, number>);
+  const chosen = all.find((a) => a.cs === sel) ?? null;
   const age = fetched ? Math.round((now - fetched) / 1000) : null;
   const runLabel = ol ? `${ol.info.run.slice(8, 10)} ${new Date(ol.info.run).toLocaleString("en-GB", { month: "short", timeZone: "UTC" })} ${ol.info.run.slice(11, 13)} UTC` : "";
   const tomorrow = ol?.manifest.days.find((d) => d > date);
@@ -293,6 +369,88 @@ export function LiveSky() {
           </div>
         </div>
 
+        <section class="section live-india">
+          <div class="sec-head rv">
+            <p class="label red">Over India now</p>
+            <span class="mono-s">{all.length} airliners above FL200 · positions moved on every second</span>
+          </div>
+          <div class="live-grid">
+            <figure class="adv-map live-map rv rv-fade">
+              <svg viewBox={`0 0 ${MW} ${MH.toFixed(0)}`} role="img" aria-label={`${all.length} airliners over India, ${nat.lasting ?? 0} in lasting-contrail air`}>
+                <rect width={MW} height={MH} class="adv-sea" />
+                {shapes.map((sh) => (
+                  <path d={sh.d} class={sh.india ? "adv-in" : "adv-land"} />
+                ))}
+                {humid.map((h) => (
+                  <rect class="map-humid" x={h.x - MK * 0.25} y={h.y - MK * 0.25} width={MK * 0.5} height={MK * 0.5} style={{ opacity: 0.18 + 0.3 * h.v }}>
+                    <title>{`lasting-contrail air at ${h.lv}`}</title>
+                  </rect>
+                ))}
+                {all
+                  .slice()
+                  .sort((x, y) => (x.kind === "lasting" ? 1 : 0) - (y.kind === "lasting" ? 1 : 0))
+                  .map((a) => {
+                    const [x, y] = mp(a.lon2, a.lat2);
+                    return (
+                      <g class={`map-ac k-${a.kind} ${sel === a.cs ? "sel" : ""}`} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${a.trk ?? 0})`} onClick={() => setSel(a.cs)}>
+                        <title>{`${a.cs} · FL${Math.round(a.alt / 100)} · ${KIND_LABEL[a.kind]}`}</title>
+                        <path d="M0,-3.6 L2.6,3 L0,1.5 L-2.6,3 Z" />
+                      </g>
+                    );
+                  })}
+                <circle class="map-you" cx={mp(place.lon, place.lat)[0]} cy={mp(place.lon, place.lat)[1]} r={(MAX_KM / 111.2) * MK} />
+              </svg>
+              <figcaption class="mono-s muted">
+                Orange shading: air where contrails would last this hour, somewhere between FL320 and FL400 (forecast). A plane counts only if it is inside
+                that air at its own level. The circle is the sky dome above {place.name}.
+              </figcaption>
+            </figure>
+            <div class="live-side">
+              <p class="live-count">
+                <b>{nat.lasting ?? 0}</b> of {all.length} airliners are flying through air where contrails last, right now
+              </p>
+              <ul class="live-key">
+                {(["lasting", "short", "none"] as const).map((k) => (
+                  <li class={`k-${k}`}>
+                    <i /> {KIND_LABEL[k]} <span class="mono-s">{nat[k] ?? 0}</span>
+                  </li>
+                ))}
+              </ul>
+              {!nat.lasting && all.length > 0 && (
+                <p class="small muted">
+                  Right now the air where contrails last sits {humid.length ? "mostly above the levels airliners fly at, or away from the routes" : "nowhere over India at airliner levels"}: over India it is often too
+                  warm below FL360 for a contrail to form at all. Check again at night or in winter, when it is colder.
+                </p>
+              )}
+              {hotspots.length > 0 && (
+                <>
+                  <p class="label">Contrail hotspots now</p>
+                  <ol class="live-hot">
+                    {hotspots.map(([n, k]) => (
+                      <li>
+                        <span>near {n}</span>
+                        <span class="mono">{k} airliners</span>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
+              {chosen && (
+                <p class="live-pick">
+                  <b class="mono">{chosen.cs}</b> {chosen.type ?? ""} · FL{String(Math.round(chosen.alt / 100)).padStart(3, "0")} · {Math.round(chosen.dist_km)} km from {place.name}
+                  <br />
+                  <span class={`live-verdict k-${chosen.kind}`}>{KIND_LABEL[chosen.kind]}</span>
+                </p>
+              )}
+              {sources && (
+                <p class="mono-s muted">
+                  Sources this minute: OpenSky {String(sources.opensky)} · adsb.fi {String(sources.adsb_fi)} · adsb.lol {String(sources.adsb_lol)} (merged, duplicates removed)
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
         <section class="section live-more rv">
           <p class="label red">Tomorrow</p>
           <p class="lede">
@@ -305,8 +463,8 @@ export function LiveSky() {
             STRATUM's learned correction is not applied, because the open forecast data lack the cloud fields it needs. Not for operational use.
           </p>
           <p class="mono-s muted">
-            {ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)"} · Live aircraft: adsb.lol (ODbL), airline flights above FL200 only; no aircraft
-            addresses are kept.
+            {ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)"} · Live aircraft: The OpenSky Network, adsb.fi and adsb.lol (ODbL), airline flights above FL200
+            only; no aircraft addresses are kept.
           </p>
         </section>
       </div>

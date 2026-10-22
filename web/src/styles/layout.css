@@ -2151,3 +2151,57 @@ a.contact-big:hover {
     grid-template-columns: 92px 1fr 52px;
   }
 }
+
+.live-india {
+  margin-top: 8px;
+}
+.live-map svg {
+  max-height: 72vh;
+}
+.map-ac {
+  cursor: pointer;
+  --k: var(--faint);
+}
+.map-ac path {
+  fill: var(--k);
+  stroke: var(--paper);
+  stroke-width: 0.5;
+}
+.map-ac.k-lasting path {
+  stroke: var(--ink);
+  stroke-width: 0.4;
+}
+.map-ac.sel path {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.map-you {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.live-hot {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 16px;
+  border-top: 1px solid var(--rule);
+}
+.live-hot li {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--rule);
+}
+.live-map {
+  position: static;
+}
+.live-pick {
+  border: 1px solid var(--ink);
+  background: var(--card);
+  padding: 10px 12px;
+}
+.map-humid {
+  fill: var(--orange);
+  pointer-events: none;
+}

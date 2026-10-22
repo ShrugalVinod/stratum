@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cell, COMMERCIAL, slim } from "../worker/live.js";
+import { cell, COMMERCIAL, fromOpenSky, fromReadsb, merge, slim } from "../worker/live.js";
 
 describe("live aircraft proxy", () => {
   it("keeps cruising airline flights and drops everything identifying or irrelevant", () => {
@@ -25,5 +25,29 @@ describe("live aircraft proxy", () => {
     expect(cell("abc", 4, 39)).toBeNull();
     expect(COMMERCIAL.test("AIC2")).toBe(true);
     expect(COMMERCIAL.test("N123AB")).toBe(false);
+  });
+
+  it("reads OpenSky state vectors in feet and knots and drops ground, low and private traffic", () => {
+    const st = [
+      ["800abc", "IGO519P ", "India", 1000, 1001, 77.5, 12.97, 10972.8, false, 231.5, 41.6, 0, null, 11200, null, false, 0],
+      ["800abd", "AIC101  ", "India", 1000, 1001, 77.5, 12.9, 4000, false, 150, 10, 0, null, 4100, null, false, 0],
+      ["800abe", "VTABC   ", "India", 1000, 1001, 77.5, 12.9, 11000, false, 200, 10, 0, null, 11100, null, false, 0],
+      ["800abf", "AIC102  ", "India", 1000, 1001, 77.5, 12.9, 11000, true, 0, 10, 0, null, 11100, null, false, 0],
+    ];
+    const out = fromOpenSky(st);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ key: "800abc", cs: "IGO519P", alt: 36000, gs: 450, trk: 42, t: 1_000_000 });
+  });
+
+  it("merges sources: one record per aircraft, the freshest position, the known type, no address", () => {
+    const now = 2_000_000;
+    const os = fromOpenSky([["800abc", "IGO519P", "India", 1990, 1990, 77.5, 13.0, 10972.8, false, 231.5, 41.6, 0, null, 0, null, false, 0]]);
+    const fi = fromReadsb([{ hex: "800abc", flight: "IGO519P", alt_baro: 36000, lat: 13.1, lon: 77.6, t: "A20N", track: 42, gs: 452, seen_pos: 1 }], now);
+    const lol = fromReadsb([{ hex: "800def", flight: "AXB639", alt_baro: 36000, lat: 14, lon: 76, t: "B738", seen_pos: 5 }], now);
+    const m = merge(os, fi, lol);
+    expect(m).toHaveLength(2);
+    const igo = m.find((a) => a.cs === "IGO519P")!;
+    expect([igo.lat, igo.type]).toEqual([13.1, "A20N"]); // adsb.fi is newer (1 s old vs 10 s)
+    expect(JSON.stringify(m)).not.toContain("800abc");
   });
 });
