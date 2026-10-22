@@ -283,6 +283,11 @@ export const dataSources = [
   { source: "Meteosat-9 / EUMETSAT", what: "Indian Ocean geostationary satellite, every 15 min", use: "Detect real contrails; check predictions", credit: "Meteosat-9 imagery © EUMETSAT 2026", limits: "Thin or cloud-covered contrails can be missed; steep viewing angles near the edges." },
   { source: "ADS-B Exchange", what: "Aircraft position reports", use: "Flight tracks (free first-of-month samples)", credit: "Flight data: ADS-B Exchange", limits: "12 days in the year; coverage over India is being audited (Nov 2026)." },
   { source: "OpenSky Network", what: "Aircraft database", use: "Aircraft type → performance and engine efficiency", credit: "Aircraft metadata: OpenSky Network", limits: "Some types missing; fallbacks are logged." },
+  { source: "OpenContrails (Google Research)", what: "GOES-16 scenes with human contrail masks", use: "Pre-training the learned detector (D-005)", credit: "OpenContrails, Ng et al. 2024, CC BY 4.0", limits: "American satellite and skies; fine-tuned on Meteosat before use." },
+  { source: "DLR expert contrail labels", what: "Meteosat scenes labelled by three contrail experts", use: "Tuning (51 scenes) and checking (89 scenes) the detectors", credit: "DLR, CC BY-NC 4.0", limits: "Not over India; the 89 check scenes have been used twice and are now closed." },
+  { source: "ECMWF open data (IFS)", what: "Daily global weather forecast, 0.25°", use: "Live outlook and contrail advisories (/advisory, /live)", credit: "Forecast: ECMWF open data, CC BY 4.0", limits: "No cloud fields on pressure levels, so physics only; experimental." },
+  { source: "The OpenSky Network (live)", what: "Live aircraft positions", use: "Airliners over India now (/live), every 5 minutes", credit: "Live aircraft: The OpenSky Network", limits: "Snapshot every 5 minutes; positions moved on by speed and heading in between." },
+  { source: "adsb.lol", what: "Live aircraft positions (community receivers)", use: "Airliners near the visitor (/live)", credit: "Live aircraft: adsb.lol, ODbL", limits: "Few receivers over India." },
   { source: "Natural Earth", what: "Coastlines, borders (India point of view), cities", use: "Base map", credit: "Made with Natural Earth", limits: "Simplified for the web." },
 ];
 

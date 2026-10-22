@@ -2205,3 +2205,66 @@ a.contact-big:hover {
   fill: var(--orange);
   pointer-events: none;
 }
+
+/* Home §6: "Try it" tiles */
+.try-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+.try-tile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 210px;
+  padding: 20px 20px 52px;
+  border: 1px solid var(--ink);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.35s var(--ease), background-color 0.3s, color 0.3s;
+}
+.try-tile b {
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1;
+}
+.try-tile .mono-s {
+  color: var(--red-text);
+}
+.try-go {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  transition: transform 0.35s var(--ease);
+}
+.try-tile:hover,
+.try-tile:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-3px);
+}
+.try-tile:hover .try-go,
+.try-tile:focus-visible .try-go {
+  transform: translateX(6px);
+}
+@media (max-width: 1000px) {
+  .try-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .try-grid {
+    grid-template-columns: 1fr;
+  }
+  .try-tile {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .try-tile,
+  .try-go {
+    transition: none;
+  }
+}

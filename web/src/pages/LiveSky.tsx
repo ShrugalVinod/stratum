@@ -156,6 +156,20 @@ export function LiveSky() {
       .sort((x, y) => y.el - x.el);
   }, [ac, now, place, vals]);
   const judged = useMemo(() => all.filter((a) => a.dist_km <= MAX_KM && a.el >= MIN_EL), [all]);
+  // callsigns on the dome: the highest planes first, skipping any too close to one already named
+  const labelled = useMemo(() => {
+    const out = new Set<string>();
+    const placed: [number, number][] = [];
+    for (const a of judged) {
+      const r = (150 * (90 - a.el)) / 90;
+      const p: [number, number] = [r * Math.sin(rad(a.az)), -r * Math.cos(rad(a.az))];
+      if (placed.some(([x, y]) => Math.abs(x - p[0]) < 46 && Math.abs(y - p[1]) < 12)) continue;
+      placed.push(p);
+      out.add(a.cs);
+      if (out.size >= 10) break;
+    }
+    return out;
+  }, [judged]);
   const [shapes, setShapes] = useState<{ india: boolean; d: string }[]>([]);
   useEffect(() => {
     fetch(`${BASE}/geo/countries.geojson`)
@@ -288,9 +302,11 @@ export function LiveSky() {
                   <g class={`dome-ac k-${a.kind} ${sel === a.cs ? "sel" : ""}`} onClick={() => setSel(a.cs)} role="button" tabIndex={0} aria-label={`${a.cs}, ${KIND_LABEL[a.kind]}`} onKeyDown={(e) => e.key === "Enter" && setSel(a.cs)}>
                     {tail > 0 && <line class="dome-trail" x1={x} y1={y} x2={x + tail * Math.sin(back)} y2={y - tail * Math.cos(back)} />}
                     <path d="M0,-6 L4.5,5 L0,2.5 L-4.5,5 Z" transform={`translate(${x},${y}) rotate(${a.trk ?? 0})`} />
-                    <text x={x + 8} y={y + 4}>
-                      {a.cs}
-                    </text>
+                    {(labelled.has(a.cs) || sel === a.cs) && (
+                      <text x={x + 8} y={y + 4}>
+                        {a.cs}
+                      </text>
+                    )}
                   </g>
                 );
               })}

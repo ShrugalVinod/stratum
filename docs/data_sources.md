@@ -173,3 +173,21 @@ API key was created, works. Its key is the one in `.env` and Colab Secrets.
   IEEE TGRS 62.
 - Use: pre-training only (3 infrared channels at the labelled time + the mask); nothing is
   redistributed. Reader: `stratum/detect/tfrecord.py` (no TensorFlow needed).
+
+## ECMWF open data (live outlook and advisories, website only)
+- What: the IFS HRES forecast, 0.25°, temperature and specific humidity at 400/300/250/200/150 hPa,
+  steps 0–54 h of the latest 00 UTC run; fetched with `ecmwf-opendata` (no account).
+- Licence: **CC BY 4.0**; credit "Forecast: ECMWF open data". Processed by `stratum outlook`
+  (GitHub Action `outlook.yml`, daily 09:20 UTC) into the `outlook-data` branch; only derived
+  hour sprites and advisories are published, never the GRIB files.
+- Use: physics only (B1, B3, SAC); STRATUM's model is not applied (no cloud fields on pressure levels).
+
+## Live aircraft (website /live only)
+- **The OpenSky Network** REST API, `/states/all` for the India box, every 5 minutes by the GitHub
+  Action `live.yml` (OpenSky does not answer Cloudflare's servers); authenticated with the team's
+  API client (GitHub secrets `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`), anonymous otherwise.
+  Non-commercial research use with attribution ("The OpenSky Network").
+- **adsb.lol** `/v2/lat/…/lon/…/dist/…` near the visitor, by the site's Worker (60 s cache per
+  0.5° cell; adsb.lol needs a User-Agent with contact details). Data **ODbL**; credited.
+- Only airline callsigns above FL200, position, level, track and speed are kept; no ICAO24
+  address is stored or shown, nothing is archived. adsb.fi was tested and refuses Cloudflare.

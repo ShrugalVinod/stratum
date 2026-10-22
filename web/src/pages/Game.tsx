@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { GameIndex, GameRound } from "../data/contract";
 import { gameImg, loadGame } from "../data/load";
@@ -61,16 +61,20 @@ export function Game() {
     setI(i + 1);
   };
 
+  // one listener for the page's lifetime that always calls the latest handler, so a key pressed
+  // the instant a round appears is never lost between renders
+  const onKey = useRef<(e: KeyboardEvent) => void>(() => {});
+  onKey.current = (e: KeyboardEvent) => {
+    if (!r) return;
+    if (!shown && (e.key === "y" || e.key === "ArrowLeft")) answer(true);
+    else if (!shown && (e.key === "n" || e.key === "ArrowRight")) answer(false);
+    else if (shown && (e.key === "Enter" || e.key === " ")) (e.preventDefault(), next());
+  };
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!r) return;
-      if (!shown && (e.key === "y" || e.key === "ArrowLeft")) answer(true);
-      else if (!shown && (e.key === "n" || e.key === "ArrowRight")) answer(false);
-      else if (shown && (e.key === "Enter" || e.key === " ")) (e.preventDefault(), next());
-    };
-    addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
-  });
+    const f = (e: KeyboardEvent) => onKey.current(e);
+    addEventListener("keydown", f);
+    return () => removeEventListener("keydown", f);
+  }, []);
 
   const score = (who: (a: Answer) => boolean) => answers.filter((a) => who(a) === a.round.seen).length;
   const you = score((a) => a.you);

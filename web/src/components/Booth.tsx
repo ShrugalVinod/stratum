@@ -4,14 +4,18 @@ import { useLocation } from "preact-iso";
 /** Booth mode for the Summit expo (build prompt §8.2): open the site with ?booth=1 and it tours
  *  map → the busiest alert day's top avoidance alert and its card → results → methods → home,
  *  pausing on any touch, click, key or scroll and resuming after 60 s without interaction. */
-const STEPS: { url: string; s: number; label: string }[] = [
+const ALL_STEPS: { url: string; s: number; label: string; online?: boolean }[] = [
   { url: "/", s: 18, label: "Home" },
   { url: "/map?date=2026-02-01&hour=00&fl=360&m=STRATUM", s: 16, label: "Map: STRATUM, busiest alert day" },
   { url: "/map?date=2026-02-01&fl=360&m=STRATUM&seg=top", s: 22, label: "Top avoidance alert and its card" },
   { url: "/map?date=2026-02-01&hour=00&fl=360&m=B1", s: 12, label: "Same day, uncorrected physics" },
+  { url: "/3d?date=2026-02-01&hour=20&layer=B1", s: 16, label: "The humid layer in 3D" },
+  { url: "/live", s: 18, label: "Live sky: airliners over India now", online: true },
   { url: "/results", s: 24, label: "Results: H1–H4" },
   { url: "/methods#threats", s: 16, label: "Threats to validity" },
 ];
+// the booth laptop may be offline (expo build): skip the pages that need live data
+const STEPS = ALL_STEPS.filter((x) => !x.online || typeof navigator === "undefined" || navigator.onLine);
 const IDLE_MS = 60_000;
 
 export function boothRequested(): boolean {

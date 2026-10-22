@@ -224,6 +224,38 @@ export function Home() {
         </div>
       </section>
 
+      {/* §6 */}
+      <section class="section pt0" aria-labelledby="try-title">
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red">§6 · Try it</p>
+            <span class="mono-s">Live data · forecast every morning</span>
+          </div>
+          <h2 id="try-title" class="display d-m">
+            <Split text="Look up, then look it up." />
+          </h2>
+          <div class="try-grid rv stagger">
+            {(
+              [
+                ["/live", "Live sky", "Which plane made that contrail? The airliners above you right now, and whether their air keeps a contrail."],
+                ["/game", "Beat STRATUM", "Ten real flights, the weather at each one. Guess before the satellite picture is shown."],
+                ["/advisory", "Contrail advisories", "Tomorrow's notices, pilot style: where contrails will last, at which levels, and the drier levels nearby."],
+                ["/3d", "The sky in 3D", "The humid layers over India and the flights crossing them, hour by hour."],
+              ] as const
+            ).map(([href, t, b], i) => (
+              <a class="try-tile" href={href} style={{ "--i": i }}>
+                <span class="mono-s">0{i + 1}</span>
+                <b class="display">{t}</b>
+                <span>{b}</span>
+                <span class="try-go" aria-hidden="true">
+                  <Arrow />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <a class="cta-band" href="/map">
         <span class="wrap cta-inner">
           <span class="mono-s">1 Jan 2026 · 1,458 flights · every hour · 8 flight levels</span>

@@ -119,7 +119,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -173,4 +173,44 @@ test("booth mode tours the site and pauses on interaction", async ({ page }) => 
   await expect(chip).toContainText("Tour 1/");
   await page.mouse.click(5, 300);
   await expect(chip).toContainText("paused");
+});
+
+test("live pages work without live data (outlook or aircraft feed missing)", async ({ page }) => {
+  // the daily outlook and the aircraft feed come from outside the repo; a missing file or an
+  // unreachable feed must leave a working page with a message, never a broken one
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  for (const path of ["/live", "/advisory"]) {
+    await page.goto(path);
+    await expect(page.locator("h1").first()).toBeVisible();
+  }
+  await page.goto("/live");
+  await page.getByRole("radio", { name: "Delhi" }).click();
+  await expect(page.locator(".live-count").first()).toBeVisible();
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("Beat STRATUM: a round can be answered and shows the satellite picture", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/game");
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.locator(".gm-card")).toBeVisible();
+  await expect(page.locator(".gm-top")).toContainText("Flight 1 of 10");
+  await page.keyboard.press("y");
+  await expect(page.locator(".gm-verdict")).toBeVisible();
+  await expect(page.locator(".gm-sat img")).toHaveJSProperty("complete", true);
+  await expect(page.locator(".gm-answers li")).toHaveCount(3);
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".gm-top")).toContainText("Flight 2 of 10");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("map card explains its prediction and the weighted decisions can be shown", async ({ page }) => {
+  await page.goto("/map?date=2026-02-01&hour=20&fl=360&model=STRATUM&seg=top");
+  await expect(page.locator(".map-canvas.ready")).toBeVisible({ timeout: 60_000 });
+  await page.locator(".why-toggle").click();
+  await expect(page.locator(".why-bars li").first()).toBeVisible();
+  expect(await page.locator(".why-bars li").count()).toBeGreaterThanOrEqual(4);
+  await page.getByRole("radio", { name: "Weighted (D-006)" }).click();
+  await expect(page.locator(".filter-row .mono-s.muted").first()).toContainText("60 shown");
 });

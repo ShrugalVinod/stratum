@@ -10,9 +10,17 @@ Indian airspace. Team STRATUM, Indus International School, Bangalore · Conrad C
 > feasibility is not modelled. The method is pre-registered in
 > [`docs/STRATUM_Research_Paper.pdf`](docs/STRATUM_Research_Paper.pdf) (v1.0, 12 Oct 2026).
 
-**Status:** Phases 0–7 complete; Phase 8 (web app v1, expo build, open release) in progress.
-Results (H1–H4) are logged in [`_locks/final_runs.jsonl`](_locks/final_runs.jsonl) and shown at
+**Status:** Phases 0–8 complete (v1.0.0 released); disclosed second analyses since (D-005 learned
+detector, D-006 probability-weighted decisions). Results (H1–H4) are logged in
+[`_locks/final_runs.jsonl`](_locks/final_runs.jsonl) and shown at
 **https://stratum.aerospaceonyx.workers.dev/results**. Progress: [`docs/progress.md`](docs/progress.md).
+
+**On the website:** the contrail map with satellite proof and "why this prediction?" for every card;
+`/live` (the airliners above you now and whether their air keeps a contrail); `/advisory`
+(NOTAM-style contrail notices from each morning's ECMWF forecast); `/3d` (the humid layers in
+three dimensions); `/game` (Beat STRATUM). Live and forecast data are refreshed by two GitHub
+Actions (`outlook.yml` daily, `live.yml` every 5 min) on the branches `outlook-data` and
+`live-data`; `web/worker/` serves them.
 
 ---
 
@@ -158,7 +166,8 @@ CI runs `verify-lock` on every push.
 | `colab/` | Thin Colab launcher notebooks, numbered by phase |
 | `notebooks/` | Exploration only (never imported; outputs stripped) |
 | `tests/` | Tests mirroring `stratum/`; tiny fixtures in `tests/fixtures/` |
-| `web/` | The website (Preact + MapLibre); `npm run dev`, `npm run build:expo` for the offline booth build |
+| `web/` | The website (Preact + MapLibre, three.js on /3d); `npm run dev`, `npm run build:expo` for the offline booth build; `web/worker/` the Cloudflare Worker (live aircraft, forecast) |
+| `scripts/` | Small tools: the live-aircraft snapshot, the India boundary fix, the local dev build |
 | `_locks/` | Pre-registration lock and the append-only log of final runs |
 | `docs/` | Progress, decisions, deviations, data sources, storage, methods notes, phase reports, source PDFs |
 
@@ -174,7 +183,7 @@ CI runs `verify-lock` on every push.
 | 5 | Labelling, matching, observability → labels for the year | done |
 | 6 | Evaluation harness, baselines B0–B4, H1 | done |
 | 7 | Correction model (H2), avoidance layer (H3, H4) | done |
-| 8 | Web app v1, expo build, open release | in progress |
+| 8 | Web app v1, expo build, open release | done (v1.0.0, DOI above) |
 
 ## Licence
 
