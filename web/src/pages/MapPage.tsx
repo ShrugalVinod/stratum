@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
 import type { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
 import { RAMP } from "../data/ramp";
@@ -147,6 +147,17 @@ export function MapPage() {
   const [dayData, setDayData] = useState<{ day: DaySummary; flights: FlightFeature[] | null; segments: FlaggedSegment[]; lists: Lists } | null>(null);
   const [alertsByDay, setAlertsByDay] = useState<Record<string, number> | null>(null);
   const [alertsOnly, setAlertsOnly] = useState(false);
+  // the controls bar wraps to two lines on laptop screens: the map below takes its real height
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const set = () => el.parentElement?.style.setProperty("--bar-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    set();
+    return () => ro.disconnect();
+  }, [!!man]);
   // website extras (Colab 12a): per-card explanations and the weighted decision layer (D-006)
   const [explain, setExplain] = useState<ExplainDay | null>(null);
   const [hasWeighted, setHasWeighted] = useState(false);
@@ -482,18 +493,18 @@ export function MapPage() {
 
   return (
     <div class="mp">
-      <div class="mp-bar" role="toolbar" aria-label="Map controls">
+      <div class="mp-bar" role="toolbar" aria-label="Map controls" ref={barRef}>
         <h1 class="mp-title mono-s">Contrail map · India 6–37°N 68–98°E</h1>
         <span class="mono-s warn">{build === "outlook" ? `Forecast (experimental) · ${man?.model_version ?? ""}` : "Computational estimate — no real flight was changed"}</span>
-        <span class="mono-s">{v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1"}</span>
+        <span class="mono-s mp-badge">{v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1"}</span>
         <span class="mono-s mp-extra">
           ADS-B coverage:{" "}
           {man?.coverage.adsb_coverage_pct != null ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights` : "audit pending (Nov 2026)"}
         </span>
         <span class="mp-tools">
           {v2 && build !== "outlook" && st.date && (
-            <a class="tool" href={`/3d?date=${st.date}&hour=${st.hour}&layer=${model}`} title="The humid layers in three dimensions">
-              3D
+            <a class="tool tool-3d" href={`/3d?date=${st.date}&hour=${st.hour}&layer=${model}`} title="The humid layers in three dimensions">
+              ◇ 3D view
             </a>
           )}
           <label class="date-pick">

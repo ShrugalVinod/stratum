@@ -1467,6 +1467,34 @@
 .mp-bar .date-pick {
   position: relative; /* keeps its screen-reader label inside the scrolling bar, not past the page edge */
 }
+/* laptops: the bar wraps to a second line instead of hiding controls off-screen (MapPage
+   measures it and the map below takes the rest of the height) */
+@media (min-width: 901px) {
+  .mp-bar {
+    flex-wrap: wrap;
+    overflow: visible;
+    row-gap: 6px;
+  }
+  .mp-bar > .mp-tools {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
+  }
+  .mp-tools select {
+    max-width: 230px;
+  }
+}
+@media (max-width: 1700px) {
+  .mp-bar > .mp-extra {
+    display: none; /* the coverage note is also on About the data */
+  }
+}
+.tool-3d {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}
 @media (max-width: 900px) {
   .mp-bar {
     flex-wrap: wrap;
