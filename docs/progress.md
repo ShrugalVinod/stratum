@@ -2,6 +2,21 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-22 — Contrail proof viewer live
+
+**Done**
+- Colab 11a exported every satellite-confirmed contrail from detector v3's labels: 241 events on
+  7 days from 234 commercial flights (691 files, 12 MB). Checked: crops north-up / east-right
+  (100 % / 98.9 % of 2,000+ detected lines consistent), predicted vs detected median 1.2 px
+  apart (90 % within 2.1 px), hashed ids, commercial flights only.
+- Map: "Satellite-confirmed contrails" layer (cyan rings; detected lines from zoom 5) and the
+  proof panel: Meteosat ash crops with flight path, predicted drift and detected line, frame by
+  frame. Button on flight cards. Short events (1–2 min) are weaker evidence; the panel shows the
+  length.
+
+**Next**
+- Coverage audit (2 and 5 Nov); then the full month of flights.
+
 ## 2026-10-22 — Detector v3: near expert level at the pixel level
 
 **Done**

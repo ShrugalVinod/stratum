@@ -1700,3 +1700,11 @@
     padding: 16px;
   }
 }
+
+.sw.seen {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid #36d1f0;
+  background: transparent;
+}

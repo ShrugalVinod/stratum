@@ -626,6 +626,11 @@ export function MapPage() {
               <div class="legend-row">
                 <i class="sw corr" /> Delhi–Mumbai corridor ±75 km
               </div>
+              {!!seen?.length && layers.seen !== false && (
+                <div class="legend-row">
+                  <i class="sw seen" /> Contrail confirmed by the satellite (click for the proof)
+                </div>
+              )}
               {hourly && (
                 <div class="legend-stat mono">
                   {layer === "STRATUM" || layer === "STRATUM_spread"

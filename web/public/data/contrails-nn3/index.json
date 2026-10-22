@@ -1,0 +1,16 @@
+{
+ "track": "nn3",
+ "detector": "learned v3",
+ "days": {
+  "2025-03-01": 17,
+  "2025-05-01": 1,
+  "2025-06-01": 1,
+  "2025-11-01": 14,
+  "2025-12-01": 21,
+  "2026-01-01": 4,
+  "2026-02-01": 183
+ },
+ "events": 241,
+ "credit": "Meteosat-9 imagery \u00a9 EUMETSAT 2026 (ash false colour, rendered by STRATUM)",
+ "note": "Labels from the detector named here (D-005, second analysis); commercial flights only."
+}
