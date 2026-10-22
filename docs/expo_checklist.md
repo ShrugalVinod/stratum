@@ -38,6 +38,10 @@ Repeat on the backup laptop and, if it is Windows, with Python 3 installed.
 - [ ] `docs/demo_script.md` and `docs/hard_questions.md` printed for the presenters.
 - [ ] Every number said aloud is on the site (Results / Methods / Progress).
 
+- [ ] Booth game: open `/game` on a second screen or tablet for visitors (keys Y / N / Enter work).
+- [ ] With Wi-Fi: `/live` and `/advisory` show today's data; without Wi-Fi the booth tour skips
+      `/live` and the pages say the live data cannot be reached (expected).
+
 ## If something breaks
 - Site does not open: close the Terminal/command window, run the start script again.
 - Port busy: set `STRATUM_PORT=8766` and run `python3 serve.py` in the folder, then open

@@ -34,3 +34,19 @@ every number below is on the live site (Map, Results, Methods, Data & code) or i
 - The team photo slide and Team page show only photos the team supplied.
 - Credits visible in the footer when scrolling (EUMETSAT, Copernicus, ADS-B Exchange, OpenSky,
   Natural Earth).
+
+## Scenes added 22 Oct 2026 (for the final video, 29 Dec – 4 Jan)
+
+Pick two or three; each is 10–20 seconds.
+- **Satellite proof** (map → a flight card → "Satellite proof"): the Meteosat picture with the flight
+  path, the predicted drift and the detected line, played as a time-lapse. Strongest visual.
+- **Why this prediction?** (same card): "STRATUM explains every prediction: here humidity at and below
+  the flight level pushed the chance up."
+- **Live sky** (/live, film outdoors with a real contrail if possible): "Which plane made that
+  contrail? This one, 34° up to the north-east, and the air at its level keeps contrails."
+- **Advisories** (/advisory): a notice in pilot format, then "Show on the map".
+- **3D** (/3d, press Play): the humid layer drifting over India with the flagged flights inside it.
+- **Beat STRATUM** (/game): one round, the answer reveal.
+- The second analysis (Results §5): "with STRATUM steering the physics, the night effect is clear:
+  0.27, interval 0.24 to 0.34" — say it is a disclosed second analysis (D-006).
+- Credits to show: also ECMWF open data, The OpenSky Network, adsb.lol, OpenContrails (footer).
