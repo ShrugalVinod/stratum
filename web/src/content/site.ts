@@ -237,7 +237,7 @@ export const deviations: { id: string; date: string; title: string; why: string 
 
 // What did not work (the paper promises this list). Source: gate reports and docs/decisions.md.
 export const didntWork: string[] = [
-  "Our pre-registered contrail detector is weak: on expert-labelled scenes it finds about a quarter of the contrails, and over India only about 1 in 20 of its lines is a contrail. A learned detector added afterwards (D-005) does about twice as well on the same expert scenes (F1 0.48 vs 0.22); the logged results still use the original one.",
+  "Our pre-registered contrail detector is weak: on expert-labelled scenes it finds about a quarter of the contrails, and over India only about 1 in 20 of its lines is a contrail. Learned detectors added afterwards (D-005) do about twice as well on the same expert scenes (F1 0.49 vs 0.22; the best finds 82.5 % of the contrails all three experts agreed on); the logged results still use the original one.",
   "We could not label India's satellite scenes ourselves; AI drafted the lines and we reviewed them, which we disclose.",
   "About a third of the satellite matches would happen by chance, even with two images required.",
   "H1 went the other way: physics over-predicts the contrails the satellite sees about six times, mostly because thin contrails are invisible.",
@@ -251,6 +251,7 @@ export const didntWork: string[] = [
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-10-22", phase: 8, title: "Detector v3: close to expert level", body: "A second, stronger network (six infrared channels, trained on every labeller's vote, all 20,088 OpenContrails scenes, five models voting together) matches the experts' consensus at a pixel Dice of 0.64, close to the 0.72 a single expert reaches at most, and finds 82.5 % of the contrails all three experts agreed on. Re-labelling the twelve flight days with it gives 1,109 contrails with 14 % chance matches, and the same answers: H1 not supported, H2 supported. All of this is a disclosed second analysis; the logged results are unchanged." },
   { date: "2026-10-21", phase: 8, title: "A learned contrail detector doubles detection quality", body: "Our simple line-finding detector was the weakest part of the project. We trained a small neural network on 6,067 human-labelled contrail scenes from Google's OpenContrails dataset, then fine-tuned it on the 51 expert-labelled Meteosat scenes. Checked once on the 89 expert scenes it never saw: 64 % of its detections are real contrails (the old detector: 22 %) and it finds 38 % of the contrails (old: 23 %), F1 0.48 against 0.22. This was added after the logged results, so it is a disclosed second analysis (D-005): the H1–H4 results stay as logged, and the new labels are reported next to them." },
   { date: "2026-10-20", phase: 8, title: "Open release with a DOI", body: "Version 1.0.0 is public: the code, a derived-data release (every labelled commercial flight segment with its satellite label, baselines and held-out forecasts) and a one-click notebook that recomputes our results, archived on Zenodo (doi:10.5281/zenodo.23480202). A teammate who did not write the code reproduced every results figure from scratch." },
   { date: "2026-10-19", phase: 7, title: "Phase 7 accepted: H2–H4 tested", body: "A machine-learning correction trained on the satellite labels ranks contrail-prone flight segments far better than any yes/no physics rule, and it passes H2 against the published correction. But a constant guess of the average contrail rate passes too, so we report that the model's probabilities barely beat the base rate. Feeding the correction back into the physics as one humidity factor turned out too blunt: it dried the air so much that almost no contrails formed. With standard physics, under 1 % of flying carries 80 % of contrail warming over India (H3, supported), and night flights carry about three quarters of it against half the distance (H4 not supported in the logged test, clear in the context runs). The avoidance layer flagged 402 stretches of flight on 12 days and would alert on 333 of them, mostly on one humid day in February." },
@@ -282,4 +283,23 @@ export const dataSources = [
   { source: "ADS-B Exchange", what: "Aircraft position reports", use: "Flight tracks (free first-of-month samples)", credit: "Flight data: ADS-B Exchange", limits: "12 days in the year; coverage over India is being audited (Nov 2026)." },
   { source: "OpenSky Network", what: "Aircraft database", use: "Aircraft type → performance and engine efficiency", credit: "Aircraft metadata: OpenSky Network", limits: "Some types missing; fallbacks are logged." },
   { source: "Natural Earth", what: "Coastlines, borders (India point of view), cities", use: "Base map", credit: "Made with Natural Earth", limits: "Simplified for the web." },
+];
+
+// Second analysis with the learned contrail detectors (deviation D-005; descriptive). Source:
+// _locks/detector_runs.jsonl, docs/deviations.md (D-005), reports/second_analysis_nn{,3}. The
+// logged H1–H4 results above are unchanged.
+export const detectorCheck = {
+  scenes: 89,
+  expertLines: 520,
+  expertPixelDiceMax: 0.72,
+  rows: [
+    { name: "Line filter (pre-registered)", precision: 0.22, recall: 0.23, f1: "0.22 [0.18, 0.26]", dice: "—", unanimous: "—" },
+    { name: "Learned v1", precision: 0.64, recall: 0.38, f1: "0.48 [0.44, 0.52]", dice: "0.55", unanimous: "73 %" },
+    { name: "Learned v3 (ensemble)", precision: 0.66, recall: 0.39, f1: "0.49 [0.44, 0.54]", dice: "0.64", unanimous: "82.5 %" },
+  ],
+};
+export const secondAnalysis = [
+  { labels: "Line filter (logged)", seen: "1,564", chance: "33 %", h1: "6.44 [4.92, 12.1]", h2: "0.86 [0.82, 0.91]" },
+  { labels: "Learned v1", seen: "942", chance: "12 %", h1: "10.7 [6.6, 54.6]", h2: "0.92 [0.90, 0.97]" },
+  { labels: "Learned v3", seen: "1,109", chance: "14 %", h1: "9.1 [5.5, 46.5]", h2: "0.92 [0.89, 0.97]" },
 ];

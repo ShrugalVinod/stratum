@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Results as ResultsT } from "../data/contract";
 import { loadManifest, loadResults } from "../data/load";
-import { hypotheses as HYP } from "../content/site";
+import { detectorCheck as DC, hypotheses as HYP, secondAnalysis as SA } from "../content/site";
 
 type Est = { value?: number; lo?: number; hi?: number } | null | undefined;
 type Curve = { distance_share: number[]; ef_share: number[] } | null | undefined;
@@ -144,10 +144,78 @@ export function Results() {
               </section>
             )}
 
+            <section class="section" aria-labelledby="second">
+              <div class="sec-head rv">
+                <p class="label red" id="second">
+                  §4 · Second analysis: a better contrail detector
+                </p>
+                <span class="mono-s">D-005 · added after the logged runs · descriptive</span>
+              </div>
+              <p class="lede rv">
+                Our pre-registered detector was the weakest link, so after the logged runs we trained a neural network on Google's OpenContrails
+                scenes and the expert-labelled Meteosat scenes, and checked it on {DC.scenes} expert scenes it never saw ({DC.expertLines} contrails).
+                A single expert matches the experts' consensus at a pixel Dice of about {DC.expertPixelDiceMax} at most.
+              </p>
+              <div class="table-wrap rv rv-fade">
+                <table class="src-table res-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Detector</th>
+                      <th scope="col">Precision</th>
+                      <th scope="col">Recall</th>
+                      <th scope="col">F1 [95 % CI]</th>
+                      <th scope="col">Pixel Dice</th>
+                      <th scope="col">Unanimous contrails found</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DC.rows.map((d) => (
+                      <tr>
+                        <th scope="row">{d.name}</th>
+                        <td class="mono">{d.precision.toFixed(2)}</td>
+                        <td class="mono">{d.recall.toFixed(2)}</td>
+                        <td class="mono">{d.f1}</td>
+                        <td class="mono">{d.dice}</td>
+                        <td class="mono">{d.unanimous}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p class="lede rv">
+                Re-labelling the twelve flight days with the new detectors cuts chance matches from a third to about an eighth, and the answers stay the
+                same: physics still predicts far more contrails than the satellite sees (H1), and the model still beats the published correction (H2).
+              </p>
+              <div class="table-wrap rv rv-fade">
+                <table class="src-table res-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Labels from</th>
+                      <th scope="col">Contrails seen</th>
+                      <th scope="col">Chance matches</th>
+                      <th scope="col">H1 ratio [95 % CI]</th>
+                      <th scope="col">H2 skill vs B3 [95 % CI]</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SA.map((a) => (
+                      <tr>
+                        <th scope="row">{a.labels}</th>
+                        <td class="mono">{a.seen}</td>
+                        <td class="mono">{a.chance}</td>
+                        <td class="mono">{a.h1}</td>
+                        <td class="mono">{a.h2}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
             <section class="section" aria-labelledby="runs">
               <div class="sec-head rv">
                 <p class="label red" id="runs">
-                  §4 · Final-runs log
+                  §5 · Final-runs log
                 </p>
                 <span class="mono-s">append-only · _locks/final_runs.jsonl</span>
               </div>
