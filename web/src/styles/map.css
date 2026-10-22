@@ -1786,3 +1786,76 @@
 .s3-bar .seg-ctl button {
   white-space: nowrap;
 }
+
+/* "Why this prediction?" (per-card TreeSHAP) */
+.dk-why {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--rule);
+}
+.why-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.why-toggle .label {
+  margin: 0;
+}
+.dk-why .small {
+  margin: 8px 0;
+  max-width: 80ch;
+}
+.why-bars {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  max-width: 820px;
+}
+.why-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 12px;
+  align-items: center;
+}
+.why-l {
+  font-size: 13.5px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.why-l em {
+  font-style: normal;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.why-track {
+  position: relative;
+  height: 12px;
+  background: linear-gradient(var(--rule), var(--rule)) center / 1px 100% no-repeat;
+}
+.why-track i {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+}
+.why-track i.up {
+  left: 50%;
+  background: var(--orange);
+}
+.why-track i.down {
+  right: 50%;
+  background: var(--teal);
+}
+@media (max-width: 700px) {
+  .why-bars li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

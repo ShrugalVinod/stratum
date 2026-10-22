@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightCollectionLite, type FlightFeature, LiveResponse, Manifest, type ModelId, OutlookInfo, Results } from "./contract";
+import { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightCollectionLite, type FlightFeature, GameIndex, LiveResponse, Manifest, type ModelId, OutlookInfo, Results } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -138,4 +138,36 @@ export async function outlookValue(m: Manifest, layer: string, date: string, hou
 export async function loadLive(lat: number, lon: number) {
   const q = (v: number) => (Math.round(v * 2) / 2).toFixed(1);
   return json(`${BASE}/api/live?lat=${q(lat)}&lon=${q(lon)}`, LiveResponse);
+}
+
+// ── "Beat STRATUM" (data/game/; ?game=<folder> for review) ───────────────────
+export function gameDir(): string {
+  const o = typeof location !== "undefined" ? new URLSearchParams(location.search).get("game") : null;
+  return o && /^[\w.-]+$/.test(o) ? o : "game";
+}
+export function loadGame(): Promise<GameIndex | null> {
+  return json(`${BASE}/data/${gameDir()}/index.json`, GameIndex).catch(() => null);
+}
+export const gameImg = (name: string) => `${BASE}/data/${gameDir()}/img/${name}`;
+
+// ── website extras from Colab 12a: explanations and the weighted decisions (D-006) ──
+const dirOverride = (key: string, def: string) => {
+  const o = typeof location !== "undefined" ? new URLSearchParams(location.search).get(key) : null;
+  return o && /^[\w.-]+$/.test(o) ? o : def;
+};
+const explainCache = new Map<string, Promise<ExplainDay | null>>();
+/** Per-card TreeSHAP for one day, or null when not exported (?explain=<folder> for review). */
+export function loadExplain(date: string): Promise<ExplainDay | null> {
+  const url = `${BASE}/data/${dirOverride("explain", "explain")}/days/${date}.json`;
+  let p = explainCache.get(url);
+  if (!p) explainCache.set(url, (p = json(url, ExplainDay).catch(() => null)));
+  return p;
+}
+/** The day's probability-weighted decision list (D-006), or null (?weighted=<folder>). */
+export function loadWeighted(date: string): Promise<z.infer<typeof FlaggedSegment>[] | null> {
+  return json(`${BASE}/data/${dirOverride("weighted", "weighted")}/days/${date}/segments_STRATUMw.json`, z.array(FlaggedSegment)).catch(() => null);
+}
+/** Whether the weighted analysis is published, with its summary (weighted/summary.json). */
+export function loadWeightedSummary(): Promise<Record<string, any> | null> {
+  return json(`${BASE}/data/${dirOverride("weighted", "weighted")}/summary.json`, z.record(z.string(), z.any())).catch(() => null);
 }

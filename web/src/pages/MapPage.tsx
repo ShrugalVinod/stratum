@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
-import type { ContrailEvent, ContrailIndex, DaySummary, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
+import type { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightFeature, Manifest, Profile } from "../data/contract";
 import { RAMP } from "../data/ramp";
 import { clock, colourise, colouriseObs, joules, tonnes, type MapState, type ModelKey, pad2, parseState, stateQuery, type ViewKey } from "../data/format";
-import { gridUrl, layerUrl, type Lists, loadContrailDay, loadContrailIndex, loadCorridor, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
+import { gridUrl, layerUrl, type Lists, loadContrailDay, loadContrailIndex, loadCorridor, loadDay, loadExplain, loadGridBytes, loadManifest, loadWeighted, loadWeightedSummary, spriteHour } from "../data/load";
+import { WhyPanel } from "../components/WhyPanel";
 import { ContrailProof } from "../components/ContrailProof";
 import type { ContrailMap as ContrailMapT, Layers } from "../map/ContrailMap";
 import "../styles/map.css";
@@ -146,6 +147,11 @@ export function MapPage() {
   const [dayData, setDayData] = useState<{ day: DaySummary; flights: FlightFeature[] | null; segments: FlaggedSegment[]; lists: Lists } | null>(null);
   const [alertsByDay, setAlertsByDay] = useState<Record<string, number> | null>(null);
   const [alertsOnly, setAlertsOnly] = useState(false);
+  // website extras (Colab 12a): per-card explanations and the weighted decision layer (D-006)
+  const [explain, setExplain] = useState<ExplainDay | null>(null);
+  const [hasWeighted, setHasWeighted] = useState(false);
+  const [weighted, setWeighted] = useState(false);
+  const [wList, setWList] = useState<FlaggedSegment[] | null>(null);
   const [conf, setConf] = useState<"all" | "covered" | "extrapolating">("all");
   const [riskImage, setRiskImage] = useState<string | null>(null);
   const [layers, setLayers] = useState<Layers>({ risk: true, flights: true, corridor: true, cities: true, seen: true });
@@ -238,7 +244,7 @@ export function MapPage() {
     if (!man) return;
     // review overrides (another data build, other viewer data) stay in the URL
     const q = new URLSearchParams(location.search);
-    const keep = ["build", "contrails"].flatMap((k) => (q.get(k) ? [`&${k}=${encodeURIComponent(q.get(k)!)}`] : [])).join("");
+    const keep = ["build", "contrails", "explain", "weighted"].flatMap((k) => (q.get(k) ? [`&${k}=${encodeURIComponent(q.get(k)!)}`] : [])).join("");
     history.replaceState(null, "", `/map${stateQuery(st)}${keep}`);
   }, [st, man]);
 
@@ -350,7 +356,21 @@ export function MapPage() {
     return () => clearInterval(id);
   }, [playing]);
 
-  const segments = useMemo(() => (dayData ? (dayData.lists[model] ?? (model === "B1" ? dayData.segments : [])) : []), [dayData, model]);
+  useEffect(() => {
+    loadWeightedSummary().then((x) => setHasWeighted(!!x));
+  }, []);
+  useEffect(() => {
+    setExplain(null);
+    if (st.date && build !== "outlook") loadExplain(st.date).then(setExplain);
+  }, [st.date, build]);
+  useEffect(() => {
+    setWList(null);
+    if (weighted && st.date) loadWeighted(st.date).then(setWList);
+  }, [weighted, st.date]);
+  const segments = useMemo(
+    () => (dayData ? (model === "STRATUM" && weighted && wList ? wList : (dayData.lists[model] ?? (model === "B1" ? dayData.segments : []))) : []),
+    [dayData, model, weighted, wList],
+  );
   const airlines = useMemo(() => [...new Set(segments.map((s) => s.airline).filter(Boolean) as string[])].sort(), [segments]);
   const isS = model === "STRATUM";
   const shown = segments.filter(
@@ -739,6 +759,18 @@ export function MapPage() {
                       Night only
                     </label>
                   </div>
+                  {isS && hasWeighted && (
+                    <div class="filter-row">
+                      <span class="seg-ctl" role="radiogroup" aria-label="Decision layer">
+                        <button role="radio" aria-checked={!weighted} class={!weighted ? "on" : ""} onClick={() => setWeighted(false)} title="The pre-registered decision layer (logged; its corrected physics turned out too dry)">
+                          Logged
+                        </button>
+                        <button role="radio" aria-checked={weighted} class={weighted ? "on" : ""} onClick={() => setWeighted(true)} title="Second analysis D-006: raw-ERA5 physics weighted by STRATUM's probability">
+                          Weighted (D-006)
+                        </button>
+                      </span>
+                    </div>
+                  )}
                   {isS && (
                     <div class="filter-row">
                       <label class="toggle">
@@ -809,7 +841,7 @@ export function MapPage() {
         </div>
 
         <div class={`deck-wrap ${detailId ? "open" : ""}`}>
-          <div>{detailId && <DetailDeck key={detailId} model={v2 ? model : "B1"} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} proof={seen?.find((e) => e.flight_id === detailId) ?? null} onProof={setProofId} />}</div>
+          <div>{detailId && <DetailDeck key={detailId} model={v2 ? model : "B1"} flight={detailFlight} seg={selected} segs={detailSegs} onStep={chooseSeg} onClose={closeDetail} proof={seen?.find((e) => e.flight_id === detailId) ?? null} onProof={setProofId} explain={explain} />}</div>
         </div>
       </div>
 
@@ -934,7 +966,7 @@ function Digits(p: { text: string; suffix: string; big?: boolean }) {
 /** Lower detail bar: the flight and, for the selected list item, every field the model has.
  *  Physics lists (B1, B3): how long the contrail lasted and its warming. STRATUM: the Table 3
  *  fields of the decision layer, the alternatives and the humidity profile. */
-function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void; proof?: ContrailEvent | null; onProof?: (id: string) => void }) {
+function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: FlaggedSegment | null; segs: FlaggedSegment[]; onStep: (s: FlaggedSegment) => void; onClose: () => void; proof?: ContrailEvent | null; onProof?: (id: string) => void; explain?: ExplainDay | null }) {
   const s = p.seg;
   const head = s ?? p.segs[0] ?? null;
   const fp = p.flight?.properties;
@@ -1090,6 +1122,7 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
               </div>
             </dl>
           )}
+          {s && p.explain?.items[s.segment_id] && <WhyPanel key={s.segment_id} it={p.explain.items[s.segment_id]} features={p.explain.features} base={p.explain.base} />}
           {isS && s.alternatives && <AltTable s={s} />}
           {isS && s.profile && <ProfileChart pr={s.profile} planned={s.fl} best={s.best_alternative_fl} />}
         </>

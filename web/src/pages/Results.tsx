@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Results as ResultsT } from "../data/contract";
-import { loadManifest, loadResults } from "../data/load";
+import { loadManifest, loadResults, loadWeightedSummary } from "../data/load";
 import { detectorCheck as DC, hypotheses as HYP, literature as LIT, secondAnalysis as SA } from "../content/site";
 
 type Est = { value?: number; lo?: number; hi?: number } | null | undefined;
@@ -16,6 +16,10 @@ const ci = (e: Est, f: (v?: number) => string = f2) => (e ? `${f(e.value)} (95 %
 export function Results() {
   const [res, setRes] = useState<ResultsT | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [ws, setWs] = useState<Record<string, any> | null>(null);
+  useEffect(() => {
+    loadWeightedSummary().then(setWs);
+  }, []);
   useEffect(() => {
     loadManifest()
       .then(({ build, manifest }) => {
@@ -212,10 +216,12 @@ export function Results() {
               </div>
             </section>
 
+            {ws && <WeightedSection ws={ws} h3={h("H3")?.estimate} h4={h("H4")?.estimate} />}
+
             <section class="section" aria-labelledby="lit">
               <div class="sec-head rv">
                 <p class="label red" id="lit">
-                  §5 · How this compares with published studies
+                  §{ws ? 6 : 5} · How this compares with published studies
                 </p>
                 <span class="mono-s">abstracts checked 22 Oct 2026</span>
               </div>
@@ -257,7 +263,7 @@ export function Results() {
             <section class="section" aria-labelledby="runs">
               <div class="sec-head rv">
                 <p class="label red" id="runs">
-                  §6 · Final-runs log
+                  §{ws ? 7 : 6} · Final-runs log
                 </p>
                 <span class="mono-s">append-only · _locks/final_runs.jsonl</span>
               </div>
@@ -467,5 +473,92 @@ function Reliability({ rel }: { rel?: Record<string, { mean_forecast: number; ob
         ))}
       </figcaption>
     </figure>
+  );
+}
+
+const t1 = (kg?: number | null) => (kg == null || !Number.isFinite(kg) ? "—" : `${Math.round(kg / 1000).toLocaleString()} t`);
+
+/** §5: the decision layer redone with STRATUM's probabilities weighting raw-ERA5 physics
+ *  (deviation D-006, descriptive). Numbers from data/weighted/summary.json (Colab 12a). */
+function WeightedSection({ ws, h3, h4 }: { ws: Record<string, any>; h3: Est; h4: Est }) {
+  const d = ws.decisions ?? {};
+  const L = ws.logged_decisions ?? {};
+  const c = ws.concentration ?? {};
+  const b1 = ws.context_B1 ?? {};
+  const rows = [
+    { name: "Logged (corrected physics, too dry)", d: L },
+    { name: "Weighted by STRATUM (D-006)", d },
+  ];
+  return (
+    <section class="section" aria-labelledby="wtd">
+      <div class="sec-head rv">
+        <p class="label red" id="wtd">
+          §5 · Second analysis: STRATUM steers the decisions
+        </p>
+        <span class="mono-s">D-006 · added after the logged runs · descriptive</span>
+      </div>
+      <p class="lede rv">
+        The pre-registered way of feeding the satellite lesson back into the physics turned out far too dry. Here the physics stays standard (raw ERA5),
+        and STRATUM decides how much each predicted contrail counts: its probability that a lasting contrail really forms. The {d.days ?? "12"} held-out
+        days are run again, flight by flight, through the same alternatives, fuel model and cautious alert rule.
+      </p>
+      <div class="table-wrap rv rv-fade">
+        <table class="src-table res-table rowhead-s">
+          <thead>
+            <tr>
+              <th scope="col">Decision layer</th>
+              <th scope="col">Stretches flagged</th>
+              <th scope="col">Alerts</th>
+              <th scope="col">Alerts without a fuel saving</th>
+              <th scope="col">Warming avoided by alerts, 100 yr (median)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <th scope="row">{r.name}</th>
+                <td class="mono">{r.d.portions ?? "—"}</td>
+                <td class="mono">{r.d.alerts ?? "—"}</td>
+                <td class="mono">{r.d.alerts_without_fuel_credit ?? "—"}</td>
+                <td class="mono">{t1(r.d.alerts_net_warming_avoided_h100_p50_kgCO2e)} CO₂e</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap rv rv-fade">
+        <table class="src-table res-table rowhead-s">
+          <thead>
+            <tr>
+              <th scope="col">Physics</th>
+              <th scope="col">Share of cruise distance carrying 80 % of warming (H3-style)</th>
+              <th scope="col">Night excess of warming (H4-style)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Logged (corrected, too dry)</th>
+              <td class="mono">{ci(h3, (v) => pct(v))}</td>
+              <td class="mono">{ci(h4)}</td>
+            </tr>
+            <tr>
+              <th scope="row">Raw ERA5 (context)</th>
+              <td class="mono">{ci(b1.h3?.share, (v) => pct(v))}</td>
+              <td class="mono">{ci(b1.h4?.difference)}</td>
+            </tr>
+            <tr>
+              <th scope="row">Weighted by STRATUM (D-006)</th>
+              <td class="mono">{ci(c.h3?.share, (v) => pct(v))}</td>
+              <td class="mono">{ci(c.h4?.difference)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted rv">
+        The weight is STRATUM's held-out probability that the satellite sees a lasting contrail, divided by the share of lasting contrails a satellite can
+        detect (capped at 1); where raw physics forms a warming contrail the weight averaged {c.mean_w_where_b1_warms != null ? c.mean_w_where_b1_warms.toFixed(2) : "—"}.
+        Only the strongest stretches per day are flown through the alternatives. The logged H3/H4 tests and alerts are unchanged.
+      </p>
+    </section>
   );
 }

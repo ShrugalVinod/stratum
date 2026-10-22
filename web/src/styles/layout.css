@@ -1513,6 +1513,7 @@ a.contact-big:hover {
 .res-table th {
   font-size: 13px;
 }
+.rowhead-s th[scope="row"],
 .lit-table th[scope="row"] {
   font-size: 17px;
   line-height: 1.2;
@@ -1954,5 +1955,199 @@ a.contact-big:hover {
   .adv-list ol button .adv-where,
   .adv-list ol button .mono-s {
     grid-column: 2;
+  }
+}
+
+/* ── Beat STRATUM (/game) ─────────────────────────────────────────────────── */
+.gm-big {
+  min-height: 56px;
+  padding: 0 28px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 17px var(--font-sans);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.2s;
+}
+.gm-big:hover {
+  transform: translateY(-1px);
+}
+.gm-big:active {
+  transform: translateY(1px);
+}
+.gm-big.yes {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+.gm-big.no {
+  background: var(--card);
+  color: var(--ink);
+}
+.gm-intro {
+  display: grid;
+  gap: 24px;
+  justify-items: start;
+}
+.gm-rules {
+  font-size: 19px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 22px;
+}
+.gm-top {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+}
+.gm-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.gm-card {
+  border: 1px solid var(--ink);
+  background: var(--card);
+  padding: 20px 22px;
+}
+.gm-card .label {
+  margin: 0 0 4px;
+}
+.gm-sub {
+  margin: 16px 0 8px;
+  font-weight: 600;
+}
+.gm-rhi {
+  display: grid;
+  grid-template-columns: 112px 1fr 58px;
+  gap: 10px;
+  align-items: center;
+  margin: 6px 0;
+}
+.gm-bar {
+  position: relative;
+  height: 14px;
+  background: var(--paper-2);
+}
+.gm-bar i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--teal);
+  opacity: 0.55;
+}
+.gm-bar i.wet {
+  background: var(--teal);
+  opacity: 1;
+}
+.gm-bar em {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--ink);
+}
+.gm-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  margin: 18px 0 12px;
+}
+.gm-facts dt {
+  font: 10.5px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.gm-facts dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+}
+.gm-q {
+  font: 700 clamp(22px, 2.4vw, 30px) / 1.2 var(--font-display);
+  margin: 0 0 20px;
+}
+.gm-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.gm-verdict {
+  font: 700 34px var(--font-display);
+  margin: 0;
+}
+.gm-verdict.ok {
+  color: var(--green);
+}
+.gm-verdict.miss {
+  color: var(--red-text);
+}
+.gm-sat {
+  margin: 12px 0;
+  max-width: 420px;
+}
+.gm-sat figcaption {
+  margin-top: 6px;
+}
+.gm-answers {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  display: grid;
+  gap: 4px;
+}
+.gm-answers li::before {
+  display: inline-block;
+  width: 22px;
+  font-weight: 700;
+}
+.gm-answers li.ok::before {
+  content: "✓";
+  color: var(--green);
+}
+.gm-answers li.miss::before {
+  content: "✗";
+  color: var(--red-text);
+}
+.gm-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 10px 0 20px;
+}
+.gm-scores > div {
+  border: 1px solid var(--rule);
+  padding: 14px 22px;
+  min-width: 140px;
+}
+.gm-scores > div.me {
+  border-color: var(--ink);
+  background: var(--card);
+}
+.gm-scores b {
+  font: 700 54px var(--font-display);
+}
+.gm-scores span {
+  color: var(--muted);
+  margin-left: 4px;
+}
+.gm-scores p {
+  margin: 0;
+}
+.gm-note {
+  margin-top: 18px;
+  max-width: 70ch;
+}
+@media (max-width: 900px) {
+  .gm-grid {
+    grid-template-columns: 1fr;
+  }
+  .gm-rhi {
+    grid-template-columns: 92px 1fr 52px;
   }
 }

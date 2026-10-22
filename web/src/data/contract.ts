@@ -253,3 +253,54 @@ export const LiveAircraft = z.object({
 });
 export type LiveAircraft = z.infer<typeof LiveAircraft>;
 export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), ac: z.array(LiveAircraft) });
+
+// "Beat STRATUM" rounds (stratum/export/game.py → data/game/index.json + img/).
+export const GameRound = z.object({
+  id: z.string(),
+  day: z.string(),
+  t: z.string(),
+  lst_h: z.number().nullable(),
+  fl: z.number().int(),
+  lat: z.number().nullable(),
+  lon: z.number().nullable(),
+  airline: z.string().nullish(),
+  aircraft_type: z.string().nullish(),
+  wx: z.object({
+    rhi: z.number().nullable(),
+    rhi_above: z.number().nullable(),
+    rhi_below: z.number().nullable(),
+    temp_k: z.number().nullable(),
+    sac_margin_k: z.number().nullable(),
+    cloud_ice: z.number().nullable(),
+    high_cloud: z.number().nullable(),
+  }),
+  seen: z.boolean(),
+  stratum_p: z.number().nullable(),
+  stratum_says: z.boolean(),
+  physics_says: z.boolean(),
+  slot: ContrailSlot,
+});
+export type GameRound = z.infer<typeof GameRound>;
+export const GameIndex = z.object({
+  track: z.string(),
+  rounds: z.array(GameRound),
+  stratum_threshold: z.number(),
+  n_seen: z.number().int(),
+  credit: z.string(),
+  note: z.string(),
+});
+export type GameIndex = z.infer<typeof GameIndex>;
+
+// "Why this prediction?" (stratum/export/explain.py → data/explain/days/<day>.json): TreeSHAP of
+// the fold model for the most likely segment of each map card, keyed by card (segment) id.
+export const ExplainItem = z.object({
+  t: z.string(),
+  fl: z.number().int(),
+  p: z.number().nullable(),
+  score: z.number().nullable(),
+  x: z.array(z.number().nullable()),
+  phi: z.array(z.number().nullable()),
+});
+export type ExplainItem = z.infer<typeof ExplainItem>;
+export const ExplainDay = z.object({ day: z.string(), fold: z.string(), features: z.array(z.string()), base: z.number().nullable(), items: z.record(z.string(), ExplainItem) });
+export type ExplainDay = z.infer<typeof ExplainDay>;

@@ -34,7 +34,7 @@ jobs:
 
       - name: Secret scan (detect-secrets)
         # same exclusions as .pre-commit-config.yaml (keep the two lists in step)
-        run: git ls-files -z | grep -zv -E '^(uv\.lock|_locks/(final|peek|detector)_runs\.jsonl|docs/.*\.pdf|(web|labeller)/package-lock\.json|web/public/data/[^/]+/(manifest|results)\.json|web/public/data/contrails-[^/]+/days/[^/]+/contrails\.json|web/public/.*\.(pdf|mp4|webp|png))$' | xargs -0 uv run detect-secrets-hook --baseline .secrets.baseline
+        run: git ls-files -z | grep -zv -E '^(uv\.lock|_locks/(final|peek|detector)_runs\.jsonl|docs/.*\.pdf|(web|labeller)/package-lock\.json|web/public/data/[^/]+/(manifest|results)\.json|web/public/data/contrails-[^/]+/days/[^/]+/contrails\.json|web/public/data/(explain|weighted|game)/.*\.json|web/public/.*\.(pdf|mp4|webp|png))$' | xargs -0 uv run detect-secrets-hook --baseline .secrets.baseline
 
       - name: Pre-registration lock unchanged (or deviations approved)
         run: |
