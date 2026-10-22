@@ -471,6 +471,11 @@ export function MapPage() {
           {man?.coverage.adsb_coverage_pct != null ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights` : "audit pending (Nov 2026)"}
         </span>
         <span class="mp-tools">
+          {v2 && build !== "outlook" && st.date && (
+            <a class="tool" href={`/3d?date=${st.date}&hour=${st.hour}&layer=${model}`} title="The humid layers in three dimensions">
+              3D
+            </a>
+          )}
           <label class="date-pick">
             <span class="sr-only">Date</span>
             <select value={st.date ?? ""} onChange={(e) => setSt({ ...st, date: (e.target as HTMLSelectElement).value, seg: null })}>

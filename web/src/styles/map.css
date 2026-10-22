@@ -1711,3 +1711,78 @@
   border: 2.5px solid #36d1f0;
   background: transparent;
 }
+
+/* ── 3D view (/3d) ─────────────────────────────────────────────────────────── */
+.sky3d {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: calc(100svh - var(--header-h));
+  --bar-h: 46px;
+}
+.s3-stage {
+  position: relative;
+  min-height: 0;
+  background: radial-gradient(ellipse at 50% 30%, var(--card), var(--paper) 70%);
+  cursor: grab;
+}
+.s3-stage:active {
+  cursor: grabbing;
+}
+.s3-stage canvas {
+  display: block;
+}
+.s3-msg {
+  position: absolute;
+  inset: 40% 0 auto;
+  text-align: center;
+}
+.s3-key {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  border: 1px solid var(--rule);
+  pointer-events: none;
+}
+.s3-key i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.s3-key .k-low {
+  background: var(--teal);
+  opacity: 0.5;
+}
+.s3-key .k-high {
+  background: var(--orange);
+}
+.s3-key .k-seg {
+  height: 3px;
+  background: var(--red);
+  vertical-align: 2px;
+}
+.s3-time {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--rule);
+  background: var(--card);
+}
+.s3-time input {
+  width: 100%;
+  accent-color: var(--red);
+}
+.s3-hour {
+  font-size: 18px;
+}
+.s3-bar .seg-ctl button {
+  white-space: nowrap;
+}

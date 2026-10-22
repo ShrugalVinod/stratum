@@ -43,9 +43,14 @@ function devLiveApi(): Plugin {
           res.end(JSON.stringify({ error: "lat/lon outside India's region" }));
           return;
         }
-        const r = await fetch(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/160`, { headers: { "user-agent": USER_AGENT } });
         const now = Date.now();
-        const ac = r.ok ? slim(((await r.json()) as { ac?: unknown[] }).ac, now) : [];
+        let ac: unknown[] = [];
+        try {
+          const r = await fetch(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/160`, { headers: { "user-agent": USER_AGENT } });
+          if (r.ok) ac = slim(((await r.json()) as { ac?: unknown[] }).ac, now);
+        } catch {
+          res.statusCode = 502; // the feed is unreachable: answer, don't crash the dev server
+        }
         res.end(JSON.stringify({ t: now, centre: [lat, lon], radius_nm: 160, credit: "Live aircraft: adsb.lol (ODbL)", ac }));
       });
     },

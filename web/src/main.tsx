@@ -64,6 +64,7 @@ const Contact = lazy(
   reloadOnce(() => import("./pages/Contact").then((m) => m.Contact)),
 );
 const LiveSky = lazy(reloadOnce(() => import("./pages/LiveSky").then((m) => m.LiveSky)));
+const Sky3D = lazy(reloadOnce(() => import("./pages/Sky3D").then((m) => m.Sky3D)));
 const NotFound = lazy(
   reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
 );
@@ -82,12 +83,13 @@ function Shell() {
   return (
     <>
       <Header />
-      <main id="main" class={path === "/map" ? "is-map" : ""}>
+      <main id="main" class={path === "/map" || path === "/3d" ? "is-map" : ""}>
         <ErrorBoundary>
           <Router>
             <Route path="/" component={Home} />
             <Route path="/map" component={MapPage} />
             <Route path="/live" component={LiveSky} />
+            <Route path="/3d" component={Sky3D} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
             <Route path="/results" component={Results} />
