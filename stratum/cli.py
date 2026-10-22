@@ -487,6 +487,23 @@ def second_analysis_nn(
     })  # fmt: skip
 
 
+@app.command("export-contrail-viewer")
+def export_contrail_viewer(
+    track: Annotated[str, typer.Option(help="labels from: line, nn (v1) or nn3 (v3)")] = "nn3",
+) -> None:
+    """Website (Colab 11a): every satellite-confirmed contrail, shown — Meteosat crops with the
+    flight path, the predicted drift and the detected line. Needs STRATUM_ID_SALT."""
+    from stratum.export.contrail_viewer import export
+    from stratum.export.web_export import id_salt
+
+    root = drive_root()
+    out = root / "web_exports" / f"contrails-{track}"
+    idx = export(root, out, id_salt(), track)
+    z = shutil.make_archive(str(out), "zip", out.parent, out.name)
+    _summary("export-contrail-viewer", {"track": track, "events": idx["events"],
+                                        "days": json.dumps(idx["days"]), "zip": z})  # fmt: skip
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],
