@@ -2,6 +2,30 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-22 — Website: live sky, forecast advisories, 3D view, literature, side menu
+
+**Done**
+- Navigation moved into a sliding side panel (Menu button), on every screen size.
+- Results §6: our numbers next to six published studies (Teoh et al. 2020/2022/2024, Stuber &
+  Forster 2007, Martín Frías et al. 2024, Sonabend-W et al. 2024), each checked against its
+  abstract; their concentration is a share of flights, ours of cruise distance.
+- Live outlook: a GitHub Action (daily 09:20 UTC) turns the latest ECMWF open-data forecast
+  (CC BY 4.0) into a small build (today + tomorrow, B1/B3/SAC) plus NOTAM-style advisories,
+  published as one commit on the `outlook-data` branch. Physics only (the open data lack the
+  cloud fields STRATUM needs); labelled experimental.
+- Site Worker (first server code): /data/outlook/* and /api/live (adsb.lol, ODbL; commercial
+  flights above FL200, 60 s cache, no ICAO24 kept).
+- New pages: /live ("which plane made that contrail?": sky dome with live airliners judged against
+  the forecast), /advisory (notices, map, plain-language reading), /3d (humid layers and flagged
+  flights in three dimensions, three.js), /game ("Beat STRATUM", data pending).
+- Code for Colab 12a: per-card TreeSHAP ("Why this prediction?"), the probability-weighted
+  decision layer (D-006, descriptive) and the game rounds; the site shows them once exported.
+
+**Next**
+- Colab 12a, then copy `extras.zip` into the site (explain/, weighted/, game/) and write the
+  D-006 result into deviations.md.
+- Coverage audit (2 and 5 Nov).
+
 ## 2026-10-22 — Contrail proof viewer live
 
 **Done**
