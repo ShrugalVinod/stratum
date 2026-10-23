@@ -53,6 +53,16 @@ def test_dashboard_groups_routes_airlines_and_hides_small_groups() -> None:
     assert "flight_id" not in str(r) and "a0" not in str(r["by_route"])
 
 
-def test_route_ends_need_a_low_aircraft_near_an_airport() -> None:
-    f = _flight("x", "IGO1", 28.6, 77.1, 19.1, 72.9, 36000, 2000, 1e9)  # starts in cruise
-    assert db.routes(f, AP).iloc[0] == "en route–BOM"
+def test_route_ends_are_the_airports_behind_and_ahead_of_the_cruise() -> None:
+    # cruise from ~150 km after Delhi to ~150 km before Mumbai, both ends at FL360
+    f = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 36000, 36000, 1e9)
+    assert db.routes(f, AP).iloc[0] == "DEL–BOM"
+    # a track heading away from both airports has no route
+    g = _flight("y", "IGO2", 25.0, 85.0, 26.0, 90.0, 36000, 36000, 1e9)
+    assert db.routes(g, AP).iloc[0] == "en route–en route"
+
+
+def test_an_empty_group_table_is_empty() -> None:
+    seg = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 36000, 36000, 1e9)
+    d = seg.assign(ef_b1_pos=1.0, ef_w_pos=1.0)
+    assert db.table(d.iloc[0:0], "callsign", {"km": 1.0, "warm_b1": 1.0, "warm_w": 1.0}) == []

@@ -7,10 +7,12 @@ airline, route, aircraft type, hour of day (IST), flight level and month: flight
 distance, warming (positive EF), and the warming share divided by the distance share (an index:
 1 = an average share of warming for the distance flown).
 
-Routes are not in the flight data. Each flight piece's route is inferred from where its track
-starts and ends: the nearest large or medium airport (OurAirports, public domain) within
-``AIRPORT_KM`` when the aircraft is below ``LOW_FT`` there, otherwise "en route" (the track
-enters or leaves the study area, or starts in cruise). Descriptive; modelled warming, not
+Routes are not in the flight data, and the segments are cruise only (from the top of climb to
+the top of descent, 100–300 km from the airports). Each flight piece's origin is the large or
+medium airport (OurAirports, public domain) behind the start of its cruise, along the first
+segment's heading reversed: within ``RAY_KM`` and ``RAY_OFF_KM`` of that line, the nearest one;
+its destination likewise ahead of the end. Otherwise "en route" (the track enters or leaves the
+study area, or the airport is ambiguous). Descriptive; modelled warming, not
 measured. Rows with fewer than ``MIN_FLIGHTS`` flights are pooled as "other" (no single flight
 can be singled out). Commercial airlines only; no flight ids are written.
 """
@@ -28,8 +30,8 @@ import numpy as np
 import pandas as pd
 
 AIRPORTS_CSV = "https://davidmegginson.github.io/ourairports-data/airports.csv"
-AIRPORT_KM = 60.0
-LOW_FT = 18_000.0
+RAY_KM = 350.0
+RAY_OFF_KM = 40.0
 MIN_FLIGHTS = 3
 TOP = 15
 FL_BANDS = [(0, 280), (280, 320), (320, 340), (340, 360), (360, 380), (380, 400), (400, 500)]
@@ -57,20 +59,33 @@ def load_airports(bbox: tuple[tuple[float, float], tuple[float, float]]) -> pd.D
     )[["iata", "city", "lat", "lon", "type"]].reset_index(drop=True)
 
 
-def nearest_airport(lat: float, lon: float, ap: pd.DataFrame) -> tuple[str | None, float]:
-    if ap.empty or not (math.isfinite(lat) and math.isfinite(lon)):
-        return None, math.inf
-    dlat = np.radians(ap["lat"].to_numpy(float) - lat)
-    dlon = np.radians(ap["lon"].to_numpy(float) - lon)
-    h = (
-        np.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat))
-        * np.cos(np.radians(ap["lat"].to_numpy(float)))
-        * np.sin(dlon / 2) ** 2
-    )
+def _dist_bearing(
+    lat: float, lon: float, lats: np.ndarray, lons: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    p1, p2 = math.radians(lat), np.radians(lats)
+    dl = np.radians(lons - lon)
+    h = np.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
     d = 2 * 6371.0 * np.arcsin(np.sqrt(np.minimum(1.0, h)))
-    i = int(np.argmin(d))
-    return str(ap["iata"].iloc[i]), float(d[i])
+    y = np.sin(dl) * np.cos(p2)
+    x = math.cos(p1) * np.sin(p2) - math.sin(p1) * np.cos(p2) * np.cos(dl)
+    return d, (np.degrees(np.arctan2(y, x)) + 360) % 360
+
+
+def airport_on_ray(lat: float, lon: float, bearing: float, ap: pd.DataFrame) -> str | None:
+    """The nearest airport along the ray from (lat, lon) at ``bearing``: within RAY_KM ahead and
+    RAY_OFF_KM of the line (cross-track)."""
+    if ap.empty or not all(map(math.isfinite, (lat, lon, bearing))):
+        return None
+    d, b = _dist_bearing(lat, lon, ap["lat"].to_numpy(float), ap["lon"].to_numpy(float))
+    rel = np.radians((b - bearing + 540) % 360 - 180)
+    along, cross = d * np.cos(rel), np.abs(d * np.sin(rel))
+    ok = (
+        (along > -20.0) & (d <= RAY_KM) & (cross <= RAY_OFF_KM)
+    )  # also a track that starts at the airport
+    if not ok.any():
+        return None
+    i = int(np.argmin(np.where(ok, d, np.inf)))
+    return str(ap["iata"].iloc[i])
 
 
 def routes(seg: pd.DataFrame, ap: pd.DataFrame) -> pd.Series:
@@ -79,14 +94,18 @@ def routes(seg: pd.DataFrame, ap: pd.DataFrame) -> pd.Series:
     first = s.groupby("flight_id").first()
     last = s.groupby("flight_id").last()
 
-    def end(lat: float, lon: float, alt: float) -> str:
-        if not (math.isfinite(alt) and alt < LOW_FT):
-            return "en route"
-        code, d = nearest_airport(lat, lon, ap)
-        return code if code and d <= AIRPORT_KM else "en route"
+    def heading(r: Any) -> float:
+        _, b = _dist_bearing(r.lat_start, r.lon_start, np.array([r.lat_end]), np.array([r.lon_end]))
+        return float(b[0])
 
-    o = [end(r.lat_start, r.lon_start, r.alt_ft_start) for r in first.itertuples()]
-    d = [end(r.lat_end, r.lon_end, r.alt_ft_end) for r in last.itertuples()]
+    o = [
+        airport_on_ray(r.lat_start, r.lon_start, (heading(r) + 180) % 360, ap) or "en route"
+        for r in first.itertuples()
+    ]
+    d = [
+        airport_on_ray(r.lat_end, r.lon_end, heading(r), ap) or "en route"
+        for r in last.itertuples()
+    ]
     return pd.Series(
         [f"{a}–{b}" for a, b in zip(o, d, strict=True)], index=first.index, name="route"
     )
@@ -103,14 +122,18 @@ def fl_band(alt_ft: pd.Series) -> pd.Series:
 def table(d: pd.DataFrame, key: str, tot: dict[str, float], min_flights: int = MIN_FLIGHTS,
           top: int | None = TOP) -> list[dict[str, Any]]:  # fmt: skip
     """Rows by ``key``: flights, km, warming (raw physics and STRATUM-weighted), shares, index."""
+    if d.empty:
+        return []
     g = d.groupby(key)
+    warm_ids = d.loc[d["ef_b1_pos"] > 0].groupby(key)["flight_id"].nunique()
     t = pd.DataFrame({
         "flights": g["flight_id"].nunique(),
         "km": g["length_km"].sum(),
         "warm_b1": g["ef_b1_pos"].sum(),
         "warm_w": g["ef_w_pos"].sum(),
-        "flights_warming": g.apply(lambda x: x.loc[x["ef_b1_pos"] > 0, "flight_id"].nunique(), include_groups=False),
+        "flights_warming": warm_ids,
     })  # fmt: skip
+    t["flights_warming"] = t["flights_warming"].fillna(0)
     small = t["flights"] < min_flights
     if small.any() and min_flights > 1:
         other = t[small].sum(numeric_only=True)
