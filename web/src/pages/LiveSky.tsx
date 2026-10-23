@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { LiveAircraft, Manifest, OutlookInfo } from "../data/contract";
+import { DIRS, deg, distBearing, R_EARTH, rad } from "../lib/geo";
 import { layerUrl, loadGridBytes, loadLive, loadOutlook, OUTLOOK, outlookValue, spriteHour } from "../data/load";
 
 /** /live — "Which plane made that contrail?": commercial aircraft above you right now (adsb.lol,
@@ -37,28 +38,12 @@ const HUBS: [string, number, number][] = [
   ["Goa", 15.38, 73.83], ["Kochi", 9.93, 76.27], ["Guwahati", 26.14, 91.74], ["Amritsar", 31.63, 74.87], ["Raipur", 21.25, 81.63],
   ["Karachi", 24.86, 67.0], ["Lahore", 31.55, 74.34], ["Dhaka", 23.81, 90.41], ["Kathmandu", 27.72, 85.32], ["Colombo", 6.93, 79.85],
 ];
-const R_EARTH = 6371;
 const KIND_LABEL: Record<Kind, string> = {
   lasting: "Likely leaving a lasting contrail",
   short: "Short-lived contrail at most",
   none: "No contrail expected",
   unknown: "No forecast here",
 };
-const DIRS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
-const rad = (d: number) => (d * Math.PI) / 180;
-const deg = (r: number) => (r * 180) / Math.PI;
-
-/** Ground distance (km) and bearing (° from north) from a to b. */
-export function distBearing(lat1: number, lon1: number, lat2: number, lon2: number): [number, number] {
-  const p1 = rad(lat1);
-  const p2 = rad(lat2);
-  const dl = rad(lon2 - lon1);
-  const h = Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
-  const d = 2 * R_EARTH * Math.asin(Math.min(1, Math.sqrt(h)));
-  const y = Math.sin(dl) * Math.cos(p2);
-  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
-  return [d, (deg(Math.atan2(y, x)) + 360) % 360];
-}
 
 /** Where the aircraft is now: its last position moved on along its track at its ground speed. */
 function deadReckon(a: LiveAircraft, now: number): [number, number] {

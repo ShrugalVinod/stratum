@@ -67,6 +67,8 @@ const LiveSky = lazy(reloadOnce(() => import("./pages/LiveSky").then((m) => m.Li
 const Sky3D = lazy(reloadOnce(() => import("./pages/Sky3D").then((m) => m.Sky3D)));
 const Advisory = lazy(reloadOnce(() => import("./pages/Advisory").then((m) => m.Advisory)));
 const Game = lazy(reloadOnce(() => import("./pages/Game").then((m) => m.Game)));
+const Routes = lazy(reloadOnce(() => import("./pages/Routes").then((m) => m.Routes)));
+const Spot = lazy(reloadOnce(() => import("./pages/Spot").then((m) => m.Spot)));
 const NotFound = lazy(
   reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
 );
@@ -94,6 +96,8 @@ function Shell() {
             <Route path="/3d" component={Sky3D} />
             <Route path="/advisory" component={Advisory} />
             <Route path="/game" component={Game} />
+            <Route path="/routes" component={Routes} />
+            <Route path="/spot" component={Spot} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
             <Route path="/results" component={Results} />

@@ -60,4 +60,5 @@ web/public/data/outlook/
 web/public/data/game-dev/
 web/public/data/explain-dev/
 web/public/data/weighted-dev/
+web/public/data/dashboard-dev/
 web/.wrangler/

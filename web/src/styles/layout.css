@@ -2209,7 +2209,7 @@ a.contact-big:hover {
 /* Home §6: "Try it" tiles */
 .try-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 28px;
 }
@@ -2266,5 +2266,247 @@ a.contact-big:hover {
   .try-tile,
   .try-go {
     transition: none;
+  }
+}
+
+/* ── Routes & airlines (/routes) ──────────────────────────────────────────── */
+.routes {
+  --dash-bar: #d6541c;
+}
+:root[data-theme="dark"] .routes {
+  --dash-bar: #e2703a; /* the dark-surface step of the same orange (validated) */
+}
+.rt-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 8px 0 24px;
+}
+.rt-tiles > div {
+  border-top: 2px solid var(--ink);
+  padding-top: 10px;
+}
+.rt-tiles b {
+  display: block;
+  font: 700 clamp(34px, 4vw, 52px) / 1 var(--font-display);
+}
+.rt-tiles span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.routes .section {
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+.rt-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-bottom: 8px;
+}
+.rt-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rt-key-bar {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+  border-radius: 0 3px 3px 0;
+  background: var(--dash-bar);
+  margin-left: 8px;
+}
+.rt-key-tick {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--ink);
+  margin-left: 12px;
+}
+.rt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 36px 48px;
+}
+.rt-sec .label {
+  margin-bottom: 10px;
+}
+/* one grid for the whole list, so every bar starts at the same x */
+.rt-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto;
+  gap: 7px 10px;
+  align-items: center;
+}
+.rt-bars li {
+  display: contents;
+}
+.rt-short {
+  display: none;
+}
+@media (max-width: 700px) {
+  .rt-full {
+    display: none;
+  }
+  .rt-short {
+    display: inline;
+  }
+}
+.rt-l {
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rt-track {
+  position: relative;
+  height: 14px;
+}
+.rt-bar {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  bottom: 1px;
+  background: var(--dash-bar);
+  border-radius: 0 4px 4px 0;
+}
+.rt-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ink);
+}
+.rt-v {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.rt-v b {
+  color: var(--ink);
+}
+.rt-hours {
+  width: 100%;
+  display: block;
+}
+.rt-hours .rt-bar {
+  position: static;
+  fill: var(--dash-bar);
+}
+.rt-night {
+  fill: var(--paper-2);
+}
+.rt-tick-l {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.rt-axis {
+  stroke: var(--rule);
+}
+.rt-ax {
+  font: 12px var(--font-mono);
+  fill: var(--muted);
+}
+.rt-cell {
+  fill: var(--dash-bar);
+}
+.rt-map {
+  position: static;
+}
+.rt-note {
+  margin-top: 32px;
+  max-width: 90ch;
+}
+@media (max-width: 900px) {
+  .rt-tiles,
+  .rt-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rt-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Spot a contrail (/spot) ──────────────────────────────────────────────── */
+.spot-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.spot-form {
+  display: grid;
+  gap: 16px;
+}
+.spot-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.spot-form input[type="range"] {
+  width: 100%;
+  accent-color: var(--red);
+}
+.spot-drop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  border: 1.5px dashed var(--ink);
+  background: var(--card);
+  cursor: pointer;
+  overflow: hidden;
+}
+.spot-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.spot-drop span {
+  font: 700 20px var(--font-display);
+}
+.spot-drop img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
+}
+.spot-dirs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.spot-best {
+  margin-bottom: 18px;
+}
+.spot-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--rule);
+}
+.spot-row i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--k);
+}
+.spot-row .mono-s {
+  justify-self: end;
+}
+@media (max-width: 900px) {
+  .spot-grid {
+    grid-template-columns: 1fr;
   }
 }

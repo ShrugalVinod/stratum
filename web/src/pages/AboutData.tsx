@@ -60,7 +60,8 @@ export function AboutData() {
               Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and
               government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose "use my
               location", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the
-              aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored.
+              aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your
+              photo is never uploaded; its time and place are read on your device and only the rounded location is sent.
             </p>
           </section>
           <section class="note rv" id="ai-use">

@@ -180,7 +180,7 @@ test("live pages work without live data (outlook or aircraft feed missing)", asy
   // unreachable feed must leave a working page with a message, never a broken one
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  for (const path of ["/live", "/advisory"]) {
+  for (const path of ["/live", "/advisory", "/spot", "/routes"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -213,4 +213,18 @@ test("map card explains its prediction and the weighted decisions can be shown",
   expect(await page.locator(".why-bars li").count()).toBeGreaterThanOrEqual(4);
   await page.getByRole("radio", { name: "Weighted (D-006)" }).click();
   await expect(page.locator(".filter-row .mono-s.muted").first()).toContainText("60 shown");
+});
+
+test("Spot a contrail: a photo stays in the browser and an answer appears", async ({ page }) => {
+  const posts: string[] = [];
+  page.on("request", (r) => r.method() !== "GET" && posts.push(r.url()));
+  await page.goto("/spot");
+  // a 1×1 JPEG without EXIF: the page asks for time and place instead
+  const jpg = Buffer.from("/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=", "base64");
+  await page.setInputFiles('input[type="file"]', { name: "sky.jpg", mimeType: "image/jpeg", buffer: jpg });
+  await expect(page.getByText("no time saved in the photo")).toBeVisible();
+  await page.getByRole("button", { name: "Delhi" }).click();
+  await page.getByRole("button", { name: "Find the plane" }).click();
+  await expect(page.locator(".spot-out .live-card, .spot-out .live-err, .spot-form .live-err").first()).toBeVisible({ timeout: 60_000 });
+  expect(posts, "the photo must never be sent anywhere").toHaveLength(0);
 });

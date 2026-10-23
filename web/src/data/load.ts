@@ -171,3 +171,8 @@ export function loadWeighted(date: string): Promise<z.infer<typeof FlaggedSegmen
 export function loadWeightedSummary(): Promise<Record<string, any> | null> {
   return json(`${BASE}/data/${dirOverride("weighted", "weighted")}/summary.json`, z.record(z.string(), z.any())).catch(() => null);
 }
+
+/** The routes and airlines dashboard (data/dashboard/summary.json; ?dashboard=<folder>). */
+export function loadDashboard(): Promise<Record<string, any> | null> {
+  return json(`${BASE}/data/${dirOverride("dashboard", "dashboard")}/summary.json`, z.record(z.string(), z.any())).catch(() => null);
+}

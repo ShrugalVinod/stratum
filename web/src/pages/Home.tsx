@@ -238,6 +238,8 @@ export function Home() {
             {(
               [
                 ["/live", "Live sky", "Which plane made that contrail? The airliners above you right now, and whether their air keeps a contrail."],
+                ["/spot", "Spot a contrail", "Took a photo of a contrail? Find the airliner that drew it. Your photo stays on your phone."],
+                ["/routes", "Routes & airlines", "Where India's contrail warming comes from: by airline, route, hour and flight level."],
                 ["/game", "Beat STRATUM", "Ten real flights, the weather at each one. Guess before the satellite picture is shown."],
                 ["/advisory", "Contrail advisories", "Tomorrow's notices, pilot style: where contrails will last, at which levels, and the drier levels nearby."],
                 ["/3d", "The sky in 3D", "The humid layers over India and the flights crossing them, hour by hour."],
