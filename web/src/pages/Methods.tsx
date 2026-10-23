@@ -3,6 +3,7 @@ import { Split } from "../components/Split";
 import { useEffect, useState } from "preact/hooks";
 import { deviations, didntWork, hypotheses, methods, modelCard, modelFeatures, site, threats } from "../content/site";
 import { loadManifest, loadResults } from "../data/load";
+import { T, tx } from "../i18n";
 
 /** Mean |SHAP| per input over the outer folds (from results.json; training rows only). */
 function useShap(): [string, number][] | null {
@@ -47,8 +48,8 @@ export function Methods() {
             <li class="rv">
               <span class="mono red">M{i + 1}</span>
               <div>
-                <h2 class="display d-m">{m.title}</h2>
-                <p>{m.body}</p>
+                <h2 class="display d-m">{T(m.title)}</h2>
+                <p>{T(m.body)}</p>
               </div>
             </li>
           ))}
@@ -57,9 +58,9 @@ export function Methods() {
         <section class="section" aria-labelledby="hyp">
           <div class="sec-head rv">
             <p class="label red" id="hyp">
-              §2 · Hypotheses · NOTAM
+              {T("§2 · Hypotheses · NOTAM")}
             </p>
-            <span class="mono-s">{hypotheses.length} notices in force</span>
+            <span class="mono-s">{tx(`${hypotheses.length} notices in force`, `${hypotheses.length} सूचनाएँ लागू`)}</span>
           </div>
           <div class="notams">
             {hypotheses.map((h, i) => (
@@ -74,89 +75,91 @@ export function Methods() {
                     <br />
                     A) VIDF VABF B) 2610130000 C) PERM
                   </p>
-                  <p class="notam-e">E) {h.plain}</p>
+                  <p class="notam-e">E) {T(h.plain)}</p>
                   <p class="notam-test">
-                    <span class="label">Test</span> {h.test}
+                    <span class="label">{T("Test")}</span> {T(h.test)}
                   </p>
                   {h.result && (
                     <p class="notam-test notam-result">
-                      <span class="label">Result</span> <b>{h.result.verdict}.</b> {h.result.body}
+                      <span class="label">{T("Result")}</span> <b>{T(h.result.verdict)}.</b> {T(h.result.body)}
                     </p>
                   )}
                 </div>
                 <footer class="mono-s">
-                  {h.result ? `Pre-registered · tested ${h.result.date} · ${h.result.verdict.toLowerCase()}` : "Pre-registered · not yet tested"}
+                  {h.result
+                    ? tx(`Pre-registered · tested ${h.result.date} · ${h.result.verdict.toLowerCase()}`, `पहले से दर्ज · परखा ${h.result.date} · ${T(h.result.verdict)}`)
+                    : T("Pre-registered · not yet tested")}
                 </footer>
               </article>
             ))}
           </div>
           <p class="muted notam-note rv">
-            H1 and H2 are interpreted only if at least 300 matched satellite-observed contrails exist; otherwise they are reported as
-            underpowered. Scored on the full study domain (6–37°N, 68–98°E); the Delhi–Mumbai corridor is the development area. VIDF and VABF
-            are the Delhi and Mumbai flight information regions.
+            {T(
+              "H1 and H2 are interpreted only if at least 300 matched satellite-observed contrails exist; otherwise they are reported as underpowered. Scored on the full study domain (6–37°N, 68–98°E); the Delhi–Mumbai corridor is the development area. VIDF and VABF are the Delhi and Mumbai flight information regions.",
+            )}
           </p>
         </section>
 
         <section class="section" aria-labelledby="inputs">
           <div class="sec-head rv">
             <p class="label red" id="inputs">
-              §3 · Correction model · inputs
+              {T("§3 · Correction model · inputs")}
             </p>
-            <span class="mono-s">18 inputs · pre-registered</span>
+            <span class="mono-s">{T("18 inputs · pre-registered")}</span>
           </div>
           <p class="rv">
-            The correction model is a set of gradient-boosted trees (LightGBM) trained on flight segments that satellites could check. Every input
-            is ERA5 weather at the segment or the flight's own position and time; nothing comes from the satellite detector or from the labels.
-            Two inputs are constrained: more humidity can only raise the predicted chance of a lasting contrail (+), and air warmer than the
-            formation threshold can only lower it (−).
+            {T(
+              "The correction model is a set of gradient-boosted trees (LightGBM) trained on flight segments that satellites could check. Every input is ERA5 weather at the segment or the flight's own position and time; nothing comes from the satellite detector or from the labels. Two inputs are constrained: more humidity can only raise the predicted chance of a lasting contrail (+), and air warmer than the formation threshold can only lower it (−).",
+            )}
           </p>
           <div class="table-wrap rv rv-fade">
             <table class="src-table">
               <thead>
                 <tr>
-                  <th scope="col">Input</th>
-                  <th scope="col">Unit</th>
-                  <th scope="col">Why it might matter</th>
-                  <th scope="col">Constraint</th>
+                  <th scope="col">{T("Input")}</th>
+                  <th scope="col">{T("Unit")}</th>
+                  <th scope="col">{T("Why it might matter")}</th>
+                  <th scope="col">{T("Constraint")}</th>
                 </tr>
               </thead>
               <tbody class="rv stagger">
                 {modelFeatures.map((f, i) => (
                   <tr style={{ "--i": i }}>
                     <th scope="row" class="display">
-                      {f.name}
+                      {T(f.name)}
                     </th>
-                    <td class="mono">{f.unit}</td>
-                    <td>{f.why}</td>
+                    <td class="mono">{T(f.unit)}</td>
+                    <td>{T(f.why)}</td>
                     <td class="mono">{f.mono ?? ""}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p class="muted notam-note rv">Month and local solar time each enter as a sine and cosine pair, so 16 rows describe 18 inputs.</p>
+          <p class="muted notam-note rv">{T("Month and local solar time each enter as a sine and cosine pair, so 16 rows describe 18 inputs.")}</p>
         </section>
 
         {shap && (
           <section class="section" aria-labelledby="shap">
             <div class="sec-head rv">
               <p class="label red" id="shap">
-                §4 · What the model relies on
+                {T("§4 · What the model relies on")}
               </p>
-              <span class="mono-s">mean |SHAP| over 6 trained models · training rows</span>
+              <span class="mono-s">{T("mean |SHAP| over 6 trained models · training rows")}</span>
             </div>
             <div class="shap-bars rv">
               {shap.map(([k, v]) => (
                 <div class="shap-row">
-                  <span class="mono-s">{NICE[k] ?? k}</span>
+                  <span class="mono-s">{NICE[k] ? T(NICE[k]) : k}</span>
                   <i style={{ "--w": v / shap[0][1] }} />
                   <span class="mono-s muted">{v.toFixed(3)}</span>
                 </div>
               ))}
             </div>
             <p class="small muted">
-              TreeSHAP, in log-odds of a satellite-seen contrail. Humidity at and around the flight level dominates; the model rises with humidity and
-              falls as the air gets warmer than the formation threshold (checked: no wrong-way step in any model).
+              {T(
+                "TreeSHAP, in log-odds of a satellite-seen contrail. Humidity at and around the flight level dominates; the model rises with humidity and falls as the air gets warmer than the formation threshold (checked: no wrong-way step in any model).",
+              )}
             </p>
           </section>
         )}
@@ -164,9 +167,9 @@ export function Methods() {
         <section class="section" aria-labelledby="card">
           <div class="sec-head rv">
             <p class="label red" id="card">
-              §5 · Model card
+              {T("§5 · Model card")}
             </p>
-            <span class="mono-s">intended use · limits · ethics</span>
+            <span class="mono-s">{T("intended use · limits · ethics")}</span>
           </div>
           <div class="table-wrap rv rv-fade">
             <table class="src-table">
@@ -174,9 +177,9 @@ export function Methods() {
                 {modelCard.map(([k, v]) => (
                   <tr>
                     <th scope="row" class="display">
-                      {k}
+                      {T(k)}
                     </th>
-                    <td>{v}</td>
+                    <td>{T(v)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -187,29 +190,29 @@ export function Methods() {
         <section class="section" aria-labelledby="threats">
           <div class="sec-head rv">
             <p class="label red" id="threats">
-              §6 · Threats to validity
+              {T("§6 · Threats to validity")}
             </p>
-            <span class="mono-s">paper Table 7 · and how each turned out</span>
+            <span class="mono-s">{T("paper Table 7 · and how each turned out")}</span>
           </div>
           <div class="table-wrap rv rv-fade">
             <table class="src-table">
               <thead>
                 <tr>
-                  <th scope="col">Risk</th>
-                  <th scope="col">Effect</th>
-                  <th scope="col">Planned response</th>
-                  <th scope="col">How it turned out</th>
+                  <th scope="col">{T("Risk")}</th>
+                  <th scope="col">{T("Effect")}</th>
+                  <th scope="col">{T("Planned response")}</th>
+                  <th scope="col">{T("How it turned out")}</th>
                 </tr>
               </thead>
               <tbody class="rv stagger">
                 {threats.map((t, i) => (
                   <tr style={{ "--i": i }}>
                     <th scope="row" class="display">
-                      {t.risk}
+                      {T(t.risk)}
                     </th>
-                    <td>{t.effect}</td>
-                    <td class="muted">{t.mitigation}</td>
-                    <td>{t.outcome}</td>
+                    <td>{T(t.effect)}</td>
+                    <td class="muted">{T(t.mitigation)}</td>
+                    <td>{T(t.outcome)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -220,19 +223,19 @@ export function Methods() {
         <section class="section" aria-labelledby="devs">
           <div class="sec-head rv">
             <p class="label red" id="devs">
-              §7 · Changes to the plan
+              {T("§7 · Changes to the plan")}
             </p>
-            <span class="mono-s">{deviations.length} deviations · each with the team's OK before results</span>
+            <span class="mono-s">{tx(`${deviations.length} deviations · each with the team's OK before results`, `${deviations.length} विचलन · हर एक पर नतीजों से पहले टीम की मंज़ूरी`)}</span>
           </div>
           <ol class="mrows">
             {deviations.map((d) => (
               <li class="rv">
                 <span class="mono red">{d.id}</span>
                 <div>
-                  <h3 class="display d-s">{d.title}</h3>
+                  <h3 class="display d-s">{T(d.title)}</h3>
                   <p>
                     <span class="mono-s muted">{d.date} · </span>
-                    {d.why}
+                    {T(d.why)}
                   </p>
                 </div>
               </li>
@@ -243,13 +246,13 @@ export function Methods() {
         <section class="section" aria-labelledby="dnw">
           <div class="sec-head rv">
             <p class="label red" id="dnw">
-              §8 · What didn't work
+              {T("§8 · What didn't work")}
             </p>
-            <span class="mono-s">the paper promises this list</span>
+            <span class="mono-s">{T("the paper promises this list")}</span>
           </div>
           <ul class="dnw rv">
             {didntWork.map((d) => (
-              <li>{d}</li>
+              <li>{T(d)}</li>
             ))}
           </ul>
         </section>
@@ -257,9 +260,9 @@ export function Methods() {
       <a class="dl-bar" href={site.paperPdf} target="_blank" rel="noopener">
         <span class="wrap dl-inner">
           <span class="display d-l">
-            <Split text="Download the research protocol (PDF)" />
+            <Split text={T("Download the research protocol (PDF)")} />
           </span>
-          <span class="mono-s">PDF · 19 pp ↓</span>
+          <span class="mono-s">{tx("PDF · 19 pp ↓", "PDF · 19 पृष्ठ (अंग्रेज़ी) ↓")}</span>
         </span>
       </a>
     </div>

@@ -2,6 +2,18 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-23 — Website in Hindi
+
+**Done**
+- Every page can be read in Hindi: a हिंदी / English switch in the header (remembered in the
+  browser; `?lang=hi` links straight to it). Devanagari fonts (Hind, Teko; OFL) load only for
+  Hindi readers.
+- Text is keyed by the English (`web/src/i18n/hi.ts`, `hi-content.ts` for `content/site.ts`), so
+  anything untranslated or later changed shows in English instead of breaking. Numbers, codes
+  (FL360, H1, B1) and names stay as they are; licence credits stay as the licences word them.
+- The Hindi was translated with AI (Claude) and is disclosed on About the data §4; the English is
+  the reference. **Next:** a Hindi-speaking team member reviews the wording.
+
 ## 2026-10-22 — Website: live sky, forecast advisories, 3D view, literature, side menu
 
 **Done**

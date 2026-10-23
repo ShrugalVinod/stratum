@@ -1,5 +1,6 @@
 import { Arrow } from "../components/Footer";
 import { PageHead } from "../components/PageHead";
+import { T } from "../i18n";
 
 export function NotFound() {
   return (
@@ -7,7 +8,7 @@ export function NotFound() {
       <PageHead label="404 · Signal lost" lines={["Signal lost."]} lede="This page drifted away like an old contrail." />
       <div class="wrap">
         <a class="btn primary" href="/">
-          Back home <Arrow />
+          {T("Back home")} <Arrow />
         </a>
       </div>
       <div class="spacer" />

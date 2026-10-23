@@ -1,5 +1,6 @@
 import { PageHead } from "../components/PageHead";
 import { site, supervisor } from "../content/site";
+import { T } from "../i18n";
 
 export function Contact() {
   return (
@@ -9,29 +10,31 @@ export function Contact() {
         <hr class="rule rule-draw" />
         <div class="contact rv stagger">
           <div>
-            <p class="label">Team email</p>
+            <p class="label">{T("Team email")}</p>
             {site.email ? (
               <a class="contact-big mono" href={`mailto:${site.email}`}>
                 {site.email}
               </a>
             ) : (
-              <p class="contact-big mono">coming soon</p>
+              <p class="contact-big mono">{T("coming soon")}</p>
             )}
           </div>
           <div>
-            <p class="label">Institution</p>
+            <p class="label">{T("Institution")}</p>
             <p class="contact-text">
-              Indus International School, Bengaluru
+              {T("Indus International School, Bengaluru")}
               <br />
-              <span class="muted">Supervisor: {supervisor.name}</span>
+              <span class="muted">
+                {T("Supervisor")}: {supervisor.name}
+              </span>
             </p>
           </div>
           <div>
-            <p class="label">Context</p>
+            <p class="label">{T("Context")}</p>
             <p class="contact-text">
-              {site.competition}
+              {T(site.competition)}
               <br />
-              <span class="muted">Computational research prototype</span>
+              <span class="muted">{T("Computational research prototype")}</span>
             </p>
           </div>
         </div>

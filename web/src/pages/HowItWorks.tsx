@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { SideView } from "../components/Figures";
 import { PageHead } from "../components/PageHead";
 import { pipeline } from "../content/site";
+import { T, tx } from "../i18n";
 
 export function HowItWorks() {
   const [open, setOpen] = useState<Set<number>>(new Set());
@@ -40,7 +41,7 @@ export function HowItWorks() {
   return (
     <div class="page">
       <PageHead
-        label={`Flight plan · ${pipeline.length} waypoints`}
+        label={tx(`Flight plan · ${pipeline.length} waypoints`, `उड़ान योजना · ${pipeline.length} पड़ाव`)}
         note={
           <>
             ROUTE: {pipeline.map((s) => s.code).join(" DCT ")}
@@ -60,26 +61,26 @@ export function HowItWorks() {
               </div>
               <div class="wpt-title rv">
                 <p class="mono-s muted">{s.code}</p>
-                <h2 class="display d-m">{s.title}</h2>
-                <p class="muted">{s.sub}</p>
+                <h2 class="display d-m">{T(s.title)}</h2>
+                <p class="muted">{T(s.sub)}</p>
               </div>
               <div class="wpt-io rv" style={{ "--d": 120 }}>
                 <dl>
                   <div>
-                    <dt class="label teal">In</dt>
-                    <dd>{s.input}</dd>
+                    <dt class="label teal">{T("In")}</dt>
+                    <dd>{T(s.input)}</dd>
                   </div>
                   <div>
-                    <dt class="label red">Out</dt>
-                    <dd>{s.output}</dd>
+                    <dt class="label red">{T("Out")}</dt>
+                    <dd>{T(s.output)}</dd>
                   </div>
                 </dl>
                 <button class={`sci-btn ${open.has(i) ? "on" : ""}`} aria-expanded={open.has(i)} onClick={() => toggle(i)}>
-                  <i aria-hidden="true" /> For scientists
+                  <i aria-hidden="true" /> {T("For scientists")}
                 </button>
                 <div class={`sci-wrap ${open.has(i) ? "open" : ""}`}>
                   <div>
-                    <p class="sci">{s.sci}</p>
+                    <p class="sci">{T(s.sci)}</p>
                   </div>
                 </div>
               </div>
@@ -90,15 +91,15 @@ export function HowItWorks() {
         <section class="section" aria-labelledby="layer-title">
           <div class="sec-head rv">
             <p class="label red" id="layer-title">
-              §2 · The cold-humid layer, side view
+              {T("§2 · The cold-humid layer, side view")}
             </p>
-            <span class="mono-s">Illustration</span>
+            <span class="mono-s">{T("Illustration")}</span>
           </div>
           <SideView />
           <p class="field-note rv">
-            A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may
-            leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against
-            satellites.
+            {T(
+              "A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against satellites.",
+            )}
           </p>
         </section>
       </div>

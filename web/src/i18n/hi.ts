@@ -636,4 +636,423 @@ export const HI: Record<string, string> = {
   "Planned-level EF, 5th–95th percentile of 100 Monte Carlo members (corrected physics).": "योजना वाले लेवल पर EF, 100 मोंटे कार्लो सदस्यों का 5वाँ–95वाँ प्रतिशतक (सुधरी भौतिकी)।",
   "Physics-only CoCiP (B1, raw ERA5). 5th–95th percentile from 100 Monte Carlo members; the 5th percentile is unstable (Phase 2 convergence check).":
     "केवल-भौतिकी CoCiP (B1, कच्चा ERA5)। 100 मोंटे कार्लो सदस्यों से 5वाँ–95वाँ प्रतिशतक; 5वाँ प्रतिशतक अस्थिर है (चरण 2 अभिसरण जाँच)।",
+
+  // ── reading pages (results, methods, logbook, team, data, contact) ───────
+  "404 · Signal lost":
+    "404 · सिग्नल खो गया",
+  "Signal lost.":
+    "सिग्नल खो गया।",
+  "This page drifted away like an old contrail.":
+    "यह पेज एक पुरानी कंट्रेल की तरह बह गया।",
+  "Back home":
+    "होम पर लौटें",
+  "12.97°N 77.59°E · Bengaluru":
+    "12.97°N 77.59°E · बेंगलुरु",
+  "Radio check.":
+    "रेडियो जाँच।",
+  "Team email":
+    "टीम ईमेल",
+  "coming soon":
+    "जल्द आ रहा है",
+  "Institution":
+    "संस्था",
+  "Indus International School, Bengaluru":
+    "इंडस इंटरनेशनल स्कूल, बेंगलुरु",
+  "Supervisor":
+    "मार्गदर्शक",
+  "Context":
+    "संदर्भ",
+  "Computational research prototype":
+    "कंप्यूटर पर आधारित शोध प्रोटोटाइप",
+  "Crew list · Bengaluru":
+    "क्रू सूची · बेंगलुरु",
+  "Photos to come":
+    "फ़ोटो जल्द",
+  "The crew.":
+    "हमारा क्रू।",
+  "Indus International School · Bengaluru · Conrad Challenge 2026–27.":
+    "इंडस इंटरनेशनल स्कूल · बेंगलुरु · कॉनराड चैलेंज 2026–27।",
+  "Boarding pass":
+    "बोर्डिंग पास",
+  "Passenger":
+    "यात्री",
+  "Role":
+    "भूमिका",
+  "Seat":
+    "सीट",
+  "Gate":
+    "गेट",
+  "Photo to come":
+    "फ़ोटो जल्द",
+  "Logbook":
+    "लॉगबुक",
+  "Progress.":
+    "प्रगति।",
+  "Entries are added when something is finished, not when it is promised.":
+    "प्रविष्टियाँ तब जुड़ती हैं जब कुछ पूरा होता है, तब नहीं जब उसका वादा किया जाता है।",
+  "Filter by phase":
+    "चरण से छाँटें",
+  "Progress log":
+    "प्रगति लॉग",
+  "Entry":
+    "प्रविष्टि",
+  "From a ping":
+    "एक सिग्नल से",
+  "to a decision.":
+    "एक फ़ैसले तक।",
+  "Every prediction STRATUM makes follows the same route. Each waypoint takes something in and hands something on.":
+    "STRATUM का हर अनुमान एक ही रास्ते से चलता है। हर पड़ाव कुछ लेता है और कुछ आगे सौंपता है।",
+  "In":
+    "अंदर",
+  "Out":
+    "बाहर",
+  "For scientists":
+    "वैज्ञानिकों के लिए",
+  "§2 · The cold-humid layer, side view":
+    "§2 · ठंडी-नम परत, बगल से",
+  "Illustration":
+    "चित्रण",
+  "A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against satellites.":
+    "ठंडी, बर्फ़-अतिसंतृप्त परत के अंदर की उड़ान ऐसी कंट्रेल छोड़ सकती है जो घंटों टिके। वही रास्ता उससे 2,000 ft ऊपर ऐसी कंट्रेल छोड़ सकता है जो सेकंडों में गायब हो जाए। मुश्किल यह जानना है कि वे परतें कहाँ हैं — STRATUM यही उपग्रहों से जाँचता है।",
+  "About the data":
+    "डेटा के बारे में",
+  "Sources & limits.":
+    "स्रोत और सीमाएँ।",
+  "Every dataset, what we use it for, who to credit, and where it falls short.":
+    "हर डेटासेट, हम उसे किस लिए इस्तेमाल करते हैं, श्रेय किसे देना है, और वह कहाँ कम पड़ता है।",
+  "Source":
+    "स्रोत",
+  "What it is":
+    "यह क्या है",
+  "How we use it":
+    "हम कैसे इस्तेमाल करते हैं",
+  "Credit":
+    "श्रेय",
+  "Limits":
+    "सीमाएँ",
+  "Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study: no real flight was changed. The results are those of the logged final runs (Results page); the map shows uncorrected physics, the published correction and STRATUM side by side.":
+    "उड़ान डेटा मार्च 2025 से फ़रवरी 2026 तक हर महीने के पहले दिन का है — बारह दिन, लगातार साल नहीं। रिसीवर भारत के ऊपर कितनी निर्धारित उड़ानें पकड़ते हैं, इसकी जाँच नवंबर 2026 में हो रही है। क्रूज़ ऊँचाई पर ERA5 की नमी एक मॉडल का अनुमान है, माप नहीं; उपग्रह के सबूत से उसे सुधारना ही इस प्रोजेक्ट का मकसद है। यह कंप्यूटर पर आधारित अध्ययन है: कोई असली उड़ान नहीं बदली गई। नतीजे दर्ज अंतिम रनों के हैं (नतीजे पेज); मानचित्र बिना सुधार की भौतिकी, प्रकाशित सुधार और STRATUM को साथ-साथ दिखाता है।",
+  "Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose \"use my location\", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your photo is never uploaded; its time and place are read on your device and only the rounded location is sent. Your language choice (English or Hindi) is remembered in your browser only.":
+    "केवल व्यावसायिक एयरलाइन उड़ानें दिखाई जाती हैं। विमानों की पहचान की जगह नमक-मिले हैश हैं; बिज़नेस जेट, निजी और सरकारी उड़ानें कभी नहीं दिखतीं। कोई लॉगिन नहीं, कोई फ़ॉर्म नहीं, कोई कुकी नहीं, कोई एनालिटिक्स नहीं, कोई ट्रैकर नहीं। लाइव आसमान: अगर आप \"मेरा स्थान इस्तेमाल करें\" चुनते हैं, तो आपकी स्थिति आपके ब्राउज़र में रहती है; पास के विमान लाने के लिए हमारे सर्वर को वह केवल आधे डिग्री (लगभग 50 किमी) तक गोल करके मिलती है, और वह कुछ नहीं रखता। लाइव विमानों के पते (ICAO24) कभी दिखाए या रखे नहीं जाते। कंट्रेल पहचानें: आपकी फ़ोटो कभी अपलोड नहीं होती; उसका समय और स्थान आपके डिवाइस पर पढ़ा जाता है और केवल गोल किया हुआ स्थान भेजा जाता है। आपकी भाषा की पसंद (अंग्रेज़ी या हिंदी) केवल आपके ब्राउज़र में याद रखी जाती है।",
+  "The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team. One exception to \"humans label the data\": for the 100 India satellite scenes used as a secondary check of the contrail detector, Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result). These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and no AI-generated observations or results are presented as data.":
+    "टीम ने AI सहायकों (Anthropic Claude) का इस्तेमाल साहित्य खोजने और सारांश बनाने, गणनाएँ जाँचने, विश्लेषण कोड लिखने और परखने, यह वेबसाइट बनाने और दस्तावेज़ों के मसौदे के लिए किया। हर पहले से दर्ज मान और डिज़ाइन निर्णय टीम ने लिया और मंज़ूर किया। \"डेटा इंसान लेबल करते हैं\" का एक अपवाद: कंट्रेल डिटेक्टर की द्वितीयक जाँच में इस्तेमाल भारत के 100 उपग्रह दृश्यों के लिए Claude ने कंट्रेल लकीरों का मसौदा बनाया और टीम के एक सदस्य ने हर दृश्य जाँचा और सुधारा (विचलन D-003, किसी भी नतीजे से पहले दर्ज)। इन लेबलों को AI-सहायता वाला बताया गया है। मुख्य डिटेक्टर जाँच मानव कंट्रेल विशेषज्ञों के लेबल (DLR डेटासेट) इस्तेमाल करती है, और कोई भी AI से बने अवलोकन या नतीजे डेटा के रूप में पेश नहीं किए गए।",
+  "The Hindi version of this website was translated with AI (Claude) and is being reviewed by the team. Where the two differ, the English text is the reference.":
+    "इस वेबसाइट का हिंदी संस्करण AI (Claude) की मदद से अनुवाद किया गया है और टीम इसकी समीक्षा कर रही है। जहाँ दोनों में अंतर हो, वहाँ अंग्रेज़ी पाठ ही मान्य है।",
+  "Code, data and how to cite":
+    "कोड, डेटा और उद्धरण कैसे दें",
+  "Protocol · pre-registered":
+    "प्रोटोकॉल · पहले से दर्ज",
+  "Locked 13 Oct 2026 · SHA-256 fingerprint":
+    "13 अक्टूबर 2026 को लॉक · SHA-256 फ़िंगरप्रिंट",
+  "Written down":
+    "नतीजों से पहले",
+  "before results.":
+    "लिखा गया।",
+  "Our analysis plan was locked on 13 Oct 2026. A result appears only once its one logged final run exists.":
+    "हमारी विश्लेषण योजना 13 अक्टूबर 2026 को लॉक की गई। कोई नतीजा तभी दिखता है जब उसका एक दर्ज अंतिम रन हो जाए।",
+  "§2 · Hypotheses · NOTAM":
+    "§2 · परिकल्पनाएँ · NOTAM",
+  "Test":
+    "परीक्षण",
+  "Result":
+    "नतीजा",
+  "Pre-registered · not yet tested":
+    "पहले से दर्ज · अभी परखी नहीं",
+  "H1 and H2 are interpreted only if at least 300 matched satellite-observed contrails exist; otherwise they are reported as underpowered. Scored on the full study domain (6–37°N, 68–98°E); the Delhi–Mumbai corridor is the development area. VIDF and VABF are the Delhi and Mumbai flight information regions.":
+    "H1 और H2 की व्याख्या तभी होती है जब कम से कम 300 मिलान वाली, उपग्रह से देखी गई कंट्रेल हों; वरना उन्हें कम-शक्ति वाला बताया जाता है। पूरे अध्ययन क्षेत्र (6–37°N, 68–98°E) पर स्कोर; दिल्ली–मुंबई गलियारा विकास क्षेत्र है। VIDF और VABF दिल्ली और मुंबई के उड़ान सूचना क्षेत्र हैं।",
+  "§3 · Correction model · inputs":
+    "§3 · सुधार मॉडल · इनपुट",
+  "18 inputs · pre-registered":
+    "18 इनपुट · पहले से दर्ज",
+  "The correction model is a set of gradient-boosted trees (LightGBM) trained on flight segments that satellites could check. Every input is ERA5 weather at the segment or the flight's own position and time; nothing comes from the satellite detector or from the labels. Two inputs are constrained: more humidity can only raise the predicted chance of a lasting contrail (+), and air warmer than the formation threshold can only lower it (−).":
+    "सुधार मॉडल ग्रेडिएंट-बूस्टेड ट्री (LightGBM) का एक समूह है, उन उड़ान हिस्सों पर प्रशिक्षित जिन्हें उपग्रह जाँच सकते थे। हर इनपुट उस हिस्से पर ERA5 मौसम या उड़ान की अपनी स्थिति और समय है; कुछ भी उपग्रह डिटेक्टर या लेबलों से नहीं आता। दो इनपुट बँधे हैं: ज़्यादा नमी टिकाऊ कंट्रेल की अनुमानित संभावना को केवल बढ़ा सकती है (+), और बनने की सीमा से गर्म हवा उसे केवल घटा सकती है (−)।",
+  "Input":
+    "इनपुट",
+  "Unit":
+    "इकाई",
+  "Why it might matter":
+    "यह क्यों मायने रख सकता है",
+  "Constraint":
+    "बाध्यता",
+  "Month and local solar time each enter as a sine and cosine pair, so 16 rows describe 18 inputs.":
+    "महीना और स्थानीय सौर समय दोनों sine और cosine की जोड़ी के रूप में आते हैं, इसलिए 16 पंक्तियाँ 18 इनपुट बताती हैं।",
+  "§4 · What the model relies on":
+    "§4 · मॉडल किस पर निर्भर है",
+  "mean |SHAP| over 6 trained models · training rows":
+    "6 प्रशिक्षित मॉडलों पर औसत |SHAP| · प्रशिक्षण पंक्तियाँ",
+  "Humidity (RHi) at the level":
+    "लेवल पर नमी (RHi)",
+  "RHi one level below":
+    "एक लेवल नीचे RHi",
+  "RHi one level above":
+    "एक लेवल ऊपर RHi",
+  "Vertical RHi gradient":
+    "ऊर्ध्वाधर RHi ढलान",
+  "T − formation threshold":
+    "T − बनने की सीमा",
+  "Pressure":
+    "दबाव",
+  "Cloud ice":
+    "बादल की बर्फ़",
+  "High cloud":
+    "ऊँचे बादल",
+  "Vertical velocity":
+    "ऊर्ध्वाधर वेग",
+  "Distance to tropopause":
+    "ट्रोपोपॉज़ से दूरी",
+  "Month (sin)":
+    "महीना (sin)",
+  "Month (cos)":
+    "महीना (cos)",
+  "Local time (sin)":
+    "स्थानीय समय (sin)",
+  "Local time (cos)":
+    "स्थानीय समय (cos)",
+  "TreeSHAP, in log-odds of a satellite-seen contrail. Humidity at and around the flight level dominates; the model rises with humidity and falls as the air gets warmer than the formation threshold (checked: no wrong-way step in any model).":
+    "TreeSHAP, उपग्रह से दिखी कंट्रेल के log-odds में। फ़्लाइट लेवल पर और उसके आसपास की नमी हावी है; मॉडल नमी के साथ बढ़ता है और हवा के बनने की सीमा से गर्म होने पर घटता है (जाँचा: किसी मॉडल में उल्टी दिशा का कदम नहीं)।",
+  "§5 · Model card":
+    "§5 · मॉडल कार्ड",
+  "intended use · limits · ethics":
+    "उद्देश्य · सीमाएँ · नैतिकता",
+  "§6 · Threats to validity":
+    "§6 · वैधता के ख़तरे",
+  "paper Table 7 · and how each turned out":
+    "पेपर तालिका 7 · और हर एक का क्या हुआ",
+  "Risk":
+    "जोखिम",
+  "Effect":
+    "असर",
+  "Planned response":
+    "योजना बनाया जवाब",
+  "How it turned out":
+    "क्या हुआ",
+  "§7 · Changes to the plan":
+    "§7 · योजना में बदलाव",
+  "§8 · What didn't work":
+    "§8 · क्या काम नहीं आया",
+  "the paper promises this list":
+    "पेपर इस सूची का वादा करता है",
+  "Download the research protocol (PDF)":
+    "शोध प्रोटोकॉल डाउनलोड करें (PDF)",
+  "K":
+    "K",
+  "Pa":
+    "Pa",
+  "kg/kg":
+    "kg/kg",
+  "Pa/s":
+    "Pa/s",
+  "m/s per km":
+    "m/s प्रति किमी",
+  "m":
+    "m",
+  "°N":
+    "°N",
+  "°E":
+    "°E",
+  "–":
+    "–",
+  "Results · logged final runs":
+    "नतीजे · दर्ज अंतिम रन",
+  "Pre-registered 13 Oct 2026 · tested 18–19 Oct 2026":
+    "13 अक्टूबर 2026 को पहले से दर्ज · 18–19 अक्टूबर 2026 को परखा",
+  "What we found.":
+    "हमने क्या पाया।",
+  "Four hypotheses, each tested once with its rule fixed in advance. A hypothesis that is not supported is a result too, and we show it the same way.":
+    "चार परिकल्पनाएँ, हर एक पहले से तय नियम के साथ एक बार परखी गई। जो परिकल्पना समर्थित नहीं है, वह भी एक नतीजा है, और हम उसे उसी तरह दिखाते हैं।",
+  "Loading results…":
+    "नतीजे लोड हो रहे हैं…",
+  "This data build has no results yet.":
+    "इस डेटा बिल्ड में अभी नतीजे नहीं हैं।",
+  "§1 · Hypotheses":
+    "§1 · परिकल्पनाएँ",
+  "supported":
+    "समर्थित",
+  "not supported":
+    "समर्थित नहीं",
+  "Rule":
+    "नियम",
+  "B1-predicted / observed persistent contrails":
+    "B1 से अनुमानित / देखी गई टिकाऊ कंट्रेल",
+  "upper 95 % CI < 1":
+    "95 % CI की ऊपरी सीमा < 1",
+  "mean Brier skill score of STRATUM vs B3 over held-out seasons":
+    "अलग रखे मौसमों पर B3 के मुकाबले STRATUM का औसत Brier स्किल स्कोर",
+  "mean ≥ 0.10 and lower 95 % CI > 0":
+    "औसत ≥ 0.10 और 95 % CI की निचली सीमा > 0",
+  "share of cruise distance carrying 80 % of positive EF":
+    "क्रूज़ दूरी का वह हिस्सा जो सकारात्मक EF का 80 % ढोता है",
+  "share ≤ 10 %":
+    "हिस्सा ≤ 10 %",
+  "night share of positive EF − night share of distance":
+    "सकारात्मक EF में रात का हिस्सा − दूरी में रात का हिस्सा",
+  "lower 95 % CI > 0":
+    "95 % CI की निचली सीमा > 0",
+  "Final run":
+    "अंतिम रन",
+  "§2 · Baselines and STRATUM on held-out seasons":
+    "§2 · अलग रखे मौसमों पर बेसलाइन और STRATUM",
+  "mean Brier skill score over 4 seasons [95 % CI]":
+    "4 मौसमों पर औसत Brier स्किल स्कोर [95 % CI]",
+  "Forecast":
+    "पूर्वानुमान",
+  "vs B3 (pre-registered)":
+    "B3 के मुकाबले (पहले से दर्ज)",
+  "vs constant rate":
+    "स्थिर दर के मुकाबले",
+  "vs climatology (B0)":
+    "जलवायु-औसत के मुकाबले (B0)",
+  "reference":
+    "संदर्भ",
+  "B0 climatology":
+    "B0 जलवायु-औसत",
+  "B1 raw ERA5":
+    "B1 कच्चा ERA5",
+  "B3 published correction":
+    "B3 प्रकाशित सुधार",
+  "Constant rate":
+    "स्थिर दर",
+  "Humidity only (logistic)":
+    "केवल नमी (लॉजिस्टिक)",
+  "STRATUM (b) scaling":
+    "STRATUM (b) स्केलिंग",
+  "STRATUM before calibration":
+    "कैलिब्रेशन से पहले STRATUM",
+  "Brier skill score: 1 = perfect, 0 = no better than the reference, negative = worse. B3 says only yes or no, so any sensible probability beats it; the constant rate (the training contrail rate everywhere) is the strictest reference.":
+    "Brier स्किल स्कोर: 1 = पूर्ण, 0 = संदर्भ से बेहतर नहीं, ऋणात्मक = बदतर। B3 सिर्फ़ हाँ या ना कहता है, इसलिए कोई भी समझदार संभावना उसे हरा देती है; स्थिर दर (हर जगह प्रशिक्षण की कंट्रेल दर) सबसे सख़्त संदर्भ है।",
+  "§3 · Is H1 robust?":
+    "§3 · क्या H1 मज़बूत है?",
+  "same test, other reasonable choices":
+    "वही परीक्षण, दूसरे उचित विकल्प",
+  "Variant":
+    "रूप",
+  "Observed":
+    "देखी गईं",
+  "Ratio [95 % CI]":
+    "अनुपात [95 % CI]",
+  "1 matched image (original rule)":
+    "1 मिलान वाली तस्वीर (मूल नियम)",
+  "3 matched images":
+    "3 मिलान वाली तस्वीरें",
+  "contrail age 20–90 min":
+    "कंट्रेल की उम्र 20–90 मिनट",
+  "contrail age 40–120 min":
+    "कंट्रेल की उम्र 40–120 मिनट",
+  "match within 1.5 px":
+    "1.5 px के भीतर मिलान",
+  "match within 3 px":
+    "3 px के भीतर मिलान",
+  "angle within 15°":
+    "15° के भीतर कोण",
+  "angle within 30°":
+    "30° के भीतर कोण",
+  "§4 · Second analysis: a better contrail detector":
+    "§4 · दूसरा विश्लेषण: एक बेहतर कंट्रेल डिटेक्टर",
+  "added after the logged runs · descriptive":
+    "दर्ज रनों के बाद जोड़ा · वर्णनात्मक",
+  "Detector":
+    "डिटेक्टर",
+  "Pixel Dice":
+    "पिक्सेल Dice",
+  "Unanimous contrails found":
+    "सर्वसम्मत कंट्रेल मिलीं",
+  "Re-labelling the twelve flight days with the new detectors cuts chance matches from a third to about an eighth, and the answers stay the same: physics still predicts far more contrails than the satellite sees (H1), and the model still beats the published correction (H2).":
+    "नए डिटेक्टरों से बारह उड़ान-दिनों को दोबारा लेबल करने पर संयोग-मिलान एक तिहाई से घटकर लगभग आठवाँ हिस्सा रह जाते हैं, और जवाब वही रहते हैं: भौतिकी अब भी उपग्रह को दिखने वाली कंट्रेल से कहीं ज़्यादा का अनुमान लगाती है (H1), और मॉडल अब भी प्रकाशित सुधार को हराता है (H2)।",
+  "Labels from":
+    "लेबल किससे",
+  "Contrails seen":
+    "देखी गई कंट्रेल",
+  "Chance matches":
+    "संयोग-मिलान",
+  "H1 ratio [95 % CI]":
+    "H1 अनुपात [95 % CI]",
+  "H2 skill vs B3 [95 % CI]":
+    "B3 के मुकाबले H2 स्किल [95 % CI]",
+  "How this compares with published studies":
+    "यह प्रकाशित अध्ययनों से कैसे मेल खाता है",
+  "abstracts checked 22 Oct 2026":
+    "सार 22 अक्टूबर 2026 को जाँचे",
+  "Study":
+    "अध्ययन",
+  "Where":
+    "कहाँ",
+  "They found":
+    "उन्होंने पाया",
+  "STRATUM over India":
+    "भारत के ऊपर STRATUM",
+  "Final-runs log":
+    "अंतिम-रन लॉग",
+  "append-only":
+    "केवल जोड़ा जा सकता है",
+  "Run":
+    "रन",
+  "Hypotheses":
+    "परिकल्पनाएँ",
+  "Time (UTC)":
+    "समय (UTC)",
+  "Commit":
+    "कमिट",
+  "Results SHA-256":
+    "नतीजों का SHA-256",
+  "Each hypothesis was scored once, after the analysis plan was locked; a second final run would need a written reason and both would be listed here. Context runs (H3/H4 with B1 and B3 physics) are descriptive and not in this log.":
+    "हर परिकल्पना का स्कोर एक बार, विश्लेषण योजना लॉक होने के बाद हुआ; दूसरे अंतिम रन के लिए लिखित कारण चाहिए होता और दोनों यहाँ दर्ज होते। संदर्भ रन (B1 और B3 भौतिकी के साथ H3/H4) वर्णनात्मक हैं और इस लॉग में नहीं।",
+  "STRATUM skill against four references":
+    "चार संदर्भों के मुकाबले STRATUM का स्किल",
+  "vs B3":
+    "B3 के मुकाबले",
+  "vs climatology":
+    "जलवायु-औसत के मुकाबले",
+  "vs humidity only":
+    "केवल नमी के मुकाबले",
+  "Share of contrail warming against share of flight distance":
+    "उड़ान दूरी के हिस्से के मुकाबले कंट्रेल गर्मी का हिस्सा",
+  "STRATUM-corrected (logged)":
+    "STRATUM-सुधरा (दर्ज)",
+  "B1 (descriptive)":
+    "B1 (वर्णनात्मक)",
+  "B3 (descriptive)":
+    "B3 (वर्णनात्मक)",
+  "logged (corrected)":
+    "दर्ज (सुधरा)",
+  "share of cruise distance (largest warming first)":
+    "क्रूज़ दूरी का हिस्सा (सबसे ज़्यादा गर्मी पहले)",
+  "Night share of warming against night share of distance":
+    "दूरी में रात के हिस्से के मुकाबले गर्मी में रात का हिस्सा",
+  "▬ night share of warming · ▬ night share of distance":
+    "▬ गर्मी में रात का हिस्सा · ▬ दूरी में रात का हिस्सा",
+  "Reliability: forecast probability against observed frequency on held-out seasons":
+    "विश्वसनीयता: अलग रखे मौसमों पर देखी गई आवृत्ति के मुकाबले पूर्वानुमान संभावना",
+  "forecast probability (bin mean)":
+    "पूर्वानुमान संभावना (खाने का औसत)",
+  "observed":
+    "देखा गया",
+  "Reliability on held-out seasons (10 equal-count bins): on the diagonal = calibrated.":
+    "अलग रखे मौसमों पर विश्वसनीयता (10 बराबर-गिनती खाने): विकर्ण पर = कैलिब्रेटेड।",
+  "Logged (corrected physics, too dry)":
+    "दर्ज (सुधरी भौतिकी, बहुत सूखी)",
+  "Weighted by STRATUM (D-006; the 60 strongest stretches per day)":
+    "STRATUM से भारित (D-006; हर दिन 60 सबसे प्रबल हिस्से)",
+  "§5 · Second analysis: STRATUM steers the decisions":
+    "§5 · दूसरा विश्लेषण: STRATUM फ़ैसले चलाता है",
+  "Stretches flagged":
+    "चिह्नित हिस्से",
+  "Alerts":
+    "चेतावनियाँ",
+  "Alerts without a fuel saving":
+    "ईंधन बचत के बिना चेतावनियाँ",
+  "Warming avoided by alerts, 100 yr (median)":
+    "चेतावनियों से टाली गई गर्मी, 100 वर्ष (माध्यिका)",
+  "Share of cruise distance carrying 80 % of warming (H3-style)":
+    "क्रूज़ दूरी का वह हिस्सा जो 80 % गर्मी ढोता है (H3 जैसा)",
+  "Night excess of warming (H4-style)":
+    "गर्मी में रात की अधिकता (H4 जैसा)",
+  "Logged (corrected, too dry)":
+    "दर्ज (सुधरी, बहुत सूखी)",
+  "Raw ERA5 (context)":
+    "कच्चा ERA5 (संदर्भ)",
+  "Weighted by STRATUM":
+    "STRATUM से भारित",
+  "The website in Hindi": "वेबसाइट हिंदी में",
+  "Every page can now be read in Hindi: the switch in the header remembers the choice, and ?lang=hi links straight to it. The Hindi was translated with AI (Claude) and is being reviewed by the team; numbers, codes and names stay as they are, and the English is the reference.":
+    "अब हर पेज हिंदी में पढ़ा जा सकता है: हेडर का स्विच आपकी पसंद याद रखता है, और ?lang=hi सीधे हिंदी खोलता है। हिंदी अनुवाद AI (Claude) की मदद से किया गया है और टीम इसकी समीक्षा कर रही है; अंक, कोड और नाम जैसे हैं वैसे रहते हैं, और अंग्रेज़ी पाठ ही मान्य है।",
 };

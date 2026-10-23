@@ -1,5 +1,6 @@
 import { PageHead } from "../components/PageHead";
 import { site, supervisor, team } from "../content/site";
+import { T } from "../i18n";
 
 /** Deterministic barcode from the name (decoration only). */
 function Barcode({ seed }: { seed: string }) {
@@ -25,28 +26,28 @@ function Pass(p: { name: string; role: string; initials: string; wide?: boolean;
     <article class={`pass rv ${p.wide ? "wide" : ""}`} style={{ "--d": (p.i % 2) * 110 }}>
       <div class="pass-main">
         <div class="pass-top">
-          <span class="label red">Boarding pass · STRATUM</span>
+          <span class="label red">{T("Boarding pass")} · STRATUM</span>
           <span class="mono-s muted">BLR → FL380</span>
         </div>
-        <p class="label">Passenger</p>
+        <p class="label">{T("Passenger")}</p>
         <h2 class="display pass-name">{p.name}</h2>
         <dl class="pass-fields">
           <div>
-            <dt class="label">Role</dt>
-            <dd class="mono">{p.role}</dd>
+            <dt class="label">{T("Role")}</dt>
+            <dd class="mono">{T(p.role)}</dd>
           </div>
           <div>
-            <dt class="label">Seat</dt>
+            <dt class="label">{T("Seat")}</dt>
             <dd class="mono big">{p.initials}</dd>
           </div>
           <div>
-            <dt class="label">Gate</dt>
+            <dt class="label">{T("Gate")}</dt>
             <dd class="mono">C26–27</dd>
           </div>
         </dl>
       </div>
       <div class="pass-stub">
-        <div class="photo mono-s">Photo to come</div>
+        <div class="photo mono-s">{T("Photo to come")}</div>
         <b class="display">{p.initials}</b>
         <Barcode seed={p.name} />
       </div>

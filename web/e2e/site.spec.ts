@@ -242,3 +242,14 @@ test("the site switches to Hindi, remembers it, and switches back to English", a
   await expect(page.locator("h1").first()).toContainText("Move the plane");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
+
+test("Hindi reaches the results, the map controls and the AI-translation note", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/results?lang=hi");
+  await expect(page.locator(".res-card").first()).toContainText("समर्थित नहीं"); // H1 verdict
+  await page.goto("/map?date=2026-02-01&lang=hi");
+  await expect(page.getByRole("button", { name: "लिंक कॉपी करें" })).toBeVisible();
+  await page.goto("/about-data?lang=hi");
+  await expect(page.locator("#ai-use")).toContainText("AI (Claude) की मदद से अनुवाद");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});

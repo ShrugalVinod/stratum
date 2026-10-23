@@ -896,3 +896,8 @@ html:lang(hi) li,
 html:lang(hi) dd {
   line-height: 1.7;
 }
+/* Hind sits low in its line box: lift the theme button's word level with its square */
+html:lang(hi) .theme-btn .word {
+  position: relative;
+  top: -2px;
+}

@@ -1,11 +1,13 @@
 import { useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { progress } from "../content/site";
+import { T, tx } from "../i18n";
 
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const MON_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 const day = (iso: string) => {
   const [y, m, d] = iso.split("-");
-  return `${d} ${MON[Number(m) - 1]} ${y}`;
+  return `${d} ${tx(MON, MON_HI)[Number(m) - 1]} ${y}`;
 };
 
 export function Progress() {
@@ -16,14 +18,14 @@ export function Progress() {
     <div class="page">
       <PageHead
         label="Logbook"
-        note={`${progress.length} entries · newest first`}
+        note={tx(`${progress.length} entries · newest first`, `${progress.length} प्रविष्टियाँ · नई पहले`)}
         lines={["Progress."]}
         lede="Entries are added when something is finished, not when it is promised."
       />
       <div class="wrap">
-        <div class="chips rv rv-fade" role="group" aria-label="Filter by phase">
+        <div class="chips rv rv-fade" role="group" aria-label={T("Filter by phase")}>
           <button class={phase === null ? "on" : ""} aria-pressed={phase === null} onClick={() => setPhase(null)}>
-            All
+            {T("All")}
           </button>
           {phases.map((p) => (
             <button class={phase === p ? "on" : ""} aria-pressed={phase === p} onClick={() => setPhase(p)}>
@@ -31,11 +33,11 @@ export function Progress() {
             </button>
           ))}
         </div>
-        <div class="logbook rv rv-fade" role="table" aria-label="Progress log">
+        <div class="logbook rv rv-fade" role="table" aria-label={T("Progress log")}>
           <div class="lb-row lb-head" role="row">
-            <span role="columnheader">Date</span>
-            <span role="columnheader">Phase</span>
-            <span role="columnheader">Entry</span>
+            <span role="columnheader">{T("Date")}</span>
+            <span role="columnheader">{T("Phase")}</span>
+            <span role="columnheader">{T("Entry")}</span>
           </div>
           {items.map((e, i) => (
             <div class="lb-row lb-item" role="row" key={`${phase}-${e.date}-${e.title}`} style={{ "--i": i }}>
@@ -46,8 +48,8 @@ export function Progress() {
                 P{e.phase}
               </span>
               <span role="cell">
-                <b>{e.title}</b>
-                <span class="muted">{e.body}</span>
+                <b>{T(e.title)}</b>
+                <span class="muted">{T(e.body)}</span>
               </span>
             </div>
           ))}

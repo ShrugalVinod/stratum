@@ -1,6 +1,7 @@
 import { useEffect } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { dataSources } from "../content/site";
+import { T, tx } from "../i18n";
 
 export function AboutData() {
   // lazy page: jump to #privacy / #ai-use once it exists
@@ -11,7 +12,7 @@ export function AboutData() {
     <div class="page">
       <PageHead
         label="About the data"
-        note={`${dataSources.length} sources`}
+        note={tx(`${dataSources.length} sources`, `${dataSources.length} स्रोत`)}
         lines={["Sources & limits."]}
         lede="Every dataset, what we use it for, who to credit, and where it falls short."
       />
@@ -20,11 +21,11 @@ export function AboutData() {
           <table class="src-table">
             <thead>
               <tr>
-                <th scope="col">Source</th>
-                <th scope="col">What it is</th>
-                <th scope="col">How we use it</th>
-                <th scope="col">Credit</th>
-                <th scope="col">Limits</th>
+                <th scope="col">{T("Source")}</th>
+                <th scope="col">{T("What it is")}</th>
+                <th scope="col">{T("How we use it")}</th>
+                <th scope="col">{T("Credit")}</th>
+                <th scope="col">{T("Limits")}</th>
               </tr>
             </thead>
             <tbody class="rv stagger">
@@ -33,10 +34,10 @@ export function AboutData() {
                   <th scope="row" class="display">
                     {d.source}
                   </th>
-                  <td>{d.what}</td>
-                  <td>{d.use}</td>
+                  <td>{T(d.what)}</td>
+                  <td>{T(d.use)}</td>
                   <td class="mono">{d.credit}</td>
-                  <td class="muted">{d.limits}</td>
+                  <td class="muted">{T(d.limits)}</td>
                 </tr>
               ))}
             </tbody>
@@ -45,38 +46,45 @@ export function AboutData() {
 
         <div class="notes">
           <section class="note rv">
-            <p class="label red">§2 · Limits</p>
+            <p class="label red">§2 · {T("Limits")}</p>
             <p>
-              Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many
-              scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model
-              estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study:
-              no real flight was changed. The results are those of the logged final runs (Results page); the map shows uncorrected physics, the published
-              correction and STRATUM side by side.
+              {T(
+                "Flight data cover the first day of each month from March 2025 to February 2026 — twelve days, not a continuous year. How many scheduled flights the receivers capture over India is being audited in November 2026. ERA5 humidity at cruise height is a model estimate, not a measurement; correcting it with satellite evidence is the point of the project. This is a computational study: no real flight was changed. The results are those of the logged final runs (Results page); the map shows uncorrected physics, the published correction and STRATUM side by side.",
+              )}
             </p>
           </section>
           <section class="note rv" id="privacy">
-            <p class="label red">§3 · Privacy</p>
+            <p class="label red">§3 · {T("Privacy")}</p>
             <p>
-              Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and
-              government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose "use my
-              location", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the
-              aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your
-              photo is never uploaded; its time and place are read on your device and only the rounded location is sent.
+              {T(
+                'Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose "use my location", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your photo is never uploaded; its time and place are read on your device and only the rounded location is sent. Your language choice (English or Hindi) is remembered in your browser only.',
+              )}
             </p>
           </section>
           <section class="note rv" id="ai-use">
-            <p class="label red">§4 · AI use</p>
+            <p class="label red">§4 · {T("AI use")}</p>
             <p>
-              The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis
-              code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team.
-              One exception to "humans label the data": for the 100 India satellite scenes used as a secondary check of the contrail detector,
-              Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result).
-              These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and
-              no AI-generated observations or results are presented as data.
+              {T(
+                'The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team. One exception to "humans label the data": for the 100 India satellite scenes used as a secondary check of the contrail detector, Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result). These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and no AI-generated observations or results are presented as data.',
+              )}
+            </p>
+            <p>
+              {T(
+                "The Hindi version of this website was translated with AI (Claude) and is being reviewed by the team. Where the two differ, the English text is the reference.",
+              )}
             </p>
           </section>
           <section class="note rv" id="code">
-            <p class="label red">§5 · Code, data and how to cite</p>
+            <p class="label red">§5 · {T("Code, data and how to cite")}</p>
+            {tx(
+              null,
+              <p>
+                <b>हिंदी में सार:</b> कोड Apache-2.0 के तहत है। हमारा व्युत्पन्न डेटा (छिपी ID वाली व्यावसायिक उड़ानों के हिस्सों के अनुमान और लेबल, मॉडल फ़ाइलें,
+                मूल्यांकन रिपोर्ट, पूर्व-पंजीकरण लॉक और अंतिम-रन लॉग) CC BY 4.0 के तहत जारी है (DLR विशेषज्ञ लेबलों से बने हिस्से: CC BY-NC 4.0)। कच्चा डेटा
+                दोबारा वितरित नहीं किया जाता; उसे रिपॉज़िटरी की स्क्रिप्ट से फिर डाउनलोड किया जाता है। नीचे लाइसेंस, दोबारा करने और उद्धरण का पूरा विवरण
+                अंग्रेज़ी में है।
+              </p>,
+            )}
             <p>
               <b>Code:</b> Apache-2.0. <b>Our derived data</b> (segment-level predictions and labels for commercial flights with hashed ids, model
               files, evaluation reports, the pre-registration lock and the final-runs log) are released under CC BY 4.0 (parts derived from the DLR

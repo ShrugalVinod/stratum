@@ -8,6 +8,7 @@
 // The Hindi text was drafted with AI (Claude) and is reviewed by the team (see About the data).
 import { useEffect, useState } from "preact/hooks";
 import { HI } from "./hi";
+import { HI_CONTENT } from "./hi-content";
 
 export type Lang = "en" | "hi";
 const KEY = "stratum-lang";
@@ -71,7 +72,7 @@ export function useLang(): Lang {
 
 /** The Hindi for an English string, or the English itself. */
 export function T(en: string): string {
-  return current === "hi" ? (HI[en] ?? en) : en;
+  return current === "hi" ? (HI[en] ?? HI_CONTENT[en] ?? en) : en;
 }
 
 /** An inline pair, for text with links or numbers inside: tx("Open the map", "मानचित्र खोलें"). */
