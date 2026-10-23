@@ -2,6 +2,20 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-23 — "Your flight's hidden footprint" (/flight), fixes
+
+**Done**
+- /flight: a trip (from, to, departure, aircraft, level) or an airliner flying now, checked
+  minute by minute along its cruise against the forecast's lasting-contrail air (B1) at every
+  level FL280–FL420. Fuel CO₂ from OpenAP at 0.80 × MTOW (A20N/A21N: A320/A321 × 0.85, because
+  OpenAP's neo model is ~40 % below the A320); contrail warming = minutes in lasting air × EF per
+  minute of the warming contrails in our CoCiP B1 runs over India (25th/50th/75th percentile
+  0.60/2.15/5.76 × 10¹² J), converted with the decision layer's AGWP factors and efficacy 0.42.
+  Suggests a level within ±4,000 ft only when it cuts lasting minutes and warming + fuel. A scan
+  ranks the most contrail-prone trips between the 12 busiest airports. Shareable URL; Hindi.
+- Forecast and live data refresh themselves again (Worker dispatch for outlook.yml, keep_vars,
+  backup cron); new AI-use statement on About the data.
+
 ## 2026-10-23 — Website in Hindi
 
 **Done**

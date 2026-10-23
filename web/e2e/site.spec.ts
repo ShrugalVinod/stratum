@@ -253,3 +253,17 @@ test("Hindi reaches the results, the map controls and the AI-translation note", 
   await expect(page.locator("#ai-use")).toContainText("हिंदी अनुवाद AI से बनाया गया");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
+
+test("Your flight: a trip gets its cruise checked and a shareable link", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/flight");
+  // the default trip (or a "no forecast" message when the outlook is missing) appears by itself
+  await expect(page.locator(".fp-out, .page.flight .muted.mono").first()).toBeVisible();
+  if (await page.locator(".fp-out").count()) {
+    await expect(page.locator(".fp-out")).toContainText("cruise");
+    await expect(page).toHaveURL(/from=BLR&to=DEL/);
+    await page.getByRole("button", { name: /contrail-prone/ }).click();
+    await expect(page.locator(".fp-scan")).not.toContainText("Scanning");
+  }
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});

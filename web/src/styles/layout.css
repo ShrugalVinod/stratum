@@ -2514,3 +2514,156 @@ a.contact-big:hover {
 .rt-ctl .seg-ctl button {
   white-space: nowrap;
 }
+
+/* ── Your flight (/flight) ─────────────────────────────────────────────────── */
+.fp-mode {
+  max-width: 520px;
+  margin-bottom: 20px;
+}
+.fp-mode button {
+  height: 40px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+.fp-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px 16px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.fp-form label {
+  display: grid;
+  gap: 6px;
+}
+.fp-form select,
+.fp-form input {
+  height: 42px;
+  width: 100%;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  padding: 0 10px;
+  font: 500 15px var(--font-sans);
+  color: var(--ink);
+}
+.fp-form input {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.fp-form .gm-big {
+  height: 42px;
+}
+.fp-wide {
+  grid-column: span 2;
+}
+.fp-out {
+  padding-top: 32px;
+}
+.fp-head {
+  margin: 6px 0 22px;
+}
+.fp-head b {
+  color: var(--orange-text);
+}
+.fp-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.fp-tiles .fp-hot {
+  border-top-color: var(--orange);
+}
+.fp-side {
+  margin: 8px 0 28px;
+  overflow-x: auto; /* on a phone the chart keeps readable labels and scrolls sideways */
+}
+.fp-side figcaption {
+  position: sticky;
+  left: 0;
+}
+.fp-svg {
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  display: block;
+}
+.fp-cell {
+  fill: var(--orange);
+}
+.fp-none {
+  fill: var(--rule);
+  opacity: 0.35;
+}
+.fp-svg .ax {
+  font: 10px var(--font-mono);
+  fill: var(--muted);
+}
+.fp-planned,
+.fp-best {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.fp-best {
+  stroke-dasharray: 6 4;
+}
+.fp-seg {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.fp-seg.hot {
+  stroke: var(--orange);
+  stroke-width: 3;
+}
+.fp-end {
+  fill: var(--ink);
+}
+.fp-grid {
+  align-items: start;
+}
+.fp-alts {
+  width: 100%;
+  margin: 10px 0 14px;
+}
+.fp-note {
+  margin-top: 22px;
+  max-width: 900px;
+}
+@media (max-width: 720px) {
+  .fp-tiles {
+    grid-template-columns: 1fr;
+  }
+  .fp-wide {
+    grid-column: auto;
+  }
+}
+.fp-scan {
+  grid-column: 1 / -1;
+}
+.fp-hot-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+.fp-hot-list button {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--orange);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.fp-hot-list button:hover {
+  border-color: var(--ink);
+  border-left-color: var(--orange);
+}
+/* Home §6: the newest page gets the full first row */
+.try-tile.try-featured {
+  grid-column: 1 / -1;
+  border-left: 3px solid var(--orange);
+}

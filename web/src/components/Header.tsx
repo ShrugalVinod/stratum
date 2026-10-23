@@ -8,6 +8,7 @@ const NAV = [
   ["/map", "Map", "Contrails, flights and the satellite proof"],
   ["/live", "Live sky", "Which plane made that contrail?"],
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
+  ["/flight", "Your flight", "Its hidden contrail footprint"],
   ["/advisory", "Advisories", "Tomorrow's contrail notices"],
   ["/game", "Beat STRATUM", "Can you out-guess the model?"],
   ["/results", "Results", "H1–H4 and what we found"],
