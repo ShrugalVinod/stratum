@@ -10,11 +10,15 @@ AP = pd.DataFrame({"iata": ["DEL", "BOM"], "city": ["Delhi", "Mumbai"], "lat": [
 
 
 def _flight(fid: str, cs: str, lat0: float, lon0: float, lat1: float, lon1: float, alt0: float,
-            alt1: float, ef: float, n: int = 10) -> pd.DataFrame:  # fmt: skip
+            alt1: float, ef: float, n: int = 10, climb: float = 26000.0) -> pd.DataFrame:  # fmt: skip
     t0 = pd.Timestamp("2026-02-01 14:00", tz="UTC")
     la, lo = np.linspace(lat0, lat1, n + 1), np.linspace(lon0, lon1, n + 1)
     alt = np.full(n + 1, 36000.0)
     alt[0], alt[-1] = alt0, alt1
+    alt[1], alt[-2] = (
+        max(alt0, climb) if alt0 < 36000 else 36000.0,
+        max(alt1, climb) if alt1 < 36000 else 36000.0,
+    )
     return pd.DataFrame({
         "segment_id": [f"{fid}_{i}" for i in range(n)], "flight_id": fid, "callsign": cs,
         "typecode": "A20N", "alt_ft_mid": 36000.0, "alt_ft_start": alt[:-1], "alt_ft_end": alt[1:],
@@ -54,9 +58,12 @@ def test_dashboard_groups_routes_airlines_and_hides_small_groups() -> None:
 
 
 def test_route_ends_are_the_airports_behind_and_ahead_of_the_cruise() -> None:
-    # cruise from ~150 km after Delhi to ~150 km before Mumbai, both ends at FL360
-    f = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 36000, 36000, 1e9)
+    # climbing out ~150 km after Delhi, descending ~150 km before Mumbai
+    f = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 25000, 25000, 1e9)
     assert db.routes(f, AP).iloc[0] == "DEL–BOM"
+    # the same line flown level at FL360 (a piece that starts and ends in cruise): no route
+    c = _flight("z", "IGO3", 27.6, 76.6, 20.1, 73.3, 36000, 36000, 1e9)
+    assert db.routes(c, AP).iloc[0] == "en route–en route"
     # a track heading away from both airports has no route
     g = _flight("y", "IGO2", 25.0, 85.0, 26.0, 90.0, 36000, 36000, 1e9)
     assert db.routes(g, AP).iloc[0] == "en route–en route"

@@ -7,12 +7,13 @@ airline, route, aircraft type, hour of day (IST), flight level and month: flight
 distance, warming (positive EF), and the warming share divided by the distance share (an index:
 1 = an average share of warming for the distance flown).
 
-Routes are not in the flight data, and the segments are cruise only (from the top of climb to
-the top of descent, 100–300 km from the airports). Each flight piece's origin is the large or
-medium airport (OurAirports, public domain) behind the start of its cruise, along the first
-segment's heading reversed: within ``RAY_KM`` and ``RAY_OFF_KM`` of that line, the nearest one;
-its destination likewise ahead of the end. Otherwise "en route" (the track enters or leaves the
-study area, or the airport is ambiguous). Descriptive; modelled warming, not
+Routes are not in the flight data, and the tracks start high (the segments begin in the climb,
+100–300 km from the airport) and are often broken into pieces where coverage drops. A flight
+piece gets an origin only if it starts in a climb below ``END_FT``: the airline airport
+(OurAirports, public domain: large airports, or medium ones with scheduled service) behind it
+along the first segment's heading, within ``RAY_KM`` and ``RAY_OFF_KM`` of that line, a large
+airport before a medium one. The destination likewise needs a descent at the end. Pieces that
+start or end in cruise are "en route". Descriptive; modelled warming, not
 measured. Rows with fewer than ``MIN_FLIGHTS`` flights are pooled as "other" (no single flight
 can be singled out). Commercial airlines only; no flight ids are written.
 """
@@ -32,6 +33,8 @@ import pandas as pd
 AIRPORTS_CSV = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 RAY_KM = 350.0
 RAY_OFF_KM = 40.0
+END_FT = 30_000.0  # a route end must be climbing (start) or descending (end) below this
+MEDIUM_PENALTY_KM = 30.0  # a medium airport must sit this much closer to the line to win
 MIN_FLIGHTS = 3
 TOP = 15
 FL_BANDS = [(0, 280), (280, 320), (320, 340), (340, 360), (360, 380), (380, 400), (400, 500)]
@@ -45,7 +48,11 @@ def load_airports(bbox: tuple[tuple[float, float], tuple[float, float]]) -> pd.D
     with urllib.request.urlopen(AIRPORTS_CSV, timeout=60) as r:
         a = pd.read_csv(io.BytesIO(r.read()), low_memory=False)
     (la0, la1), (lo0, lo1) = bbox
-    a = a[a["type"].isin(["large_airport", "medium_airport"]) & a["iata_code"].notna()]
+    airline = (a["type"] == "large_airport") | (
+        (a["type"] == "medium_airport") & (a["scheduled_service"] == "yes")
+    )
+    a = a[airline & a["iata_code"].notna()].copy()
+    a["municipality"] = a["municipality"].fillna(a["name"])
     a = a[
         a["latitude_deg"].between(la0 - 3, la1 + 3) & a["longitude_deg"].between(lo0 - 3, lo1 + 3)
     ]
@@ -84,7 +91,10 @@ def airport_on_ray(lat: float, lon: float, bearing: float, ap: pd.DataFrame) -> 
     )  # also a track that starts at the airport
     if not ok.any():
         return None
-    i = int(np.argmin(np.where(ok, d, np.inf)))
+    # the airport closest to the line of flight, nearer ones first; a large airport before a medium one
+    big = (ap["type"] == "large_airport").to_numpy() if "type" in ap else np.ones(len(ap), bool)
+    score = cross + 0.1 * np.maximum(along, 0.0) + np.where(big, 0.0, MEDIUM_PENALTY_KM)
+    i = int(np.argmin(np.where(ok, score, np.inf)))
     return str(ap["iata"].iloc[i])
 
 
@@ -98,12 +108,24 @@ def routes(seg: pd.DataFrame, ap: pd.DataFrame) -> pd.Series:
         _, b = _dist_bearing(r.lat_start, r.lon_start, np.array([r.lat_end]), np.array([r.lon_end]))
         return float(b[0])
 
+    def climbing(r: Any) -> bool:  # the piece starts in the climb out of an airport
+        return bool(r.alt_ft_start < END_FT and r.alt_ft_end - r.alt_ft_start > 100)
+
+    def descending(r: Any) -> bool:  # the piece ends in the descent to an airport
+        return bool(r.alt_ft_end < END_FT and r.alt_ft_start - r.alt_ft_end > 100)
+
     o = [
-        airport_on_ray(r.lat_start, r.lon_start, (heading(r) + 180) % 360, ap) or "en route"
+        (
+            airport_on_ray(r.lat_start, r.lon_start, (heading(r) + 180) % 360, ap)
+            if climbing(r)
+            else None
+        )
+        or "en route"
         for r in first.itertuples()
     ]
     d = [
-        airport_on_ray(r.lat_end, r.lon_end, heading(r), ap) or "en route"
+        (airport_on_ray(r.lat_end, r.lon_end, heading(r), ap) if descending(r) else None)
+        or "en route"
         for r in last.itertuples()
     ]
     return pd.Series(
