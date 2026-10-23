@@ -33,6 +33,7 @@ AIRPORTS_CSV = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 RAY_KM = 350.0
 RAY_OFF_KM = 40.0
 END_FT = 30_000.0  # a route end must be climbing (start) or descending (end) below this
+KM_PER_FT = 0.005  # a ~3.5° climb or descent: FL250 is ~125 km from the airport
 MEDIUM_PENALTY_KM = 30.0  # a medium airport must sit this much closer to the line to win
 MIN_FLIGHTS = 3
 TOP = 15
@@ -77,9 +78,12 @@ def _dist_bearing(
     return d, (np.degrees(np.arctan2(y, x)) + 360) % 360
 
 
-def airport_on_ray(lat: float, lon: float, bearing: float, ap: pd.DataFrame) -> str | None:
-    """The nearest airport along the ray from (lat, lon) at ``bearing``: within RAY_KM ahead and
-    RAY_OFF_KM of the line (cross-track)."""
+def airport_on_ray(
+    lat: float, lon: float, bearing: float, ap: pd.DataFrame, alt_ft: float = math.nan
+) -> str | None:
+    """The airport along the ray from (lat, lon) at ``bearing`` (within RAY_KM ahead and
+    RAY_OFF_KM of the line) that best fits: close to the line, at about the distance a climb or
+    descent from that airport covers to reach ``alt_ft`` (KM_PER_FT), large before medium."""
     if ap.empty or not all(map(math.isfinite, (lat, lon, bearing))):
         return None
     d, b = _dist_bearing(lat, lon, ap["lat"].to_numpy(float), ap["lon"].to_numpy(float))
@@ -92,7 +96,8 @@ def airport_on_ray(lat: float, lon: float, bearing: float, ap: pd.DataFrame) -> 
         return None
     # the airport closest to the line of flight, nearer ones first; a large airport before a medium one
     big = (ap["type"] == "large_airport").to_numpy() if "type" in ap else np.ones(len(ap), bool)
-    score = cross + 0.1 * np.maximum(along, 0.0) + np.where(big, 0.0, MEDIUM_PENALTY_KM)
+    expect = alt_ft * KM_PER_FT if math.isfinite(alt_ft) else 0.0
+    score = cross + 0.5 * np.abs(along - expect) + np.where(big, 0.0, MEDIUM_PENALTY_KM)
     i = int(np.argmin(np.where(ok, score, np.inf)))
     return str(ap["iata"].iloc[i])
 
@@ -211,6 +216,8 @@ def build(seg: pd.DataFrame, ap: pd.DataFrame, names: dict[str, str]) -> dict[st
     d["month"] = t.dt.strftime("%Y-%m")
     d["fl_band"] = fl_band(d["alt_ft_mid"])
     d = d.merge(routes(d, ap), left_on="flight_id", right_index=True, how="left")
+    d["origin"] = d["route"].str.split("–").str[0]
+    d["dest"] = d["route"].str.split("–").str[1]
     tot = {"km": float(d["length_km"].sum()), "warm_b1": float(d["ef_b1_pos"].sum()),
            "warm_w": float(d["ef_w_pos"].sum())}  # fmt: skip
     # concentration: share of weighted warming from the top 1 % / 10 % of flights
@@ -230,6 +237,9 @@ def build(seg: pd.DataFrame, ap: pd.DataFrame, names: dict[str, str]) -> dict[st
         "concentration": conc,
         "by_airline": table(d, "airline", tot),
         "by_route": table(d[~d["route"].eq("en route–en route")], "route", tot),
+        # most tracks are pieces with only one airport end in view: departures and arrivals apart
+        "by_departure": table(d[~d["origin"].eq("en route")], "origin", tot),
+        "by_arrival": table(d[~d["dest"].eq("en route")], "dest", tot),
         "by_aircraft": table(d, "aircraft", tot),
         "by_hour_ist": sorted(
             table(d, "hour_ist", tot, min_flights=1, top=None), key=lambda r: r["key"]

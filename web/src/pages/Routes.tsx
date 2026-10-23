@@ -103,7 +103,7 @@ export function Routes() {
   }, []);
 
   const ap: Record<string, [string, number, number]> = d?.airports ?? {};
-  const routeLabel = (r: Row) => (r.key === "other" ? "Other routes (under 3 flights each)" : r.key.split("–").map((c) => (c === "en route" ? "en route" : ap[c]?.[0] ? `${ap[c][0]} (${c})` : c)).join(" → "));
+  const airportLabel = (r: Row) => (r.key === "other" ? "Other airports (under 3 flights each)" : ap[r.key]?.[0] ? `${ap[r.key][0]} (${r.key})` : r.key);
   const other = (r: Row, what: string) => (r.key === "other" ? `Other ${what} (under 3 flights each)` : r.key);
   const heatMax = Math.max(1e-9, ...((d?.heat ?? []) as number[][]).map((c) => c[2]));
   const t = d?.totals;
@@ -171,11 +171,16 @@ export function Routes() {
                 <Bars rows={d.by_airline} metric={metric} label={(r) => other(r, "airlines")} />
               </section>
               <section class="rt-sec">
-                <p class="label red">By route</p>
-                <Bars rows={d.by_route} metric={metric} label={routeLabel} short={(r) => (r.key === "other" ? "Other routes" : r.key.replace("–", " → "))} />
+                <p class="label red">Flights departing from</p>
+                <Bars rows={d.by_departure ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
+              </section>
+              <section class="rt-sec">
+                <p class="label red">Flights arriving at</p>
+                <Bars rows={d.by_arrival ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
                 <p class="small muted">
-                  Routes are worked out from where each track starts and ends ({pc(t.route_known_share, 0)} of flights have at least one airport end; overflights
-                  are left out here).
+                  Most of our tracks are pieces of a flight (the receivers lose aircraft for a while), so we see the climb out of an airport for{" "}
+                  {pc(t.route_known_share, 0)} of the pieces at one end at least, and the whole route almost never. An airport is found from the climb or descent: the
+                  one behind or ahead of the track at the distance that height needs. Overflights count under neither.
                 </p>
               </section>
               <section class="rt-sec">

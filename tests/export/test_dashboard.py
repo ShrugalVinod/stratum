@@ -85,3 +85,24 @@ def test_written_summary_is_strict_json(tmp_path) -> None:  # type: ignore[no-un
     txt = web_json(db.build(seg, ap, {}))
     assert "NaN" not in txt
     json.loads(txt)
+
+
+def test_the_climb_distance_picks_delhi_not_the_airport_under_the_climb_out() -> None:
+    # Noida (DXN) lies 60 km from Delhi; a departure at FL250 ~125 km out belongs to DEL
+    ap = pd.concat(
+        [
+            AP,
+            pd.DataFrame(
+                {
+                    "iata": ["DXN"],
+                    "city": ["Noida"],
+                    "lat": [28.18],
+                    "lon": [77.61],
+                    "type": "large_airport",
+                }
+            ),
+        ]
+    )
+    # start 125 km south-south-east of DEL, climbing, heading away from Delhi
+    f = _flight("x", "IGO1", 27.47, 77.55, 24.0, 79.0, 25000, 36000, 1e9)
+    assert db.routes(f, ap).iloc[0].startswith("DEL–")
