@@ -1,8 +1,12 @@
 import type { ComponentChildren } from "preact";
+import { T } from "../i18n";
 import { Split } from "./Split";
 
 /** Inner-page title block: red label, mono note on the right, huge split title, lede. */
-export function PageHead(p: { label: string; note?: ComponentChildren; lines: string[]; lede?: ComponentChildren; id?: string }) {
+export function PageHead(p0: { label: string; note?: ComponentChildren; lines: string[]; lede?: ComponentChildren; id?: string }) {
+  // plain-text heads translate themselves (pages with richer text pass it already translated)
+  const tr = (x: ComponentChildren) => (typeof x === "string" ? T(x) : x);
+  const p = { ...p0, label: T(p0.label), lines: p0.lines.map(T), note: tr(p0.note), lede: tr(p0.lede) };
   let k = 0;
   return (
     <header class="wrap page-head">

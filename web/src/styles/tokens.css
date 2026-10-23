@@ -39,9 +39,10 @@
   --map-pred: #d6541c;
   --map-sel: #13202f;
 
-  --font-display: "Archivo Variable", "Archivo Narrow", "Arial Narrow", sans-serif;
-  --font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Martian Mono Variable", "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* Devanagari falls through to Teko (display) and Hind (text, mono), loaded only for Hindi */
+  --font-display: "Archivo Variable", "Teko", "Archivo Narrow", "Arial Narrow", sans-serif;
+  --font-sans: "Public Sans Variable", "Hind", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Martian Mono Variable", "Hind", "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1); /* long, soft landing */

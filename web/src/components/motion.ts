@@ -9,7 +9,9 @@ const FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·–";
 
 function flap(el: HTMLElement) {
   const final = el.dataset.flap ?? el.textContent ?? "";
-  if (reduced() || el.dataset.done) return;
+  // letters spin one by one: fine for the Latin alphabet, but it would tear apart the joined
+  // letters of Devanagari (Hindi), so other scripts simply show their final text
+  if (reduced() || el.dataset.done || /[^\u0000-\u024f·–—]/.test(final)) return;
   el.dataset.done = "1";
   const delay = Number(el.dataset.flapDelay ?? 0);
   const spans = [...final].map((ch) => {

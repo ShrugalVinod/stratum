@@ -1,4 +1,5 @@
 import { site } from "../content/site";
+import { T } from "../i18n";
 import { Split } from "./Split";
 
 export function Footer() {
@@ -11,12 +12,12 @@ export function Footer() {
               <Split text="STRATUM" />
             </p>
             <p class="footer-tag rv rv-fade" style={{ "--d": 250 }}>
-              {site.tagline}
+              {T(site.tagline)}
             </p>
-            <p class="footer-warn">Computational research prototype — no real flight was changed.</p>
+            <p class="footer-warn">{T("Computational research prototype — no real flight was changed.")}</p>
           </div>
           <div>
-            <p class="label">Credits</p>
+            <p class="label">{T("Credits")}</p>
             <p class="footer-credits">
               Contains modified Copernicus Climate Change Service information 2026 · Meteosat-9 imagery © EUMETSAT 2026 · Flight data:
               ADS-B Exchange · Aircraft metadata and live aircraft: The OpenSky Network · Live aircraft: adsb.lol (ODbL) · Forecast: ECMWF open
@@ -25,33 +26,33 @@ export function Footer() {
             </p>
             <nav class="footer-links" aria-label="Footer">
               <a class="link" href="/contact">
-                Contact
+                {T("Contact")}
               </a>
               <a class="link" href="/about-data#privacy">
-                Privacy
+                {T("Privacy")}
               </a>
               <a class="link" href="/about-data#ai-use">
-                AI use
+                {T("AI use")}
               </a>
               <a class="link" href={site.paperPdf} target="_blank" rel="noopener">
-                Protocol PDF ↗
+                {T("Protocol PDF")} ↗
               </a>
             </nav>
           </div>
           <div class="footer-origin">
-            <p class="label">Origin</p>
+            <p class="label">{T("Origin")}</p>
             <p class="mono">
               12.97°N 77.59°E
               <br />
-              BENGALURU
+              {T("BENGALURU")}
               <br />
               CONRAD 2026–27
             </p>
           </div>
         </div>
         <div class="footer-base mono-s">
-          <span>{site.school}</span>
-          <span>No cookies · no analytics · no trackers</span>
+          <span>{T(site.school)}</span>
+          <span>{T("No cookies · no analytics · no trackers")}</span>
         </div>
       </div>
     </footer>

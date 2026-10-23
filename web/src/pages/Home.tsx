@@ -4,6 +4,7 @@ import { Hero } from "../components/Hero";
 import { Plane } from "../components/Plane";
 import { Split } from "../components/Split";
 import { facts, loop, phases, refs, site, statusUpdated, whyCards } from "../content/site";
+import { T } from "../i18n";
 
 const STATUS = { done: "Done", current: "Active", upcoming: "Scheduled" } as const;
 
@@ -12,13 +13,13 @@ export function Home() {
     <div class="page home">
       <Hero />
 
-      <div class="ticker" aria-label="Project facts">
+      <div class="ticker" aria-label={T("Project facts")}>
         <div class="ticker-track">
           {[0, 1].map((copy) => (
             <ul aria-hidden={copy === 1 ? "true" : undefined}>
               {facts.map((f) => (
                 <li class="mono-s">
-                  <i aria-hidden="true">◆</i> {f}
+                  <i aria-hidden="true">◆</i> {T(f)}
                 </li>
               ))}
             </ul>
@@ -30,13 +31,13 @@ export function Home() {
       <section class="section" aria-labelledby="why-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§1 · The problem · The India gap · Our approach</p>
-            <span class="mono-s">Ref. Lee et al. 2021¹</span>
+            <p class="label red">{T("§1 · The problem · The India gap · Our approach")}</p>
+            <span class="mono-s">{T("Ref.")} Lee et al. 2021¹</span>
           </div>
           <div class="why">
             <div>
               <h2 id="why-title" class="display d-l">
-                <Split text="A few flights make most of the warming." />
+                <Split text={T("A few flights make most of the warming.")} />
               </h2>
               <hr class="rule rule-draw" style={{ "--d": 300 }} />
               <SpreadFigure />
@@ -46,8 +47,8 @@ export function Home() {
                 <li style={{ "--i": i }}>
                   <span class="n mono">0{i + 1}</span>
                   <div>
-                    <h3 class="label ink">{c.title}</h3>
-                    <p>{c.body}</p>
+                    <h3 class="label ink">{T(c.title)}</h3>
+                    <p>{T(c.body)}</p>
                   </div>
                 </li>
               ))}
@@ -68,9 +69,9 @@ export function Home() {
         <div class="wrap">
           <div class="sec-head rv">
             <p class="label red" id="loop-title">
-              §2 · The study loop
+              {T("§2 · The study loop")}
             </p>
-            <span class="mono-s">Flight plan · {loop.length} WPT</span>
+            <span class="mono-s">{T("Flight plan")} · {loop.length} WPT</span>
           </div>
           <ol class="route rv">
             <span class="route-line" aria-hidden="true" />
@@ -83,8 +84,8 @@ export function Home() {
                 <p class="mono-s red">
                   WPT {i + 1} · {s.code}
                 </p>
-                <h3 class="display d-s">{s.title}</h3>
-                <p class="muted">{s.body}</p>
+                <h3 class="display d-s">{T(s.title)}</h3>
+                <p class="muted">{T(s.body)}</p>
               </li>
             ))}
           </ol>
@@ -95,44 +96,44 @@ export function Home() {
       <section class="section pt0" aria-labelledby="status-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§3 · Status</p>
-            <span class="mono-s">Updated {statusUpdated}</span>
+            <p class="label red">{T("§3 · Status")}</p>
+            <span class="mono-s">{T("Updated")} {statusUpdated}</span>
           </div>
           <div class="dep">
             <div>
               <h2 id="status-title" class="display d-l">
-                <Split text="Departures" />
+                <Split text={T("Departures")} />
               </h2>
               <p class="lede rv" style={{ "--d": 200 }}>
-                Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. All four hypotheses are now tested; the results are on the Methods page.
+                {T("Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. All four hypotheses are now tested; the results are on the Methods page.")}
               </p>
               <a class="link rv" style={{ "--d": 320 }} href="/progress">
-                Full progress log →
+                {T("Full progress log")} →
               </a>
             </div>
-            <div class="board rv rv-scale" role="table" aria-label="Project phases">
+            <div class="board rv rv-scale" role="table" aria-label={T("Project phases")}>
               <div class="b-row b-head" role="row">
-                <span role="columnheader">Phase</span>
-                <span role="columnheader">Destination</span>
-                <span role="columnheader">Status</span>
-                <span role="columnheader">Logged</span>
+                <span role="columnheader">{T("Phase")}</span>
+                <span role="columnheader">{T("Destination")}</span>
+                <span role="columnheader">{T("Status")}</span>
+                <span role="columnheader">{T("Logged")}</span>
               </div>
               {phases.map((p, i) => (
                 <div class={`b-row ${p.state}`} role="row">
                   <span role="cell">
                     <span class="tile">{p.n}</span>
                   </span>
-                  <span role="cell" class="b-dest" data-flap={p.name.toUpperCase()} data-flap-delay={i * 90}>
-                    {p.name.toUpperCase()}
+                  <span role="cell" class="b-dest" data-flap={T(p.name).toUpperCase()} data-flap-delay={i * 90}>
+                    {T(p.name).toUpperCase()}
                   </span>
                   <span role="cell" class={`b-status ${p.state}`}>
                     {p.state === "current" && <i class="dot" aria-hidden="true" />}
-                    <span data-flap={STATUS[p.state].toUpperCase()} data-flap-delay={300 + i * 90}>
-                      {STATUS[p.state].toUpperCase()}
+                    <span data-flap={T(STATUS[p.state]).toUpperCase()} data-flap-delay={300 + i * 90}>
+                      {T(STATUS[p.state]).toUpperCase()}
                     </span>
                   </span>
                   <span role="cell" class="b-log">
-                    {p.logged ?? (p.state === "current" ? "NOW" : "—")}
+                    {p.logged ?? (p.state === "current" ? T("NOW") : "—")}
                   </span>
                 </div>
               ))}
@@ -145,8 +146,8 @@ export function Home() {
       <section class="section pt0" aria-labelledby="ground-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§4 · From the ground</p>
-            <span class="mono-s">Team photo · South India · 18 Oct 2026</span>
+            <p class="label red">{T("§4 · From the ground")}</p>
+            <span class="mono-s">{T("Team photo · South India")} · 18 Oct 2026</span>
           </div>
           <div class="openly ground">
             <figure class="sat rv rv-fade">
@@ -158,18 +159,16 @@ export function Home() {
                   width="1600"
                   height="1200"
                 />
-                <span class="sat-tl mono-s">Seen from below</span>
+                <span class="sat-tl mono-s">{T("Seen from below")}</span>
               </div>
-              <figcaption class="caption">Fig. 3 — A contrail over South India, photographed by the team on 18 Oct 2026.</figcaption>
+              <figcaption class="caption">{T("Fig. 3 — A contrail over South India, photographed by the team on 18 Oct 2026.")}</figcaption>
             </figure>
             <div class="open-text">
               <h2 id="ground-title" class="display d-m">
-                <Split text="The line we are trying to predict." />
+                <Split text={T("The line we are trying to predict.")} />
               </h2>
               <p class="rv" style={{ "--d": 200 }}>
-                A contrail like this one spreads into cirrus and lasts for hours only when the air is supersaturated with ice — and that is
-                exactly what weather models struggle to see. From 36,000 km up, Meteosat sees the same kind of line as a thin bright stroke
-                (Fig. 4).
+                {T("A contrail like this one spreads into cirrus and lasts for hours only when the air is supersaturated with ice — and that is exactly what weather models struggle to see. From 36,000 km up, Meteosat sees the same kind of line as a thin bright stroke (Fig. 4).")}
               </p>
             </div>
           </div>
@@ -180,8 +179,8 @@ export function Home() {
       <section class="section pt0" aria-labelledby="open-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§5 · Built openly</p>
-            <span class="mono-s">Real satellite image · not a result</span>
+            <p class="label red">{T("§5 · Built openly")}</p>
+            <span class="mono-s">{T("Real satellite image · not a result")}</span>
           </div>
           <div class="openly">
             <figure class="sat rv rv-fade">
@@ -198,25 +197,24 @@ export function Home() {
                 <span class="sat-scan" aria-hidden="true" />
               </div>
               <figcaption class="caption">
-                Fig. 4 — Two contrails over the Arabian Sea at night, found by the STRATUM detector. BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT
-                2026.
+                {T("Fig. 4 — Two contrails over the Arabian Sea at night, found by the STRATUM detector.")} BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT 2026.
               </figcaption>
             </figure>
             <div class="open-text">
               <h2 id="open-title" class="display d-m">
-                <Split text="Good science leaves room for “not yet”." />
+                <Split text={T("Good science leaves room for “not yet”.")} />
               </h2>
               <p class="rv" style={{ "--d": 200 }}>
-                Our plan, our code assumptions and our limits were written down before we saw any result. Anyone can check them.
+                {T("Our plan, our code assumptions and our limits were written down before we saw any result. Anyone can check them.")}
               </p>
               <div class="open-links rv stagger" style={{ "--d": 300 }}>
                 <a class="row-link" href={site.paperPdf} target="_blank" rel="noopener">
-                  <span class="label red">Research protocol (PDF) ↓</span>
-                  <span class="mono-s muted">Pre-registered 13 Oct 2026 · 19 pp</span>
+                  <span class="label red">{T("Research protocol (PDF)")} ↓</span>
+                  <span class="mono-s muted">{T("Pre-registered 13 Oct 2026 · 19 pp")}</span>
                 </a>
                 <a class="row-link" href="/methods">
-                  <span class="label red">Read the methods →</span>
-                  <span class="mono-s muted">Hypotheses H1–H4</span>
+                  <span class="label red">{T("Read the methods")} →</span>
+                  <span class="mono-s muted">{T("Hypotheses H1–H4")}</span>
                 </a>
               </div>
             </div>
@@ -228,11 +226,11 @@ export function Home() {
       <section class="section pt0" aria-labelledby="try-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">§6 · Try it</p>
-            <span class="mono-s">Live data · forecast every morning</span>
+            <p class="label red">{T("§6 · Try it")}</p>
+            <span class="mono-s">{T("Live data · forecast every morning")}</span>
           </div>
           <h2 id="try-title" class="display d-m">
-            <Split text="Look up, then look it up." />
+            <Split text={T("Look up, then look it up.")} />
           </h2>
           <div class="try-grid rv stagger">
             {(
@@ -247,8 +245,8 @@ export function Home() {
             ).map(([href, t, b], i) => (
               <a class="try-tile" href={href} style={{ "--i": i }}>
                 <span class="mono-s">0{i + 1}</span>
-                <b class="display">{t}</b>
-                <span>{b}</span>
+                <b class="display">{T(t)}</b>
+                <span>{T(b)}</span>
                 <span class="try-go" aria-hidden="true">
                   <Arrow />
                 </span>
@@ -260,9 +258,9 @@ export function Home() {
 
       <a class="cta-band" href="/map">
         <span class="wrap cta-inner">
-          <span class="mono-s">1 Jan 2026 · 1,458 flights · every hour · 8 flight levels</span>
+          <span class="mono-s">{T("1 Jan 2026 · 1,458 flights · every hour · 8 flight levels")}</span>
           <span class="display cta-big">
-            Open the contrail map <Arrow />
+            {T("Open the contrail map")} <Arrow />
           </span>
           <span class="cta-plane" aria-hidden="true">
             <Plane width={64} />

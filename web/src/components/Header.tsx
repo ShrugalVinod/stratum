@@ -1,5 +1,6 @@
 import { useLocation } from "preact-iso";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { setLang, T, useLang } from "../i18n";
 import { currentTheme, setTheme, type Theme } from "./motion";
 
 const NAV = [
@@ -30,6 +31,7 @@ export function Header() {
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const here = NAV.find(([href]) => isOn(path, href));
+  const lang = useLang();
 
   useEffect(() => setT(currentTheme()), []);
   useEffect(() => setOpen(false), [path]);
@@ -74,18 +76,21 @@ export function Header() {
           </a>
           {here && here[0] !== "/" && (
             <span class="here mono-s" key={path}>
-              § {here[1]}
+              § {T(here[1])}
             </span>
           )}
           <div class="header-tools">
+            <button class="lang-btn" onClick={() => setLang(lang === "hi" ? "en" : "hi")} lang={lang === "hi" ? "en" : "hi"} aria-label={lang === "hi" ? "Switch to English" : "हिंदी में देखें (switch to Hindi)"}>
+              {lang === "hi" ? "English" : "हिंदी"}
+            </button>
             <button class="theme-btn" onClick={toggle} aria-label={`${theme === "dark" ? "Night" : "Chart"} mode — switch to ${theme === "dark" ? "chart (light)" : "night (dark)"}`}>
               <span class="sq" aria-hidden="true" />
               <span class="word" key={theme}>
-                {theme === "dark" ? "Night" : "Chart"}
+                {theme === "dark" ? T("Night") : T("Chart")}
               </span>
             </button>
             <button ref={btn} class="menu-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="side-nav">
-              <span class="menu-word">{open ? "Close" : "Menu"}</span>
+              <span class="menu-word">{open ? T("Close") : T("Menu")}</span>
               <span class="menu-icon" aria-hidden="true">
                 <i />
                 <i />
@@ -99,7 +104,7 @@ export function Header() {
       <div class="nav-layer">
         <div class={`nav-backdrop ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
         <nav ref={panel} id="side-nav" class={`side-nav ${open ? "open" : ""}`} aria-label="Main" aria-hidden={!open} inert={!open}>
-          <p class="label red side-nav-label">Navigate</p>
+          <p class="label red side-nav-label">{T("Navigate")}</p>
           <ul>
             {NAV.map(([href, label, sub], i) => {
               const on = isOn(path, href);
@@ -107,14 +112,14 @@ export function Header() {
                 <li style={{ "--i": i }}>
                   <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
                     <span class="nav-n mono-s">{String(i + 1).padStart(2, "0")}</span>
-                    <span class="nav-t">{label}</span>
-                    <span class="nav-sub">{sub}</span>
+                    <span class="nav-t">{T(label)}</span>
+                    <span class="nav-sub">{T(sub)}</span>
                   </a>
                 </li>
               );
             })}
           </ul>
-          <p class="mono-s muted side-nav-foot">Conrad Challenge 2026–27 · Indus International School, Bengaluru</p>
+          <p class="mono-s muted side-nav-foot">{T("Conrad Challenge 2026–27 · Indus International School, Bengaluru")}</p>
         </nav>
       </div>
     </>

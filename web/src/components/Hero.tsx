@@ -6,6 +6,7 @@
 // type at every screen width. All motion is transform/opacity (compositor only).
 import { useLayoutEffect, useRef } from "preact/hooks";
 import { site } from "../content/site";
+import { T } from "../i18n";
 import { Arrow } from "./Footer";
 import { Plane } from "./Plane";
 import { Split } from "./Split";
@@ -116,25 +117,25 @@ export function Hero() {
       </div>
 
       <div class="wrap h-inner">
-        <p class="h-coords mono">INDUS INTERNATIONAL SCHOOL · BENGALURU · 12.97°N 77.59°E · {site.competition.toUpperCase()}</p>
+        <p class="h-coords mono">{T("INDUS INTERNATIONAL SCHOOL · BENGALURU")} · 12.97°N 77.59°E · {T(site.competition).toUpperCase()}</p>
         <h1 id="hero-title" class="display h-title">
           <span class="h-l1">
-            <Split text={site.heroTitle[0]} base={420} class="h-split1" />
+            <Split text={T(site.heroTitle[0])} base={420} class="h-split1" />
           </span>
           <span class="h-l2">
             <span class="block">
-              <Split text={site.heroTitle[1]} class="h-split2" />
+              <Split text={T(site.heroTitle[1])} class="h-split2" />
             </span>
           </span>
         </h1>
         <div class="h-foot">
-          <p class="h-lede">{site.heroLede}</p>
+          <p class="h-lede">{T(site.heroLede)}</p>
           <div class="h-actions">
             <a class="btn primary" href="/map">
-              Open the contrail map <Arrow />
+              {T("Open the contrail map")} <Arrow />
             </a>
             <a class="btn" href="/how-it-works">
-              How it works
+              {T("How it works")}
             </a>
           </div>
         </div>

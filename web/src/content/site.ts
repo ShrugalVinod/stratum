@@ -56,7 +56,7 @@ export const facts = [
 
 // Phase status: update as phases are accepted (source: docs/phase_reports).
 export type PhaseState = "done" | "current" | "upcoming";
-export const statusUpdated = "19 Oct 2026";
+export const statusUpdated = "23 Oct 2026";
 // logged = date of the progress-log entry that finished the phase (docs/progress.md)
 export const phases: { n: number; name: string; state: PhaseState; logged?: string }[] = [
   { n: 0, name: "Setup & pre-registration", state: "done", logged: "13 OCT" },
@@ -67,7 +67,7 @@ export const phases: { n: number; name: string; state: PhaseState; logged?: stri
   { n: 5, name: "Labels & matching", state: "done", logged: "18 OCT" },
   { n: 6, name: "Evaluation (H1)", state: "done", logged: "18 OCT" },
   { n: 7, name: "Correction & decisions", state: "done", logged: "19 OCT" },
-  { n: 8, name: "Final web app", state: "current" },
+  { n: 8, name: "Final web app", state: "done", logged: "20 OCT" },
 ];
 
 export const pipeline = [

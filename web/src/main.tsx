@@ -19,6 +19,7 @@ import { Footer } from "./components/Footer";
 import { Booth, boothRequested } from "./components/Booth";
 import { Header } from "./components/Header";
 import { startMotion } from "./components/motion";
+import { useLang } from "./i18n";
 import { Home } from "./pages/Home";
 
 // A page's code is fetched when it is first opened. If that fetch fails (a new version was
@@ -116,13 +117,15 @@ function Shell() {
 }
 
 export function App() {
+  // switching language redraws the whole site in the other language
+  const lang = useLang();
   return (
     <LocationProvider>
       <a class="skip-link" href="#main">
         Skip to content
       </a>
       <ScrollReset />
-      <Shell />
+      <Shell key={lang} />
     </LocationProvider>
   );
 }

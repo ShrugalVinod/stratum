@@ -228,3 +228,17 @@ test("Spot a contrail: a photo stays in the browser and an answer appears", asyn
   await expect(page.locator(".spot-out .live-card, .spot-out .live-err, .spot-form .live-err").first()).toBeVisible({ timeout: 60_000 });
   expect(posts, "the photo must never be sent anywhere").toHaveLength(0);
 });
+
+test("the site switches to Hindi, remembers it, and switches back to English", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /switch to Hindi/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "hi");
+  await expect(page.locator("h1").first()).toContainText("विमान हटाइए");
+  await page.reload();
+  await expect(page.locator("h1").first()).toContainText("विमान हटाइए"); // remembered
+  await page.getByRole("button", { name: "Switch to English" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("h1").first()).toContainText("Move the plane");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});

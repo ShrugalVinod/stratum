@@ -1,5 +1,6 @@
 // Animated explanatory figures (illustrations, not results).
 import { useEffect, useRef } from "preact/hooks";
+import { T } from "../i18n";
 import { reduced } from "./motion";
 
 const PLANE_PATHS = (
@@ -32,8 +33,8 @@ export function SpreadFigure() {
           </svg>
         </g>
       </svg>
-      <p class="mono-s fig1-label">ISSR · ~500 m thick</p>
-      <figcaption class="caption">Fig. 1 — A trail widening into cirrus inside the layer. Illustration.</figcaption>
+      <p class="mono-s fig1-label">ISSR · {T("~500 m thick")}</p>
+      <figcaption class="caption">{T("Fig. 1 — A trail widening into cirrus inside the layer. Illustration.")}</figcaption>
     </figure>
   );
 }
@@ -154,7 +155,7 @@ export function SideView() {
           </g>
         </svg>
       </div>
-      <figcaption class="caption">Fig. 2 — The layer is thin. A small change of level can take a plane out of it. Illustration.</figcaption>
+      <figcaption class="caption">{T("Fig. 2 — The layer is thin. A small change of level can take a plane out of it. Illustration.")}</figcaption>
     </figure>
   );
 }
