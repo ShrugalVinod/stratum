@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { LiveAircraft, Manifest, OutlookInfo } from "../data/contract";
-import { DIRS, deg, distBearing, R_EARTH, rad } from "../lib/geo";
+import { deg, dirName, distBearing, R_EARTH, rad } from "../lib/geo";
+import { T, tx } from "../i18n";
 import { layerUrl, loadGridBytes, loadLive, loadOutlook, OUTLOOK, outlookValue, spriteHour } from "../data/load";
 
 /** /live — "Which plane made that contrail?": commercial aircraft above you right now (adsb.lol,
@@ -44,6 +45,7 @@ const KIND_LABEL: Record<Kind, string> = {
   none: "No contrail expected",
   unknown: "No forecast here",
 };
+const pct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)} %`);
 
 /** Where the aircraft is now: its last position moved on along its track at its ground speed. */
 function deadReckon(a: LiveAircraft, now: number): [number, number] {
@@ -243,26 +245,26 @@ export function LiveSky() {
     <div class="page live">
       <PageHead
         label="Live sky · experimental"
-        note={ol ? `Forecast run ${runLabel} · physics only` : ol === null ? "Forecast not published yet" : "Loading forecast…"}
+        note={ol ? tx(`Forecast run ${runLabel} · physics only`, `पूर्वानुमान रन ${runLabel} · केवल भौतिकी`) : ol === null ? "Forecast not published yet" : "Loading forecast…"}
         lines={["Which plane", "made that contrail?"]}
         lede="See a white line across the sky? These are the airliners above you right now, and whether the air at their level lets a contrail last. Point, look up, and match the line to the plane."
       />
       <div class="wrap">
-        <div class="live-places rv" role="radiogroup" aria-label="Where are you?">
+        <div class="live-places rv" role="radiogroup" aria-label={T("Where are you?")}>
           {PLACES.map((p) => (
             <button role="radio" aria-checked={!mine && place.name === p.name} class={!mine && place.name === p.name ? "tool on" : "tool"} onClick={() => (setPlace(p), setMine(false), setSel(null))}>
-              {p.name}
+              {T(p.name)}
             </button>
           ))}
           <button class={mine ? "tool on" : "tool"} onClick={useMyLocation} aria-pressed={mine}>
-            ◎ Use my location
+            ◎ {T("Use my location")}
           </button>
         </div>
-        {err && <p class="mono-s live-err">{err}</p>}
+        {err && <p class="mono-s live-err">{T(err)}</p>}
 
         <div class="live-grid">
           <figure class="live-dome rv rv-fade">
-            <svg viewBox="-170 -170 340 340" role="img" aria-label={`Sky above ${place.name}: ${judged.length} airliners within ${MAX_KM} km`}>
+            <svg viewBox="-170 -170 340 340" role="img" aria-label={tx(`Sky above ${place.name}: ${judged.length} airliners within ${MAX_KM} km`, `${T(place.name)} के ऊपर का आसमान: ${MAX_KM} किमी के भीतर ${judged.length} यात्री विमान`)}>
               {[0, 30, 60].map((e) => (
                 <circle class="dome-ring" r={(150 * (90 - e)) / 90} />
               ))}
@@ -286,7 +288,7 @@ export function LiveSky() {
                 const back = rad((a.trk ?? 0) + 180);
                 const tail = a.kind === "lasting" ? 38 : a.kind === "short" ? 12 : 0;
                 return (
-                  <g class={`dome-ac k-${a.kind} ${sel === a.cs ? "sel" : ""}`} onClick={() => setSel(a.cs)} role="button" tabIndex={0} aria-label={`${a.cs}, ${KIND_LABEL[a.kind]}`} onKeyDown={(e) => e.key === "Enter" && setSel(a.cs)}>
+                  <g class={`dome-ac k-${a.kind} ${sel === a.cs ? "sel" : ""}`} onClick={() => setSel(a.cs)} role="button" tabIndex={0} aria-label={`${a.cs}, ${T(KIND_LABEL[a.kind])}`} onKeyDown={(e) => e.key === "Enter" && setSel(a.cs)}>
                     {tail > 0 && <line class="dome-trail" x1={x} y1={y} x2={x + tail * Math.sin(back)} y2={y - tail * Math.cos(back)} />}
                     <path d="M0,-6 L4.5,5 L0,2.5 L-4.5,5 Z" transform={`translate(${x},${y}) rotate(${a.trk ?? 0})`} />
                     {(labelled.has(a.cs) || sel === a.cs) && (
@@ -300,20 +302,23 @@ export function LiveSky() {
               <circle class="dome-you" r="3" />
             </svg>
             <figcaption class="mono-s muted">
-              Looking up from {place.name}: the centre is straight overhead, the rim the horizon. Contrail tails drawn where the forecast air holds one.
+              {tx(
+                <>Looking up from {place.name}: the centre is straight overhead, the rim the horizon. Contrail tails drawn where the forecast air holds one.</>,
+                <>{T(place.name)} से ऊपर देखते हुए: बीच का हिस्सा ठीक सिर के ऊपर है, किनारा क्षितिज। जहाँ पूर्वानुमान की हवा कंट्रेल टिकने देती है, वहाँ उसकी पूँछ बनी है।</>,
+              )}
             </figcaption>
           </figure>
 
           <div class="live-side">
-            <p class="label red">Right now</p>
+            <p class="label red">{T("Right now")}</p>
             <p class="live-count">
-              <b>{judged.length}</b> airliners within {MAX_KM} km
-              {age != null && <span class="mono-s muted"> · updated {age < 5 ? "just now" : `${age} s ago`}</span>}
+              <b>{judged.length}</b> {tx(`airliners within ${MAX_KM} km`, `यात्री विमान, ${MAX_KM} किमी के भीतर`)}
+              {age != null && <span class="mono-s muted"> · {tx(`updated ${age < 5 ? "just now" : `${age} s ago`}`, `अपडेट ${age < 5 ? "अभी-अभी" : `${age} सेकंड पहले`}`)}</span>}
             </p>
             <ul class="live-key">
               {(["lasting", "short", "none"] as const).map((k) => (
                 <li class={`k-${k}`}>
-                  <i /> {KIND_LABEL[k]} <span class="mono-s">{counts[k] ?? 0}</span>
+                  <i /> {T(KIND_LABEL[k])} <span class="mono-s">{counts[k] ?? 0}</span>
                 </li>
               ))}
             </ul>
@@ -321,19 +326,32 @@ export function LiveSky() {
             {chosen ? (
               <div class="live-card">
                 <p class="mono-s muted">
-                  {chosen.type ?? "Airliner"} · FL{String(Math.round(chosen.alt / 100)).padStart(3, "0")} · {Math.round(chosen.dist_km)} km away
+                  {chosen.type ?? T("Airliner")} · FL{String(Math.round(chosen.alt / 100)).padStart(3, "0")} · {tx(`${Math.round(chosen.dist_km)} km away`, `${Math.round(chosen.dist_km)} किमी दूर`)}
                 </p>
                 <p class="live-cs">{chosen.cs}</p>
                 <p>
-                  Look <b>{Math.round(chosen.el)}° up</b> toward the <b>{DIRS[Math.round(chosen.az / 45) % 8]}</b>.
+                  {tx(
+                    <>
+                      Look <b>{Math.round(chosen.el)}° up</b> toward the <b>{dirName(chosen.az)}</b>.
+                    </>,
+                    <>
+                      <b>{dirName(chosen.az)}</b> की ओर <b>{Math.round(chosen.el)}° ऊपर</b> देखिए।
+                    </>,
+                  )}
                 </p>
-                <p class={`live-verdict k-${chosen.kind}`}>{KIND_LABEL[chosen.kind]}</p>
+                <p class={`live-verdict k-${chosen.kind}`}>{T(KIND_LABEL[chosen.kind])}</p>
                 <p class="small muted">
-                  Forecast for this hour at FL{chosen.fl}: lasting-contrail conditions {chosen.b1 == null ? "—" : `${Math.round(chosen.b1 * 100)} %`} of the hour, any contrail{" "}
-                  {chosen.sac == null ? "—" : `${Math.round(chosen.sac * 100)} %`}.
+                  {tx(
+                    <>
+                      Forecast for this hour at FL{chosen.fl}: lasting-contrail conditions {pct(chosen.b1)} of the hour, any contrail {pct(chosen.sac)}.
+                    </>,
+                    <>
+                      इस घंटे FL{chosen.fl} पर पूर्वानुमान: टिकाऊ कंट्रेल की स्थिति घंटे के {pct(chosen.b1)} हिस्से में, कोई भी कंट्रेल {pct(chosen.sac)}।
+                    </>,
+                  )}
                 </p>
                 <button class="tool" onClick={() => setSel(null)}>
-                  Close
+                  {T("Close")}
                 </button>
               </div>
             ) : (
@@ -344,19 +362,19 @@ export function LiveSky() {
                       <i />
                       <span class="mono">{a.cs}</span>
                       <span class="mono-s muted">
-                        {Math.round(a.el)}° up · {DIRS[Math.round(a.az / 45) % 8]} · FL{String(Math.round(a.alt / 100)).padStart(3, "0")}
+                        {Math.round(a.el)}° {T("up")} · {dirName(a.az)} · FL{String(Math.round(a.alt / 100)).padStart(3, "0")}
                       </span>
                     </button>
                   </li>
                 ))}
-                {ac && !judged.length && <li class="muted">No airliner high enough above {place.name} at the moment.</li>}
-                {!ac && !err && <li class="muted">Listening for aircraft…</li>}
+                {ac && !judged.length && <li class="muted">{tx(`No airliner high enough above ${place.name} at the moment.`, `अभी ${T(place.name)} के ऊपर कोई यात्री विमान पर्याप्त ऊँचाई पर नहीं है।`)}</li>}
+                {!ac && !err && <li class="muted">{T("Listening for aircraft…")}</li>}
               </ol>
             )}
 
             {column.length > 0 && (
-              <div class="live-column" aria-label="Contrail conditions above you by flight level">
-                <p class="label">The air above {place.name}, this hour</p>
+              <div class="live-column" aria-label={T("Contrail conditions above you by flight level")}>
+                <p class="label">{tx(`The air above ${place.name}, this hour`, `इस घंटे ${T(place.name)} के ऊपर की हवा`)}</p>
                 {[...column].reverse().map((c) => (
                   <div class="lc-row">
                     <span class="mono-s">FL{c.fl}</span>
@@ -366,7 +384,7 @@ export function LiveSky() {
                     </span>
                   </div>
                 ))}
-                <p class="mono-s muted">orange: lasting contrails · teal: any contrail · share of the hour</p>
+                <p class="mono-s muted">{T("orange: lasting contrails · teal: any contrail · share of the hour")}</p>
               </div>
             )}
           </div>
@@ -374,19 +392,19 @@ export function LiveSky() {
 
         <section class="section live-india">
           <div class="sec-head rv">
-            <p class="label red">Over India now</p>
-            <span class="mono-s">{all.length} airliners above FL200 · positions moved on by speed and heading</span>
+            <p class="label red">{T("Over India now")}</p>
+            <span class="mono-s">{all.length} {T("airliners above FL200 · positions moved on by speed and heading")}</span>
           </div>
           <div class="live-grid">
             <figure class="adv-map live-map rv rv-fade">
-              <svg viewBox={`0 0 ${MW} ${MH.toFixed(0)}`} role="img" aria-label={`${all.length} airliners over India, ${nat.lasting ?? 0} in lasting-contrail air`}>
+              <svg viewBox={`0 0 ${MW} ${MH.toFixed(0)}`} role="img" aria-label={tx(`${all.length} airliners over India, ${nat.lasting ?? 0} in lasting-contrail air`, `भारत के ऊपर ${all.length} यात्री विमान, ${nat.lasting ?? 0} टिकाऊ-कंट्रेल वाली हवा में`)}>
                 <rect width={MW} height={MH} class="adv-sea" />
                 {shapes.map((sh) => (
                   <path d={sh.d} class={sh.india ? "adv-in" : "adv-land"} />
                 ))}
                 {humid.map((h) => (
                   <rect class="map-humid" x={h.x - MK * 0.25} y={h.y - MK * 0.25} width={MK * 0.5} height={MK * 0.5} style={{ opacity: 0.18 + 0.3 * h.v }}>
-                    <title>{`lasting-contrail air at ${h.lv}`}</title>
+                    <title>{tx(`lasting-contrail air at ${h.lv}`, `${h.lv} पर टिकाऊ-कंट्रेल वाली हवा`)}</title>
                   </rect>
                 ))}
                 {all
@@ -396,7 +414,7 @@ export function LiveSky() {
                     const [x, y] = mp(a.lon2, a.lat2);
                     return (
                       <g class={`map-ac k-${a.kind} ${sel === a.cs ? "sel" : ""}`} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${a.trk ?? 0})`} onClick={() => setSel(a.cs)}>
-                        <title>{`${a.cs} · FL${Math.round(a.alt / 100)} · ${KIND_LABEL[a.kind]}`}</title>
+                        <title>{`${a.cs} · FL${Math.round(a.alt / 100)} · ${T(KIND_LABEL[a.kind])}`}</title>
                         <path d="M0,-3.6 L2.6,3 L0,1.5 L-2.6,3 Z" />
                       </g>
                     );
@@ -404,38 +422,61 @@ export function LiveSky() {
                 <circle class="map-you" cx={mp(place.lon, place.lat)[0]} cy={mp(place.lon, place.lat)[1]} r={(MAX_KM / 111.2) * MK} />
               </svg>
               <figcaption class="mono-s muted">
-                Orange shading: air where contrails would last this hour, somewhere between FL320 and FL400 (forecast). A plane counts only if it is inside
-                that air at its own level. The circle is the sky dome above {place.name}.
+                {tx(
+                  <>
+                    Orange shading: air where contrails would last this hour, somewhere between FL320 and FL400 (forecast). A plane counts only if it is inside
+                    that air at its own level. The circle is the sky dome above {place.name}.
+                  </>,
+                  <>
+                    नारंगी छाया: वह हवा जहाँ इस घंटे कंट्रेल टिकेंगी, FL320 से FL400 के बीच कहीं (पूर्वानुमान)। कोई विमान तभी गिना जाता है जब वह अपने ही लेवल पर
+                    उस हवा के अंदर हो। गोला {T(place.name)} के ऊपर का आसमान है।
+                  </>,
+                )}
               </figcaption>
             </figure>
             <div class="live-side">
               <p class="live-count">
-                <b>{nat.lasting ?? 0}</b> of {all.length} airliners are flying through air where contrails last, right now
+                {tx(
+                  <>
+                    <b>{nat.lasting ?? 0}</b> of {all.length} airliners are flying through air where contrails last, right now
+                  </>,
+                  <>
+                    {all.length} में से <b>{nat.lasting ?? 0}</b> यात्री विमान अभी ऐसी हवा से गुज़र रहे हैं जहाँ कंट्रेल टिकती हैं
+                  </>,
+                )}
               </p>
               {refreshing && (typeof sources?.opensky !== "number" || (snapT != null && now - snapT > 6 * 60_000)) && (
-                <p class="mono-s live-err">Fetching a fresh picture of all of India, about a minute… (the page updates by itself)</p>
+                <p class="mono-s live-err">{T("Fetching a fresh picture of all of India, about a minute… (the page updates by itself)")}</p>
               )}
               <ul class="live-key">
                 {(["lasting", "short", "none"] as const).map((k) => (
                   <li class={`k-${k}`}>
-                    <i /> {KIND_LABEL[k]} <span class="mono-s">{nat[k] ?? 0}</span>
+                    <i /> {T(KIND_LABEL[k])} <span class="mono-s">{nat[k] ?? 0}</span>
                   </li>
                 ))}
               </ul>
               {!nat.lasting && all.length > 0 && (
                 <p class="small muted">
-                  Right now the air where contrails last sits {humid.length ? "mostly above the levels airliners fly at, or away from the routes" : "nowhere over India at airliner levels"}: over India it is often too
-                  warm below FL360 for a contrail to form at all. Check again at night or in winter, when it is colder.
+                  {tx(
+                    <>
+                      Right now the air where contrails last sits {humid.length ? "mostly above the levels airliners fly at, or away from the routes" : "nowhere over India at airliner levels"}: over India it
+                      is often too warm below FL360 for a contrail to form at all. Check again at night or in winter, when it is colder.
+                    </>,
+                    <>
+                      अभी कंट्रेल टिकने वाली हवा {humid.length ? "ज़्यादातर उन लेवल से ऊपर है जिन पर यात्री विमान उड़ते हैं, या रूट से दूर है" : "भारत के ऊपर यात्री विमानों के लेवल पर कहीं नहीं है"}। भारत के ऊपर
+                      FL360 से नीचे अक्सर इतनी गर्मी होती है कि कंट्रेल बनती ही नहीं। रात में या सर्दियों में, जब ठंड ज़्यादा हो, फिर देखिए।
+                    </>,
+                  )}
                 </p>
               )}
               {hotspots.length > 0 && (
                 <>
-                  <p class="label">Contrail hotspots now</p>
+                  <p class="label">{T("Contrail hotspots now")}</p>
                   <ol class="live-hot">
                     {hotspots.map(([n, k]) => (
                       <li>
-                        <span>near {n}</span>
-                        <span class="mono">{k} airliners</span>
+                        <span>{tx(`near ${n}`, `${T(n)} के पास`)}</span>
+                        <span class="mono">{tx(`${k} airliners`, `${k} विमान`)}</span>
                       </li>
                     ))}
                   </ol>
@@ -443,16 +484,17 @@ export function LiveSky() {
               )}
               {chosen && (
                 <p class="live-pick">
-                  <b class="mono">{chosen.cs}</b> {chosen.type ?? ""} · FL{String(Math.round(chosen.alt / 100)).padStart(3, "0")} · {Math.round(chosen.dist_km)} km from {place.name}
+                  <b class="mono">{chosen.cs}</b> {chosen.type ?? ""} · FL{String(Math.round(chosen.alt / 100)).padStart(3, "0")} ·{" "}
+                  {tx(`${Math.round(chosen.dist_km)} km from ${place.name}`, `${T(place.name)} से ${Math.round(chosen.dist_km)} किमी`)}
                   <br />
-                  <span class={`live-verdict k-${chosen.kind}`}>{KIND_LABEL[chosen.kind]}</span>
+                  <span class={`live-verdict k-${chosen.kind}`}>{T(KIND_LABEL[chosen.kind])}</span>
                 </p>
               )}
               {sources && (
                 <p class="mono-s muted">
-                  Sources: OpenSky snapshot {String(sources.opensky)}
-                  {snapT ? ` (taken ${Math.max(0, Math.round((now - snapT) / 60_000))} min ago)` : ""} · adsb.lol live {String(sources.adsb_lol)} (merged by
-                  callsign)
+                  {T("Sources")}: {T("OpenSky snapshot")} {String(sources.opensky)}
+                  {snapT ? tx(` (taken ${Math.max(0, Math.round((now - snapT) / 60_000))} min ago)`, ` (${Math.max(0, Math.round((now - snapT) / 60_000))} मिनट पहले लिया)`) : ""} · adsb.lol{" "}
+                  {T("live")} {String(sources.adsb_lol)} ({T("merged by callsign")})
                 </p>
               )}
             </div>
@@ -460,19 +502,31 @@ export function LiveSky() {
         </section>
 
         <section class="section live-more rv">
-          <p class="label red">Tomorrow</p>
+          <p class="label red">{T("Tomorrow")}</p>
           <p class="lede">
-            The same forecast covers {tomorrow ? "tomorrow" : "the next day"} hour by hour.{" "}
-            <a href={`/map?build=outlook${tomorrow ? `&date=${tomorrow}` : ""}`}>Open it on the map</a>, or read the{" "}
-            <a href="/advisory">contrail advisories</a> written from it.
+            {tx(
+              <>
+                The same forecast covers {tomorrow ? "tomorrow" : "the next day"} hour by hour.{" "}
+                <a href={`/map?build=outlook${tomorrow ? `&date=${tomorrow}` : ""}`}>Open it on the map</a>, or read the <a href="/advisory">contrail advisories</a>{" "}
+                written from it.
+              </>,
+              <>
+                यही पूर्वानुमान {tomorrow ? "कल" : "अगले दिन"} को घंटे-दर-घंटे बताता है।{" "}
+                <a href={`/map?build=outlook${tomorrow ? `&date=${tomorrow}` : ""}`}>इसे मानचित्र पर खोलिए</a>, या इसी से लिखी गई{" "}
+                <a href="/advisory">कंट्रेल चेतावनियाँ</a> पढ़िए।
+              </>,
+            )}
           </p>
           <p class="small muted">
-            Experimental and physics only: the forecast humidity goes through the same Schmidt–Appleman and ice-supersaturation test as our B1 baseline.
-            STRATUM's learned correction is not applied, because the open forecast data lack the cloud fields it needs. Not for operational use.
+            {T(
+              "Experimental and physics only: the forecast humidity goes through the same Schmidt–Appleman and ice-supersaturation test as our B1 baseline. STRATUM's learned correction is not applied, because the open forecast data lack the cloud fields it needs. Not for operational use.",
+            )}
           </p>
           <p class="mono-s muted">
-            {ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)"} · Live aircraft: The OpenSky Network (every 5 minutes, positions moved on by speed and heading)
-            and adsb.lol (ODbL, live); airline flights above FL200 only; no aircraft addresses are kept.
+            {T(ol?.info.credit ?? "Forecast: ECMWF open data (CC BY 4.0)")} ·{" "}
+            {T(
+              "Live aircraft: The OpenSky Network (every 5 minutes, positions moved on by speed and heading) and adsb.lol (ODbL, live); airline flights above FL200 only; no aircraft addresses are kept.",
+            )}
           </p>
         </section>
       </div>

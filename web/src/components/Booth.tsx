@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
+import { T } from "../i18n";
 
 /** Booth mode for the Summit expo (build prompt §8.2): open the site with ?booth=1 and it tours
  *  map → the busiest alert day's top avoidance alert and its card → results → methods → home,
@@ -54,7 +55,7 @@ export function Booth() {
 
   return (
     <div class="booth-chip mono-s" role="status">
-      {paused ? "Tour paused — it resumes after a minute without touching" : `Tour ${i + 1}/${STEPS.length}: ${STEPS[i].label}`}
+      {paused ? T("Tour paused — it resumes after a minute without touching") : `${T("Tour")} ${i + 1}/${STEPS.length}: ${T(STEPS[i].label)}`}
     </div>
   );
 }

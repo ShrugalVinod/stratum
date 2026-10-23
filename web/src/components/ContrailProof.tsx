@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ContrailEvent } from "../data/contract";
 import { contrailImg } from "../data/load";
+import { T, tx } from "../i18n";
 
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hhmm = (iso: string) => iso.slice(11, 16);
@@ -44,23 +45,27 @@ export function ContrailProof({ ev, day, detector, credit, onClose }: {
       <div class="proof" role="dialog" aria-modal="true" aria-labelledby="proof-title" tabIndex={-1} ref={box}>
         <div class="proof-head">
           <div>
-            <p class="label red">Satellite proof</p>
+            <p class="label red">{T("Satellite proof")}</p>
             <h2 id="proof-title" class="proof-title">
-              {who || "A commercial flight"}
+              {who || T("A commercial flight")}
             </h2>
             <p class="mono-s muted">
-              {ev.fl ? `FL${ev.fl} · ` : ""}flew {hhmm(ev.t_start)}–{hhmm(ev.t_end)} UTC · {ev.segments} min of contrail seen
+              {ev.fl ? `FL${ev.fl} · ` : ""}
+              {tx(
+                `flew ${hhmm(ev.t_start)}–${hhmm(ev.t_end)} UTC · ${ev.segments} min of contrail seen`,
+                `उड़ान ${hhmm(ev.t_start)}–${hhmm(ev.t_end)} UTC · ${ev.segments} मिनट की कंट्रेल दिखी`,
+              )}
             </p>
           </div>
-          <button class="tool" onClick={onClose} aria-label="Close the satellite proof">
-            Close ✕
+          <button class="tool" onClick={onClose} aria-label={T("Close the satellite proof")}>
+            {T("Close")} ✕
           </button>
         </div>
 
         <div class="proof-body">
           <figure class="proof-fig">
             <div class="proof-img" style={{ aspectRatio: `${s.w} / ${s.h}` }}>
-              <img src={contrailImg(day, s.img)} width={s.w} height={s.h} alt={`Meteosat-9 at ${hhmm(s.t)} UTC around the contrail`} />
+              <img src={contrailImg(day, s.img)} width={s.w} height={s.h} alt={tx(`Meteosat-9 at ${hhmm(s.t)} UTC around the contrail`, `${hhmm(s.t)} UTC पर कंट्रेल के आसपास Meteosat-9`)} />
               <svg viewBox={`0 0 ${s.w} ${s.h}`} aria-hidden="true" preserveAspectRatio="none">
                 {s.track.map((l) => (
                   <polyline class="pr-track" points={pts(l)} />
@@ -74,44 +79,46 @@ export function ContrailProof({ ev, day, detector, credit, onClose }: {
               </svg>
             </div>
             <figcaption class="mono-s">
-              {hhmm(s.t)} UTC · contrail ≈ {Math.round(s.age_min)} min old
-              {s.match_px != null ? ` · predicted vs detected: ${s.match_px.toFixed(1)} px apart` : ""}
-              {s.vza_deg != null ? ` · viewing angle ${Math.round(s.vza_deg)}°` : ""}
+              {hhmm(s.t)} UTC · {tx(`contrail ≈ ${Math.round(s.age_min)} min old`, `कंट्रेल ≈ ${Math.round(s.age_min)} मिनट पुरानी`)}
+              {s.match_px != null ? tx(` · predicted vs detected: ${s.match_px.toFixed(1)} px apart`, ` · अनुमानित बनाम खोजी गई: ${s.match_px.toFixed(1)} px दूर`) : ""}
+              {s.vza_deg != null ? tx(` · viewing angle ${Math.round(s.vza_deg)}°`, ` · देखने का कोण ${Math.round(s.vza_deg)}°`) : ""}
             </figcaption>
           </figure>
 
           <div class="proof-side">
-            <div class="proof-steps" role="group" aria-label="Satellite images">
+            <div class="proof-steps" role="group" aria-label={T("Satellite images")}>
               {ev.slots.map((x, i) => (
                 <button class={i === k ? "on" : ""} aria-pressed={i === k} onClick={() => (setPlay(false), setK(i))}>
                   {hhmm(x.t)}
-                  <span>{Math.round(x.age_min)} min</span>
+                  <span>
+                    {Math.round(x.age_min)} {T("min")}
+                  </span>
                 </button>
               ))}
             </div>
             {ev.slots.length > 1 && (
               <button class="tool" onClick={() => setPlay(!play)}>
-                {play ? "❚❚ Pause" : "▶ Play the sequence"}
+                {play ? `❚❚ ${T("Pause")}` : `▶ ${T("Play the sequence")}`}
               </button>
             )}
             <ul class="proof-key">
               <li>
-                <i class="k-track" /> Where the aircraft flew
+                <i class="k-track" /> {T("Where the aircraft flew")}
               </li>
               <li>
-                <i class="k-drift" /> Where its contrail should be: drifted with the wind (ERA5), corrected for the satellite's viewing angle
+                <i class="k-drift" /> {T("Where its contrail should be: drifted with the wind (ERA5), corrected for the satellite's viewing angle")}
               </li>
               <li>
-                <i class="k-det" /> The line our detector found ({detector})
+                <i class="k-det" /> {T("The line our detector found")} ({detector})
               </li>
               <li>
-                <i class="k-other" /> Other lines it found nearby
+                <i class="k-other" /> {T("Other lines it found nearby")}
               </li>
             </ul>
             <p class="small muted">
-              A flight counts as "seen" only if its predicted contrail lies on a detected line in at least two images (pre-registered rule). These
-              labels come from the learned detector, a disclosed second analysis (D-005); the logged results use the original detector. Ash false
-              colour: contrails and thin ice cloud look dark blue to black.
+              {T(
+                'A flight counts as "seen" only if its predicted contrail lies on a detected line in at least two images (pre-registered rule). These labels come from the learned detector, a disclosed second analysis (D-005); the logged results use the original detector. Ash false colour: contrails and thin ice cloud look dark blue to black.',
+              )}
             </p>
             <p class="mono-s muted">{credit}</p>
           </div>

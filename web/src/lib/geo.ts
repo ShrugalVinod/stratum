@@ -1,10 +1,11 @@
 // Small great-circle helpers shared by the live pages (Live sky, Spot a contrail).
+import { T } from "../i18n";
 
 export const R_EARTH = 6371;
 export const rad = (d: number) => (d * Math.PI) / 180;
 export const deg = (r: number) => (r * 180) / Math.PI;
 export const DIRS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
-export const dirName = (bearing: number) => DIRS[Math.round(bearing / 45) % 8];
+export const dirName = (bearing: number) => T(DIRS[Math.round(bearing / 45) % 8]);
 
 /** Ground distance (km) and bearing (° from north) from a to b. */
 export function distBearing(lat1: number, lon1: number, lat2: number, lon2: number): [number, number] {

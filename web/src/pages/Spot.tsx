@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Manifest, OutlookInfo } from "../data/contract";
 import { loadLive, loadOutlook, outlookValue } from "../data/load";
+import { T, tx } from "../i18n";
 import { readExif } from "../lib/exif";
 import { dirName } from "../lib/geo";
 import { type Candidate, candidates, type Look } from "../lib/spot";
@@ -62,14 +63,14 @@ export function Spot() {
     if (info.taken) {
       const m = Math.round((Date.now() - info.taken.getTime()) / 60_000);
       setAgo(Math.max(0, m));
-      notes.push(`taken ${hm(info.taken.getTime())} IST`);
-    } else notes.push("no time saved in the photo: set it below");
+      notes.push(tx(`taken ${hm(info.taken.getTime())} IST`, `ली गई ${hm(info.taken.getTime())} IST`));
+    } else notes.push(T("no time saved in the photo: set it below"));
     if (info.lat != null && info.lon != null) {
       setLat(Math.round(info.lat * 100) / 100);
       setLon(Math.round(info.lon * 100) / 100);
       setPlaceName("where the photo was taken");
-      notes.push("location read from the photo");
-    } else notes.push("no location in the photo: pick a place");
+      notes.push(T("location read from the photo"));
+    } else notes.push(T("no location in the photo: pick a place"));
     setExifNote(notes.join(" · "));
   };
 
@@ -80,13 +81,13 @@ export function Spot() {
         setLon(Math.round(p.coords.longitude * 100) / 100);
         setPlaceName("your location");
       },
-      () => setErr("Location was not shared. Pick a city instead."),
+      () => setErr(T("Location was not shared. Pick a city instead.")),
       { maximumAge: 600_000, timeout: 10_000 },
     );
 
   const find = async () => {
-    if (lat == null || lon == null) return setErr("Pick where you were first.");
-    if (ago > MAX_AGE_MIN) return setErr(`This photo is ${ago} minutes old. We only keep the live sky, so this works for photos from the last two hours.`);
+    if (lat == null || lon == null) return setErr(T("Pick where you were first."));
+    if (ago > MAX_AGE_MIN) return setErr(tx(`This photo is ${ago} minutes old. We only keep the live sky, so this works for photos from the last two hours.`, `यह फ़ोटो ${ago} मिनट पुरानी है। हम केवल लाइव आसमान रखते हैं, इसलिए यह पिछले दो घंटों की फ़ोटो के लिए ही काम करता है।`));
     setBusy(true);
     setErr(null);
     try {
@@ -113,7 +114,7 @@ export function Spot() {
       // on a phone the answer is below the form: bring it into view
       if (innerWidth < 900) requestAnimationFrame(() => document.querySelector(".spot-out")?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch {
-      setErr("The live aircraft feed cannot be reached right now. Try again in a minute.");
+      setErr(T("The live aircraft feed cannot be reached right now. Try again in a minute."));
     } finally {
       setBusy(false);
     }
@@ -144,37 +145,37 @@ export function Spot() {
         <div class="spot-form">
           <label class="spot-drop">
             <input type="file" accept="image/*" onChange={(e) => onFile((e.target as HTMLInputElement).files?.[0])} />
-            {photo ? <img src={photo} alt="Your contrail photo (only on this device)" /> : <span>+ Choose or take a photo</span>}
+            {photo ? <img src={photo} alt={T("Your contrail photo (only on this device)")} /> : <span>+ {T("Choose or take a photo")}</span>}
           </label>
           {exifNote && <p class="mono-s muted">{exifNote}</p>}
 
           <fieldset>
-            <legend class="label">Where were you?</legend>
+            <legend class="label">{T("Where were you?")}</legend>
             <div class="live-places">
               {PLACES.map((p) => (
                 <button class={placeName === p.name ? "tool on" : "tool"} onClick={() => (setLat(p.lat), setLon(p.lon), setPlaceName(p.name))}>
-                  {p.name}
+                  {T(p.name)}
                 </button>
               ))}
               <button class={placeName === "your location" ? "tool on" : "tool"} onClick={myLocation}>
-                ◎ My location
+                ◎ {T("My location")}
               </button>
             </div>
-            {lat != null && placeName && <p class="mono-s muted">Using {placeName}</p>}
+            {lat != null && placeName && <p class="mono-s muted">{tx(`Using ${placeName}`, `${T(placeName)} का इस्तेमाल`)}</p>}
           </fieldset>
 
           <fieldset>
-            <legend class="label">When?</legend>
-            <input type="range" min={0} max={MAX_AGE_MIN} step={1} value={ago} aria-label="Minutes ago" onInput={(e) => setAgo(Number((e.target as HTMLInputElement).value))} />
-            <p class="mono-s">{ago === 0 ? "just now" : `${ago} min ago (${hm(Date.now() - ago * 60_000)} IST)`}</p>
+            <legend class="label">{T("When?")}</legend>
+            <input type="range" min={0} max={MAX_AGE_MIN} step={1} value={ago} aria-label={T("Minutes ago")} onInput={(e) => setAgo(Number((e.target as HTMLInputElement).value))} />
+            <p class="mono-s">{ago === 0 ? T("just now") : tx(`${ago} min ago (${hm(Date.now() - ago * 60_000)} IST)`, `${ago} मिनट पहले (${hm(Date.now() - ago * 60_000)} IST)`)}</p>
           </fieldset>
 
           <fieldset>
-            <legend class="label">Which way were you looking? (optional)</legend>
+            <legend class="label">{T("Which way were you looking? (optional)")}</legend>
             <div class="spot-dirs">
               {BEARINGS.map(([n, b]) => (
                 <button class={look.bearing === b ? "tool on" : "tool"} aria-pressed={look.bearing === b} onClick={() => setLook({ ...look, bearing: b })}>
-                  {n}
+                  {n === "Anywhere" ? T(n) : n}
                 </button>
               ))}
             </div>
@@ -182,7 +183,7 @@ export function Spot() {
               <div class="spot-dirs">
                 {HEIGHTS.map(([h, t]) => (
                   <button class={look.height === h ? "tool on" : "tool"} aria-pressed={look.height === h} onClick={() => setLook({ ...look, height: h })}>
-                    {t}
+                    {T(t)}
                   </button>
                 ))}
               </div>
@@ -190,48 +191,67 @@ export function Spot() {
           </fieldset>
 
           <button class="gm-big" onClick={find} disabled={busy || lat == null}>
-            {busy ? "Searching the sky…" : "Find the plane"}
+            {busy ? T("Searching the sky…") : T("Find the plane")}
           </button>
           {err && <p class="mono-s live-err">{err}</p>}
           <p class="small muted">
-            Your photo is shown only in this browser tab and is never uploaded. Its time and place are read here, on your device. To fetch the aircraft nearby,
-            our server receives your location rounded to about 50 km.
+            {T(
+              "Your photo is shown only in this browser tab and is never uploaded. Its time and place are read here, on your device. To fetch the aircraft nearby, our server receives your location rounded to about 50 km.",
+            )}
           </p>
         </div>
 
         <div class="spot-out" aria-live="polite">
-          {!res && <p class="muted">The answer appears here.</p>}
+          {!res && <p class="muted">{T("The answer appears here.")}</p>}
           {res && !top && (
             <div class="live-card">
-              <p class="live-cs">No match</p>
+              <p class="live-cs">{T("No match")}</p>
               <p>
-                No airliner we can see crossed that part of your sky in the hour before {hm(res.photoT)} IST. The contrail may be older than an hour, may have drifted
-                far with the wind, or the plane may already have left our live data (landed, or flown out of the region).
+                {tx(
+                  <>
+                    No airliner we can see crossed that part of your sky in the hour before {hm(res.photoT)} IST. The contrail may be older than an hour, may have
+                    drifted far with the wind, or the plane may already have left our live data (landed, or flown out of the region).
+                  </>,
+                  <>
+                    {hm(res.photoT)} IST से पहले के घंटे में हमें दिखने वाला कोई यात्री विमान आपके आसमान के उस हिस्से से नहीं गुज़रा। हो सकता है कंट्रेल एक घंटे से
+                    पुरानी हो, हवा के साथ दूर बह गई हो, या विमान हमारे लाइव डेटा से निकल चुका हो (उतर गया, या क्षेत्र से बाहर उड़ गया)।
+                  </>,
+                )}
               </p>
             </div>
           )}
           {res && top && (
             <>
               <div class="live-card spot-best">
-                <p class="label red">Most likely</p>
+                <p class="label red">{T("Most likely")}</p>
                 <p class="live-cs">{top.cs}</p>
                 <p class="mono-s muted">
-                  {top.type ?? "Airliner"} · FL{String(Math.round(top.alt / 100)).padStart(3, "0")}
+                  {top.type ?? T("Airliner")} · FL{String(Math.round(top.alt / 100)).padStart(3, "0")}
                 </p>
                 <p>
-                  It crossed your sky <b>{Math.round(top.ageMin)} min</b> before the photo, about <b>{Math.round(top.distKm)} km</b> to the <b>{dirName(top.bearing)}</b>
-                  {top.distKm < 8 ? " (nearly overhead)" : ""}, and {KIND_TEXT[res.kinds[top.cs] ?? "unknown"]}.
+                  {tx(
+                    <>
+                      It crossed your sky <b>{Math.round(top.ageMin)} min</b> before the photo, about <b>{Math.round(top.distKm)} km</b> to the{" "}
+                      <b>{dirName(top.bearing)}</b>
+                      {top.distKm < 8 ? " (nearly overhead)" : ""}, and {KIND_TEXT[res.kinds[top.cs] ?? "unknown"]}.
+                    </>,
+                    <>
+                      यह फ़ोटो से <b>{Math.round(top.ageMin)} मिनट</b> पहले आपके आसमान से गुज़रा, लगभग <b>{Math.round(top.distKm)} किमी</b>{" "}
+                      <b>{dirName(top.bearing)}</b> में{top.distKm < 8 ? " (लगभग सिर के ऊपर)" : ""}, और {T(KIND_TEXT[res.kinds[top.cs] ?? "unknown"])}।
+                    </>,
+                  )}
                 </p>
                 {res.kinds[top.cs] === "none" && (
                   <p class="small">
-                    Your photo says otherwise. Forecasts often miss thin layers of ice-saturated air at cruise height, and that gap is exactly what STRATUM
-                    learns to fill from satellite images.
+                    {T(
+                      "Your photo says otherwise. Forecasts often miss thin layers of ice-saturated air at cruise height, and that gap is exactly what STRATUM learns to fill from satellite images.",
+                    )}
                   </p>
                 )}
               </div>
               {ranked.length > 1 && (
                 <>
-                  <p class="label">Also possible</p>
+                  <p class="label">{T("Also possible")}</p>
                   <ol class="live-list">
                     {ranked.slice(1).map((c) => (
                       <li>
@@ -239,7 +259,7 @@ export function Spot() {
                           <i />
                           <span class="mono">{c.cs}</span>
                           <span class="mono-s muted">
-                            {Math.round(c.ageMin)} min before · {Math.round(c.distKm)} km {dirName(c.bearing)} · FL{String(Math.round(c.alt / 100)).padStart(3, "0")}
+                            {tx(`${Math.round(c.ageMin)} min before`, `${Math.round(c.ageMin)} मिनट पहले`)} · {Math.round(c.distKm)} {tx("km", "किमी")} {dirName(c.bearing)} · FL{String(Math.round(c.alt / 100)).padStart(3, "0")}
                           </span>
                         </span>
                       </li>
@@ -248,8 +268,9 @@ export function Spot() {
                 </>
               )}
               <p class="small muted">
-                How: each aircraft is flown backwards along its current heading at its current speed (good for cruising flights over an hour; a plane that turned
-                will be missed). Live aircraft: The OpenSky Network, adsb.lol (ODbL). Forecast: ECMWF open data.
+                {T(
+                  "How: each aircraft is flown backwards along its current heading at its current speed (good for cruising flights over an hour; a plane that turned will be missed). Live aircraft: The OpenSky Network, adsb.lol (ODbL). Forecast: ECMWF open data.",
+                )}
               </p>
             </>
           )}

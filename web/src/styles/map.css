@@ -1524,6 +1524,11 @@
   min-width: 0;
   padding: 0 4px;
 }
+/* the decision-layer switch keeps each label on one line (Hindi labels are wider) */
+.filter-row .seg-ctl button {
+  white-space: nowrap;
+  padding: 0 10px;
+}
 .filter-row {
   flex-wrap: wrap;
 }

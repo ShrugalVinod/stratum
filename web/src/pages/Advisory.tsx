@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Advisory as Adv, Manifest, OutlookInfo } from "../data/contract";
 import { loadOutlook } from "../data/load";
+import { T, tx } from "../i18n";
 
 /** /advisory — contrail advisories in NOTAM style, written every morning from the ECMWF
  *  open-data forecast (stratum/export/outlook.py): boxes where lasting contrails are likely,
@@ -22,10 +23,16 @@ function ringPath(r: number[][]): string {
 const where = (a: Adv) => {
   const m = /\(([^)]+)\)/.exec(a.text);
   const t = (m ? m[1] : a.near).toLowerCase().replace(/ km /, " km ");
-  return t.replace(/\b(goa|pune|delhi|mumbai|kolkata|chennai|bengaluru|hyderabad|ahmedabad|nagpur|bhopal|lucknow|jaipur|varanasi|patna|bhubaneswar|visakhapatnam|kochi|thiruvananthapuram|guwahati|srinagar|amritsar|raipur|ranchi|indore|udaipur|port blair|arabian sea|bay of bengal)\b/g, (w) => w.replace(/\b\w/g, (c) => c.toUpperCase())).replace("Of Bengal", "of Bengal");
+  const en = t.replace(/\b(goa|pune|delhi|mumbai|kolkata|chennai|bengaluru|hyderabad|ahmedabad|nagpur|bhopal|lucknow|jaipur|varanasi|patna|bhubaneswar|visakhapatnam|kochi|thiruvananthapuram|guwahati|srinagar|amritsar|raipur|ranchi|indore|udaipur|port blair|arabian sea|bay of bengal)\b/g, (w) => w.replace(/\b\w/g, (c) => c.toUpperCase())).replace("Of Bengal", "of Bengal");
+  // Hindi: "near Goa" → "गोवा के पास", "over the Arabian Sea" → "अरब सागर के ऊपर", "450 km from Goa" → "गोवा से 450 किमी"
+  const near = /^near (.+)$/.exec(en);
+  const over = /^over the (.+)$/.exec(en);
+  const from = /^(\d+) km from (.+)$/.exec(en);
+  const hi = near ? `${T(near[1])} के पास` : over ? `${T(over[1])} के ऊपर` : from ? `${T(from[2])} से ${from[1]} किमी` : en;
+  return tx(en, hi);
 };
 const win = (a: Adv) => `${a.valid_from.slice(11, 16)}–${a.valid_to.slice(11, 16)} UTC`;
-const dayOf = (iso: string) => new Date(iso.slice(0, 10) + "T00:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const dayOf = (iso: string) => new Date(iso.slice(0, 10) + "T00:00:00Z").toLocaleDateString(tx("en-GB", "hi-IN"), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const ist = (iso: string) => {
   const d = new Date(new Date(iso).getTime() + 5.5 * 3_600_000);
   return `${String(d.getUTCHours()).padStart(2, "0")}${String(d.getUTCMinutes()).padStart(2, "0")} IST`;
@@ -66,15 +73,24 @@ export function Advisory() {
     <div class="page advisory">
       <PageHead
         label="Contrail advisories · experimental"
-        note={ol ? `Issued ${issued} · forecast run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC` : ol === null ? "Not published yet" : "Loading…"}
+        note={
+          ol
+            ? tx(
+                `Issued ${issued} · forecast run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC`,
+                `जारी ${issued} · पूर्वानुमान रन ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC`,
+              )
+            : ol === null
+              ? "Not published yet"
+              : "Loading…"
+        }
         lines={["Notice to", "contrail makers."]}
         lede="Every morning STRATUM reads the new weather forecast and writes notices in the style pilots know: where the air at cruise level is cold and humid enough for contrails to last, at which levels, and which nearby levels are drier."
       />
       <div class="wrap">
-        {ol === null && <p class="muted mono">No advisories have been published yet. They are written daily at about 09:30 UTC.</p>}
+        {ol === null && <p class="muted mono">{T("No advisories have been published yet. They are written daily at about 09:30 UTC.")}</p>}
         {ol && (
           <>
-            <div class="adv-days rv" role="tablist" aria-label="Day">
+            <div class="adv-days rv" role="tablist" aria-label={T("Day")}>
               {ol.info.days.map((d) => (
                 <button role="tab" aria-selected={day === d} class={day === d ? "tool on" : "tool"} onClick={() => (setDay(d), setSel(null))}>
                   {dayOf(d)}
@@ -85,7 +101,7 @@ export function Advisory() {
 
             <div class="adv-grid">
               <figure class="adv-map rv rv-fade">
-                <svg viewBox={`0 0 ${W} ${H.toFixed(0)}`} role="img" aria-label={`Advisory areas on ${day}`}>
+                <svg viewBox={`0 0 ${W} ${H.toFixed(0)}`} role="img" aria-label={tx(`Advisory areas on ${day}`, `${day} के चेतावनी क्षेत्र`)}>
                   <rect width={W} height={H} class="adv-sea" />
                   {shapes.map((s) => (
                     <path d={s.d} class={s.india ? "adv-in" : "adv-land"} />
@@ -108,7 +124,7 @@ export function Advisory() {
                     );
                   })}
                 </svg>
-                <figcaption class="mono-s muted">Boxes: areas with an advisory on this day (darker = more of the box affected). Click one to read it.</figcaption>
+                <figcaption class="mono-s muted">{T("Boxes: areas with an advisory on this day (darker = more of the box affected). Click one to read it.")}</figcaption>
               </figure>
 
               <div class="adv-list">
@@ -129,27 +145,41 @@ export function Advisory() {
                         </button>
                       </li>
                     ))}
-                    {!list.length && <li class="muted">No advisory for this day: the forecast has no large area of lasting-contrail air at FL300–FL400.</li>}
+                    {!list.length && <li class="muted">{T("No advisory for this day: the forecast has no large area of lasting-contrail air at FL300–FL400.")}</li>}
                   </ol>
                 )}
               </div>
             </div>
 
             <section class="section adv-how rv">
-              <p class="label red">How these are written</p>
+              <p class="label red">{T("How these are written")}</p>
               <p>
-                The forecast humidity and temperature (ECMWF's open data, the latest 00 UTC run) go through the same test as our physics baseline B1:
-                does a contrail form (Schmidt–Appleman), and is the air ice-supersaturated so it lasts? The domain is cut into 3° boxes; a box gets a
-                notice for a 6-hour window when at least {Math.round(0.4 * 100)} % of it has lasting-contrail air for at least half of some hour, at a level
-                between FL300 and FL400. Neighbouring boxes with the same levels are joined, at most five notices per window. "Drier levels nearby" are
-                the flight levels with the least lasting-contrail air inside the box.
+                {tx(
+                  <>
+                    The forecast humidity and temperature (ECMWF's open data, the latest 00 UTC run) go through the same test as our physics baseline B1:
+                    does a contrail form (Schmidt–Appleman), and is the air ice-supersaturated so it lasts? The domain is cut into 3° boxes; a box gets a
+                    notice for a 6-hour window when at least {Math.round(0.4 * 100)} % of it has lasting-contrail air for at least half of some hour, at a
+                    level between FL300 and FL400. Neighbouring boxes with the same levels are joined, at most five notices per window. "Drier levels nearby"
+                    are the flight levels with the least lasting-contrail air inside the box.
+                  </>,
+                  <>
+                    पूर्वानुमान की नमी और तापमान (ECMWF का खुला डेटा, नवीनतम 00 UTC रन) उसी परीक्षण से गुज़रते हैं जो हमारे भौतिकी बेसलाइन B1 में है: क्या
+                    कंट्रेल बनती है (श्मिट–ऐपलमैन), और क्या हवा बर्फ़-अतिसंतृप्त है ताकि वह टिके? क्षेत्र को 3° के खानों में बाँटा जाता है; किसी खाने को 6
+                    घंटे की अवधि के लिए सूचना तब मिलती है जब उसके कम से कम {Math.round(0.4 * 100)} % हिस्से में किसी घंटे के कम से कम आधे समय टिकाऊ-कंट्रेल
+                    वाली हवा हो, FL300 और FL400 के बीच किसी लेवल पर। एक जैसे लेवल वाले पड़ोसी खाने जोड़ दिए जाते हैं, हर अवधि में ज़्यादा से ज़्यादा पाँच
+                    सूचनाएँ। "पास के सूखे लेवल" वे फ़्लाइट लेवल हैं जिन पर खाने के अंदर सबसे कम टिकाऊ-कंट्रेल वाली हवा है।
+                  </>,
+                )}
               </p>
               <p class="small muted">
-                Experimental and physics only: STRATUM's learned correction is not applied (the open data lack the cloud fields it needs), and forecast
-                humidity at cruise level is uncertain. These notices are a research demonstration, not a NOTAM and not for operational use. {ol.info.credit}.
+                {T(
+                  "Experimental and physics only: STRATUM's learned correction is not applied (the open data lack the cloud fields it needs), and forecast humidity at cruise level is uncertain. These notices are a research demonstration, not a NOTAM and not for operational use.",
+                )}{" "}
+                {T(ol.info.credit)}
               </p>
               <p>
-                <a href={`/map?build=outlook&date=${day ?? ""}`}>See the hour-by-hour forecast on the map</a> · <a href="/live">Which plane is making a contrail right now?</a>
+                <a href={`/map?build=outlook&date=${day ?? ""}`}>{T("See the hour-by-hour forecast on the map")}</a> ·{" "}
+                <a href="/live">{T("Which plane is making a contrail right now?")}</a>
               </p>
             </section>
           </>
@@ -162,6 +192,7 @@ export function Advisory() {
 function Notam({ a, onClose }: { a: Adv; onClose: () => void }) {
   const hour = Number(a.valid_from.slice(11, 13)) + 3;
   const fl = [300, 320, 340, 360, 380, 400].reduce((b, f) => (Math.abs(f - (a.fl_low + a.fl_high) / 2) < Math.abs(b - (a.fl_low + a.fl_high) / 2) ? f : b), 340);
+  const band = `${a.fl_low}${a.fl_high !== a.fl_low ? `–FL${a.fl_high}` : ""}`;
   return (
     <div class="notam">
       <pre class="mono">
@@ -172,17 +203,25 @@ E) ${a.text}
 F) FL${String(a.fl_low).padStart(3, "0")}  G) FL${String(a.fl_high).padStart(3, "0")}`}
       </pre>
       <p class="small">
-        In plain words: between {a.valid_from.slice(11, 16)} and {a.valid_to.slice(11, 16)} UTC ({ist(a.valid_from)}–{ist(a.valid_to)}), aircraft cruising at FL
-        {a.fl_low}
-        {a.fl_high !== a.fl_low ? `–FL${a.fl_high}` : ""} {where(a)} are likely to leave contrails
-        that last and spread.{a.drier_fls.length ? ` Flying at ${a.drier_fls.map((f) => `FL${f}`).join(" or ")} would cross drier air.` : ""}
+        {tx(
+          <>
+            In plain words: between {a.valid_from.slice(11, 16)} and {a.valid_to.slice(11, 16)} UTC ({ist(a.valid_from)}–{ist(a.valid_to)}), aircraft
+            cruising at FL{band} {where(a)} are likely to leave contrails that last and spread.
+            {a.drier_fls.length ? ` Flying at ${a.drier_fls.map((f) => `FL${f}`).join(" or ")} would cross drier air.` : ""}
+          </>,
+          <>
+            सरल शब्दों में: {a.valid_from.slice(11, 16)} से {a.valid_to.slice(11, 16)} UTC ({ist(a.valid_from)}–{ist(a.valid_to)}) के बीच, {where(a)} FL{band}{" "}
+            पर क्रूज़ करते विमान ऐसी कंट्रेल छोड़ सकते हैं जो टिकें और फैलें।
+            {a.drier_fls.length ? ` ${a.drier_fls.map((f) => `FL${f}`).join(" या ")} पर उड़ने से सूखी हवा मिलेगी।` : ""}
+          </>,
+        )}
       </p>
       <p class="adv-actions">
         <a class="tool" href={`/map?build=outlook&date=${a.valid_from.slice(0, 10)}&hour=${hour}&fl=${fl}`}>
-          Show on the map
+          {T("Show on the map")}
         </a>
         <button class="tool" onClick={onClose}>
-          All notices
+          {T("All notices")}
         </button>
       </p>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type * as THREE_NS from "three";
 import type { FlaggedSegment, Manifest } from "../data/contract";
 import { currentBuild, layerUrl, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
+import { T } from "../i18n";
 import "../styles/map.css";
 
 /** /3d — the humid layers in three dimensions: for one hour, every 0.5° column of the study
@@ -252,19 +253,19 @@ export function Sky3D() {
   const avail = LAYERS.filter((l) => man?.layers?.some((x) => x.id === l.id));
   return (
     <div class="sky3d">
-      <div class="s3-bar mp-bar" role="toolbar" aria-label="3D view controls">
-        <h1 class="mp-title mono-s">Humid layers in 3D · height ×100</h1>
+      <div class="s3-bar mp-bar" role="toolbar" aria-label={T("3D view controls")}>
+        <h1 class="mp-title mono-s">{T("Humid layers in 3D · height ×100")}</h1>
         <span class="mp-tools">
-          <span class="seg-ctl" role="radiogroup" aria-label="Layer">
+          <span class="seg-ctl" role="radiogroup" aria-label={T("Layer")}>
             {avail.map((l) => (
-              <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={l.title} onClick={() => setLayer(l.id)}>
-                {l.label}
+              <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={T(l.title)} onClick={() => setLayer(l.id)}>
+                {T(l.label)}
               </button>
             ))}
           </span>
           {man && date && (
             <label class="date-pick">
-              <span class="sr-only">Date</span>
+              <span class="sr-only">{T("Date")}</span>
               <select value={date} onChange={(e) => setDate((e.target as HTMLSelectElement).value)}>
                 {man.days.map((d) => (
                   <option value={d}>
@@ -276,31 +277,33 @@ export function Sky3D() {
             </label>
           )}
           <a class="tool" href={`/map?date=${date ?? ""}&hour=${hour}`}>
-            2D map
+            {T("2D map")}
           </a>
         </span>
       </div>
       <div class="s3-stage" ref={box}>
         {err && <p class="muted mono s3-msg">{err}</p>}
-        {!ready && !err && <p class="muted mono s3-msg">Building the sky…</p>}
+        {!ready && !err && <p class="muted mono s3-msg">{T("Building the sky…")}</p>}
         <div class="s3-key mono-s">
           <span>
-            <i class="k-low" /> layer present
+            <i class="k-low" /> {T("layer present")}
           </span>
           <span>
-            <i class="k-high" /> strong
+            <i class="k-high" /> {T("strong")}
           </span>
           <span>
-            <i class="k-seg" /> flagged flight portions ({segs.length})
+            <i class="k-seg" /> {T("flagged flight portions")} ({segs.length})
           </span>
-          <span class="muted">{count.toLocaleString()} blocks · drag to turn, scroll to zoom</span>
+          <span class="muted">
+            {count.toLocaleString()} {T("blocks · drag to turn, scroll to zoom")}
+          </span>
         </div>
       </div>
       <div class="s3-time">
         <button class="tool" onClick={() => setPlay(!play)} aria-pressed={play}>
-          {play ? "❚❚ Pause" : "▶ Play the day"}
+          {play ? `❚❚ ${T("Pause")}` : `▶ ${T("Play the day")}`}
         </button>
-        <input type="range" min={0} max={23} value={hour} aria-label="Hour (UTC)" onInput={(e) => (setPlay(false), setHour(Number((e.target as HTMLInputElement).value)))} />
+        <input type="range" min={0} max={23} value={hour} aria-label={T("Hour (UTC)")} onInput={(e) => (setPlay(false), setHour(Number((e.target as HTMLInputElement).value)))} />
         <span class="mono s3-hour">{String(hour).padStart(2, "0")}00 UTC</span>
       </div>
     </div>

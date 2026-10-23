@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { loadDashboard } from "../data/load";
+import { T, tx } from "../i18n";
 import "../styles/map.css";
 
 /** /routes — where India's contrail warming comes from: by airline, route, hour, flight level,
@@ -19,13 +20,16 @@ const MH = (BOX.n - BOX.s) * MK;
 const mp = (lon: number, lat: number) => [(lon - BOX.w) * MK, (BOX.n - lat) * MK] as const;
 const pc = (v: number, d = 1) => `${(v * 100).toFixed(v > 0 && v < 0.001 ? 2 : d)} %`;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_HI = ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सितं", "अक्टू", "नवं", "दिसं"];
+/** "North-west → East", "Overflight (beyond → beyond)": each word through the dictionary. */
+const corridor = (k: string) => k.replace(/[A-Za-z][A-Za-z-]*/g, (w) => T(w));
 
 function Bars({ rows, metric, label, short }: { rows: Row[]; metric: Metric; label: (r: Row) => string; short?: (r: Row) => string }) {
   const max = Math.max(0.0001, ...rows.map((r) => Math.max(r[metric], r.share_km)));
   return (
     <ul class="rt-bars">
       {rows.map((r) => (
-        <li title={`${label(r)}: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance · ${r.flights.toLocaleString()} flights`}>
+        <li title={tx(`${label(r)}: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance · ${r.flights.toLocaleString()} flights`, `${label(r)}: गर्मी का ${pc(r[metric])}, दूरी का ${pc(r.share_km)} · ${r.flights.toLocaleString()} उड़ानें`)}>
           <span class="rt-l">
             <span class={short ? "rt-full" : ""}>{label(r)}</span>
             {short && <span class="rt-short">{short(r)}</span>}
@@ -35,7 +39,7 @@ function Bars({ rows, metric, label, short }: { rows: Row[]; metric: Metric; lab
             <em class="rt-tick" style={{ left: `${(r.share_km / max) * 100}%` }} />
           </span>
           <span class="rt-v mono-s">
-            <b>{pc(r[metric])}</b> · {pc(r.share_km)} km
+            <b>{pc(r[metric])}</b> · {pc(r.share_km)} {tx("km", "किमी")}
           </span>
         </li>
       ))}
@@ -51,7 +55,7 @@ function Hours({ rows, metric }: { rows: Row[]; metric: Metric }) {
   const H = 200;
   const bw = W / 24;
   return (
-    <svg class="rt-hours" viewBox={`0 0 ${W} ${H + 22}`} role="img" aria-label="Share of contrail warming and of distance by hour of day, IST">
+    <svg class="rt-hours" viewBox={`0 0 ${W} ${H + 22}`} role="img" aria-label={T("Share of contrail warming and of distance by hour of day, IST")}>
       <rect class="rt-night" x={0} y={0} width={bw * 6} height={H} />
       <rect class="rt-night" x={bw * 18} y={0} width={bw * 6} height={H} />
       {hs.map((r, h) => {
@@ -60,7 +64,7 @@ function Hours({ rows, metric }: { rows: Row[]; metric: Metric }) {
         const th = H - (r.share_km / max) * (H - 8);
         return (
           <g>
-            <title>{`${String(h).padStart(2, "0")}:00 IST: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance`}</title>
+            <title>{tx(`${String(h).padStart(2, "0")}:00 IST: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance`, `${String(h).padStart(2, "0")}:00 IST: गर्मी का ${pc(r[metric])}, दूरी का ${pc(r.share_km)}`)}</title>
             <rect class="rt-bar" x={h * bw + 3} y={H - bh} width={bw - 6} height={Math.max(bh, 0.5)} rx={2} />
             <line class="rt-tick-l" x1={h * bw + 1} x2={(h + 1) * bw - 1} y1={th} y2={th} />
             <rect x={h * bw} y={0} width={bw} height={H} fill="transparent" />
@@ -74,10 +78,10 @@ function Hours({ rows, metric }: { rows: Row[]; metric: Metric }) {
         </text>
       ))}
       <text class="rt-ax" x={4} y={14}>
-        night
+        {T("night")}
       </text>
       <text class="rt-ax" x={bw * 18 + 4} y={14}>
-        night
+        {T("night")}
       </text>
     </svg>
   );
@@ -102,7 +106,7 @@ export function Routes() {
       .catch(() => setShapes([]));
   }, []);
 
-  const other = (r: Row, what: string) => (r.key === "other" ? `Other ${what} (under 3 flights each)` : r.key);
+  const other = (r: Row, what: string) => (r.key === "other" ? T(`Other ${what} (under 3 flights each)`) : r.key);
   const heatMax = Math.max(1e-9, ...((d?.heat ?? []) as number[][]).map((c) => c[2]));
   const t = d?.totals;
   const c = d?.concentration;
@@ -113,87 +117,97 @@ export function Routes() {
     <div class="page routes">
       <PageHead
         label="Routes & airlines · descriptive"
-        note={t ? `${t.flights.toLocaleString()} commercial flights · 12 days · ${Math.round(t.km / 1000).toLocaleString()} thousand km` : d === null ? "Not published yet" : "Loading…"}
+        note={
+          t
+            ? tx(
+                `${t.flights.toLocaleString()} commercial flights · 12 days · ${Math.round(t.km / 1000).toLocaleString()} thousand km`,
+                `${t.flights.toLocaleString()} व्यावसायिक उड़ानें · 12 दिन · ${Math.round(t.km / 1000).toLocaleString()} हज़ार किमी`,
+              )
+            : d === null
+              ? "Not published yet"
+              : "Loading…"
+        }
         lines={["Where the warming", "comes from."]}
         lede="Contrail warming is not spread evenly. Here it is broken down by airline, route, hour, flight level and aircraft, next to each group's share of the flying. A bar longer than its tick means more warming than its distance would suggest."
       />
       <div class="wrap">
-        {d === null && <p class="muted mono">The dashboard data are not published yet.</p>}
+        {d === null && <p class="muted mono">{T("The dashboard data are not published yet.")}</p>}
         {d && (
           <>
             <div class="rt-tiles rv">
               <div>
                 <b>{pc(c.top_1pct_flights, 0)}</b>
-                <span>of the warming came from the top 1 % of flights</span>
+                <span>{T("of the warming came from the top 1 % of flights")}</span>
               </div>
               <div>
                 <b>{pc(c.top_10pct_flights, 0)}</b>
-                <span>from the top 10 %</span>
+                <span>{T("from the top 10 %")}</span>
               </div>
               <div>
                 <b>{pc(t.flights_warming / t.flights, 0)}</b>
-                <span>of flights made any warming contrail</span>
+                <span>{T("of flights made any warming contrail")}</span>
               </div>
               <div>
                 <b>{pc(nightShare(d.by_hour_ist, metric), 0)}</b>
-                <span>of the warming at night (18:00–06:00 IST), for {pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance</span>
+                <span>{tx(`of the warming at night (18:00–06:00 IST), for ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance`, `गर्मी रात में (18:00–06:00 IST), जबकि दूरी केवल ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)}`)}</span>
               </div>
             </div>
 
-            <div class="rt-ctl rv" role="radiogroup" aria-label="Warming measure">
-              <span class="mono-s muted">Warming measured by</span>
+            <div class="rt-ctl rv" role="radiogroup" aria-label={T("Warming measure")}>
+              <span class="mono-s muted">{T("Warming measured by")}</span>
               <span class="seg-ctl">
                 <button role="radio" aria-checked={metric === "share_warm_w"} class={metric === "share_warm_w" ? "on" : ""} onClick={() => setMetric("share_warm_w")}>
-                  STRATUM-weighted
+                  {T("STRATUM-weighted")}
                 </button>
                 <button role="radio" aria-checked={metric === "share_warm_b1"} class={metric === "share_warm_b1" ? "on" : ""} onClick={() => setMetric("share_warm_b1")}>
-                  Raw physics
+                  {T("Raw physics")}
                 </button>
               </span>
               <span class="rt-key mono-s">
-                <i class="rt-key-bar" /> share of the warming <i class="rt-key-tick" /> share of the distance flown
+                <i class="rt-key-bar" /> {T("share of the warming")} <i class="rt-key-tick" /> {T("share of the distance flown")}
               </span>
             </div>
 
             <section class="section rt-sec">
               <div class="sec-head rv">
-                <p class="label red">By hour of day (IST)</p>
-                <span class="mono-s">shaded: night</span>
+                <p class="label red">{T("By hour of day (IST)")}</p>
+                <span class="mono-s">{T("shaded: night")}</span>
               </div>
               <Hours rows={d.by_hour_ist} metric={metric} />
             </section>
 
             <div class="rt-grid">
               <section class="rt-sec">
-                <p class="label red">By airline</p>
+                <p class="label red">{T("By airline")}</p>
                 <Bars rows={d.by_airline} metric={metric} label={(r) => other(r, "airlines")} />
               </section>
               {d.by_corridor && (
                 <section class="rt-sec">
-                  <p class="label red">By corridor</p>
-                  <Bars rows={d.by_corridor} metric={metric} label={(r) => other(r, "corridors")} />
+                  <p class="label red">{T("By corridor")}</p>
+                  <Bars rows={d.by_corridor} metric={metric} label={(r) => (r.key === "other" ? other(r, "corridors") : corridor(r.key))} />
                   <p class="small muted">
-                    Where each tracked stretch of flight began and ended: parts of India, or "beyond" where it enters or leaves the area. Overflights cross the
-                    whole region without landing, often long-haul flights between the Gulf and South-east Asia.
+                    {T(
+                      'Where each tracked stretch of flight began and ended: parts of India, or "beyond" where it enters or leaves the area. Overflights cross the whole region without landing, often long-haul flights between the Gulf and South-east Asia.',
+                    )}
                   </p>
                 </section>
               )}
               <section class="rt-sec">
-                <p class="label red">By flight level</p>
-                <Bars rows={d.by_fl_band} metric={metric} label={(r) => r.key} />
+                <p class="label red">{T("By flight level")}</p>
+                <Bars rows={d.by_fl_band} metric={metric} label={(r) => T(r.key)} />
               </section>
               <section class="rt-sec">
-                <p class="label red">By aircraft type</p>
+                <p class="label red">{T("By aircraft type")}</p>
                 <Bars rows={d.by_aircraft} metric={metric} label={(r) => other(r, "types")} />
               </section>
               <section class="rt-sec">
-                <p class="label red">By month (one day each)</p>
-                <Bars rows={d.by_month} metric={metric} label={(r) => `${MONTHS[Number(r.key.slice(5, 7)) - 1]} ${r.key.slice(0, 4)}`} />
+                <p class="label red">{T("By month (one day each)")}</p>
+                <Bars rows={d.by_month} metric={metric} label={(r) => `${tx(MONTHS, MONTHS_HI)[Number(r.key.slice(5, 7)) - 1]} ${r.key.slice(0, 4)}`} />
               </section>
               <section class="rt-sec">
-                <p class="label red">Where (STRATUM-weighted)</p>
+                <p class="label red">{T("Where (STRATUM-weighted)")}</p>
                 <figure class="adv-map rt-map">
-                  <svg viewBox={`0 0 ${MW} ${MH.toFixed(0)}`} role="img" aria-label="Map of the share of contrail warming per 1° square">
+                  <svg viewBox={`0 0 ${MW} ${MH.toFixed(0)}`} role="img" aria-label={T("Map of the share of contrail warming per 1° square")}>
                     <rect width={MW} height={MH} class="adv-sea" />
                     {shapes.map((s) => (
                       <path d={s.d} class={s.india ? "adv-in" : "adv-land"} />
@@ -202,19 +216,21 @@ export function Routes() {
                       const [x, y] = mp(lo - 0.5, la + 0.5);
                       return (
                         <rect class="rt-cell" x={x} y={y} width={MK} height={MK} style={{ opacity: 0.12 + 0.88 * Math.sqrt(w / heatMax) }}>
-                          <title>{`${la.toFixed(1)}°N ${lo.toFixed(1)}°E: ${pc(w, 2)} of the warming, ${pc(km, 2)} of the distance`}</title>
+                          <title>{tx(`${la.toFixed(1)}°N ${lo.toFixed(1)}°E: ${pc(w, 2)} of the warming, ${pc(km, 2)} of the distance`, `${la.toFixed(1)}°N ${lo.toFixed(1)}°E: गर्मी का ${pc(w, 2)}, दूरी का ${pc(km, 2)}`)}</title>
                         </rect>
                       );
                     })}
                   </svg>
-                  <figcaption class="mono-s muted">Each 1° square, darker = more of the STRATUM-weighted warming.</figcaption>
+                  <figcaption class="mono-s muted">{T("Each 1° square, darker = more of the STRATUM-weighted warming.")}</figcaption>
                 </figure>
               </section>
             </div>
 
             <p class="small muted rt-note">
-              {d.note} An airline's share mostly reflects where and when it flies, not how it flies. Raw physics: CoCiP with ERA5 humidity; STRATUM-weighted: the
-              same contrails weighted by STRATUM's probability that they really form (second analysis D-006).
+              {T(d.note)}{" "}
+              {T(
+                "An airline's share mostly reflects where and when it flies, not how it flies. Raw physics: CoCiP with ERA5 humidity; STRATUM-weighted: the same contrails weighted by STRATUM's probability that they really form (second analysis D-006).",
+              )}
             </p>
           </>
         )}
