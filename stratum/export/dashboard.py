@@ -21,7 +21,6 @@ can be singled out). Commercial airlines only; no flight ids are written.
 from __future__ import annotations
 
 import io
-import json
 import math
 import urllib.request
 from pathlib import Path
@@ -265,7 +264,9 @@ def export(
     seg = pd.concat(parts, ignore_index=True)
     res = build(seg, load_airports(bbox), names)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "summary.json").write_text(json.dumps(res, separators=(",", ":")))
+    from stratum.export.web_export import web_json  # strict: NaN would break the page
+
+    (out / "summary.json").write_text(web_json(res, separators=(",", ":")))
     return {"flights": res["totals"]["flights"], "routes_known": res["totals"]["route_known_share"],
             "top_airline": res["by_airline"][0]["key"] if res["by_airline"] else None,
             "kb": round((out / "summary.json").stat().st_size / 1024)}  # fmt: skip

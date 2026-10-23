@@ -73,3 +73,15 @@ def test_an_empty_group_table_is_empty() -> None:
     seg = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 36000, 36000, 1e9)
     d = seg.assign(ef_b1_pos=1.0, ef_w_pos=1.0)
     assert db.table(d.iloc[0:0], "callsign", {"km": 1.0, "warm_b1": 1.0, "warm_w": 1.0}) == []
+
+
+def test_written_summary_is_strict_json(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    import json
+
+    from stratum.export.web_export import web_json
+
+    ap = AP.assign(city=[None, "Mumbai"])  # an airport without a city name
+    seg = _flight("x", "IGO1", 27.6, 76.6, 20.1, 73.3, 25000, 25000, 1e9)
+    txt = web_json(db.build(seg, ap, {}))
+    assert "NaN" not in txt
+    json.loads(txt)
