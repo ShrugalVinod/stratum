@@ -170,10 +170,13 @@ export function Routes() {
                 <p class="label red">By airline</p>
                 <Bars rows={d.by_airline} metric={metric} label={(r) => other(r, "airlines")} />
               </section>
+              {d.by_departure && (
               <section class="rt-sec">
                 <p class="label red">Flights departing from</p>
                 <Bars rows={d.by_departure ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
               </section>
+              )}
+              {d.by_arrival && (
               <section class="rt-sec">
                 <p class="label red">Flights arriving at</p>
                 <Bars rows={d.by_arrival ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
@@ -183,6 +186,7 @@ export function Routes() {
                   one behind or ahead of the track at the distance that height needs. Overflights count under neither.
                 </p>
               </section>
+              )}
               <section class="rt-sec">
                 <p class="label red">By flight level</p>
                 <Bars rows={d.by_fl_band} metric={metric} label={(r) => r.key} />
