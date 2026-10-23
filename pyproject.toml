@@ -97,6 +97,7 @@ extend-exclude = ["notebooks", "colab", "docs/paper"]
 "stratum/evaluate/report*.py" = ["E501"]  # report prose and table cells read better unbroken
 "stratum/export/web_v1.py" = ["E501"]  # one record per line reads better than a 100-column wrap
 "stratum/export/outlook.py" = ["E501"]  # as web_v1: one record per line
+"stratum/export/dashboard.py" = ["E501"]  # as web_v1: one record per line
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "NPY", "PD"]

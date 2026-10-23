@@ -662,6 +662,23 @@ def outlook_cmd(
                          "advisories": r["advisories"], "MB": mb})  # fmt: skip
 
 
+@app.command("export-dashboard")
+def export_dashboard_cmd() -> None:
+    """Website (Colab 12b): the routes and airlines dashboard, from the weighted segments of
+    Colab 12a (all 12 days) → web_exports/dashboard (+ zip). Aggregates only, no flight ids."""
+    from stratum.config import configs_dir, load_domain
+    from stratum.export import dashboard as db
+    from stratum.export.web_export import airline_names
+
+    root = drive_root()
+    dom = load_domain()
+    bbox = (tuple(dom.study_bbox.lat), tuple(dom.study_bbox.lon))
+    out = root / "web_exports" / "dashboard"
+    r = db.export(root, _eval_days(root), out, bbox, airline_names(configs_dir() / "airlines.yaml"))
+    z = shutil.make_archive(str(out), "zip", out.parent, out.name)
+    _summary("export-dashboard", {**r, "zip": z})
+
+
 @app.command("rescore")
 def rescore_cmd(
     release: Annotated[Path, typer.Option(help="unzipped release folder (has results.json)")],
