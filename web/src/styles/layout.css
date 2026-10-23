@@ -2510,3 +2510,6 @@ a.contact-big:hover {
     grid-template-columns: 1fr;
   }
 }
+.rt-ctl .seg-ctl button {
+  white-space: nowrap;
+}
