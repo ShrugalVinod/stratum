@@ -89,3 +89,12 @@ export function merge(...lists) {
 export function slim(ac, now) {
   return merge(fromReadsb(ac, now));
 }
+
+/** The forecast build is stale when it is not from today's 00 UTC run and today's open data are
+ *  out (by about 08:00 UTC; the build is asked for from 09:30). ``run`` like "2026-10-22T00:00Z". */
+export function outlookStale(run, now) {
+  if (typeof run !== "string") return true;
+  const d = new Date(now);
+  const today = d.toISOString().slice(0, 10);
+  return run.slice(0, 10) < today && d.getUTCHours() * 60 + d.getUTCMinutes() >= 9 * 60 + 30;
+}

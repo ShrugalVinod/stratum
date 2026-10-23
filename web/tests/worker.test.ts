@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cell, COMMERCIAL, fromOpenSky, fromReadsb, merge, slim } from "../worker/live.js";
+import { cell, COMMERCIAL, fromOpenSky, fromReadsb, merge, outlookStale, slim } from "../worker/live.js";
 
 describe("live aircraft proxy", () => {
   it("keeps cruising airline flights and drops everything identifying or irrelevant", () => {
@@ -50,5 +50,15 @@ describe("live aircraft proxy", () => {
     const igo = m.find((a) => a.cs === "IGO519P")!;
     expect([igo.lat, igo.type]).toEqual([13.1, "A20N"]); // adsb.fi is newer (1 s old vs 10 s)
     expect(JSON.stringify(m)).not.toContain("800abc");
+  });
+});
+
+describe("forecast freshness", () => {
+  const at = (iso: string) => Date.parse(iso);
+  it("asks for today's build only once today's open data are out", () => {
+    expect(outlookStale("2026-10-22T00:00Z", at("2026-10-23T08:00:00Z"))).toBe(false); // too early
+    expect(outlookStale("2026-10-22T00:00Z", at("2026-10-23T10:25:00Z"))).toBe(true);
+    expect(outlookStale("2026-10-23T00:00Z", at("2026-10-23T23:59:00Z"))).toBe(false); // already today's
+    expect(outlookStale(undefined, at("2026-10-23T10:00:00Z"))).toBe(true);
   });
 });

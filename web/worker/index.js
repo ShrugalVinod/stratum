@@ -2,6 +2,8 @@
 //
 // * /data/outlook/*  the daily contrail outlook (ECMWF open data, built by the `outlook` GitHub
 //   Action and kept as one commit on the repo's `outlook-data` branch), cached for 10 minutes.
+//   If a visitor finds the build is not from today's model run (after 09:30 UTC), the Worker asks
+//   GitHub to build it now (same token as below; at most once an hour per location).
 // * /api/live        cruising airline flights over India: the `live` GitHub Action's OpenSky
 //   snapshot of the whole country (`live-data` branch; OpenSky and adsb.fi do not answer
 //   Cloudflare's servers) merged with adsb.lol's live positions around the visitor (cached 60 s
@@ -13,7 +15,7 @@
 //
 // Everything else is the static site (wrangler.jsonc: assets, single-page fallback).
 
-import { cell, fromReadsb, merge, USER_AGENT } from "./live.js";
+import { cell, fromReadsb, merge, outlookStale, USER_AGENT } from "./live.js";
 
 const OUTLOOK_RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/outlook-data/";
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
@@ -21,24 +23,36 @@ const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
 const STALE_MIN = 30;
 const REFRESH_MIN = 6;
-const DISPATCH = "https://api.github.com/repos/ShrugalVinod/stratum/actions/workflows/live.yml/dispatches";
+const DISPATCH = "https://api.github.com/repos/ShrugalVinod/stratum/actions/workflows/{wf}/dispatches";
 const TYPES = { json: "application/json; charset=utf-8", png: "image/png", geojson: "application/geo+json" };
 
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname.startsWith("/data/outlook/")) return outlook(url);
+    if (req.method === "GET" && url.pathname.startsWith("/data/outlook/")) return outlook(url, env, ctx);
     if (req.method === "GET" && url.pathname === "/api/live") return live(url, env, ctx);
     return env.ASSETS.fetch(req);
   },
 };
 
-async function outlook(url) {
+async function outlook(url, env, ctx) {
   const path = url.pathname.slice("/data/outlook/".length);
   if (!/^[\w./-]+$/.test(path) || path.includes("..")) return new Response("bad path", { status: 400 });
   const r = await fetch(OUTLOOK_RAW + path, { cf: { cacheTtl: 600, cacheEverything: true } });
   if (!r.ok) return new Response("not found", { status: r.status === 404 ? 404 : 502 });
   const ext = path.split(".").pop();
+  if (path === "outlook.json") {
+    // GitHub's daily schedule can skip a day: a visitor who finds yesterday's forecast asks for today's
+    const text = await r.text();
+    let run = null;
+    try {
+      run = JSON.parse(text).run;
+    } catch {
+      /* served as is */
+    }
+    if (outlookStale(run, Date.now())) await refresh(env, ctx, "outlook.yml", 3600);
+    return new Response(text, { headers: { "content-type": TYPES.json, "cache-control": "public, max-age=600" } });
+  }
   return new Response(r.body, {
     headers: { "content-type": TYPES[ext] ?? "application/octet-stream", "cache-control": "public, max-age=600" },
   });
@@ -52,7 +66,7 @@ async function live(url, env, ctx) {
   // a snapshot older than STALE_MIN (the Action did not run) would show planes where they were,
   // not where they are: leave it out and say so
   const age = snap0.t ? (Date.now() - snap0.t) / 60_000 : null;
-  const asked = age == null || age > REFRESH_MIN ? await refresh(env, ctx) : false;
+  const asked = age == null || age > REFRESH_MIN ? await refresh(env, ctx, "live.yml", 600) : false;
   const snap =
     age != null && age > STALE_MIN
       ? { ...snap0, status: `stale (${Math.round(age)} min)${asked ? ", refreshing" : ""}`, list: [] }
@@ -99,15 +113,15 @@ function snapshot(ctx) {
   });
 }
 
-/** Ask GitHub to run the `live` Action now (the snapshot is old). True if a run was requested
- *  now or in the last 10 min from this Cloudflare location; false without the token. */
-async function refresh(env, ctx) {
+/** Ask GitHub to run a workflow now (its data are old). True if a run was requested now or in
+ *  the last ``every`` seconds from this Cloudflare location; false without the token. */
+async function refresh(env, ctx, wf, every) {
   if (!env.GH_DISPATCH_TOKEN) return false;
-  const k = new Request("https://stratum-cache.invalid/live-dispatch");
+  const k = new Request(`https://stratum-cache.invalid/dispatch/${wf}`);
   if (await caches.default.match(k)) return true;
-  ctx.waitUntil(caches.default.put(k, new Response("1", { headers: { "cache-control": "public, max-age=600" } })));
+  ctx.waitUntil(caches.default.put(k, new Response("1", { headers: { "cache-control": `public, max-age=${every}` } })));
   ctx.waitUntil(
-    fetch(DISPATCH, {
+    fetch(DISPATCH.replace("{wf}", wf), {
       method: "POST",
       headers: {
         authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`,

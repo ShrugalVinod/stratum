@@ -45,6 +45,8 @@ const KIND_LABEL: Record<Kind, string> = {
   none: "No contrail expected",
   unknown: "No forecast here",
 };
+/** A feed's aircraft count, or a plain word when it did not answer (rate limit, timeout). */
+const feed = (v: unknown) => (typeof v === "number" ? String(v) : /^stale/.test(String(v)) ? T("out of date") : T("busy right now"));
 const pct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)} %`);
 
 /** Where the aircraft is now: its last position moved on along its track at its ground speed. */
@@ -492,9 +494,9 @@ export function LiveSky() {
               )}
               {sources && (
                 <p class="mono-s muted">
-                  {T("Sources")}: {T("OpenSky snapshot")} {String(sources.opensky)}
+                  {T("Sources")}: {T("OpenSky snapshot")} {feed(sources.opensky)}
                   {snapT ? tx(` (taken ${Math.max(0, Math.round((now - snapT) / 60_000))} min ago)`, ` (${Math.max(0, Math.round((now - snapT) / 60_000))} मिनट पहले लिया)`) : ""} · adsb.lol{" "}
-                  {T("live")} {String(sources.adsb_lol)} ({T("merged by callsign")})
+                  {T("live")} {feed(sources.adsb_lol)} ({T("merged by callsign")})
                 </p>
               )}
             </div>

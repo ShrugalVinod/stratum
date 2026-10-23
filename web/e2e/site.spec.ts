@@ -250,6 +250,6 @@ test("Hindi reaches the results, the map controls and the AI-translation note", 
   await page.goto("/map?date=2026-02-01&lang=hi");
   await expect(page.getByRole("button", { name: "लिंक कॉपी करें" })).toBeVisible();
   await page.goto("/about-data?lang=hi");
-  await expect(page.locator("#ai-use")).toContainText("AI (Claude) की मदद से अनुवाद");
+  await expect(page.locator("#ai-use")).toContainText("हिंदी अनुवाद AI से बनाया गया");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });

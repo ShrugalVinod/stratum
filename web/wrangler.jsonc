@@ -6,6 +6,9 @@
   "name": "stratum",
   "compatibility_date": "2026-10-01",
   "main": "./worker/index.js",
+  // keep variables set in the Cloudflare dashboard (GH_DISPATCH_TOKEN) when a push redeploys;
+  // without this every deploy removes a plain-text dashboard variable
+  "keep_vars": true,
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

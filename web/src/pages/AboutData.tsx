@@ -65,12 +65,13 @@ export function AboutData() {
             <p class="label red">§4 · {T("AI use")}</p>
             <p>
               {T(
-                'The team used AI assistants (Anthropic Claude) to find and summarise literature, check calculations, write and test analysis code, build this website and draft documents. Every pre-registered value and design decision was made and approved by the team. One exception to "humans label the data": for the 100 India satellite scenes used as a secondary check of the contrail detector, Claude drew draft contrail lines and a team member reviewed and corrected every scene (deviation D-003, logged before any result). These labels are reported as AI-assisted. The primary detector check uses labels by human contrail experts (DLR dataset), and no AI-generated observations or results are presented as data.',
+                "The research question, hypotheses, pre-registered analysis plan, and every foundational design decision were entirely conceived and directed by the team. To execute the project, we worked openly with Anthropic Claude as an engineering and development assistant. Under our direct supervision, Claude generated and tested a significant portion of the analysis codebase, co-built the project website, assisted with literature summarization, verified calculations, and drafted documentation. Additionally, the Hindi translation of the website was generated via AI and checked by the team. The team reviewed and tested the work and takes responsibility for everything published.",
               )}
             </p>
             <p>
+              <b>{T("Data integrity and validation")}.</b>{" "}
               {T(
-                "The Hindi version of this website was translated with AI (Claude) and is being reviewed by the team. Where the two differ, the English text is the reference.",
+                "Absolute data integrity was prioritized across all pipelines. The primary validation of the contrail detector relies strictly on independent, human-expert labels from the DLR dataset. For a secondary cross-check on 100 regional India satellite scenes, we implemented a hybrid pipeline where Claude generated baseline geometric drafts of the contrail lines. To minimize algorithmic bias and ensure accuracy, a team member manually audited, overrode, and corrected every single scene (documented under pre-result deviation D-003). No unreviewed AI observations or synthetic data points are presented in our final results.",
               )}
             </p>
           </section>

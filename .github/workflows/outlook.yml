@@ -7,6 +7,8 @@ name: outlook
 on:
   schedule:
     - cron: "20 9 * * *" # 09:20 UTC: the 00 UTC run's open data are out by about 08:00 UTC
+    - cron: "50 13 * * *" # backup: GitHub sometimes skips a scheduled run (the job skips itself if today's is built)
+  # the website's Worker also starts this workflow when a visitor finds yesterday's forecast
   workflow_dispatch:
 
 permissions:
@@ -21,19 +23,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Already built today?
+        id: fresh
+        run: |
+          run=$(curl -fsS "https://raw.githubusercontent.com/${{ github.repository }}/outlook-data/outlook.json" | jq -r .run || echo none)
+          if [ "${run:0:10}" = "$(date -u +%F)" ]; then echo "today's outlook ($run) is published"; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+
       - uses: actions/checkout@v4
+        if: steps.fresh.outputs.skip != '1'
 
       - uses: astral-sh/setup-uv@v6
+        if: steps.fresh.outputs.skip != '1'
         with:
           enable-cache: true
 
       - name: Install pinned environment
+        if: steps.fresh.outputs.skip != '1'
         run: uv sync --frozen --python 3.12 --no-dev
 
       - name: Build the outlook
+        if: steps.fresh.outputs.skip != '1'
         run: uv run --no-sync stratum outlook --out "$RUNNER_TEMP/outlook"
 
       - name: Publish to the outlook-data branch (one commit, replaced daily)
+        if: steps.fresh.outputs.skip != '1'
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
