@@ -1364,7 +1364,8 @@
   border-top: 1px solid var(--rule);
   scroll-margin-top: calc(var(--header-h) + 20px);
 }
-.note p:last-child {
+/* every paragraph of a note in one style (a note can have several) */
+.note p:not(.label) {
   margin: 18px 0 0;
   font-size: clamp(17px, 1.5vw, 21px);
   color: var(--ink-2);

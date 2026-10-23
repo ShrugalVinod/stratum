@@ -69,7 +69,7 @@ export function AboutData() {
               )}
             </p>
             <p>
-              <b>{T("Data integrity and validation")}.</b>{" "}
+              {T("Data integrity and validation")}.{" "}
               {T(
                 "Absolute data integrity was prioritized across all pipelines. The primary validation of the contrail detector relies strictly on independent, human-expert labels from the DLR dataset. For a secondary cross-check on 100 regional India satellite scenes, we implemented a hybrid pipeline where Claude generated baseline geometric drafts of the contrail lines. To minimize algorithmic bias and ensure accuracy, a team member manually audited, overrode, and corrected every single scene (documented under pre-result deviation D-003). No unreviewed AI observations or synthetic data points are presented in our final results.",
               )}
