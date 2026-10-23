@@ -1,5 +1,12 @@
 """Routes and airlines dashboard for the website: where India's contrail warming comes from.
 
+Corridors: most tracks are pieces of flights (coverage gaps), starting and ending in the climb,
+cruise or descent, and Indian airports lie close together, so airports cannot be named reliably
+from a piece (tried: nearby airports under the climb-out took the hub's flights). The page shows
+the corridor instead: the part of India where each piece starts and ends (``region``), or
+"Overflight" when it enters and leaves the study area. The airport-based route columns are kept
+in the JSON for reference but not shown.
+
 From every commercial cruise segment of the 12 held-out flight days (Colab 12a's
 ``interim/weighted/<day>/segments.parquet``: raw-physics CoCiP EF and STRATUM-weighted EF of
 D-006, joined to ``segments_met`` for callsign, aircraft type, level, position and time), sums by
@@ -137,6 +144,41 @@ def routes(seg: pd.DataFrame, ap: pd.DataFrame) -> pd.Series:
     )
 
 
+EDGE_DEG = (
+    0.75  # a piece starting/ending this close to the study box edge came from / left for beyond
+)
+
+
+def region(lat: float, lon: float, bbox: tuple[tuple[float, float], tuple[float, float]]) -> str:
+    """A plain-language part of the study area: north/centre/south × west/centre/east, or
+    "beyond" at the box edge (the track enters or leaves the area there)."""
+    (la0, la1), (lo0, lo1) = bbox
+    if not (math.isfinite(lat) and math.isfinite(lon)):
+        return "unknown"
+    if lat < la0 + EDGE_DEG or lat > la1 - EDGE_DEG or lon < lo0 + EDGE_DEG or lon > lo1 - EDGE_DEG:
+        return "beyond"
+    ns = "North" if lat >= 24 else "South" if lat < 17 else ""
+    ew = "west" if lon < 76 else "east" if lon >= 84 else ""
+    if ns and ew:
+        return f"{ns}-{ew}"
+    return ns or ew.capitalize() or "Centre"
+
+
+def corridors(
+    seg: pd.DataFrame, bbox: tuple[tuple[float, float], tuple[float, float]]
+) -> pd.Series:
+    """'<region where the piece starts> → <region where it ends>' per flight piece; "Overflight"
+    when both ends are at the box edge."""
+    s = seg.sort_values(["flight_id", "time_start"])
+    first = s.groupby("flight_id").first()
+    last = s.groupby("flight_id").last()
+    out = []
+    for a, b in zip(first.itertuples(), last.itertuples(), strict=True):
+        ra, rb = region(a.lat_start, a.lon_start, bbox), region(b.lat_end, b.lon_end, bbox)
+        out.append("Overflight (beyond → beyond)" if ra == rb == "beyond" else f"{ra} → {rb}")
+    return pd.Series(out, index=first.index, name="corridor")
+
+
 def fl_band(alt_ft: pd.Series) -> pd.Series:
     fl = alt_ft.to_numpy(float) / 100.0
     out = np.full(len(fl), "", dtype=object)
@@ -202,7 +244,12 @@ def heat(d: pd.DataFrame, step: float = 1.0) -> list[list[float]]:
             for (a, b), r in g.iterrows()]  # fmt: skip
 
 
-def build(seg: pd.DataFrame, ap: pd.DataFrame, names: dict[str, str]) -> dict[str, Any]:
+def build(
+    seg: pd.DataFrame,
+    ap: pd.DataFrame,
+    names: dict[str, str],
+    bbox: Any = ((4.0, 39.0), (66.0, 100.0)),
+) -> dict[str, Any]:
     """``seg``: commercial cruise segments of all days with ef_b1, ef_w and the SEG_COLS."""
     d = seg.copy()
     d["ef_b1_pos"] = d["ef_b1"].clip(lower=0).fillna(0.0)
@@ -216,6 +263,7 @@ def build(seg: pd.DataFrame, ap: pd.DataFrame, names: dict[str, str]) -> dict[st
     d["month"] = t.dt.strftime("%Y-%m")
     d["fl_band"] = fl_band(d["alt_ft_mid"])
     d = d.merge(routes(d, ap), left_on="flight_id", right_index=True, how="left")
+    d = d.merge(corridors(d, bbox), left_on="flight_id", right_index=True, how="left")
     d["origin"] = d["route"].str.split("–").str[0]
     d["dest"] = d["route"].str.split("–").str[1]
     tot = {"km": float(d["length_km"].sum()), "warm_b1": float(d["ef_b1_pos"].sum()),
@@ -237,9 +285,9 @@ def build(seg: pd.DataFrame, ap: pd.DataFrame, names: dict[str, str]) -> dict[st
         "concentration": conc,
         "by_airline": table(d, "airline", tot),
         "by_route": table(d[~d["route"].eq("en route–en route")], "route", tot),
-        # most tracks are pieces with only one airport end in view: departures and arrivals apart
-        "by_departure": table(d[~d["origin"].eq("en route")], "origin", tot),
-        "by_arrival": table(d[~d["dest"].eq("en route")], "dest", tot),
+        # most tracks are pieces with only one airport end in view, and nearby airports cannot be
+        # told apart reliably: the page shows corridors (parts of India), not airports
+        "by_corridor": table(d, "corridor", tot),
         "by_aircraft": table(d, "aircraft", tot),
         "by_hour_ist": sorted(
             table(d, "hour_ist", tot, min_flights=1, top=None), key=lambda r: r["key"]
@@ -272,7 +320,7 @@ def export(
         m = w[w["commercial"].fillna(False).astype(bool)].merge(sm, on="segment_id", how="inner")
         parts.append(m.assign(day=day))
     seg = pd.concat(parts, ignore_index=True)
-    res = build(seg, load_airports(bbox), names)
+    res = build(seg, load_airports(bbox), names, bbox)
     out.mkdir(parents=True, exist_ok=True)
     from stratum.export.web_export import web_json  # strict: NaN would break the page
 

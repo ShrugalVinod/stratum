@@ -106,3 +106,13 @@ def test_the_climb_distance_picks_delhi_not_the_airport_under_the_climb_out() ->
     # start 125 km south-south-east of DEL, climbing, heading away from Delhi
     f = _flight("x", "IGO1", 27.47, 77.55, 24.0, 79.0, 25000, 36000, 1e9)
     assert db.routes(f, ap).iloc[0].startswith("DEL–")
+
+
+def test_corridors_name_the_parts_of_india_and_overflights() -> None:
+    b = ((4.0, 39.0), (66.0, 100.0))
+    assert [db.region(*p, b) for p in [(28.6, 77.2), (19.1, 72.9), (13.0, 77.6), (22.6, 88.4), (21.0, 79.0), (30.0, 72.0), (4.3, 80.0)]] == [
+        "North", "West", "South", "East", "Centre", "North-west", "beyond"]  # fmt: skip
+    f = _flight("x", "IGO1", 28.6, 77.1, 13.0, 77.6, 25000, 25000, 1e9)
+    g = _flight("y", "UAE1", 25.0, 66.2, 15.0, 99.8, 36000, 36000, 1e9)  # Gulf → South-east Asia
+    c = db.corridors(pd.concat([f, g]), b)
+    assert c["x"] == "North → South" and c["y"] == "Overflight (beyond → beyond)"

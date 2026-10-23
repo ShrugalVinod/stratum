@@ -102,8 +102,6 @@ export function Routes() {
       .catch(() => setShapes([]));
   }, []);
 
-  const ap: Record<string, [string, number, number]> = d?.airports ?? {};
-  const airportLabel = (r: Row) => (r.key === "other" ? "Other airports (under 3 flights each)" : ap[r.key]?.[0] ? `${ap[r.key][0]} (${r.key})` : r.key);
   const other = (r: Row, what: string) => (r.key === "other" ? `Other ${what} (under 3 flights each)` : r.key);
   const heatMax = Math.max(1e-9, ...((d?.heat ?? []) as number[][]).map((c) => c[2]));
   const t = d?.totals;
@@ -170,22 +168,15 @@ export function Routes() {
                 <p class="label red">By airline</p>
                 <Bars rows={d.by_airline} metric={metric} label={(r) => other(r, "airlines")} />
               </section>
-              {d.by_departure && (
-              <section class="rt-sec">
-                <p class="label red">Flights departing from</p>
-                <Bars rows={d.by_departure ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
-              </section>
-              )}
-              {d.by_arrival && (
-              <section class="rt-sec">
-                <p class="label red">Flights arriving at</p>
-                <Bars rows={d.by_arrival ?? []} metric={metric} label={airportLabel} short={(r) => (r.key === "other" ? "Other" : r.key)} />
-                <p class="small muted">
-                  Most of our tracks are pieces of a flight (the receivers lose aircraft for a while), so we see the climb out of an airport for{" "}
-                  {pc(t.route_known_share, 0)} of the pieces at one end at least, and the whole route almost never. An airport is found from the climb or descent: the
-                  one behind or ahead of the track at the distance that height needs. Overflights count under neither.
-                </p>
-              </section>
+              {d.by_corridor && (
+                <section class="rt-sec">
+                  <p class="label red">By corridor</p>
+                  <Bars rows={d.by_corridor} metric={metric} label={(r) => other(r, "corridors")} />
+                  <p class="small muted">
+                    Where each tracked stretch of flight began and ended: parts of India, or "beyond" where it enters or leaves the area. Overflights cross the
+                    whole region without landing, often long-haul flights between the Gulf and South-east Asia.
+                  </p>
+                </section>
               )}
               <section class="rt-sec">
                 <p class="label red">By flight level</p>
