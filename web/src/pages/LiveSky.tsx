@@ -78,6 +78,7 @@ export function LiveSky() {
   const [fetched, setFetched] = useState(0);
   const [sources, setSources] = useState<Record<string, unknown> | null>(null);
   const [snapT, setSnapT] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ol, setOl] = useState<{ manifest: Manifest; info: OutlookInfo } | null | undefined>(undefined);
   const [now, setNow] = useState(Date.now());
@@ -94,7 +95,7 @@ export function LiveSky() {
     let alive = true;
     const get = () =>
       loadLive(place.lat, place.lon)
-        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setSnapT(r.snapshot_t ?? null), setErr(null)))
+        .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setSnapT(r.snapshot_t ?? null), setRefreshing(!!r.refreshing), setErr(null)))
         .catch((e) => alive && setErr(String(e.message ?? e).includes("503") ? "The live feed is busy. Trying again in a minute." : "The live feed cannot be reached right now."));
     get();
     const t = setInterval(get, 60_000);
@@ -426,6 +427,9 @@ export function LiveSky() {
               <p class="live-count">
                 <b>{nat.lasting ?? 0}</b> of {all.length} airliners are flying through air where contrails last, right now
               </p>
+              {refreshing && (typeof sources?.opensky !== "number" || (snapT != null && now - snapT > 6 * 60_000)) && (
+                <p class="mono-s live-err">Fetching a fresh picture of all of India, about a minute… (the page updates by itself)</p>
+              )}
               <ul class="live-key">
                 {(["lasting", "short", "none"] as const).map((k) => (
                   <li class={`k-${k}`}>

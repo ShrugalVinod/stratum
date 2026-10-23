@@ -3,10 +3,13 @@
 // * /data/outlook/*  the daily contrail outlook (ECMWF open data, built by the `outlook` GitHub
 //   Action and kept as one commit on the repo's `outlook-data` branch), cached for 10 minutes.
 // * /api/live        cruising airline flights over India: the `live` GitHub Action's OpenSky
-//   snapshot of the whole country (every 5 min, `live-data` branch; OpenSky and adsb.fi do not
-//   answer Cloudflare's servers) merged with adsb.lol's live positions around the visitor
-//   (cached 60 s per 0.5° cell). Only callsign, type, position, level, track and speed reach
-//   the browser: no ICAO24 address, nothing is stored.
+//   snapshot of the whole country (`live-data` branch; OpenSky and adsb.fi do not answer
+//   Cloudflare's servers) merged with adsb.lol's live positions around the visitor (cached 60 s
+//   per 0.5° cell). GitHub starts scheduled runs hours late, so when a visitor finds the snapshot
+//   older than REFRESH_MIN the Worker asks GitHub to run the Action now (secret GH_DISPATCH_TOKEN:
+//   a fine-grained token with Actions read/write on this repository only; at most one request
+//   per 10 min per Cloudflare location). Only callsign, type, position, level, track and speed
+//   reach the browser: no ICAO24 address, nothing is stored.
 //
 // Everything else is the static site (wrangler.jsonc: assets, single-page fallback).
 
@@ -17,6 +20,8 @@ const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-da
 const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
 const STALE_MIN = 30;
+const REFRESH_MIN = 6;
+const DISPATCH = "https://api.github.com/repos/ShrugalVinod/stratum/actions/workflows/live.yml/dispatches";
 const TYPES = { json: "application/json; charset=utf-8", png: "image/png", geojson: "application/geo+json" };
 
 export default {
@@ -47,7 +52,11 @@ async function live(url, env, ctx) {
   // a snapshot older than STALE_MIN (the Action did not run) would show planes where they were,
   // not where they are: leave it out and say so
   const age = snap0.t ? (Date.now() - snap0.t) / 60_000 : null;
-  const snap = age != null && age > STALE_MIN ? { ...snap0, status: `stale (${Math.round(age)} min)`, list: [] } : snap0;
+  const asked = age == null || age > REFRESH_MIN ? await refresh(env, ctx) : false;
+  const snap =
+    age != null && age > STALE_MIN
+      ? { ...snap0, status: `stale (${Math.round(age)} min)${asked ? ", refreshing" : ""}`, list: [] }
+      : snap0;
   const ac = merge(snap.list, lol.list);
   if (!ac.length && snap.status !== "ok" && lol.status !== "ok") return json({ error: "live feeds busy, try again in a minute" }, 503, 0);
   return json(
@@ -57,6 +66,7 @@ async function live(url, env, ctx) {
       radius_nm: 250,
       credit: "Live aircraft: The OpenSky Network, adsb.lol (ODbL)",
       snapshot_t: snap.t ?? null,
+      refreshing: asked,
       sources: { opensky: snap.status === "ok" ? snap.list.length : snap.status, adsb_lol: lol.status === "ok" ? lol.list.length : lol.status },
       ac,
     },
@@ -78,7 +88,8 @@ async function cached(key, ttl, ctx, load) {
 function snapshot(ctx) {
   return cached("snapshot/india", TTL_S, ctx, async () => {
     try {
-      const r = await fetch(SNAPSHOT, { cf: { cacheTtl: 30 } });
+      // a per-minute query string: raw.githubusercontent.com may otherwise serve a 5-min-old copy
+      const r = await fetch(`${SNAPSHOT}?m=${Math.floor(Date.now() / 60_000)}`, { cf: { cacheTtl: 30 } });
       if (!r.ok) return { status: `HTTP ${r.status}`, list: [] };
       const d = await r.json();
       return { status: "ok", t: d.t, list: d.ac ?? [] };
@@ -86,6 +97,28 @@ function snapshot(ctx) {
       return { status: "unreachable", list: [] };
     }
   });
+}
+
+/** Ask GitHub to run the `live` Action now (the snapshot is old). True if a run was requested
+ *  now or in the last 10 min from this Cloudflare location; false without the token. */
+async function refresh(env, ctx) {
+  if (!env.GH_DISPATCH_TOKEN) return false;
+  const k = new Request("https://stratum-cache.invalid/live-dispatch");
+  if (await caches.default.match(k)) return true;
+  ctx.waitUntil(caches.default.put(k, new Response("1", { headers: { "cache-control": "public, max-age=600" } })));
+  ctx.waitUntil(
+    fetch(DISPATCH, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`,
+        accept: "application/vnd.github+json",
+        "x-github-api-version": "2022-11-28",
+        "user-agent": USER_AGENT,
+      },
+      body: JSON.stringify({ ref: "main" }),
+    }).catch(() => undefined),
+  );
+  return true;
 }
 
 function near(lat, lon, ctx) {
