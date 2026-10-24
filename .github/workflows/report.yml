@@ -29,8 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      STRATUM_DRIVE_ROOT: ${{ runner.temp }}/root
-      STRATUM_WORK_DIR: ${{ runner.temp }}/work
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Which day, and is it already reported?
@@ -38,6 +36,9 @@ jobs:
         env:
           HAS_KEY: ${{ secrets.EUMETSAT_KEY != '' && secrets.EUMETSAT_SECRET != '' }}
         run: |
+          # data and scratch folders (the runner context is not available in job-level env)
+          echo "STRATUM_DRIVE_ROOT=$RUNNER_TEMP/root" >> "$GITHUB_ENV"
+          echo "STRATUM_WORK_DIR=$RUNNER_TEMP/work" >> "$GITHUB_ENV"
           # not set up yet (EUMETSAT secrets, detector-v3 release): skip quietly instead of failing
           if [ "$HAS_KEY" != "true" ]; then echo "::notice::EUMETSAT_KEY / EUMETSAT_SECRET are not set: skipped"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
           if ! gh release view detector-v3 --repo "${{ github.repository }}" >/dev/null 2>&1; then echo "::notice::no detector-v3 release yet: skipped"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
