@@ -31,7 +31,9 @@ concurrency:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # about 4.5 min per hourly image on a standard runner (5-model detector with mirroring):
+    # a full day of 24 images takes about 2 hours
+    timeout-minutes: 300
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
