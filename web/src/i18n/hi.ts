@@ -215,8 +215,8 @@ export const HI: Record<string, string> = {
   "orange: lasting contrails · teal: any contrail · share of the hour": "नारंगी: टिकाऊ कंट्रेल · फ़िरोज़ी: कोई भी कंट्रेल · घंटे का हिस्सा",
   "Over India now": "अभी भारत के ऊपर",
   "airliners above FL200 · positions moved on by speed and heading": "यात्री विमान FL200 से ऊपर · स्थिति गति और दिशा से आगे बढ़ाई गई",
-  "Fetching a fresh picture of all of India, about a minute… (the page updates by itself)":
-    "पूरे भारत की ताज़ा तस्वीर आ रही है, लगभग एक मिनट… (पेज अपने आप अपडेट होगा)",
+  "Fetching a fresh picture of all of India, about five minutes… (the page updates by itself)":
+    "पूरे भारत की ताज़ा तस्वीर आ रही है, लगभग पाँच मिनट… (पेज अपने आप अपडेट होगा)",
   "Contrail hotspots now": "अभी के कंट्रेल हॉटस्पॉट",
   "OpenSky snapshot": "OpenSky स्नैपशॉट",
   "merged by callsign": "कॉलसाइन से जोड़े गए",
@@ -1324,4 +1324,6 @@ export const HI: Record<string, string> = {
   "A daily report card for the forecast": "पूर्वानुमान का रोज़ का रिपोर्ट कार्ड",
   "A new page, /report, and a daily job: every morning yesterday's contrail forecast is checked against the contrails Meteosat-9 saw (learned detector, hourly images) and the score is kept in public, with a running record. First test on 23 October (2 images, the older detector): 37 % of the contrails seen were in forecast air against 16 % by chance. The daily job starts once its setup is done.":
     "एक नया पेज, /report, और रोज़ का काम: हर सुबह कल का कंट्रेल पूर्वानुमान उन कंट्रेल से मिलाया जाता है जो Meteosat-9 ने देखीं (सीखा हुआ डिटेक्टर, घंटेवार तस्वीरें), और स्कोर लगातार रिकॉर्ड के साथ सबके सामने रखा जाता है। 23 अक्टूबर की पहली जाँच (2 तस्वीरें, पुराना डिटेक्टर): देखी गई कंट्रेल में से 37 % पूर्वानुमान की हवा में थीं, जबकि संयोग से 16 %। रोज़ का काम उसकी तैयारी पूरी होने पर शुरू होगा।",
+  "Fetching a fresh picture of India's sky, about five minutes. The page updates by itself.":
+    "भारत के आसमान की ताज़ा तस्वीर आ रही है, लगभग पाँच मिनट। पेज अपने आप अपडेट होगा।",
 };

@@ -85,7 +85,7 @@ export function LiveSky() {
     const get = () =>
       loadLive(place.lat, place.lon)
         .then((r) => alive && (setAc(r.ac), setFetched(r.t), setSources(r.sources ?? null), setSnapT(r.snapshot_t ?? null), setRefreshing(!!r.refreshing), setErr(null)))
-        .catch((e) => alive && setErr(String(e.message ?? e).includes("503") ? "The live feed is busy. Trying again in a minute." : "The live feed cannot be reached right now."));
+        .catch((e) => alive && setErr(String(e.message ?? e).includes("503") ? "Fetching a fresh picture of India's sky, about five minutes. The page updates by itself." : "The live feed cannot be reached right now."));
     get();
     const t = setInterval(get, 60_000);
     return () => ((alive = false), clearInterval(t));
@@ -317,6 +317,7 @@ export function LiveSky() {
               <b>{judged.length}</b> {tx(`airliners within ${MAX_KM} km`, `यात्री विमान, ${MAX_KM} किमी के भीतर`)}
               {age != null && <span class="mono-s muted"> · {tx(`updated ${age < 5 ? "just now" : `${age} s ago`}`, `अपडेट ${age < 5 ? "अभी-अभी" : `${age} सेकंड पहले`}`)}</span>}
             </p>
+            <StaleNote snapT={snapT} now={now} refreshing={refreshing} />
             <ul class="live-key">
               {(["lasting", "short", "none"] as const).map((k) => (
                 <li class={`k-${k}`}>
@@ -447,9 +448,7 @@ export function LiveSky() {
                   </>,
                 )}
               </p>
-              {refreshing && (typeof sources?.opensky !== "number" || (snapT != null && now - snapT > 6 * 60_000)) && (
-                <p class="mono-s live-err">{T("Fetching a fresh picture of all of India, about a minute… (the page updates by itself)")}</p>
-              )}
+              <StaleNote snapT={snapT} now={now} refreshing={refreshing} />
               <ul class="live-key">
                 {(["lasting", "short", "none"] as const).map((k) => (
                   <li class={`k-${k}`}>
@@ -533,5 +532,25 @@ export function LiveSky() {
         </section>
       </div>
     </div>
+  );
+}
+
+/** While the India-wide snapshot is old (GitHub has not run the snapshot job for a while), say how
+ *  old the positions are and that a fresh picture is coming (about five minutes after a visit). */
+function StaleNote({ snapT, now, refreshing }: { snapT: number | null; now: number; refreshing: boolean }) {
+  if (snapT == null) return null;
+  const m = Math.round((now - snapT) / 60_000);
+  if (m <= 6) return null;
+  return (
+    <p class="mono-s live-err">
+      {m >= 20
+        ? tx(
+            `Positions are from ${m} min ago. ${refreshing ? "A fresh picture of all of India is on its way (about five minutes); the page updates by itself." : "A fresh picture is fetched when the page is next opened."}`,
+            `स्थितियाँ ${m} मिनट पहले की हैं। ${refreshing ? "पूरे भारत की ताज़ा तस्वीर आ रही है (लगभग पाँच मिनट); पेज अपने आप अपडेट होगा।" : "पेज अगली बार खुलने पर ताज़ा तस्वीर ली जाएगी।"}`,
+          )
+        : refreshing
+          ? T("Fetching a fresh picture of all of India, about five minutes… (the page updates by itself)")
+          : null}
+    </p>
   );
 }

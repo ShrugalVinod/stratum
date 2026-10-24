@@ -23,7 +23,7 @@ const RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/";
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
 const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
-const STALE_MIN = 30;
+const STALE_MIN = 180; // older than this, a snapshot is no longer shown at all
 const REFRESH_MIN = 6;
 const DISPATCH = "https://api.github.com/repos/ShrugalVinod/stratum/actions/workflows/{wf}/dispatches";
 const TYPES = { json: "application/json; charset=utf-8", png: "image/png", geojson: "application/geo+json" };
@@ -67,8 +67,8 @@ async function live(url, env, ctx) {
   const lon = cell(url.searchParams.get("lon"), 66, 100);
   if (lat == null || lon == null) return json({ error: "lat/lon outside India's region" }, 400, 0);
   const [snap0, lol] = await Promise.all([snapshot(ctx), near(lat, lon, ctx)]);
-  // a snapshot older than STALE_MIN (the Action did not run) would show planes where they were,
-  // not where they are: leave it out and say so
+  // an old snapshot (the Action has not run for a while) is still shown, with its age, while a
+  // fresh one is fetched: better than an empty page. Past STALE_MIN it is left out.
   const age = snap0.t ? (Date.now() - snap0.t) / 60_000 : null;
   const asked = age == null || age > REFRESH_MIN ? await refresh(env, ctx, "live.yml", 600) : false;
   const snap =
@@ -76,7 +76,7 @@ async function live(url, env, ctx) {
       ? { ...snap0, status: `stale (${Math.round(age)} min)${asked ? ", refreshing" : ""}`, list: [] }
       : snap0;
   const ac = merge(snap.list, lol.list);
-  if (!ac.length && snap.status !== "ok" && lol.status !== "ok") return json({ error: "live feeds busy, try again in a minute" }, 503, 0);
+  if (!ac.length) return json({ error: "live feeds busy, try again in a minute", refreshing: asked }, 503, 0);
   return json(
     {
       t: Date.now(),
@@ -84,6 +84,7 @@ async function live(url, env, ctx) {
       radius_nm: 250,
       credit: "Live aircraft: The OpenSky Network, adsb.lol (ODbL)",
       snapshot_t: snap.t ?? null,
+      snapshot_age_min: age == null ? null : Math.round(age),
       refreshing: asked,
       sources: { opensky: snap.status === "ok" ? snap.list.length : snap.status, adsb_lol: lol.status === "ok" ? lol.list.length : lol.status },
       ac,
