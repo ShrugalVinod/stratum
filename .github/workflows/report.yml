@@ -16,6 +16,10 @@ on:
       day:
         description: "UTC day (YYYY-MM-DD); empty = yesterday"
         required: false
+      publish:
+        description: "Publish the result (untick for a test run)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -84,9 +88,10 @@ jobs:
         run: |
           uv run --no-sync stratum report-card --day "${{ steps.day.outputs.day }}" \
             --outlook "$RUNNER_TEMP/outlook" --out "$RUNNER_TEMP/report"
+          cat "$RUNNER_TEMP/report/days/${{ steps.day.outputs.day }}.json" | jq '{date, images, contrails_seen, contrails_in_forecast_air, hit_rate, chance, lift, notices, notices_checked, notices_confirmed}'
 
       - name: Publish to the report-data branch
-        if: steps.day.outputs.skip != '1'
+        if: steps.day.outputs.skip != '1' && inputs.publish != false
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
