@@ -1,5 +1,7 @@
 // STRATUM website Worker: static assets, plus two small server-side routes.
 //
+// * /data/report/*   the daily report card (the `report` Action: yesterday's outlook against the
+//   contrails Meteosat-9 saw; `report-data` branch), cached for 10 minutes.
 // * /data/outlook/*  the daily contrail outlook (ECMWF open data, built by the `outlook` GitHub
 //   Action and kept as one commit on the repo's `outlook-data` branch), cached for 10 minutes.
 //   If a visitor finds the build is not from today's model run (after 09:30 UTC), the Worker asks
@@ -17,7 +19,7 @@
 
 import { cell, fromReadsb, merge, outlookStale, USER_AGENT } from "./live.js";
 
-const OUTLOOK_RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/outlook-data/";
+const RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/";
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
 const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
@@ -29,19 +31,21 @@ const TYPES = { json: "application/json; charset=utf-8", png: "image/png", geojs
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname.startsWith("/data/outlook/")) return outlook(url, env, ctx);
+    if (req.method === "GET" && url.pathname.startsWith("/data/outlook/")) return branchFile(url, "outlook", env, ctx);
+    if (req.method === "GET" && url.pathname.startsWith("/data/report/")) return branchFile(url, "report", env, ctx);
     if (req.method === "GET" && url.pathname === "/api/live") return live(url, env, ctx);
     return env.ASSETS.fetch(req);
   },
 };
 
-async function outlook(url, env, ctx) {
-  const path = url.pathname.slice("/data/outlook/".length);
+/** A file of a data branch: /data/outlook/* → `outlook-data`, /data/report/* → `report-data`. */
+async function branchFile(url, name, env, ctx) {
+  const path = url.pathname.slice(`/data/${name}/`.length);
   if (!/^[\w./-]+$/.test(path) || path.includes("..")) return new Response("bad path", { status: 400 });
-  const r = await fetch(OUTLOOK_RAW + path, { cf: { cacheTtl: 600, cacheEverything: true } });
+  const r = await fetch(`${RAW}${name}-data/${path}`, { cf: { cacheTtl: 600, cacheEverything: true } });
   if (!r.ok) return new Response("not found", { status: r.status === 404 ? 404 : 502 });
   const ext = path.split(".").pop();
-  if (path === "outlook.json") {
+  if (name === "outlook" && path === "outlook.json") {
     // GitHub's daily schedule can skip a day: a visitor who finds yesterday's forecast asks for today's
     const text = await r.text();
     let run = null;

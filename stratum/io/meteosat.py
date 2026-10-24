@@ -250,11 +250,13 @@ def ingest_day(
     max_slots: int | None = None,
     config_hash: str | None = None,
     parallel_downloads: int = 4,
+    every_minutes: int | None = None,
 ) -> dict[str, Any]:
     """Download + crop every slot of ``day`` (+ ``extend_hours``) → two day Zarrs on ``root``.
 
     ``root`` = ``<drive>/raw/meteosat``. ``work`` = fast local scratch. ``store`` =
     ``eumdac.DataStore``. ``max_slots`` is for tests only (never marks the day done).
+    ``every_minutes``: keep only slots on that step (60 = hourly, for the daily report card).
     """
     bbox = bbox or BBox.padded_domain()
     l15_dir = root / "l15_crop" / f"{day:%Y-%m-%d}"
@@ -278,6 +280,7 @@ def ingest_day(
             max_slots,
             config_hash,
             parallel_downloads,
+            every_minutes,
         )
     finally:
         lock.release()
@@ -294,13 +297,18 @@ def _ingest_day_locked(
     max_slots: int | None,
     config_hash: str | None,
     parallel_downloads: int,
+    every_minutes: int | None = None,
 ) -> dict[str, Any]:
     t_start = _time.time()
     start, end = day_window(day, extend_hours)
     l15 = list(store.get_collection(COLLECTION_L15).search(dtstart=start, dtend=end))
     clm = list(store.get_collection(COLLECTION_CLM).search(dtstart=start, dtend=end))
     slots = match_products(l15, clm)
-    times = [t for t in slots if start <= t < end][:max_slots]
+    times = [
+        t
+        for t in slots
+        if start <= t < end and (not every_minutes or (t.hour * 60 + t.minute) % every_minutes == 0)
+    ][:max_slots]
     scratch = work / "meteosat" / f"{day:%Y-%m-%d}"
     scratch.mkdir(parents=True, exist_ok=True)
     bt: dict[str, list[npt.NDArray[np.uint16]]] = {ch: [] for ch in CHANNELS}

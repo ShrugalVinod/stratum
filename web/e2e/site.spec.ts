@@ -267,3 +267,11 @@ test("Your flight: a trip gets its cruise checked and a shareable link", async (
   }
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
+
+test("Report card: a scored day, or a clear message before the first one", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/report");
+  await expect(page.locator(".rc-day, .page.report .muted.mono").first()).toBeVisible();
+  if (await page.locator(".rc-day").count()) await expect(page.locator(".rc-tiles").first()).toContainText("chance");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});

@@ -85,13 +85,16 @@ export function Flight() {
   const [hot, setHot] = useState<Hot[] | null | "busy">(null);
 
   // departure slots: every hour the forecast covers, from the coming hour
-  const slots = useMemo(() => {
-    if (!ol) return [];
-    const first = Math.max(Date.parse(`${ol.manifest.days[0]}T00:00:00Z`), Math.ceil(Date.now() / HOUR) * HOUR);
+  // (a forecast that is out of date still shows its own hours, and the page says so)
+  const [slots, stale] = useMemo((): [number[], boolean] => {
+    if (!ol) return [[], false];
+    const start = Date.parse(`${ol.manifest.days[0]}T00:00:00Z`);
     const last = Date.parse(`${ol.manifest.days[ol.manifest.days.length - 1]}T23:00:00Z`);
+    const next = Math.ceil(Date.now() / HOUR) * HOUR;
+    const old = next > last;
     const out: number[] = [];
-    for (let t = first; t <= last; t += HOUR) out.push(t);
-    return out;
+    for (let t = old ? start : Math.max(start, next); t <= last; t += HOUR) out.push(t);
+    return [out, old];
   }, [ol]);
 
   useEffect(() => {
@@ -222,6 +225,14 @@ export function Flight() {
               </button>
             </div>
 
+            {stale && (
+              <p class="mono-s live-err">
+                {tx(
+                  `The latest forecast (run ${ol.info.run.slice(0, 10)}) has no hours left ahead; showing its own hours. A new one is built every morning.`,
+                  `नवीनतम पूर्वानुमान (रन ${ol.info.run.slice(0, 10)}) में आगे के घंटे नहीं बचे; उसी के घंटे दिखाए जा रहे हैं। नया पूर्वानुमान हर सुबह बनता है।`,
+                )}
+              </p>
+            )}
             {mode === "plan" ? (
               <form
                 class="fp-form rv"

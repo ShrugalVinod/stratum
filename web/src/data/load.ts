@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightCollectionLite, type FlightFeature, GameIndex, LiveResponse, Manifest, type ModelId, OutlookInfo, Results } from "./contract";
+import { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightCollectionLite, type FlightFeature, GameIndex, LiveResponse, Manifest, type ModelId, OutlookInfo, ReportDay, ReportIndex, Results } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -175,4 +175,12 @@ export function loadWeightedSummary(): Promise<Record<string, any> | null> {
 /** The routes and airlines dashboard (data/dashboard/summary.json; ?dashboard=<folder>). */
 export function loadDashboard(): Promise<Record<string, any> | null> {
   return json(`${BASE}/data/${dirOverride("dashboard", "dashboard")}/summary.json`, z.record(z.string(), z.any())).catch(() => null);
+}
+
+// ── daily report card (data/report/ — the `report-data` branch via the Worker) ─────────────
+export function loadReportIndex(): Promise<ReportIndex | null> {
+  return json(`${BASE}/data/report/index.json`, ReportIndex).catch(() => null);
+}
+export function loadReportDay(date: string): Promise<ReportDay | null> {
+  return json(`${BASE}/data/report/days/${date}.json`, ReportDay).catch(() => null);
 }

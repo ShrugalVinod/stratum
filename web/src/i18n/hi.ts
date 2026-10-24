@@ -1112,4 +1112,70 @@ export const HI: Record<string, string> = {
   "Your flight's hidden footprint": "आपकी उड़ान का छिपा असर",
   "A new page, /flight: pick a trip (or an airliner flying now) and STRATUM checks the forecast minute by minute along its whole cruise, at its level and the levels around it. It shows the fuel's CO₂ (OpenAP) next to the warming its contrail could cause (our CoCiP runs over India, converted like the decision layer), and the nearby level that avoids the humid layer. A scan finds the most contrail-prone trips in each day's forecast. Physics only, with H1's caveat stated.":
     "एक नया पेज, /flight: कोई यात्रा (या अभी उड़ता कोई यात्री विमान) चुनिए और STRATUM उसके पूरे क्रूज़ पर, उसके लेवल और आसपास के लेवलों पर, मिनट-दर-मिनट पूर्वानुमान जाँचता है। यह ईंधन का CO₂ (OpenAP) उस गर्मी के साथ दिखाता है जो उसकी कंट्रेल पैदा कर सकती है (भारत पर हमारे CoCiP रन, निर्णय परत की तरह बदले गए), और पास का वह लेवल जो नम परत से बचाता है। एक स्कैन हर दिन के पूर्वानुमान में सबसे ज़्यादा कंट्रेल वाली यात्राएँ खोजता है। केवल भौतिकी, H1 की चेतावनी के साथ।",
+
+  // ── report card ──
+  "Bar: contrails seen that hour · dark part: in forecast air":
+    "पट्टी: उस घंटे देखी गई कंट्रेल · गहरा हिस्सा: पूर्वानुमान की हवा में",
+  "Contrails seen each hour, and how many were in forecast air":
+    "हर घंटे देखी गई कंट्रेल, और उनमें से कितनी पूर्वानुमान की हवा में थीं",
+  "Each day: dot = share of contrails in forecast air, tick = chance. Click a day to open it.":
+    "हर दिन: बिंदु = पूर्वानुमान की हवा में कंट्रेल का हिस्सा, निशान = संयोग। खोलने के लिए किसी दिन पर क्लिक करें।",
+  "Each day: share of contrails in forecast air against chance":
+    "हर दिन: संयोग के मुकाबले पूर्वानुमान की हवा में कंट्रेल का हिस्सा",
+  "Every morning STRATUM checks yesterday's contrail forecast against the contrails the satellite actually saw, and keeps the score here, in public, good days and bad.":
+    "हर सुबह STRATUM कल के कंट्रेल पूर्वानुमान को उन कंट्रेल से मिलाता है जो उपग्रह ने सचमुच देखीं, और स्कोर यहाँ सबके सामने रखता है, अच्छे दिन भी और बुरे भी।",
+  "Forecast air with no contrail is not counted as wrong: a contrail also needs a plane, and air traffic is not part of this check. The detector finds about 2 in 5 contrails and about 1 in 3 of its lines is not a contrail (expert check scenes, D-005), so single days are noisy; the running record is what matters. This is a descriptive check of the experimental outlook, added after the pre-registered study and not part of its results. Only the derived lines and scores are published; satellite images © EUMETSAT 2026.":
+    "बिना कंट्रेल वाली पूर्वानुमान की हवा को गलत नहीं गिना जाता: कंट्रेल के लिए विमान भी चाहिए, और हवाई यातायात इस जाँच का हिस्सा नहीं है। डिटेक्टर लगभग 5 में से 2 कंट्रेल खोजता है और उसकी लगभग 3 में से 1 लकीर कंट्रेल नहीं होती (विशेषज्ञ जाँच दृश्य, D-005), इसलिए अकेले दिन शोर भरे होते हैं; असली बात लगातार रिकॉर्ड है। यह प्रायोगिक पूर्वानुमान की वर्णनात्मक जाँच है, पहले से दर्ज अध्ययन के बाद जोड़ी गई और उसके नतीजों का हिस्सा नहीं। केवल बनाई गई लकीरें और स्कोर प्रकाशित होते हैं; उपग्रह तस्वीरें © EUMETSAT 2026।",
+  "Forecast lasting-contrail air and the contrails the satellite saw":
+    "पूर्वानुमान की टिकाऊ-कंट्रेल वाली हवा और उपग्रह को दिखी कंट्रेल",
+  "Hour by hour (UTC)":
+    "घंटे-दर-घंटे (UTC)",
+  "How did yesterday's notices do?":
+    "कल की सूचनाएँ कितनी सही रहीं?",
+  "How the score works":
+    "स्कोर कैसे बनता है",
+  "Orange: where the forecast had lasting-contrail air at some hour of the day. Lines: contrails the satellite saw (dark: in forecast air at their hour; blue: outside it).":
+    "नारंगी: जहाँ दिन के किसी घंटे पूर्वानुमान में टिकाऊ-कंट्रेल वाली हवा थी। लकीरें: उपग्रह को दिखी कंट्रेल (गहरी: अपने घंटे में पूर्वानुमान की हवा में; नीली: उसके बाहर)।",
+  "Read the notices":
+    "सूचनाएँ पढ़ें",
+  "Report card":
+    "रिपोर्ट कार्ड",
+  "Report card · every morning":
+    "रिपोर्ट कार्ड · हर सुबह",
+  "The day's notices":
+    "उस दिन की सूचनाएँ",
+  "The first report card is written the morning after the daily check starts.":
+    "पहला रिपोर्ट कार्ड रोज़ की जाँच शुरू होने के अगले दिन सुबह लिखा जाएगा।",
+  "The forecast: the experimental outlook made that morning from ECMWF open data (physics only), which marks every quarter-degree square where the air at some cruise level lets a contrail last for at least half of the hour. The check: the contrail lines our learned detector finds in that day's 24 hourly Meteosat-9 images, counted only where the sky was clear and in good view. A contrail counts as explained if it lies in forecast air (within one square, which also covers its drift with the wind). Chance is the share of the checkable sky the forecast had marked at that hour: a forecast that paints a random patch of the same size would score ×1.0.":
+    "पूर्वानुमान: उस सुबह ECMWF open data से बना प्रायोगिक पूर्वानुमान (केवल भौतिकी), जो हर चौथाई-डिग्री खाने को चिह्नित करता है जहाँ किसी क्रूज़ लेवल की हवा घंटे के कम से कम आधे समय कंट्रेल को टिकने देती है। जाँच: उस दिन की 24 घंटेवार Meteosat-9 तस्वीरों में हमारे सीखे हुए डिटेक्टर को मिली कंट्रेल लकीरें, केवल वहाँ गिनी गईं जहाँ आसमान साफ़ और अच्छे दृश्य में था। कोई कंट्रेल 'समझाई गई' मानी जाती है अगर वह पूर्वानुमान की हवा में हो (एक खाने के भीतर, जिसमें हवा से उसका बहाव भी आ जाता है)। संयोग जाँचे जा सकने वाले आसमान का वह हिस्सा है जिसे पूर्वानुमान ने उस घंटे चिह्नित किया था: उतने ही आकार का बेतरतीब हिस्सा रंगने वाला पूर्वानुमान ×1.0 पाएगा।",
+  "The running record":
+    "लगातार रिकॉर्ड",
+  "Too cloudy to check: no contrail was seen in clear, well-viewed sky.":
+    "जाँच के लिए बहुत बादल: साफ़, अच्छे दृश्य वाले आसमान में कोई कंट्रेल नहीं दिखी।",
+  "Was yesterday's":
+    "क्या कल का",
+  "Was yesterday's forecast right?":
+    "क्या कल का पूर्वानुमान सही था?",
+  "better than chance":
+    "संयोग से बेहतर",
+  "better than chance, all days together":
+    "संयोग से बेहतर, सभी दिन मिलाकर",
+  "confirmed":
+    "पुष्ट",
+  "contrail notices confirmed by the satellite (of those it could check)":
+    "कंट्रेल सूचनाएँ उपग्रह से पुष्ट (जो वह जाँच सका उनमें से)",
+  "expected by chance":
+    "संयोग से अपेक्षित",
+  "expected by chance (a forecast patch of the same size)":
+    "संयोग से अपेक्षित (उतने ही आकार का पूर्वानुमान क्षेत्र)",
+  "forecast right?":
+    "पूर्वानुमान सही था?",
+  "not checkable":
+    "जाँच नहीं हो सकी",
+  "not seen":
+    "नहीं दिखी",
+  "of all the contrails seen were in forecast air":
+    "सभी देखी गई कंट्रेल में से पूर्वानुमान की हवा में थीं",
+  "notices confirmed by the satellite (of those it could check)":
+    "सूचनाएँ उपग्रह से पुष्ट (जो जाँची जा सकीं उनमें से)",
 };

@@ -179,7 +179,8 @@ export function Advisory() {
               </p>
               <p>
                 <a href={`/map?build=outlook&date=${day ?? ""}`}>{T("See the hour-by-hour forecast on the map")}</a> ·{" "}
-                <a href="/live">{T("Which plane is making a contrail right now?")}</a>
+                <a href="/live">{T("Which plane is making a contrail right now?")}</a> ·{" "}
+                <a href="/report">{T("How did yesterday's notices do?")}</a>
               </p>
             </section>
           </>

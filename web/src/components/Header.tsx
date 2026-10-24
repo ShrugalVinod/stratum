@@ -10,6 +10,7 @@ const NAV = [
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
   ["/flight", "Your flight", "Its hidden contrail footprint"],
   ["/advisory", "Advisories", "Tomorrow's contrail notices"],
+  ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/game", "Beat STRATUM", "Can you out-guess the model?"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/routes", "Routes & airlines", "Where the warming comes from"],

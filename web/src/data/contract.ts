@@ -304,3 +304,43 @@ export const ExplainItem = z.object({
 export type ExplainItem = z.infer<typeof ExplainItem>;
 export const ExplainDay = z.object({ day: z.string(), fold: z.string(), features: z.array(z.string()), base: z.number().nullable(), items: z.record(z.string(), ExplainItem) });
 export type ExplainDay = z.infer<typeof ExplainDay>;
+
+// ── daily report card (data/report/, `report` GitHub Action; stratum/export/report_card.py) ──
+const ReportSummary = z.object({
+  date: z.string(),
+  contrails_seen: z.number(),
+  contrails_in_forecast_air: z.number(),
+  hit_rate: z.number().nullable(),
+  chance: z.number().nullable(),
+  lift: z.number().nullable(),
+  notices: z.number(),
+  notices_checked: z.number(),
+  notices_confirmed: z.number(),
+  checkable_share: z.number().nullish(),
+  forecast_run: z.string().nullish(),
+  detector: z.string().nullish(),
+});
+export const ReportIndex = z.object({
+  updated: z.string(),
+  totals: z.object({
+    days: z.number(),
+    contrails_seen: z.number(),
+    contrails_in_forecast_air: z.number(),
+    hit_rate: z.number().nullable(),
+    chance: z.number().nullable(),
+    lift: z.number().nullable(),
+    notices_checked: z.number(),
+    notices_confirmed: z.number(),
+  }),
+  days: z.array(ReportSummary),
+});
+export type ReportIndex = z.infer<typeof ReportIndex>;
+export const ReportDay = ReportSummary.extend({
+  images: z.number().nullish(),
+  notice_results: z.array(z.object({ id: z.string(), contrails: z.number(), checkable: z.number(), status: z.string() })),
+  by_hour: z.array(z.object({ h: z.number(), lines: z.number(), hits: z.number(), chance: z.number().nullable() })),
+  grid: z.object({ lat_north: z.number(), lon_west: z.number(), step: z.number() }),
+  forecast_cells: z.array(z.tuple([z.number(), z.number()])),
+  lines: z.array(z.object({ h: z.number(), hit: z.boolean(), lat: z.array(z.number()), lon: z.array(z.number()) })),
+});
+export type ReportDay = z.infer<typeof ReportDay>;

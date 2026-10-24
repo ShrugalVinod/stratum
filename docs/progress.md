@@ -2,6 +2,23 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-24 — Daily forecast report card (/report), built
+
+**Done**
+- `stratum report-card` + `.github/workflows/report.yml` (02:40 UTC, backup 06:40): yesterday's
+  24 hourly Meteosat-9 images (new `every_minutes` option of `ingest_day`), contrail lines from
+  the learned detector v3 (CPU), scored against the outlook that covered the day
+  (`stratum/export/report_card.py`): share of seen contrails in forecast lasting-contrail air
+  (±1 cell) against the chance level (share of the checkable sky the forecast marked that hour),
+  and advisories confirmed / not seen / not checkable. Only derived lines and scores published
+  (branch `report-data`, served by the Worker at /data/report/). Descriptive, not pre-registered.
+- Test on 23 Oct (2 images, line filter): 97 lines, 37 % in forecast air vs 16 % chance (×2.3);
+  3/3 checkable notices confirmed.
+- /flight keeps working when the forecast is out of date (shows its hours and says so).
+
+**Waiting on the team:** GitHub secrets EUMETSAT_KEY / EUMETSAT_SECRET, and the `detector-v3`
+release (meta.json + model_fold1–5.pt from Drive). Until both exist the job skips itself.
+
 ## 2026-10-23 — "Your flight's hidden footprint" (/flight), fixes
 
 **Done**

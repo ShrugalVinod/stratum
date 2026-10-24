@@ -2667,3 +2667,86 @@ a.contact-big:hover {
   grid-column: 1 / -1;
   border-left: 3px solid var(--orange);
 }
+
+/* ── Report card (/report) ─────────────────────────────────────────────────── */
+.rc-head {
+  margin: 6px 0 22px;
+}
+.rc-tiles .rc-good {
+  border-top-color: var(--teal);
+}
+.rc-tiles .rc-bad {
+  border-top-color: var(--red);
+}
+.rc-cell {
+  fill: var(--orange);
+  opacity: 0.32;
+}
+.rc-line {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.rc-line.hit {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.rc-hours,
+.rc-rec {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 6px 0;
+}
+.rc-hours .ax,
+.rc-rec .ax {
+  font: 9px var(--font-mono);
+  fill: var(--muted);
+}
+.rc-bar {
+  fill: var(--rule);
+}
+.rc-bar.hit {
+  fill: var(--ink);
+}
+.rc-notices {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px 12px;
+}
+.rc-n {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--rule);
+  padding: 3px 0;
+}
+.rc-n.confirmed span:last-child {
+  color: var(--ink);
+  font-weight: 700;
+}
+.rc-n.not-checkable span:last-child {
+  color: var(--muted);
+}
+.rc-grid-l {
+  stroke: var(--rule);
+}
+.rc-chance {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+.rc-dot {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+.rc-day-mark {
+  cursor: pointer;
+}
+.rc-how p {
+  max-width: 900px;
+}

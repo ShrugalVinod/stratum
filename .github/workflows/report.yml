@@ -1,0 +1,98 @@
+# Daily forecast report card (descriptive): yesterday's contrail outlook against the contrails
+# Meteosat-9 saw. Downloads yesterday's 24 hourly images (EUMETSAT Data Store; secrets
+# EUMETSAT_KEY / EUMETSAT_SECRET), finds contrail lines with the learned detector v3 (D-005;
+# its model files come from the `detector-v3` release), scores them against the outlook build
+# that covered the day, and adds the result to the `report-data` branch (one file per day plus
+# the running record, index.json). Only derived lines and scores are published, never the
+# satellite data (EUMETSAT licence). The website's Worker serves the branch at /data/report/.
+name: report
+
+on:
+  schedule:
+    - cron: "40 2 * * *" # 02:40 UTC: yesterday's images are all in by now, and the outlook
+    - cron: "40 6 * * *" #   that covers yesterday is replaced only at ~09:20 (backup run)
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "UTC day (YYYY-MM-DD); empty = yesterday"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      STRATUM_DRIVE_ROOT: ${{ runner.temp }}/root
+      STRATUM_WORK_DIR: ${{ runner.temp }}/work
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Which day, and is it already reported?
+        id: day
+        env:
+          HAS_KEY: ${{ secrets.EUMETSAT_KEY != '' && secrets.EUMETSAT_SECRET != '' }}
+        run: |
+          # not set up yet (EUMETSAT secrets, detector-v3 release): skip quietly instead of failing
+          if [ "$HAS_KEY" != "true" ]; then echo "::notice::EUMETSAT_KEY / EUMETSAT_SECRET are not set: skipped"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if ! gh release view detector-v3 --repo "${{ github.repository }}" >/dev/null 2>&1; then echo "::notice::no detector-v3 release yet: skipped"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          day="${{ inputs.day }}"
+          [ -n "$day" ] || day=$(date -u -d yesterday +%F)
+          echo "day=$day" >> "$GITHUB_OUTPUT"
+          done=$(curl -fsS "https://raw.githubusercontent.com/${{ github.repository }}/report-data/index.json" 2>/dev/null \
+            | jq -r --arg d "$day" '[.days[].date] | index($d) != null' || echo false)
+          if [ "$done" = "true" ] && [ -z "${{ inputs.day }}" ]; then echo "$day is already reported"; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/checkout@v4
+        if: steps.day.outputs.skip != '1'
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.day.outputs.skip != '1'
+        with:
+          enable-cache: true
+
+      - name: Install pinned environment (+ CPU PyTorch for the detector)
+        if: steps.day.outputs.skip != '1'
+        run: |
+          uv sync --frozen --python 3.12 --no-dev
+          uv pip install --python .venv "torch>=2.5" --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Detector v3 model files and the outlook that covered the day
+        if: steps.day.outputs.skip != '1'
+        run: |
+          mkdir -p "$STRATUM_DRIVE_ROOT/interim/detector_nn_v3"
+          gh release download detector-v3 --repo "${{ github.repository }}" --pattern '*' \
+            --dir "$STRATUM_DRIVE_ROOT/interim/detector_nn_v3"
+          git clone -q --depth 1 --branch outlook-data "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/outlook"
+          if git ls-remote --exit-code --heads origin report-data >/dev/null; then
+            git clone -q --depth 1 --branch report-data "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/report"
+          else
+            mkdir -p "$RUNNER_TEMP/report"
+          fi
+
+      - name: Score the day
+        if: steps.day.outputs.skip != '1'
+        env:
+          EUMETSAT_KEY: ${{ secrets.EUMETSAT_KEY }}
+          EUMETSAT_SECRET: ${{ secrets.EUMETSAT_SECRET }}
+        run: |
+          uv run --no-sync stratum report-card --day "${{ steps.day.outputs.day }}" \
+            --outlook "$RUNNER_TEMP/outlook" --out "$RUNNER_TEMP/report"
+
+      - name: Publish to the report-data branch
+        if: steps.day.outputs.skip != '1'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd "$RUNNER_TEMP/report"
+          [ -d .git ] || git init -q -b report-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Report card ${{ steps.day.outputs.day }}"
+          git push -q "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" HEAD:report-data

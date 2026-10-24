@@ -662,6 +662,97 @@ def outlook_cmd(
                          "advisories": r["advisories"], "MB": mb})  # fmt: skip
 
 
+@app.command("report-card")
+def report_card_cmd(
+    outlook: Annotated[Path, typer.Option(help="the outlook build that covers the day")],
+    out: Annotated[Path, typer.Option(help="report folder (days/<date>.json + index.json)")],
+    day: Annotated[str, typer.Option(help="UTC day, YYYY-MM-DD (default: yesterday)")] = "",
+    every: Annotated[int, typer.Option(help="satellite image step in minutes")] = 60,
+    track: Annotated[str, typer.Option(help="detector: nn3 (learned v3) or line")] = "nn3",
+    skip_ingest: Annotated[bool, typer.Option(help="use the stored satellite day")] = False,
+    max_slots: Annotated[int | None, typer.Option(help="TEST ONLY: first N images")] = None,
+) -> None:
+    """Daily report card (GitHub Action, descriptive): yesterday's outlook against the contrails
+    the satellite saw (hourly Meteosat-9 images, learned detector). Data root: $STRATUM_DRIVE_ROOT
+    (raw/meteosat, interim/detector_nn_v3); only derived lines and scores are written."""
+    from datetime import date as _date
+    from datetime import datetime, timedelta
+
+    import pandas as pd
+    import xarray as xr
+
+    from stratum.detect.run import detect_day, detections_dir
+    from stratum.export import report_card as rc
+    from stratum.export.grids import decode_sprite
+    from stratum.io import meteosat
+
+    d = _date.fromisoformat(day) if day else datetime.now(UTC).date() - timedelta(days=1)
+    man = json.loads((outlook / "manifest.json").read_text())
+    info = json.loads((outlook / "outlook.json").read_text())
+    if d.isoformat() not in man["days"]:
+        raise typer.BadParameter(f"the outlook build ({info.get('run')}) does not cover {d}")
+    root = drive_root()
+    met = root / "raw" / "meteosat"
+    if not skip_ingest:
+        from eumdac.datastore import DataStore
+        from eumdac.token import AccessToken
+
+        tok = AccessToken((os.environ["EUMETSAT_KEY"], os.environ["EUMETSAT_SECRET"]))
+        res = meteosat.ingest_day(
+            d,
+            met,
+            work_dir(),
+            DataStore(tok),
+            extend_hours=0.0,
+            every_minutes=every,
+            max_slots=max_slots,
+            config_hash=cfg.config_hash(),
+        )
+        area = res.pop("_area", None)
+        if area is not None and not (met / "static_grid.zarr").exists():
+            meteosat.static_grid(area).to_zarr(
+                met / "static_grid.zarr", mode="w", consolidated=True
+            )
+    det = detect_day(root, d, track=track)
+    grid = rc.Grid.from_manifest(man)
+    pattern = next(layer["file"] for layer in man["layers"] if layer["id"] == "B1")
+    b1 = {fl: decode_sprite(outlook / "days" / d.isoformat() / pattern.replace("{fl}", f"{fl:03d}"))
+          for fl in rc.FLS}  # fmt: skip
+    static = xr.open_zarr(met / "static_grid.zarr").load()
+    clm = xr.open_zarr(met / "clm" / d.isoformat() / "data.zarr")["cloud_mask"]
+    times = pd.DatetimeIndex(clm["time"].values)
+    keep = [i for i, t in enumerate(times) if t.date() == d and t.minute == 0]
+    obs = rc.observable(
+        clm.isel(time=keep).values, static["lat"].values, static["lon"].values,
+        static["vza_deg"].values, [int(times[i].hour) for i in keep], grid,
+    )  # fmt: skip
+    objs = pd.read_parquet(detections_dir(root, track) / d.isoformat() / "objects.parquet")
+    advisories = [
+        a for a in info.get("advisories", []) if a["valid_from"].startswith(d.isoformat())
+    ]
+    card = rc.score_day(d, objs, rc.forecast_mask(b1), obs, grid, advisories)
+    card.update(
+        forecast_run=info.get("run"),
+        detector="learned v3 (D-005)" if track == "nn3" else track,
+        images=len(keep),
+    )
+    (out / "days").mkdir(parents=True, exist_ok=True)
+    (out / "days" / f"{d.isoformat()}.json").write_text(json.dumps(card))
+    idx = rc.update_index(out / "index.json", card)
+    rows = {
+        "day": str(d),
+        "images": len(keep),
+        "detections": det.get("status"),
+        "seen": card["contrails_seen"],
+        "in forecast air": card["contrails_in_forecast_air"],
+        "chance": card["chance"],
+        "lift": card["lift"],
+        "notices confirmed": f"{card['notices_confirmed']}/{card['notices_checked']}",
+        "record days": idx["totals"]["days"],
+    }
+    _summary("report-card", rows)
+
+
 @app.command("export-dashboard")
 def export_dashboard_cmd() -> None:
     """Website (Colab 12b): the routes and airlines dashboard, from the weighted segments of

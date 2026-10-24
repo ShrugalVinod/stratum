@@ -57,6 +57,7 @@ labeller/playwright-report/
 web/expo-build/
 web/public/data/contrails-dev/
 web/public/data/outlook/
+web/public/data/report/
 web/public/data/game-dev/
 web/public/data/explain-dev/
 web/public/data/weighted-dev/
