@@ -611,6 +611,22 @@ main {
   gap: 8px;
   align-items: center;
 }
+/* a narrow phone: the theme button keeps only its square (its label stays for screen readers),
+   so wordmark, language, theme and menu fit in one row in both languages */
+@media (max-width: 480px) {
+  .header-tools {
+    gap: 6px;
+  }
+  .theme-btn {
+    padding: 0 12px;
+  }
+  .theme-btn .word {
+    display: none;
+  }
+  .lang-btn {
+    padding: 0 10px;
+  }
+}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
 .site-footer {

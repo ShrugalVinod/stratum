@@ -1178,4 +1178,150 @@ export const HI: Record<string, string> = {
     "सभी देखी गई कंट्रेल में से पूर्वानुमान की हवा में थीं",
   "notices confirmed by the satellite (of those it could check)":
     "सूचनाएँ उपग्रह से पुष्ट (जो जाँची जा सकीं उनमें से)",
+
+  // ── for airlines, physics sandbox ──
+  "A lasting contrail":
+    "एक टिकाऊ कंट्रेल",
+  "A lasting contrail: it spreads into cirrus and traps heat.":
+    "एक टिकाऊ कंट्रेल: यह सिरस में फैलती है और गर्मी रोकती है।",
+  "A satellite check of the forecast every day, a correction learned from Meteosat-9, a footprint for any flight, and altitude advice only where the cautious estimate says it helps.":
+    "हर दिन पूर्वानुमान की उपग्रह से जाँच, Meteosat-9 से सीखा हुआ सुधार, किसी भी उड़ान का असर, और ऊँचाई की सलाह केवल वहाँ जहाँ सतर्क अनुमान कहता है कि इससे मदद मिलती है।",
+  "A short contrail: it forms, then vanishes in seconds.":
+    "एक छोटी कंट्रेल: यह बनती है, फिर सेकंडों में गायब हो जाती है।",
+  "A short-lived contrail":
+    "थोड़ी देर की कंट्रेल",
+  "Air temperature":
+    "हवा का तापमान",
+  "All airlines over India":
+    "भारत के ऊपर सभी एयरलाइन",
+  "Behind the engine, hot moist exhaust mixes with the cold air along a straight line (dashed; its slope depends on the pressure and the engine). If that line crosses the water-saturation curve, droplets form and freeze: a contrail. It lasts only if the air itself is above the ice-saturation curve. More efficient engines leave cooler exhaust, so they make contrails in slightly warmer air: try the engine buttons.":
+    "इंजन के पीछे गर्म, नम धुआँ ठंडी हवा में एक सीधी रेखा के साथ मिलता है (डैश; इसकी ढलान दबाव और इंजन पर निर्भर है)। अगर वह रेखा पानी-संतृप्ति वक्र को पार करे, तो बूँदें बनकर जम जाती हैं: एक कंट्रेल। वह तभी टिकती है जब हवा खुद बर्फ़-संतृप्ति वक्र से ऊपर हो। ज़्यादा कुशल इंजन ठंडा धुआँ छोड़ते हैं, इसलिए वे थोड़ी गर्म हवा में भी कंट्रेल बनाते हैं: इंजन के बटन आज़माइए।",
+  "Carbon price, € per tonne":
+    "कार्बन मूल्य, € प्रति टन",
+  "Cold but dry":
+    "ठंडा पर सूखा",
+  "EU rules checked 24 Oct 2026":
+    "EU नियम 24 अक्टूबर 2026 को जाँचे",
+  "Engine":
+    "इंजन",
+  "European Commission, Reducing emissions from aviation":
+    "यूरोपीय आयोग, विमानन से उत्सर्जन घटाना",
+  "Every STRATUM forecast starts with one test from 1953: is the air behind the engine cold enough for its water vapour to freeze, and is the air humid enough for the ice to stay? Move the sliders and find out.":
+    "STRATUM का हर पूर्वानुमान 1953 के एक परीक्षण से शुरू होता है: क्या इंजन के पीछे की हवा इतनी ठंडी है कि उसकी भाप जम जाए, और क्या हवा इतनी नम है कि बर्फ़ टिकी रहे? स्लाइडर खिसकाइए और देखिए।",
+  "Example skies":
+    "उदाहरण आसमान",
+  "Flights to and from the rest of the world, India included, may report voluntarily.":
+    "बाकी दुनिया से आने-जाने वाली उड़ानें, भारत सहित, अपनी मर्ज़ी से रिपोर्ट कर सकती हैं।",
+  "For airlines":
+    "एयरलाइनों के लिए",
+  "For airlines · the business case":
+    "एयरलाइनों के लिए · व्यावसायिक पक्ष",
+  "How STRATUM uses it":
+    "STRATUM इसका उपयोग कैसे करता है",
+  "Humidity over ice":
+    "बर्फ़ के सापेक्ष नमी",
+  "Indian airlines enter the mandatory phase of ICAO's CORSIA. It covers CO₂ only: contrails are not in it yet.":
+    "भारतीय एयरलाइनें ICAO के CORSIA के अनिवार्य चरण में आती हैं। यह केवल CO₂ को ढकता है: कंट्रेल अभी इसमें नहीं हैं।",
+  "Its default method estimates each flight's contrail effect with CoCiP, the contrail model STRATUM also uses, driven by weather forecasts, and turns it into CO₂-equivalent (20, 50 and 100 years) in the EU's own tracking system.":
+    "इसका डिफ़ॉल्ट तरीका हर उड़ान का कंट्रेल असर CoCiP से आँकता है, वही कंट्रेल मॉडल जो STRATUM भी इस्तेमाल करता है, मौसम पूर्वानुमानों के आधार पर, और उसे EU की अपनी ट्रैकिंग प्रणाली में CO₂ के बराबर (20, 50 और 100 वर्ष) में बदलता है।",
+  "Jet fuel, ₹ per litre":
+    "जेट ईंधन, ₹ प्रति लीटर",
+  "Make a":
+    "एक कंट्रेल",
+  "Make a contrail":
+    "कंट्रेल बनाइए",
+  "Mandatory for all flights into and out of the European Economic Area: every flight between India and Europe.":
+    "यूरोपीय आर्थिक क्षेत्र में आने-जाने वाली सभी उड़ानों के लिए अनिवार्य: भारत और यूरोप के बीच हर उड़ान।",
+  "Monitoring starts for flights between airports in the European Economic Area (and from there to Switzerland and the UK), reported once a year.":
+    "यूरोपीय आर्थिक क्षेत्र के हवाई अड्डों के बीच की उड़ानों (और वहाँ से स्विट्ज़रलैंड और ब्रिटेन) की निगरानी शुरू, साल में एक बार रिपोर्ट।",
+  "Newest engine (η 0.42)":
+    "नवीनतम इंजन (η 0.42)",
+  "No contrail: the air is too warm.":
+    "कंट्रेल नहीं: हवा बहुत गर्म है।",
+  "Older engine (η 0.25)":
+    "पुराना इंजन (η 0.25)",
+  "On the edge":
+    "सीमा पर",
+  "Physics sandbox · try it":
+    "भौतिकी सैंडबॉक्स · आज़माइए",
+  "STRATUM is a student research prototype, not an approved monitoring tool, and no real flight was changed.":
+    "STRATUM विद्यार्थियों का शोध प्रोटोटाइप है, कोई मान्यता प्राप्त निगरानी उपकरण नहीं, और किसी असली उड़ान को नहीं बदला गया।",
+  "Schmidt–Appleman criterion · as in our model":
+    "श्मिट–ऐपलमैन मानदंड · हमारे मॉडल की तरह",
+  "Since 2025 the European Union has made airlines monitor and report the climate effect of their contrails, and from 2027 that includes every flight between India and Europe. Here is the rule, where STRATUM fits, and what avoiding contrails would cost an airline over India.":
+    "2025 से यूरोपीय संघ एयरलाइनों से उनकी कंट्रेल के जलवायु असर की निगरानी और रिपोर्ट करवाता है, और 2027 से इसमें भारत और यूरोप के बीच की हर उड़ान शामिल है। यहाँ नियम है, STRATUM कहाँ फ़िट होता है, और भारत के ऊपर कंट्रेल से बचना एक एयरलाइन को कितना महँगा पड़ेगा।",
+  "Source for 2025–2027:":
+    "2025–2027 का स्रोत:",
+  "That physics flags about six times more lasting contrails over India than the satellite sees (our test H1), and the humidity it relies on is poorly measured at cruise height here. Estimates for India's skies need checking against India's skies.":
+    "वह भौतिकी भारत के ऊपर उपग्रह को दिखने वाली टिकाऊ कंट्रेल से लगभग छह गुना ज़्यादा चिह्नित करती है (हमारा परीक्षण H1), और जिस नमी पर वह निर्भर है उसे यहाँ क्रूज़ ऊँचाई पर ठीक से मापा नहीं जाता। भारत के आसमान के अनुमानों को भारत के आसमान से ही जाँचना ज़रूरी है।",
+  "The EU adds non-CO₂ effects of aviation, contrails among them, to its Emissions Trading System law and asks for a system to monitor, report and verify them.":
+    "EU विमानन के गैर-CO₂ असर, जिनमें कंट्रेल भी हैं, अपने उत्सर्जन व्यापार प्रणाली के कानून में जोड़ता है और उनकी निगरानी, रिपोर्ट और सत्यापन की प्रणाली माँगता है।",
+  "The European Commission reports on the results and, if appropriate, proposes a law to address aviation's non-CO₂ effects.":
+    "यूरोपीय आयोग नतीजों पर रिपोर्ट देता है और, यदि उचित हो, विमानन के गैर-CO₂ असर के लिए कानून का प्रस्ताव रखता है।",
+  "The decision data are not published yet.":
+    "निर्णय का डेटा अभी प्रकाशित नहीं हुआ।",
+  "The diagram behind it":
+    "इसके पीछे का आरेख",
+  "The physics, with sliders":
+    "भौतिकी, स्लाइडरों के साथ",
+  "The rules now":
+    "अब नियम",
+  "The rules, and what avoiding contrails costs":
+    "नियम, और कंट्रेल से बचने की कीमत",
+  "Typical today (η 0.35)":
+    "आज का आम (η 0.35)",
+  "Vapour pressure against temperature, with the saturation curves and the mixing line":
+    "तापमान के मुकाबले भाप दबाव, संतृप्ति वक्रों और मिश्रण रेखा के साथ",
+  "Warm summer afternoon":
+    "गर्मियों की गर्म दोपहर",
+  "What STRATUM adds":
+    "STRATUM क्या जोड़ता है",
+  "What the EU uses":
+    "EU क्या इस्तेमाल करता है",
+  "What we found over India":
+    "भारत के ऊपर हमने क्या पाया",
+  "Winter night, humid layer":
+    "सर्दियों की रात, नम परत",
+  "contrail.":
+    "बनाइए।",
+  "count contrails.":
+    "कंट्रेल गिनते हैं।",
+  "ice saturation":
+    "बर्फ़ संतृप्ति",
+  "per year · from our decision runs (D-006)":
+    "प्रति वर्ष · हमारे निर्णय रनों से (D-006)",
+  "same physics, checked over India":
+    "वही भौतिकी, भारत के ऊपर जाँची गई",
+  "threshold mixing line":
+    "सीमा मिश्रण रेखा",
+  "vapour pressure, Pa (log scale)":
+    "भाप दबाव, Pa (लॉग पैमाना)",
+  "water saturation":
+    "पानी संतृप्ति",
+  "your air":
+    "आपकी हवा",
+  "your air's mixing line":
+    "आपकी हवा की मिश्रण रेखा",
+  "§1 · The rule":
+    "§1 · नियम",
+  "§2 · Where STRATUM fits":
+    "§2 · STRATUM कहाँ फ़िट होता है",
+  "§3 · What would it cost?":
+    "§3 · इसकी कीमत क्या होगी?",
+  "₹ per €":
+    "₹ प्रति €",
+  "Proof: real past days, checked against the satellite — no real flight was changed": "सबूत: बीते हुए असली दिन, उपग्रह से जाँचे गए — कोई असली उड़ान नहीं बदली गई",
+  "What the map shows": "मानचित्र क्या दिखाता है",
+  "Proof": "सबूत",
+  "Real past days: flights, physics, STRATUM and what the satellite saw": "बीते हुए असली दिन: उड़ानें, भौतिकी, STRATUM और उपग्रह ने क्या देखा",
+  "Today and tomorrow from the latest weather forecast": "नवीनतम मौसम पूर्वानुमान से आज और कल",
+  "Make a contrail: the physics with sliders": "कंट्रेल बनाइए: स्लाइडरों के साथ भौतिकी",
+  "A new page, /sandbox: pick the flight level, the air's temperature and humidity and the engine, and see whether a contrail forms and whether it lasts, with the Schmidt–Appleman diagram drawn live. It runs the same physics as our model (ported to the browser and tested against the Python on seven cases).":
+    "एक नया पेज, /sandbox: फ़्लाइट लेवल, हवा का तापमान और नमी और इंजन चुनिए, और देखिए कि कंट्रेल बनती है या नहीं और टिकती है या नहीं, साथ में श्मिट–ऐपलमैन आरेख तुरंत बनता है। यह हमारे मॉडल वाली ही भौतिकी चलाता है (ब्राउज़र में लाई गई और सात मामलों पर Python से जाँची गई)।",
+  "For airlines: the rule and the cost": "एयरलाइनों के लिए: नियम और कीमत",
+  "A new page, /airlines: since 2025 the EU makes airlines monitor and report their contrails' climate effect, and from 2027 for every flight between India and Europe; its default method uses CoCiP, the model STRATUM also checks over India. A calculator turns our decision runs (D-006) into rupees: about ₹1,000 of fuel per tonne of CO₂-equivalent warming avoided, against an EU carbon price near ₹9,000.":
+    "एक नया पेज, /airlines: 2025 से EU एयरलाइनों से उनकी कंट्रेल के जलवायु असर की निगरानी और रिपोर्ट करवाता है, और 2027 से भारत और यूरोप के बीच हर उड़ान के लिए; इसका डिफ़ॉल्ट तरीका CoCiP इस्तेमाल करता है, वही मॉडल जिसे STRATUM भारत के ऊपर जाँचता है। एक कैलकुलेटर हमारे निर्णय रनों (D-006) को रुपयों में बदलता है: टली गई हर टन CO₂ के बराबर गर्मी पर लगभग ₹1,000 का ईंधन, जबकि EU का कार्बन मूल्य लगभग ₹9,000 है।",
+  "A daily report card for the forecast": "पूर्वानुमान का रोज़ का रिपोर्ट कार्ड",
+  "A new page, /report, and a daily job: every morning yesterday's contrail forecast is checked against the contrails Meteosat-9 saw (learned detector, hourly images) and the score is kept in public, with a running record. First test on 23 October (2 images, the older detector): 37 % of the contrails seen were in forecast air against 16 % by chance. The daily job starts once its setup is done.":
+    "एक नया पेज, /report, और रोज़ का काम: हर सुबह कल का कंट्रेल पूर्वानुमान उन कंट्रेल से मिलाया जाता है जो Meteosat-9 ने देखीं (सीखा हुआ डिटेक्टर, घंटेवार तस्वीरें), और स्कोर लगातार रिकॉर्ड के साथ सबके सामने रखा जाता है। 23 अक्टूबर की पहली जाँच (2 तस्वीरें, पुराना डिटेक्टर): देखी गई कंट्रेल में से 37 % पूर्वानुमान की हवा में थीं, जबकि संयोग से 16 %। रोज़ का काम उसकी तैयारी पूरी होने पर शुरू होगा।",
 };

@@ -497,7 +497,11 @@ export function MapPage() {
     <div class="mp">
       <div class="mp-bar" role="toolbar" aria-label={T("Map controls")} ref={barRef}>
         <h1 class="mp-title mono-s">{T("Contrail map")} · {T("India")} 6–37°N 68–98°E</h1>
-        <span class="mono-s warn">{build === "outlook" ? `${T("Forecast (experimental)")} · ${man?.model_version ?? ""}` : T("Computational estimate — no real flight was changed")}</span>
+        <span class="mono-s warn">
+          {build === "outlook"
+            ? `${T("Forecast (experimental)")} · ${man?.model_version ?? ""}`
+            : T("Proof: real past days, checked against the satellite — no real flight was changed")}
+        </span>
         <span class="mono-s mp-badge">{T(v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1")}</span>
         <span class="mono-s mp-extra">
           {T("ADS-B coverage")}:{" "}
@@ -506,6 +510,23 @@ export function MapPage() {
             : T("audit pending (Nov 2026)")}
         </span>
         <span class="mp-tools">
+          {/* the two jobs of the map: the evidence (past days with satellite checks) and today's forecast.
+              The data build is chosen when the page loads, so the switch loads the page again. */}
+          <span class="seg-ctl mp-mode" role="group" aria-label={T("What the map shows")}>
+            {(
+              [
+                ["proof", "/map", "Proof", "Real past days: flights, physics, STRATUM and what the satellite saw"],
+                ["outlook", "/map?build=outlook", "Forecast", "Today and tomorrow from the latest weather forecast"],
+              ] as const
+            ).map(([k, href, label, tip]) => {
+              const on = (build === "outlook") === (k === "outlook");
+              return (
+                <a class={on ? "on" : ""} href={href} aria-current={on ? "page" : undefined} title={T(tip)} onClick={(e) => (e.preventDefault(), !on && location.assign(href))}>
+                  {T(label)}
+                </a>
+              );
+            })}
+          </span>
           {v2 && build !== "outlook" && st.date && (
             <a class="tool tool-3d" href={`/3d?date=${st.date}&hour=${st.hour}&layer=${model}`} title={T("The humid layers in three dimensions")}>
               ◇ {T("3D view")}

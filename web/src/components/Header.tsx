@@ -14,6 +14,8 @@ const NAV = [
   ["/game", "Beat STRATUM", "Can you out-guess the model?"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/routes", "Routes & airlines", "Where the warming comes from"],
+  ["/airlines", "For airlines", "The rules, and what avoiding contrails costs"],
+  ["/sandbox", "Make a contrail", "The physics, with sliders"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
   ["/methods", "Methods", "Written down before results"],
   ["/progress", "Progress", "The lab diary"],

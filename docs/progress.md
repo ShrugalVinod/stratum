@@ -2,6 +2,23 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-24 — For airlines (/airlines), physics sandbox (/sandbox), map switch, phone fixes
+
+**Done**
+- /airlines (#6 + #7): the EU ETS non-CO₂ MRV timeline (Directive (EU) 2023/958; monitoring from
+  1 Jan 2025 intra-EEA; all flights in/out of the EEA, so India–Europe, mandatory from 1 Jan 2027;
+  Commission report by end 2027), checked against the Commission's aviation page on 24 Oct 2026;
+  its default method uses CoCiP with forecast weather. CORSIA (CO₂ only) for Indian airlines from
+  2027. Calculator from the D-006 decisions (79 kg fuel and ~13 t CO₂e avoided per alert):
+  ≈ ₹1,000 of fuel per tonne avoided vs ≈ ₹9,000/t EU carbon price (defaults editable: ATF
+  ₹137/L Delhi 1 Oct, €85/t, ₹106.56/€ of 19 Oct).
+- /sandbox (#8): Schmidt–Appleman in the browser (web/src/lib/sac.ts, ported from
+  stratum/physics, matches the Python on 7 cases), sliders, example skies, live diagram.
+- /map: "Proof | Forecast" switch; the past-data mode now says what it is.
+- Phone fixes: the English header was 33 px too wide at 390 px since the language button
+  (theme button shows only its square under 480 px); the map's timeline and "Map shows" menu no
+  longer overflow; the "most contrail-prone trips" button wraps.
+
 ## 2026-10-24 — Daily forecast report card (/report), built
 
 **Done**

@@ -119,7 +119,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -274,4 +274,34 @@ test("Report card: a scored day, or a clear message before the first one", async
   await expect(page.locator(".rc-day, .page.report .muted.mono").first()).toBeVisible();
   if (await page.locator(".rc-day").count()) await expect(page.locator(".rc-tiles").first()).toContainText("chance");
   expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("Make a contrail: the sliders change the verdict, by the same physics as the model", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/sandbox");
+  await page.getByRole("button", { name: "Winter night, humid layer" }).click();
+  await expect(page.locator(".sb-verdict")).toContainText("lasting");
+  await page.getByRole("button", { name: "Warm summer afternoon" }).click();
+  await expect(page.locator(".sb-verdict")).toContainText("No contrail");
+  await page.getByRole("button", { name: "Cold but dry" }).click();
+  await expect(page.locator(".sb-verdict")).toContainText("short");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("For airlines: the rule's dates and a cost in rupees that follows the inputs", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/airlines");
+  await expect(page.locator(".al-time")).toContainText("2027");
+  const cost = page.locator(".al-tiles > div").nth(1).locator("b");
+  await expect(cost).toContainText("₹");
+  const before = await cost.textContent();
+  await page.getByLabel("Jet fuel, ₹ per litre").fill("274");
+  await expect(cost).not.toHaveText(before ?? "");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("the map says what it shows: proof (past days) or forecast", async ({ page }) => {
+  await page.goto("/map");
+  await expect(page.locator(".mp-mode a.on")).toHaveText(/Proof/i);
+  await expect(page.locator(".mp-bar .warn")).toContainText("checked against the satellite");
 });

@@ -1057,7 +1057,7 @@
   }
   .mp-time {
     height: auto;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 14px 16px;
     gap: 14px;
   }
@@ -1067,9 +1067,15 @@
   }
   .tl-btns {
     flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
   }
   .tl-labels span:nth-child(even) {
     display: none;
+  }
+  /* the last label (18:00) ends at its tick instead of running off the screen */
+  .tl-labels span:nth-child(7) {
+    transform: translateX(-100%);
   }
   .gal-row {
     grid-template-columns: 1fr;
@@ -1514,8 +1520,13 @@
     white-space: normal;
     min-width: 0;
   }
+  .mp-tools .date-pick {
+    max-width: 100%;
+    min-width: 0;
+  }
   .mp-tools .date-pick select {
     max-width: 100%;
+    text-overflow: ellipsis;
   }
 }
 
@@ -1891,4 +1902,27 @@
     grid-template-columns: 1fr;
     gap: 2px;
   }
+}
+
+/* Proof | Forecast: the map's two jobs */
+.mp-mode a {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--card);
+  text-decoration: none;
+  border-right: 1px solid var(--rule);
+}
+.mp-mode a:last-child {
+  border-right: 0;
+}
+.mp-mode a.on {
+  background: var(--red);
+  color: var(--paper);
 }
