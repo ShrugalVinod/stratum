@@ -70,12 +70,27 @@ jobs:
           uv pip install --python .venv "torch>=2.5" --index-url https://download.pytorch.org/whl/cpu
 
       - name: Detector v3 model files and the outlook that covered the day
+        id: fetch
         if: steps.day.outputs.skip != '1'
         run: |
           mkdir -p "$STRATUM_DRIVE_ROOT/interim/detector_nn_v3"
           gh release download detector-v3 --repo "${{ github.repository }}" --pattern '*' \
             --dir "$STRATUM_DRIVE_ROOT/interim/detector_nn_v3"
-          git clone -q --depth 1 --branch outlook-data "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/outlook"
+          # the forecast that covered the day: that day's own model run if kept, else the newest
+          # build that covered it (outlook-data keeps one commit per build)
+          git clone -q --filter=blob:none --branch outlook-data "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/outlook"
+          day="${{ steps.day.outputs.day }}"
+          exact=""; newest=""
+          for c in $(git -C "$RUNNER_TEMP/outlook" log --format=%H); do
+            info=$(git -C "$RUNNER_TEMP/outlook" show "$c:outlook.json" 2>/dev/null) || continue
+            [ "$(echo "$info" | jq -r --arg d "$day" '.days | index($d) != null')" = true ] || continue
+            [ -n "$newest" ] || newest=$c
+            if [ "$(echo "$info" | jq -r '.run[0:10]')" = "$day" ]; then exact=$c; break; fi
+          done
+          pick=${exact:-$newest}
+          if [ -z "$pick" ]; then echo "::warning::no kept forecast covers $day"; echo "none=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git -C "$RUNNER_TEMP/outlook" checkout -q "$pick"
+          echo "forecast for $day: $(jq -r .run "$RUNNER_TEMP/outlook/outlook.json")"
           if git ls-remote --exit-code --heads origin report-data >/dev/null; then
             git clone -q --depth 1 --branch report-data "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/report"
           else
@@ -83,7 +98,7 @@ jobs:
           fi
 
       - name: Score the day
-        if: steps.day.outputs.skip != '1'
+        if: steps.day.outputs.skip != '1' && steps.fetch.outputs.none != '1'
         env:
           EUMETSAT_KEY: ${{ secrets.EUMETSAT_KEY }}
           EUMETSAT_SECRET: ${{ secrets.EUMETSAT_SECRET }}
@@ -93,7 +108,9 @@ jobs:
           cat "$RUNNER_TEMP/report/days/${{ steps.day.outputs.day }}.json" | jq '{date, images, contrails_seen, contrails_in_forecast_air, hit_rate, chance, lift, notices, notices_checked, notices_confirmed}'
 
       - name: Publish to the report-data branch
-        if: steps.day.outputs.skip != '1' && inputs.publish != false
+        # scheduled runs always publish; a manual run unless "publish" is unticked (a test run).
+        # (inputs.publish is empty on a schedule, and GitHub compares empty == false as true)
+        if: steps.day.outputs.skip != '1' && steps.fetch.outputs.none != '1' && (github.event_name != 'workflow_dispatch' || inputs.publish)
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

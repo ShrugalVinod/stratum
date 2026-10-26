@@ -1,7 +1,8 @@
 # Live contrail outlook (experimental): every morning, the latest 00 UTC ECMWF open-data forecast
 # (CC BY 4.0) becomes a small web build (today + tomorrow, physics only) with NOTAM-style
-# advisories. Published as ONE commit on the `outlook-data` branch, replaced every day, so the
-# main history does not grow; the website's Worker serves it at /data/outlook/.
+# advisories. Published as one commit per build on the `outlook-data` branch (its own history,
+# ~1 MB a day, so the report card can find any recent day's forecast; main does not grow); the
+# website's Worker serves the latest at /data/outlook/.
 name: outlook
 
 on:
@@ -45,15 +46,23 @@ jobs:
         if: steps.fresh.outputs.skip != '1'
         run: uv run --no-sync stratum outlook --out "$RUNNER_TEMP/outlook"
 
-      - name: Publish to the outlook-data branch (one commit, replaced daily)
+      - name: Publish to the outlook-data branch (one commit per build; history kept for the report card)
         if: steps.fresh.outputs.skip != '1'
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd "$RUNNER_TEMP/outlook"
-          git init -q -b outlook-data
+          repo="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          cd "$RUNNER_TEMP"
+          # earlier builds stay in the branch history (~1 MB a day), so the daily report card can
+          # find the forecast that covered a day even when it runs after the next build
+          if git clone -q --filter=blob:none --branch outlook-data "$repo" hist 2>/dev/null; then
+            cd hist && find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          else
+            git init -q -b outlook-data hist && cd hist
+          fi
+          cp -R "$RUNNER_TEMP/outlook/." .
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "Outlook $(jq -r .run outlook.json)"
-          git push -q --force "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" outlook-data
+          git push -q "$repo" HEAD:outlook-data
