@@ -257,6 +257,11 @@ export function Methods() {
           </ul>
         </section>
       </div>
+      <p class="wrap small">
+        <a class="link" href="/progress">
+          {T("The lab diary: every step, dated")} →
+        </a>
+      </p>
       <a class="dl-bar" href={site.paperPdf} target="_blank" rel="noopener">
         <span class="wrap dl-inner">
           <span class="display d-l">

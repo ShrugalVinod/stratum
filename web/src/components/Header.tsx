@@ -9,32 +9,21 @@ const NAV = [
   ["/map", "Map", "Contrails, flights and the satellite proof"],
   ["/now", "Live advice", "Which planes should move, right now"],
   ["/flight", "Your flight", "Its hidden contrail footprint"],
-  ["/live", "Live sky", "Which plane made that contrail?"],
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
   ["/replay", "What if we'd listened?", "One real day, replayed both ways"],
-  ["/game", "Beat STRATUM", "Can you out-guess the model?"],
   ["/sandbox", "Make a contrail", "The physics, with sliders"],
-  ["/advisory", "Advisories", "Tomorrow's contrail notices"],
   ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
-  ["/airlines", "For airlines", "The rules, and what avoiding contrails costs"],
-  ["/routes", "Routes & airlines", "Where the warming comes from"],
+  ["/airlines", "For airlines", "The rules, where the warming comes from, and the cost"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/methods", "Methods", "Written down before results"],
-  ["/progress", "Progress", "The lab diary"],
   ["/about-data", "Data & code", "Sources, licences, how to reproduce"],
-  ["/team", "Team", "Who we are"],
-  ["/contact", "Contact", "Get in touch"],
+  ["/team", "Team", "Who we are, and how to reach us"],
 ] as const;
-// headings in the menu, before the item with this index
-const GROUPS: Record<number, string> = {
-  0: "Things you can do",
-  11: "Things to learn",
-  14: "Research and the rest",
-};
+// headings in the menu, before these pages (pages left out of the menu still open by link)
+const GROUPS: Record<string, string> = { "/": "Things you can do", "/how-it-works": "Things to learn", "/results": "Research and the rest" };
 
-const isOn = (path: string, href: string) =>
-  href === "/" ? path === "/" : path.startsWith(href);
+const isOn = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
 /** Site header: wordmark, the current page, theme switch and a menu button that slides the
  *  navigation in from the side (all screen sizes). Esc, a click outside or a link closes it. */
@@ -52,9 +41,7 @@ export function Header() {
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     if (!open) return;
-    panel.current
-      ?.querySelector<HTMLElement>("a")
-      ?.focus({ preventScroll: true });
+    panel.current?.querySelector<HTMLElement>("a")?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
@@ -65,10 +52,8 @@ export function Header() {
         const f = [...panel.current.querySelectorAll<HTMLElement>("a, button")];
         const first = f[0];
         const last = f[f.length - 1];
-        if (e.shiftKey && document.activeElement === first)
-          (e.preventDefault(), last.focus());
-        else if (!e.shiftKey && document.activeElement === last)
-          (e.preventDefault(), first.focus());
+        if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus());
+        else if (!e.shiftKey && document.activeElement === last) (e.preventDefault(), first.focus());
       }
     };
     addEventListener("keydown", onKey);
@@ -98,35 +83,16 @@ export function Header() {
             </span>
           )}
           <div class="header-tools">
-            <button
-              class="lang-btn"
-              onClick={() => setLang(lang === "hi" ? "en" : "hi")}
-              lang={lang === "hi" ? "en" : "hi"}
-              aria-label={
-                lang === "hi"
-                  ? "Switch to English"
-                  : "हिंदी में देखें (switch to Hindi)"
-              }
-            >
+            <button class="lang-btn" onClick={() => setLang(lang === "hi" ? "en" : "hi")} lang={lang === "hi" ? "en" : "hi"} aria-label={lang === "hi" ? "Switch to English" : "हिंदी में देखें (switch to Hindi)"}>
               {lang === "hi" ? "English" : "हिंदी"}
             </button>
-            <button
-              class="theme-btn"
-              onClick={toggle}
-              aria-label={`${theme === "dark" ? "Night" : "Chart"} mode — switch to ${theme === "dark" ? "chart (light)" : "night (dark)"}`}
-            >
+            <button class="theme-btn" onClick={toggle} aria-label={`${theme === "dark" ? "Night" : "Chart"} mode — switch to ${theme === "dark" ? "chart (light)" : "night (dark)"}`}>
               <span class="sq" aria-hidden="true" />
               <span class="word" key={theme}>
                 {theme === "dark" ? T("Night") : T("Chart")}
               </span>
             </button>
-            <button
-              ref={btn}
-              class="menu-btn"
-              onClick={() => setOpen(!open)}
-              aria-expanded={open}
-              aria-controls="side-nav"
-            >
+            <button ref={btn} class="menu-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="side-nav">
               <span class="menu-word">{open ? T("Close") : T("Menu")}</span>
               <span class="menu-icon" aria-hidden="true">
                 <i />
@@ -139,44 +105,22 @@ export function Header() {
       </header>
       {/* a fixed, clipping layer: the closed panel waits off-screen without widening the page */}
       <div class="nav-layer">
-        <div
-          class={`nav-backdrop ${open ? "open" : ""}`}
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
-        <nav
-          ref={panel}
-          id="side-nav"
-          class={`side-nav ${open ? "open" : ""}`}
-          aria-label="Main"
-          aria-hidden={!open}
-          inert={!open}
-        >
+        <div class={`nav-backdrop ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
+        <nav ref={panel} id="side-nav" class={`side-nav ${open ? "open" : ""}`} aria-label="Main" aria-hidden={!open} inert={!open}>
           <p class="label red side-nav-label">{T("Navigate")}</p>
           <ul>
             {NAV.map(([href, label, sub], i) => {
               const on = isOn(path, href);
               return (
                 <>
-                  {GROUPS[i] && (
-                    <li
-                      class="nav-group mono-s"
-                      style={{ "--i": i }}
-                      aria-hidden="true"
-                    >
-                      {T(GROUPS[i])}
+                  {GROUPS[href] && (
+                    <li class="nav-group mono-s" style={{ "--i": i }} aria-hidden="true">
+                      {T(GROUPS[href])}
                     </li>
                   )}
                   <li style={{ "--i": i }}>
-                    <a
-                      href={href}
-                      class={on ? "active" : ""}
-                      aria-current={on ? "page" : undefined}
-                      onClick={() => setOpen(false)}
-                    >
-                      <span class="nav-n mono-s">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
+                    <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
+                      <span class="nav-n mono-s">{String(i + 1).padStart(2, "0")}</span>
                       <span class="nav-t">{T(label)}</span>
                       <span class="nav-sub">{T(sub)}</span>
                     </a>
@@ -185,11 +129,7 @@ export function Header() {
               );
             })}
           </ul>
-          <p class="mono-s muted side-nav-foot">
-            {T(
-              "Conrad Challenge 2026–27 · Indus International School, Bengaluru",
-            )}
-          </p>
+          <p class="mono-s muted side-nav-foot">{T("Conrad Challenge 2026–27 · Indus International School, Bengaluru")}</p>
         </nav>
       </div>
     </>

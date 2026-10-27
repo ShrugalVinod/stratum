@@ -28,6 +28,9 @@ type Props = {
   lines: GeoJSON.FeatureCollection;
   /** fly to this point when it changes */
   focus: [number, number] | null;
+  /** the "near me" place and radius: a circle, and the map flies there */
+  near: [number, number] | null;
+  nearKm: number;
   onSelect: (id: string | null) => void;
   /** hover text for an aircraft (HTML), or null */
   tip: (id: string) => string | null;
@@ -77,6 +80,7 @@ export function NowMap(p: Props) {
       m.addSource("riskB", { type: "image", url: transparentPng(), coordinates: imageCoords(props.current.manifest) });
       m.addSource("lines", { type: "geojson", data: props.current.lines });
       m.addSource("planes", { type: "geojson", data: EMPTY });
+      m.addSource("near", { type: "geojson", data: props.current.near ? circle(props.current.near, props.current.nearKm) : EMPTY });
 
       m.addLayer({ id: "land", type: "fill", source: "countries", paint: { "fill-color": col.land } });
       m.addLayer({ id: "grat", type: "line", source: "grat", paint: { "line-color": col.grat, "line-width": 1 } });
@@ -84,6 +88,7 @@ export function NowMap(p: Props) {
       m.addLayer({ id: "riskB", type: "raster", source: "riskB", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 0 } });
       m.addLayer({ id: "states", type: "line", source: "states", paint: { "line-color": col.state, "line-width": 0.7 } });
       m.addLayer({ id: "borders", type: "line", source: "countries", paint: { "line-color": col.border, "line-width": 1 } });
+      m.addLayer({ id: "near", type: "line", source: "near", paint: { "line-color": col.corr, "line-width": 1.6, "line-dasharray": [3, 2] } });
       m.addLayer({ id: "ahead", type: "line", source: "lines", filter: ["==", ["get", "kind"], "ahead"], layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": 1.6, "line-opacity": 0.55, "line-dasharray": [1, 2] } });
       m.addLayer({ id: "lasting-glow", type: "line", source: "lines", filter: ["==", ["get", "kind"], "lasting"], layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 10, 7, 18], "line-blur": ["interpolate", ["linear"], ["zoom"], 4, 7, 7, 12], "line-opacity": 0.45 } });
       m.addLayer({ id: "lasting", type: "line", source: "lines", filter: ["==", ["get", "kind"], "lasting"], layout: { "line-cap": "round" }, paint: { "line-color": col.pred, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 2.5, 7, 4] } });
@@ -133,7 +138,8 @@ export function NowMap(p: Props) {
 
       ready.current = true;
       el.current?.classList.add("ready");
-      m.fitBounds([[67, 6], [98, 36.5]], { padding: 16, duration: still ? 0 : 1600 });
+      if (props.current.near) m.easeTo({ center: props.current.near, zoom: 6, duration: still ? 0 : 1600 });
+      else m.fitBounds([[67, 6], [98, 36.5]], { padding: 16, duration: still ? 0 : 1600 });
 
       // planes move every frame; alert rings pulse (still rings for people who prefer less motion)
       const loop = (now: number) => {
@@ -201,10 +207,30 @@ export function NowMap(p: Props) {
 
   useEffect(() => {
     const m = map.current;
+    if (!m || !ready.current) return;
+    (m.getSource("near") as GeoJSONSource | undefined)?.setData(p.near ? circle(p.near, p.nearKm) : EMPTY);
+    const ease = (t: number) => 1 - (1 - t) ** 3;
+    if (p.near) m.easeTo({ center: p.near, zoom: 6, duration: reducedMotion() ? 0 : 1400, easing: ease });
+    else m.fitBounds([[67, 6], [98, 36.5]], { padding: 16, duration: reducedMotion() ? 0 : 1400, easing: ease });
+  }, [p.near?.[0], p.near?.[1]]);
+
+  useEffect(() => {
+    const m = map.current;
     if (m && ready.current && p.focus) m.easeTo({ center: p.focus, zoom: Math.max(m.getZoom(), 5), duration: reducedMotion() ? 0 : 1200, easing: (t) => 1 - (1 - t) ** 3 });
   }, [p.focus?.[0], p.focus?.[1]]);
 
   return <div ref={el} class="map-canvas" role="region" aria-label={p.label} />;
+}
+
+/** A circle of ``km`` around a point, as a closed line. */
+function circle([lon, lat]: [number, number], km: number): GeoJSON.Feature {
+  const pts = Array.from({ length: 73 }, (_, i) => {
+    const b = (i * 5 * Math.PI) / 180;
+    const dLat = (km / 111.2) * Math.cos(b);
+    const dLon = ((km / 111.2) * Math.sin(b)) / Math.cos((lat * Math.PI) / 180);
+    return [lon + dLon, lat + dLat];
+  });
+  return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: pts } };
 }
 
 function cssVar(name: string) {

@@ -2,6 +2,21 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-27 — Site trimmed for the Conrad prototype
+
+**Done**
+- Menu down from 20 to 14 pages, in three groups (things you can do / to learn / research and
+  the rest). Left out of the menu and Home but still open by link (nothing already shared
+  breaks): Progress (now a link at the end of Methods), Beat STRATUM, Live sky (its "planes
+  above me" is now the Near picker on Live advice: a city or the visitor's location, kept in the
+  browser; the board filters to 200 km and each card says where to look in the sky), Advisories
+  (Next 12 hours on Live advice covers it), Routes & airlines (its tiles, hour chart and airline
+  bars are now §4 of For airlines, with a link to the full breakdown), Contact (now part of Team;
+  footer link → /team#contact).
+- Live advice warns when the aircraft feed is thin. 27 Oct ~13 UTC: OpenSky degraded worldwide
+  (599 aircraft on the planet, 0 over India); adsb.lol answers again but allows only 500
+  requests a day, too few to replace it.
+
 ## 2026-10-27 — Live advice (/now): which planes should move, right now
 
 **Done**

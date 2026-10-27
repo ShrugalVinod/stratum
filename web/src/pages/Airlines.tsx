@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { loadDashboard, loadWeightedSummary } from "../data/load";
+import { Bars, Hours, pc, type Row } from "../components/WarmingCharts";
 import { T, tx } from "../i18n";
 import { ATF_KG_PER_L, type Decisions, perAlert, rupees, year } from "../lib/business";
 
@@ -30,12 +31,14 @@ export function Airlines() {
   const [atf, setAtf] = useState(ATF_RS_PER_L);
   const [eur, setEur] = useState(EUR_PER_T);
   const [fx, setFx] = useState(INR_PER_EUR);
+  const [dash, setDash] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     loadWeightedSummary().then((w) => setDec(w ? (w.decisions as Decisions) : null));
-    loadDashboard().then((d) =>
-      setAirlines(((d?.by_airline ?? []) as { key: string; share_warm_w: number }[]).filter((r) => r.key !== "other").map((r) => ({ key: r.key, share: r.share_warm_w }))),
-    );
+    loadDashboard().then((d) => {
+      setDash(d);
+      setAirlines(((d?.by_airline ?? []) as { key: string; share_warm_w: number }[]).filter((r) => r.key !== "other").map((r) => ({ key: r.key, share: r.share_warm_w })));
+    });
   }, []);
 
   const p = useMemo(() => (dec ? perAlert(dec) : null), [dec]);
@@ -226,7 +229,55 @@ export function Airlines() {
             </>
           )}
         </section>
+
+        {dash && (
+          <section class="section al-dash" aria-labelledby="where">
+            <div class="sec-head rv">
+              <p class="label red" id="where">
+                {T("§4 · Where the warming comes from")}
+              </p>
+              <span class="mono-s">{tx(`${dash.totals.flights.toLocaleString()} commercial flights · 12 days`, `${dash.totals.flights.toLocaleString()} व्यावसायिक उड़ानें · 12 दिन`)}</span>
+            </div>
+            <div class="rt-tiles rv">
+              <div>
+                <b>{pc(dash.concentration.top_1pct_flights, 0)}</b>
+                <span>{T("of the warming came from the top 1 % of flights")}</span>
+              </div>
+              <div>
+                <b>{pc(dash.concentration.top_10pct_flights, 0)}</b>
+                <span>{T("from the top 10 %")}</span>
+              </div>
+              <div>
+                <b>{pc(dash.totals.flights_warming / dash.totals.flights, 0)}</b>
+                <span>{T("of flights made any warming contrail")}</span>
+              </div>
+              <div>
+                <b>{pc(night(dash.by_hour_ist, "share_warm_w"), 0)}</b>
+                <span>{tx(`of the warming at night (18:00–06:00 IST), for ${pc(night(dash.by_hour_ist, "share_km"), 0)} of the distance`, `गर्मी रात में (18:00–06:00 IST), जबकि दूरी केवल ${pc(night(dash.by_hour_ist, "share_km"), 0)}`)}</span>
+              </div>
+            </div>
+            <p class="rt-key mono-s rv">
+              <i class="rt-key-bar" /> {T("share of the warming")} <i class="rt-key-tick" /> {T("share of the distance flown")}
+            </p>
+            <div class="al-where">
+              <div class="rt-sec">
+                <p class="label red">{T("By hour of day (IST)")}</p>
+                <Hours rows={dash.by_hour_ist} metric="share_warm_w" />
+              </div>
+              <div class="rt-sec">
+                <p class="label red">{T("By airline")}</p>
+                <Bars rows={dash.by_airline} metric="share_warm_w" label={(r) => (r.key === "other" ? T("Other airlines (under 3 flights each)") : r.key)} />
+              </div>
+            </div>
+            <p class="small muted">
+              {T("STRATUM-weighted warming (second analysis D-006, descriptive). An airline's share mostly reflects where and when it flies, not how it flies.")}{" "}
+              <a href="/routes">{T("By route, flight level, aircraft and month")} →</a>
+            </p>
+          </section>
+        )}
       </div>
     </div>
   );
 }
+
+const night = (rows: Row[] | undefined, k: "share_warm_w" | "share_km") => (rows ?? []).filter((r) => Number(r.key) >= 18 || Number(r.key) < 6).reduce((n, r) => n + r[k], 0);

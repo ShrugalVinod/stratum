@@ -1,6 +1,7 @@
 import { PageHead } from "../components/PageHead";
 import { site, supervisor, team } from "../content/site";
 import { T } from "../i18n";
+import { ContactBlock } from "./Contact";
 
 /** Deterministic barcode from the name (decoration only). */
 function Barcode({ seed }: { seed: string }) {
@@ -66,6 +67,16 @@ export function Team() {
           ))}
           <Pass {...supervisor} wide i={0} />
         </div>
+        <section class="section" id="contact" aria-labelledby="contact-title">
+          <div class="sec-head rv">
+            <p class="label red" id="contact-title">
+              {T("Get in touch")}
+            </p>
+            <span class="mono-s">12.97°N 77.59°E · Bengaluru</span>
+          </div>
+          <hr class="rule rule-draw" />
+          <ContactBlock />
+        </section>
       </div>
       <div class="spacer" />
     </div>

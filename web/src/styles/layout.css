@@ -2271,10 +2271,12 @@ a.contact-big:hover {
 }
 
 /* ── Routes & airlines (/routes) ──────────────────────────────────────────── */
-.routes {
+.routes,
+.al-dash {
   --dash-bar: #d6541c;
 }
-:root[data-theme="dark"] .routes {
+:root[data-theme="dark"] .routes,
+:root[data-theme="dark"] .al-dash {
   --dash-bar: #e2703a; /* the dark-surface step of the same orange (validated) */
 }
 .rt-tiles {
@@ -3326,5 +3328,17 @@ a.contact-big:hover {
   }
   .now-facts dd {
     margin-bottom: 8px;
+  }
+}
+/* /airlines §4: the hour chart and the airline bars side by side */
+.al-where {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 28px;
+  margin: 18px 0;
+}
+@media (max-width: 900px) {
+  .al-where {
+    grid-template-columns: 1fr;
   }
 }

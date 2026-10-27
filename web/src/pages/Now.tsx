@@ -7,7 +7,7 @@ import { loadLive, loadOutlook, loadOutlookB1, loadSchedule } from "../data/load
 import { T, tx } from "../i18n";
 import { type Advice, contrailsUntil, LIFE_H, type Live, routePosition, type Sample, sampler, type Stop, type Timing, totals, track, type Tracked, upcoming, type Upcoming, usualLevel } from "../lib/advice";
 import { AIRPORTS, FLS, type Point } from "../lib/footprint";
-import { dirName, move } from "../lib/geo";
+import { deg, dirName, distBearing, move, R_EARTH } from "../lib/geo";
 import type { NowMap as NowMapT } from "../map/NowMap";
 import "../styles/map.css";
 
@@ -21,6 +21,17 @@ const HOUR = 3_600_000;
 const REFRESH_MS = 60_000;
 const NEXT_SPEED = (HOURS * HOUR) / 48_000; // the next 12 hours in 48 s
 const GLIDE_MS = 1500;
+// "Near me": the sky above a city or the visitor's own location (kept in the browser only)
+type Place = { name: string; lat: number; lon: number };
+const PLACES: Place[] = [
+  { name: "Bengaluru", lat: 12.97, lon: 77.59 },
+  { name: "Delhi", lat: 28.61, lon: 77.21 },
+  { name: "Mumbai", lat: 19.08, lon: 72.88 },
+  { name: "Kolkata", lat: 22.57, lon: 88.36 },
+  { name: "Chennai", lat: 13.08, lon: 80.27 },
+  { name: "Hyderabad", lat: 17.39, lon: 78.49 },
+];
+const NEAR_KM = 200;
 const SHADE_FLS = FLS.filter((f) => f >= 300 && f <= 400);
 const pad = (n: number) => String(n).padStart(2, "0");
 const utc = (t: number) => `${pad(new Date(t).getUTCHours())}:${pad(new Date(t).getUTCMinutes())}`;
@@ -45,6 +56,19 @@ export function Now() {
   const [playing, setPlaying] = useState(false);
   const [listened, setListened] = useState(false);
   const [all, setAll] = useState(false);
+  const [near, setNear] = useState<Place | null>(() => PLACES.find((p) => p.name === q.get("near")) ?? null);
+  const [geoErr, setGeoErr] = useState(false);
+  const within = (lat: number, lon: number) => !near || distBearing(near.lat, near.lon, lat, lon)[0] <= NEAR_KM;
+  const pickNear = (v: string) => {
+    setGeoErr(false);
+    if (v === "me") {
+      navigator.geolocation?.getCurrentPosition(
+        (g) => setNear({ name: T("your location"), lat: Math.round(g.coords.latitude * 100) / 100, lon: Math.round(g.coords.longitude * 100) / 100 }),
+        () => setGeoErr(true),
+        { timeout: 10_000 },
+      );
+    } else setNear(PLACES.find((p) => p.name === v) ?? null);
+  };
   const [NowMap, setNowMap] = useState<typeof NowMapT | null>(null);
   const simRef = useRef(simT); // read by the map every frame; the page redraws ~10 times a second
   const setSim = (t: number) => {
@@ -77,9 +101,10 @@ export function Now() {
     const p = new URLSearchParams();
     if (mode === "next") p.set("mode", "next");
     if (sel) p.set("cs", sel);
+    if (near && PLACES.includes(near)) p.set("near", near.name);
     const qs = p.toString();
     history.replaceState(null, "", `/now${qs ? `?${qs}` : ""}`);
-  }, [mode, sel]);
+  }, [mode, sel, near]);
 
   // the forecast covers today? (it is built every morning; an old one only covers past hours)
   const today = new Date().toISOString().slice(0, 10);
@@ -133,9 +158,11 @@ export function Now() {
   const rows: Row[] = useMemo(() => {
     if (mode === "now")
       return (tracked ?? [])
-        .filter((t) => t.status === "cruise")
+        .filter((t) => t.status === "cruise" && within(t.lat, t.lon))
         .map((t) => ({ id: t.cs, cs: t.cs, type: t.type, route: routeText(t), fl: t.fl, advice: t.advice, path: t.path }));
-    return (next ?? []).map((u) => ({
+    return (next ?? [])
+      .filter((u) => !near || within(u.from[1], u.from[2]) || within(u.to[1], u.to[2]) || u.path.some((p) => within(p.lat, p.lon)))
+      .map((u) => ({
       id: u.cs,
       cs: u.cs,
       type: u.type,
@@ -146,7 +173,7 @@ export function Now() {
       when: `${utc(u.dep)} UTC ±${u.acc}`,
       flNote: u.flHow === "route" ? T("as airliners on this route fly now") : u.flHow === "similar" ? T("as on similar trips now") : T("usual level for the direction"),
     }));
-  }, [mode, tracked, next]);
+  }, [mode, tracked, next, near]);
   const ranked = useMemo(
     () => [...rows].sort((a, b) => Number(!!b.advice?.alert) - Number(!!a.advice?.alert) || (b.advice?.avoided.p50 ?? 0) - (a.advice?.avoided.p50 ?? 0) || (b.advice?.nLasting ?? 0) - (a.advice?.nLasting ?? 0)),
     [rows],
@@ -291,6 +318,16 @@ export function Now() {
             </button>
           </div>
           <label class="now-shade mono-s">
+            {T("Near")}
+            <select value={near ? (PLACES.includes(near) ? near.name : "me") : "all"} onChange={(e) => pickNear((e.target as HTMLSelectElement).value)}>
+              <option value="all">{T("All of India")}</option>
+              {PLACES.map((p) => (
+                <option value={p.name}>{T(p.name)}</option>
+              ))}
+              <option value="me">{T("My location (stays on this device)")}</option>
+            </select>
+          </label>
+          <label class="now-shade mono-s">
             {T("Shading")}
             <select value={String(shade)} onChange={(e) => setShade((e.target as HTMLSelectElement).value === "any" ? "any" : Number((e.target as HTMLSelectElement).value))}>
               <option value="any">{T("lasting-contrail air, any level FL300–FL400")}</option>
@@ -301,6 +338,7 @@ export function Now() {
           </label>
         </div>
 
+        {geoErr && <p class="now-warn mono-s">{T("Your location is not available. Pick a city instead.")}</p>}
         {ol === null && <p class="now-warn mono-s">{T("The forecast cannot be loaded right now. Try again in a minute.")}</p>}
         {ol && !covered && (
           <p class="now-warn mono-s">
@@ -310,13 +348,29 @@ export function Now() {
             )}
           </p>
         )}
+        {live && live.ac.length < 80 && (
+          <p class="now-warn mono-s">
+            {tx(
+              `The live aircraft feed has only ${live.ac.length} airliners over India right now (usually 200–260): the OpenSky Network's coverage is down. The advice below covers only these.`,
+              `लाइव विमान फ़ीड में अभी भारत के ऊपर केवल ${live.ac.length} यात्री विमान हैं (आमतौर पर 200–260): OpenSky Network की कवरेज बंद है। नीचे की सलाह केवल इन्हीं के लिए है।`,
+            )}
+          </p>
+        )}
         {live === null && <p class="now-warn mono-s">{T("The live aircraft feed cannot be reached right now. Try again in a minute.")}</p>}
         {mode === "next" && sched === null && <p class="now-warn mono-s">{T("The list of expected flights is not published yet.")}</p>}
 
         <div class="rt-tiles now-tiles" aria-live="polite">
           <div>
-            <b>{mode === "now" ? (live ? live.ac.length : "…") : next ? next.length : "…"}</b>
-            <span>{mode === "now" ? T("airliners over India now (above FL200)") : tx(`expected departures in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में अपेक्षित उड़ानें`)}</span>
+            <b>{mode === "now" ? (live ? (near ? (tracked ?? []).filter((t) => within(t.lat, t.lon)).length : live.ac.length) : "…") : next ? (near ? rows.length : next.length) : "…"}</b>
+            <span>
+              {mode === "now"
+                ? near
+                  ? tx(`airliners within ${NEAR_KM} km of ${near.name} now`, `अभी ${near.name} के ${NEAR_KM} किमी के भीतर यात्री विमान`)
+                  : T("airliners over India now (above FL200)")
+                : near
+                  ? tx(`expected flights near ${near.name} in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में ${near.name} के पास अपेक्षित उड़ानें`)
+                  : tx(`expected departures in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में अपेक्षित उड़ानें`)}
+            </span>
           </div>
           <div>
             <b>{rows.length ? inAir : "…"}</b>
@@ -341,6 +395,8 @@ export function Now() {
               frame={frame}
               lines={lines}
               focus={focus}
+              near={near ? [near.lon, near.lat] : null}
+              nearKm={NEAR_KM}
               onSelect={pick}
               tip={tipFor}
               label={T("Map of airliners over India and the air where their contrails would last")}
@@ -398,7 +454,7 @@ export function Now() {
         {/* right under the map: the chosen flight, then every flight with advice */}
         <section class="now-pick" aria-live="polite">
           {chosen || chosenTrack || chosenUp ? (
-            <Detail key={`${mode}-${sel}`} row={chosen} t={chosenTrack} up={chosenUp} onClose={() => setSel(null)} />
+            <Detail key={`${mode}-${sel}`} row={chosen} t={chosenTrack} up={chosenUp} near={near} onClose={() => setSel(null)} />
           ) : (
             <p class="mono-s muted">{T("Click a plane on the map, or a flight below, to see its advice.")}</p>
           )}
@@ -527,6 +583,15 @@ function adviceShort(a: Advice) {
   return T("Clear of lasting-contrail air");
 }
 
+/** Where to look for a plane from ``near``: how far, how high above the horizon, which way. */
+function lookUp(t: Tracked | null, near: Place | null): [string, ComponentChildren][] {
+  if (!t || !near) return [];
+  const [d, az] = distBearing(near.lat, near.lon, t.lat, t.lon);
+  const el = deg(Math.atan2((t.fl * 100 * 0.3048) / 1000 - (d * d) / (2 * R_EARTH), d));
+  if (el < 3) return [];
+  return [[tx(`From ${near.name}`, `${near.name} से`), tx(`${Math.round(d)} km away: look ${Math.round(el)}° above the horizon, towards the ${dirName(az)}`, `${Math.round(d)} किमी दूर: क्षितिज से ${Math.round(el)}° ऊपर, ${dirName(az)} की ओर देखिए`)]];
+}
+
 /** "Delhi (DEL)" from a route stop; the city as the route database or airport list names it. */
 function place(st: Stop) {
   const city = st[3] || AIRPORTS.find((a) => a.code === st[0])?.city;
@@ -539,7 +604,7 @@ const dur = (min: number) => {
 const both = (t: number) => `${utc(t)} UTC (${ist(t)} IST)`;
 
 /** Everything about the chosen flight, right under the map: its trip, its contrails, the advice. */
-function Detail({ row, t, up, onClose }: { row: Row | null; t: Tracked | null; up: Upcoming | null; onClose: () => void }) {
+function Detail({ row, t, up, near, onClose }: { row: Row | null; t: Tracked | null; up: Upcoming | null; near: Place | null; onClose: () => void }) {
   const a = row?.advice ?? t?.advice ?? null;
   const cs = row?.cs ?? t?.cs ?? up?.cs ?? "";
   const type = row?.type ?? t?.type ?? up?.type ?? null;
@@ -555,6 +620,7 @@ function Detail({ row, t, up, onClose }: { row: Row | null; t: Tracked | null; u
     [up ? T("Departs") : T("Departed"), up ? `${both(up.dep)} ±${up.acc} min` : tm ? tx(`about ${both(tm.dep)}`, `लगभग ${both(tm.dep)}`) : "–"],
     [T("Lands"), tm ? tx(`about ${both(tm.arr)}`, `लगभग ${both(tm.arr)}`) : "–"],
     [T("Travel time"), tm ? (up ? tx(`about ${dur(tm.total)}`, `लगभग ${dur(tm.total)}`) : tx(`about ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} left`, `लगभग ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} बाकी`)) : "–"],
+    ...lookUp(t, near),
     [T("Level"), up ? tx(`about ${flName(fl)} (${row?.flNote ?? ""})`, `लगभग ${flName(fl)} (${row?.flNote ?? ""})`) : t ? `${flName(t.fl)} · ${Math.round(t.kmh)} km/h · ${T(STATUS[t.status])}` : flName(fl)],
     [
       T("Contrails"),

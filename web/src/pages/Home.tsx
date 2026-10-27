@@ -107,8 +107,8 @@ export function Home() {
               <p class="lede rv" style={{ "--d": 200 }}>
                 {T("Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. All four hypotheses are now tested; the results are on the Methods page.")}
               </p>
-              <a class="link rv" style={{ "--d": 320 }} href="/progress">
-                {T("Full progress log")} →
+              <a class="link rv" style={{ "--d": 320 }} href="/methods">
+                {T("Methods and the lab diary")} →
               </a>
             </div>
             <div class="board rv rv-scale" role="table" aria-label={T("Project phases")}>
@@ -235,13 +235,13 @@ export function Home() {
           <div class="try-grid rv stagger">
             {(
               [
-                ["/flight", "Your flight", "Pick a trip and see its hidden footprint: the minutes it cruises through air where contrails last, its fuel CO₂ next to its contrail's warming, and the level that avoids it."],
+                ["/now", "Live advice", "Every airliner over India right now, and the flights expected next: which ones are heading into air where their contrail would last, and the level that avoids it."],
                 ["/replay", "What if we'd listened?", "One real day over India, played twice side by side: as flown, and as if every STRATUM alert had been followed. Watch the lasting contrails disappear and the warming avoided add up."],
-                ["/live", "Live sky", "Which plane made that contrail? The airliners above you right now, and whether their air keeps a contrail."],
+                ["/flight", "Your flight", "Pick a trip and see its hidden footprint: the minutes it cruises through air where contrails last, its fuel CO₂ next to its contrail's warming, and the level that avoids it."],
                 ["/spot", "Spot a contrail", "Took a photo of a contrail? Find the airliner that drew it. Your photo stays on your phone."],
-                ["/routes", "Routes & airlines", "Where India's contrail warming comes from: by airline, route, hour and flight level."],
-                ["/game", "Beat STRATUM", "Ten real flights, the weather at each one. Guess before the satellite picture is shown."],
-                ["/advisory", "Contrail advisories", "Tomorrow's notices, pilot style: where contrails will last, at which levels, and the drier levels nearby."],
+                ["/sandbox", "Make a contrail", "Pick the level, the air's temperature and humidity and the engine, and watch whether a contrail forms and whether it lasts."],
+                ["/report", "Report card", "Every morning, yesterday's forecast is checked against the contrails the satellite saw, and the score is kept in public."],
+                ["/airlines", "For airlines", "The EU's contrail reporting rule from 2027, where India's contrail warming comes from, and what avoiding it would cost in rupees."],
                 ["/3d", "The sky in 3D", "The humid layers over India and the flights crossing them, hour by hour."],
               ] as const
             ).map(([href, t, b], i) => (

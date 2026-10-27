@@ -25,7 +25,7 @@ export function Footer() {
               Natural Earth
             </p>
             <nav class="footer-links" aria-label="Footer">
-              <a class="link" href="/contact">
+              <a class="link" href="/team#contact">
                 {T("Contact")}
               </a>
               <a class="link" href="/about-data#privacy">

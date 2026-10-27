@@ -774,12 +774,12 @@ export function MapPage() {
                 <p class="muted">
                   {tx(
                     <>
-                      This is tomorrow's sky from the ECMWF open-data forecast, run through our physics. For the aircraft flying right now and whether they
-                      are leaving contrails, open <a href="/live">Live sky</a>; for the areas to avoid, the <a href="/advisory">contrail advisories</a>.
+                      This is tomorrow's sky from the ECMWF open-data forecast, run through our physics. For the aircraft flying right now, and which of them
+                      should change level, open <a href="/now">Live advice</a>.
                     </>,
                     <>
-                      यह ECMWF के खुले पूर्वानुमान से कल का आसमान है, हमारी भौतिकी से गुज़ारा हुआ। अभी उड़ रहे विमानों और उनकी कंट्रेल के लिए{" "}
-                      <a href="/live">लाइव आसमान</a> खोलिए; बचने वाले क्षेत्रों के लिए <a href="/advisory">कंट्रेल चेतावनियाँ</a>।
+                      यह ECMWF के खुले पूर्वानुमान से कल का आसमान है, हमारी भौतिकी से गुज़ारा हुआ। अभी उड़ रहे विमानों, और किसे लेवल बदलना चाहिए, के लिए{" "}
+                      <a href="/now">लाइव सलाह</a> खोलिए।
                     </>,
                   )}
                 </p>

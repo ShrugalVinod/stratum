@@ -342,7 +342,7 @@ export function Flight() {
                 </button>
                 <p class="small muted fp-wide">
                   {T("Callsigns are on flight-tracking apps: IndiGo flights start IGO, Air India AIC, Air India Express AXB, Akasa AKJ, SpiceJet SEJ.")}{" "}
-                  <a href="/live">{T("See the airliners over India now")}</a>
+                  <a href="/now">{T("See the airliners over India now")}</a>
                 </p>
               </form>
             )}

@@ -230,8 +230,8 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
                   {tx(`${notChecked} more could not be checked (cloud or out of view in their time window).`, `${notChecked} और जाँची नहीं जा सकीं (अपनी अवधि में बादल या दृश्य से बाहर)।`)}
                 </p>
               )}
-              <a class="mono-s" href="/advisory">
-                {T("Read the notices")} →
+              <a class="mono-s" href="/now?mode=next">
+                {T("Today's live advice")} →
               </a>
             </>
           )}

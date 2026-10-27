@@ -360,6 +360,11 @@ test("Live advice: real-looking feeds give advice for a plane in the air and an 
   await expect(card).toContainText("Delhi (DEL) → Mumbai (BOM)"); // cities from the site's airport list
   await expect(card.locator("dt")).toContainText(["Route", "Departed", "Lands", "Travel time", "Level", "Contrails"]);
   await expect(card).toContainText("could last until about");
+  // near me: Bengaluru is far from this plane, so the board empties; all of India brings it back
+  await page.getByLabel("Near").selectOption("Bengaluru");
+  await expect(page.locator(".now-board")).not.toContainText("IGO5001");
+  await page.getByLabel("Near").selectOption("all");
+  await expect(board).toContainText("IGO5001");
 
   await page.getByRole("tab", { name: "Next 12 hours" }).click();
   await expect(board).toContainText("IGO5002");

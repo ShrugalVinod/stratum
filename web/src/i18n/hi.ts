@@ -1515,4 +1515,36 @@ export const HI: Record<string, string> = {
   "Things you can do": "आप क्या कर सकते हैं",
   "Things to learn": "सीखने के लिए",
   "Research and the rest": "शोध और बाकी",
+  "§4 · Where the warming comes from":
+    "§4 · गर्मी कहाँ से आती है",
+  "STRATUM-weighted warming (second analysis D-006, descriptive). An airline's share mostly reflects where and when it flies, not how it flies.":
+    "STRATUM-भारित गर्मी (दूसरा विश्लेषण D-006, वर्णनात्मक)। किसी एयरलाइन का हिस्सा ज़्यादातर इस पर निर्भर है कि वह कहाँ और कब उड़ती है, न कि कैसे।",
+  "By route, flight level, aircraft and month":
+    "रूट, फ़्लाइट लेवल, विमान और महीने के अनुसार",
+  "Who we are, and how to reach us":
+    "हम कौन हैं, और हमसे कैसे संपर्क करें",
+  "The rules, where the warming comes from, and the cost":
+    "नियम, गर्मी कहाँ से आती है, और खर्च",
+  "Methods and the lab diary":
+    "विधियाँ और लैब डायरी",
+  "Every airliner over India right now, and the flights expected next: which ones are heading into air where their contrail would last, and the level that avoids it.":
+    "अभी भारत के ऊपर हर यात्री विमान, और आगे अपेक्षित उड़ानें: कौन-सी ऐसी हवा की ओर जा रही हैं जहाँ उनकी कंट्रेल टिकेगी, और कौन-सा लेवल उससे बचाता है।",
+  "Pick the level, the air's temperature and humidity and the engine, and watch whether a contrail forms and whether it lasts.":
+    "लेवल, हवा का तापमान और नमी और इंजन चुनिए, और देखिए कि कंट्रेल बनती है या नहीं और टिकती है या नहीं।",
+  "Every morning, yesterday's forecast is checked against the contrails the satellite saw, and the score is kept in public.":
+    "हर सुबह कल का पूर्वानुमान सैटेलाइट द्वारा देखी गई कंट्रेल से मिलाया जाता है, और स्कोर सबके सामने रखा जाता है।",
+  "The EU's contrail reporting rule from 2027, where India's contrail warming comes from, and what avoiding it would cost in rupees.":
+    "2027 से EU का कंट्रेल रिपोर्टिंग नियम, भारत की कंट्रेल गर्मी कहाँ से आती है, और उससे बचने में रुपयों में कितना खर्च होगा।",
+  "Today's live advice":
+    "आज की लाइव सलाह",
+  "The lab diary: every step, dated":
+    "लैब डायरी: हर कदम, तारीख़ के साथ",
+  "Near":
+    "पास",
+  "All of India":
+    "पूरा भारत",
+  "My location (stays on this device)":
+    "मेरी जगह (इसी डिवाइस पर रहती है)",
+  "Your location is not available. Pick a city instead.":
+    "आपकी जगह उपलब्ध नहीं है। कोई शहर चुनिए।",
 };
