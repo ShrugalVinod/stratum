@@ -49,7 +49,10 @@ export function Now() {
   const [sel, setSel] = useState<string | null>(q.get("cs"));
   const [ol, setOl] = useState<{ manifest: Manifest; info: OutlookInfo } | null | undefined>(undefined);
   const [sample, setSample] = useState<Sample | null>(null);
-  const [live, setLive] = useState<{ ac: Live[]; at: number; age: number | null } | null | undefined>(undefined);
+  type Fallback = { recorded_t: number; reason: "thin" | "asked"; live_count: number };
+  const [live, setLive] = useState<{ ac: Live[]; at: number; age: number | null; fb: Fallback | null } | null | undefined>(undefined);
+  // ?demo=1 always shows the recorded sky (for presentations); otherwise only when the feed is down
+  const demo = q.get("demo") === "1";
   const [sched, setSched] = useState<Schedule | null | undefined>(undefined);
   const [shade, setShade] = useState<number | "any">("any");
   const [simT, setSimT] = useState(() => Date.now());
@@ -88,8 +91,8 @@ export function Now() {
     });
     loadSchedule().then(setSched);
     const get = () =>
-      loadLive(20.5, 78.9).then(
-        (r) => setLive({ ac: r.ac as Live[], at: Date.now(), age: (r as { snapshot_age_min?: number | null }).snapshot_age_min ?? null }),
+      loadLive(20.5, 78.9, demo ? "1" : "allow").then(
+        (r) => setLive({ ac: r.ac as Live[], at: Date.now(), age: r.snapshot_age_min ?? null, fb: r.fallback ?? null }),
         () => setLive((l) => l ?? null),
       );
     get();
@@ -348,7 +351,17 @@ export function Now() {
             )}
           </p>
         )}
-        {live && live.ac.length < 80 && (
+        {live?.fb && (
+          <p class="now-warn now-recorded">
+            <b>{live.fb.reason === "asked" ? T("Demo mode: a recorded sky.") : T("The live feed is down.")}</b>{" "}
+            {tx(
+              `${live.fb.reason === "thin" ? `The OpenSky Network shows only ${live.fb.live_count} airliners over India right now, so this ` : "This "}is the real sky recorded at ${utc(live.fb.recorded_t)} UTC on ${new Date(live.fb.recorded_t).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}: ${live.ac.length} airliners with their positions, levels and routes as recorded, shown as if it were now and checked against today's forecast.`,
+              `${live.fb.reason === "thin" ? `OpenSky Network अभी भारत के ऊपर केवल ${live.fb.live_count} यात्री विमान दिखा रहा है, इसलिए यह ` : "यह "}${new Date(live.fb.recorded_t).toLocaleDateString("hi-IN", { day: "numeric", month: "short", timeZone: "UTC" })} को ${utc(live.fb.recorded_t)} UTC पर रिकॉर्ड किया गया असली आसमान है: ${live.ac.length} यात्री विमान, उनकी स्थिति, लेवल और रूट जैसे रिकॉर्ड हुए, ऐसे दिखाए गए जैसे अभी हों, और आज के पूर्वानुमान से जाँचे गए।`,
+            )}{" "}
+            {live.fb.reason === "asked" && <a href="/now">{T("Back to the live sky")}</a>}
+          </p>
+        )}
+        {live && !live.fb && live.ac.length < 80 && (
           <p class="now-warn mono-s">
             {tx(
               `The live aircraft feed has only ${live.ac.length} airliners over India right now (usually 200–260): the OpenSky Network's coverage is down. The advice below covers only these.`,
@@ -551,8 +564,8 @@ export function Now() {
           </p>
           <p class="mono-s muted">
             {tx(
-              `Positions ${live?.age != null ? `${live.age} min old` : "…"} · refreshed every minute · Live aircraft: The OpenSky Network · Routes: adsb.lol (ODbL) · Types: Mictronics · Airports: OurAirports · Forecast: ECMWF open data (CC BY 4.0)`,
-              `स्थितियाँ ${live?.age != null ? `${live.age} मिनट पुरानी` : "…"} · हर मिनट ताज़ा · लाइव विमान: The OpenSky Network · रूट: adsb.lol (ODbL) · प्रकार: Mictronics · हवाई अड्डे: OurAirports · पूर्वानुमान: ECMWF open data (CC BY 4.0)`,
+              `Positions ${live?.fb ? `recorded at ${utc(live.fb.recorded_t)} UTC` : live?.age != null ? `${live.age} min old` : "…"} · refreshed every minute · Live aircraft: The OpenSky Network · Routes: adsb.lol (ODbL) · Types: Mictronics · Airports: OurAirports · Forecast: ECMWF open data (CC BY 4.0)`,
+              `स्थितियाँ ${live?.fb ? `${utc(live.fb.recorded_t)} UTC पर रिकॉर्ड` : live?.age != null ? `${live.age} मिनट पुरानी` : "…"} · हर मिनट ताज़ा · लाइव विमान: The OpenSky Network · रूट: adsb.lol (ODbL) · प्रकार: Mictronics · हवाई अड्डे: OurAirports · पूर्वानुमान: ECMWF open data (CC BY 4.0)`,
             )}
           </p>
         </div>

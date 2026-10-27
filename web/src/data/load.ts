@@ -165,9 +165,9 @@ export async function loadOutlookB1(m: Manifest): Promise<Map<string, { data: Ui
 }
 
 /** Aircraft near a point from the site's Worker (rounded to its 0.5° cache cell before sending). */
-export async function loadLive(lat: number, lon: number) {
+export async function loadLive(lat: number, lon: number, fallback?: "allow" | "1") {
   const q = (v: number) => (Math.round(v * 2) / 2).toFixed(1);
-  return json(`${BASE}/api/live?lat=${q(lat)}&lon=${q(lon)}`, LiveResponse);
+  return json(`${BASE}/api/live?lat=${q(lat)}&lon=${q(lon)}${fallback ? `&fallback=${fallback}` : ""}`, LiveResponse);
 }
 
 // ── "Beat STRATUM" (data/game/; ?game=<folder> for review) ───────────────────

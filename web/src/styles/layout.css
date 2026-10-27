@@ -3342,3 +3342,8 @@ a.contact-big:hover {
     grid-template-columns: 1fr;
   }
 }
+.now-recorded {
+  font-family: inherit;
+  font-size: 15px;
+  border-left-color: var(--teal);
+}

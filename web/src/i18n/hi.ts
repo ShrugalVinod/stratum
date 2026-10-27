@@ -1547,4 +1547,10 @@ export const HI: Record<string, string> = {
     "मेरी जगह (इसी डिवाइस पर रहती है)",
   "Your location is not available. Pick a city instead.":
     "आपकी जगह उपलब्ध नहीं है। कोई शहर चुनिए।",
+  "Demo mode: a recorded sky.":
+    "डेमो मोड: रिकॉर्ड किया गया आसमान।",
+  "The live feed is down.":
+    "लाइव फ़ीड बंद है।",
+  "Back to the live sky":
+    "लाइव आसमान पर लौटें",
 };

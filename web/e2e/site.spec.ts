@@ -372,6 +372,22 @@ test("Live advice: real-looking feeds give advice for a plane in the air and an 
   await board.getByRole("button", { name: "IGO5002" }).click();
   await expect(card).toContainText("as airliners on this route fly now");
   await expect(card).toContainText("Departs");
+
+  // the live feed goes down: the recorded sky is shown, and says so
+  await page.unroute("**/api/live**");
+  await page.route("**/api/live**", (r) =>
+    r.fulfill({
+      json: {
+        t: now, centre: [20.5, 79], radius_nm: 250, credit: "test", snapshot_t: now - 8 * 3_600_000, snapshot_age_min: 0,
+        fallback: { recorded_t: now - 8 * 3_600_000, reason: "thin", live_count: 16 },
+        ac: [{ cs: "IGO5001", type: "A20N", alt: 36000, lat: 23.8, lon: 75.9, trk: 215, gs: 450, t: now, vs: 0, route: [DEL, BOM] }],
+      },
+    }),
+  );
+  await page.goto("/now");
+  await expect(page.locator(".now-recorded")).toContainText("The live feed is down.");
+  await expect(page.locator(".now-recorded")).toContainText("only 16 airliners");
+  await expect(board).toContainText("IGO5001");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
 

@@ -16,6 +16,11 @@ Newest first. What was done, what's next, blockers.
 - Live advice warns when the aircraft feed is thin. 27 Oct ~13 UTC: OpenSky degraded worldwide
   (599 aircraft on the planet, 0 over India); adsb.lol answers again but allows only 500
   requests a day, too few to replace it.
+- Fallback for presentations: the `live` Action keeps the last snapshot with ≥ 150 airliners as
+  india-good.json; a real snapshot (27 Oct 05:33 UTC, 261 airliners) ships with the site as
+  data/live-fallback.json. When OpenSky shows < 80 airliners over India, Live advice
+  (?fallback=allow) gets the recorded sky, shown as if now with a banner saying so;
+  /now?demo=1 forces it. Other pages never get the recorded sky.
 
 ## 2026-10-27 — Live advice (/now): which planes should move, right now
 

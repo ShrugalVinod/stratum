@@ -21,6 +21,10 @@ import { cell, fromReadsb, merge, outlookStale, scheduleStale, USER_AGENT } from
 
 const RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/";
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
+// the last snapshot with a full sky (kept by the `live` Action), and a recorded one shipped with
+// the site: shown, clearly labelled, when the live feed is down (pages that ask with ?fallback=)
+const GOOD_SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india-good.json";
+const THIN = 80; // fewer airliners than this over India: the live feed is down
 const ADSB_LOL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/250";
 const TTL_S = 60;
 const STALE_MIN = 180; // older than this, a snapshot is no longer shown at all
@@ -89,6 +93,30 @@ async function live(url, env, ctx) {
       ? { ...snap0, status: `stale (${Math.round(age)} min)${asked ? ", refreshing" : ""}`, list: [] }
       : snap0;
   const ac = merge(snap.list, lol.list);
+  // ?fallback=allow: the last full sky when the live one is thin; ?fallback=1: always (demos)
+  const fb = url.searchParams.get("fallback");
+  if (fb === "1" || (fb === "allow" && snap.list.length < THIN)) {
+    const good = await goodSky(url, env, ctx);
+    if (good.list.length >= THIN) {
+      const now = Date.now();
+      return json(
+        {
+          t: now,
+          centre: [lat, lon],
+          radius_nm: 250,
+          credit: "Live aircraft (recorded): The OpenSky Network",
+          snapshot_t: good.t,
+          snapshot_age_min: 0,
+          sources: { opensky: snap.list.length, recorded: good.list.length },
+          fallback: { recorded_t: good.t, reason: fb === "1" ? "asked" : "thin", live_count: ac.length },
+          // shown as if now: positions, levels and routes as recorded
+          ac: good.list.map((a) => ({ ...a, t: now })),
+        },
+        200,
+        30,
+      );
+    }
+  }
   if (!ac.length) return json({ error: "live feeds busy, try again in a minute", refreshing: asked }, 503, 0);
   return json(
     {
@@ -129,6 +157,31 @@ function snapshot(ctx) {
       return { status: "unreachable", list: [] };
     }
   });
+}
+
+/** The last full sky: the `live` Action's last good snapshot, else the one shipped with the site. */
+async function goodSky(url, env, ctx) {
+  const kept = await cached("snapshot/good", 600, ctx, async () => {
+    try {
+      const r = await fetch(GOOD_SNAPSHOT, { cf: { cacheTtl: 300 } });
+      if (!r.ok) return { t: null, list: [] };
+      const d = await r.json();
+      return { t: d.t, list: d.ac ?? [] };
+    } catch {
+      return { t: null, list: [] };
+    }
+  });
+  if (kept.list.length >= THIN) return kept;
+  try {
+    const r = await env.ASSETS.fetch(new Request(new URL("/data/live-fallback.json", url)));
+    if (r.ok) {
+      const d = await r.json();
+      return { t: d.t, list: d.ac ?? [] };
+    }
+  } catch {
+    /* none */
+  }
+  return { t: null, list: [] };
 }
 
 /** Ask GitHub to run a workflow now (its data are old). True if a run was requested now or in

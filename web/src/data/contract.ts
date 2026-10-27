@@ -268,7 +268,19 @@ export const ScheduledFlight = z.object({
 export type ScheduledFlight = z.infer<typeof ScheduledFlight>;
 export const Schedule = z.object({ day: z.string(), built: z.string(), source: z.string(), n_records: z.number(), flights: z.array(ScheduledFlight) });
 export type Schedule = z.infer<typeof Schedule>;
-export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), snapshot_t: z.number().nullish(), refreshing: z.boolean().nullish(), sources: z.record(z.string(), z.union([z.number(), z.string()])).nullish(), ac: z.array(LiveAircraft) });
+export const LiveResponse = z.object({
+  t: z.number(),
+  centre: z.array(z.number()),
+  radius_nm: z.number(),
+  credit: z.string(),
+  snapshot_t: z.number().nullish(),
+  snapshot_age_min: z.number().nullish(),
+  refreshing: z.boolean().nullish(),
+  sources: z.record(z.string(), z.union([z.number(), z.string()])).nullish(),
+  // the live feed was down (or a demo asked): a recorded full sky, shown as if now
+  fallback: z.object({ recorded_t: z.number(), reason: z.enum(["thin", "asked"]), live_count: z.number() }).nullish(),
+  ac: z.array(LiveAircraft),
+});
 
 // "Beat STRATUM" rounds (stratum/export/game.py → data/game/index.json + img/).
 export const GameRound = z.object({

@@ -44,11 +44,15 @@ jobs:
           export TYPES_DB="$RUNNER_TEMP/aircraft.csv.gz" ROUTE_CACHE="$RUNNER_TEMP/routes.json"
           curl -fsSL -o "$TYPES_DB" https://github.com/wiedehopf/tar1090-db/raw/refs/heads/csv/aircraft.csv.gz || rm -f "$TYPES_DB"
           cd "$RUNNER_TEMP/live"
+          # the last snapshot with a full sky (>= 150 airliners) is kept as india-good.json: the
+          # website shows it, labelled as recorded, when the live feed is down
+          curl -fsSL -o india-good.json "https://raw.githubusercontent.com/${{ github.repository }}/live-data/india-good.json" || rm -f india-good.json
           git init -q -b live-data
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4 5 6; do
             if python3 "$RUNNER_TEMP/snap.py" india.json; then
+              [ "$(jq '.ac | length' india.json)" -ge 150 ] && cp india.json india-good.json
               git add -A
               git commit -q --amend --allow-empty -m "Live snapshot $(date -u +%FT%TZ)" 2>/dev/null || git commit -q -m "Live snapshot $(date -u +%FT%TZ)"
               git push -q --force "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" live-data
