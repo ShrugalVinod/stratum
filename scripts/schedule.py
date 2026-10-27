@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -29,6 +30,8 @@ from live_snapshot import bearer
 
 FLIGHTS = "https://opensky-network.org/api/flights/all?begin={b}&end={e}"
 AIRLINE = re.compile(r"^[A-Z]{3}[0-9][0-9A-Z]{0,3}$")
+# Indian airlines (their flights are kept even when OpenSky did not place an airport)
+INDIAN_AIRLINES = ("IGO", "AIC", "AXB", "AKJ", "SEJ", "LLR", "SDG", "IAD", "VTI", "FLG")
 WINDOW_S = 2 * 3600  # the longest interval OpenSky's /flights/all accepts
 
 
@@ -54,28 +57,34 @@ def fetch(day: dt.date, tok: str) -> list[dict]:
     return out
 
 
+def _minutes(a: list, b: list) -> float:
+    """Typical block time between two airports: great circle at 780 km/h plus 15 minutes."""
+    la1, lo1, la2, lo2 = map(math.radians, (a[1], a[2], b[1], b[2]))
+    h = math.sin((la2 - la1) / 2) ** 2
+    h += math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * math.asin(math.sqrt(h)) / 780 * 60 + 15
+
+
 def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[str, list]) -> dict:
     start = dt.datetime(day.year, day.month, day.day, tzinfo=dt.UTC).timestamp()
     seen: dict[str, dict] = {}
     for f in raw:
         cs = (f.get("callsign") or "").strip()
         dep, arr = f.get("estDepartureAirport") or "", f.get("estArrivalAirport") or ""
-        if (
-            not AIRLINE.match(cs)
-            or not (dep.startswith(INDIA) or arr.startswith(INDIA))
-            or not f.get("firstSeen")
-        ):
+        india = dep.startswith(INDIA) or arr.startswith(INDIA) or cs.startswith(INDIAN_AIRLINES)
+        if not AIRLINE.match(cs) or not india or not f.get("firstSeen") or not f.get("lastSeen"):
             continue
         rec = {
             "cs": cs,
             "type": types.get((f.get("icao24") or "").lower()),
             "from": airports.get(dep),
             "to": airports.get(arr),
-            "dep": round((f["firstSeen"] - start) / 60),
-            "arr": round((f["lastSeen"] - start) / 60) if f.get("lastSeen") else None,
+            "seen": (f["firstSeen"] - start) / 60,
+            "last": (f["lastSeen"] - start) / 60,
+            "placed": "from" if dep else "to" if arr else "",
         }
         # one record per callsign and day: the first leg seen
-        if cs not in seen or rec["dep"] < seen[cs]["dep"]:
+        if cs not in seen or rec["seen"] < seen[cs]["seen"]:
             seen[cs] = rec
     # fill unplaced airports from the route database (the stop list must contain the known one)
     gaps = [cs for cs, r in seen.items() if not (r["from"] and r["to"])]
@@ -90,12 +99,29 @@ def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[s
         elif r["to"] and r["to"][0] in codes:
             i = codes.index(r["to"][0])
             r["from"] = stops[i - 1] if i > 0 else None
-        elif len(stops) == 2:
+        elif len(stops) == 2 and not r["from"] and not r["to"]:
             r["from"], r["to"] = stops
-    flights = sorted(
-        (r for r in seen.values() if r["from"] and r["to"] and r["from"][0] != r["to"][0]),
-        key=lambda r: r["dep"],
-    )
+    flights = []
+    for r in seen.values():
+        a, b = r["from"], r["to"]
+        if not a or not b or a[0] == b[0]:
+            continue
+        d = _minutes(a, b)
+        # departure time: when OpenSky placed the departure airport it saw the take-off; when it
+        # placed only the arrival, the landing less a typical block time; otherwise the aircraft
+        # was first seen in flight and left between (last seen - block time) and first seen
+        if r["placed"] == "from":
+            dep, acc = r["seen"], 10
+        elif r["placed"] == "to":
+            dep, acc = min(r["seen"], r["last"] - d), 20
+        else:
+            lo = min(r["last"] - d, r["seen"])
+            dep, acc = (lo + r["seen"]) / 2, max(15, (r["seen"] - lo) / 2)
+        flights.append(
+            {"cs": r["cs"], "type": r["type"], "from": a, "to": b}
+            | {"dep": round(dep), "acc": round(acc), "block": round(d)}
+        )
+    flights.sort(key=lambda f: f["dep"])
     return {
         "day": day.isoformat(),
         "built": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%MZ"),
@@ -128,6 +154,11 @@ if __name__ == "__main__":
     )
     fl = s["flights"]
     typed = sum(1 for f in fl if f["type"])
+    acc = [f["acc"] for f in fl]
+    tight, mid = sum(a <= 10 for a in acc), sum(10 < a <= 20 for a in acc)
+    print(
+        f"departure time within ±10 min: {tight}, ±20 min: {mid}, wider: {len(acc) - tight - mid}"
+    )
     print(f"{day}: {len(raw)} flight records worldwide, {s['n_records']} airline flights")
     print(f"touching India, {len(fl)} with both airports placed, {typed} with a type")
     if dry:

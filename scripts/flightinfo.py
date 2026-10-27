@@ -92,8 +92,8 @@ def routes(callsigns: list[str], cache_path: str | None = None) -> dict[str, lis
             cache = json.load(fh)
     todo = sorted({c for c in callsigns if c not in cache})
     with ThreadPoolExecutor(16) as ex:
-        for cs, r in zip(todo, ex.map(route, todo), strict=True):
-            cache[cs] = r
+        for i, r in enumerate(ex.map(route, todo)):
+            cache[todo[i]] = r
     if cache_path:
         with open(cache_path, "w") as fh:
             json.dump(cache, fh, separators=(",", ":"))

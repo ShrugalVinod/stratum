@@ -26,7 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/live_snapshot.py
+          sparse-checkout: |
+            scripts/live_snapshot.py
+            scripts/flightinfo.py
           sparse-checkout-cone-mode: false
 
       - name: Fetch and publish every 2.5 minutes (6 times)
@@ -37,6 +39,10 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/live"
           cp scripts/live_snapshot.py "$RUNNER_TEMP/snap.py"
+          cp scripts/flightinfo.py "$RUNNER_TEMP/flightinfo.py"
+          # aircraft types by address (Mictronics database via tar1090-db) and a route cache shared by the 6 snapshots
+          export TYPES_DB="$RUNNER_TEMP/aircraft.csv.gz" ROUTE_CACHE="$RUNNER_TEMP/routes.json"
+          curl -fsSL -o "$TYPES_DB" https://github.com/wiedehopf/tar1090-db/raw/refs/heads/csv/aircraft.csv.gz || rm -f "$TYPES_DB"
           cd "$RUNNER_TEMP/live"
           git init -q -b live-data
           git config user.name "github-actions[bot]"
