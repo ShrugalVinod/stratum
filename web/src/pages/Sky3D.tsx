@@ -43,6 +43,7 @@ export function Sky3D() {
   const [hover, setHover] = useState<SkyPick | null>(null);
   const [following, setFollowing] = useState<SkyFlight | null>(null);
   const [contrails, setContrails] = useState<SkyContrail[]>([]);
+  const [ended, setEnded] = useState<string | null>(null);
   const flightsRef = useRef<SkyFlight[]>([]);
   const contrailsRef = useRef<SkyContrail[]>([]);
 
@@ -76,6 +77,13 @@ export function Sky3D() {
         if (stop) return;
         const e = (mod as typeof import("../three/sky")).createSky(el, { countries, states, cities });
         e.time.min = sim.current;
+        e.onFollowEnd(() => {
+          setFollowing((f) => {
+            if (f) setEnded(f.cs);
+            return null;
+          });
+          setSpeed("fast");
+        });
         e.onPick((p, click) => {
           setHover(click ? null : p);
           if (click && p) ride(p.id);
@@ -208,7 +216,12 @@ export function Sky3D() {
     setSpeed("ride");
     setPlay(true);
     setFollowing(f);
-    eng.current?.follow(f.id);
+    setEnded(null);
+    // the scene must see the new time before it looks for the plane
+    if (eng.current) {
+      eng.current.time.min = sim.current;
+      eng.current.follow(f.id);
+    }
   }
   function stopRide() {
     setFollowing(null);
@@ -276,9 +289,12 @@ export function Sky3D() {
           </div>
         ) : (
           ready && (
-            <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
-              ✈ {T("Ride along with a contrail-maker")}
-            </button>
+            <div class="s3-ride-btn-wrap">
+              {ended && <p class="s3-ended mono-s">{tx(`${ended} has left the area.`, `${ended} क्षेत्र से बाहर चला गया।`)}</p>}
+              <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
+                ✈ {T("Ride along with a contrail-maker")}
+              </button>
+            </div>
           )
         )}
 

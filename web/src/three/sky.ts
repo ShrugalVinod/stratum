@@ -42,6 +42,8 @@ export type SkyHandle = {
   home(): void;
   stats(): { airborne: number; contrails: number; sunElev: number };
   onPick(fn: (p: SkyPick | null, click: boolean) => void): void;
+  /** the followed flight left the scene (landed or flew out of the area) */
+  onFollowEnd(fn: () => void): void;
   dispose(): void;
 };
 
@@ -75,6 +77,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   const camera = new T.PerspectiveCamera(42, 1, 0.02, 12000);
   camera.position.set(0, 70, 55);
   const controls = new OrbitControls(camera, renderer.domElement);
+  if (import.meta.env.DEV) Object.assign(window, { __skyCam: camera, __skyTarget: controls.target }); // local testing only
   controls.target.copy(HOME.target);
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
@@ -121,7 +124,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     vertexShader: /* glsl */ `
       attribute float aV0; attribute float aV1; attribute float aSeed;
       uniform float uMix; uniform float uTime; uniform float uPx;
-      varying float vA;
+      varying float vA; varying float vNear;
       void main() {
         float v = mix(aV0, aV1, uMix);
         vec3 p = position;
@@ -130,15 +133,16 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
         p.y += sin(uTime * 0.31 + aSeed * 11.0) * 0.012;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = v > 0.02 ? (0.32 + 0.55 * aSeed) * uPx / -mv.z : 0.0;
+        gl_PointSize = v > 0.02 ? min((0.32 + 0.55 * aSeed) * uPx / -mv.z, 260.0) : 0.0;
         vA = v;
+        vNear = smoothstep(0.25, 1.2, -mv.z); // see through the haze right around the camera
       }`,
     fragmentShader: /* glsl */ `
       uniform vec3 uColor; uniform float uOpacity;
-      varying float vA;
+      varying float vA; varying float vNear;
       void main() {
         vec2 c = gl_PointCoord - 0.5;
-        float a = exp(-dot(c, c) * 14.0) * vA * uOpacity;
+        float a = exp(-dot(c, c) * 14.0) * vA * uOpacity * vNear;
         if (a < 0.004) discard;
         gl_FragColor = vec4(uColor, a);
       }`,
@@ -149,7 +153,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
 
   // ── airliners ─────────────────────────────────────────────────────────────
   const planeGeo = planeGeometry();
-  const planeMat = new T.MeshStandardMaterial({ color: 0xf4f6f8, emissive: 0xffffff, emissiveIntensity: 0.18, roughness: 0.45, metalness: 0.25 });
+  const planeMat = new T.MeshStandardMaterial({ color: 0xf2f4f7, emissive: 0xc8d2e0, emissiveIntensity: 0.22, roughness: 0.38, metalness: 0.3, side: T.DoubleSide });
   let planes = new T.InstancedMesh(planeGeo, planeMat, 1);
   scene.add(planes);
   // strobe lights on every airliner (they make the planes findable at night and from far away)
@@ -182,6 +186,16 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   });
   const strobes = new T.Points(strobeGeo, strobeMat);
   scene.add(strobes);
+  // navigation lights on the plane being ridden: red left wingtip, green right, white tail
+  const navGeo = new T.BufferGeometry();
+  navGeo.setAttribute("position", new T.Float32BufferAttribute(new Float32Array(9), 3));
+  navGeo.setAttribute("color", new T.Float32BufferAttribute([1, 0.15, 0.1, 0.1, 1, 0.3, 1, 1, 1], 3));
+  const nav = new T.Points(
+    navGeo,
+    new T.PointsMaterial({ size: 0.035, vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, map: glowTexture() }),
+  );
+  nav.visible = false;
+  scene.add(nav);
   let flights: SkyFlight[] = [];
   let day = "2026-02-01";
 
@@ -290,6 +304,9 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   renderer.domElement.addEventListener("pointerup", onUp);
 
   let following: string | null = null;
+  let lostAt = 0; // when the followed flight was last missing (it may not be flying yet this frame)
+  let endFn: () => void = () => {};
+  const camDir = new T.Vector3(0, 0, -1); // smoothed heading: the tracks turn at their points
   let flight: { from: T.Vector3; to: T.Vector3; tFrom: T.Vector3; tTo: T.Vector3; t0: number; ms: number } | null = null;
   const fly = (pos: T.Vector3, target: T.Vector3, ms: number) => {
     flight = { from: camera.position.clone(), to: pos.clone(), tFrom: controls.target.clone(), tTo: target.clone(), t0: performance.now(), ms: still ? 1 : ms };
@@ -305,9 +322,12 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   let sunElev = 0;
   let raf = 0;
   const t0 = performance.now();
+  let lastFrame = t0;
 
   const frame = (now: number) => {
     const secs = (now - t0) / 1000;
+    const dt = Math.min(0.1, (now - lastFrame) / 1000);
+    lastFrame = now;
     const min = time.min;
     // sun, sky, light, stars, city lights, fog
     const sun = sunAt(day, min);
@@ -379,7 +399,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     const zoomScale = T.MathUtils.clamp(camera.position.distanceTo(controls.target) / 30, 0.25, 1.6);
     airborne.forEach((b, i) => {
       q.setFromUnitVectors(fwd, b.dir);
-      s3.setScalar(zoomScale);
+      s3.setScalar(b.f.id === following ? 0.9 : zoomScale);
       m4.compose(b.p, q, s3);
       planes.setMatrixAt(i, m4);
       sp.set([b.p.x, b.p.y + 0.012, b.p.z], i * 3);
@@ -387,6 +407,19 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       hot[i] = b.hot ? 1 : 0;
     });
     planes.count = airborne.length;
+    const rode = following ? airborne.find((x) => x.f.id === following) : null;
+    nav.visible = !!rode;
+    if (rode) {
+      const right = new T.Vector3(-rode.dir.z, 0, rode.dir.x).multiplyScalar(0.9);
+      const pos = navGeo.getAttribute("position") as T.BufferAttribute;
+      const blink = (secs * 1.1) % 1 < 0.12 ? 1.6 : 1;
+      const at = (v: T.Vector3, k: number) => pos.setXYZ(k, v.x, v.y, v.z);
+      at(rode.p.clone().addScaledVector(right, -0.13).add(new T.Vector3(0, -0.004, 0)).addScaledVector(rode.dir, -0.045), 0);
+      at(rode.p.clone().addScaledVector(right, 0.13).add(new T.Vector3(0, -0.004, 0)).addScaledVector(rode.dir, -0.045), 1);
+      at(rode.p.clone().addScaledVector(rode.dir, -0.11).add(new T.Vector3(0, 0.055, 0)), 2);
+      pos.needsUpdate = true;
+      (nav.material as T.PointsMaterial).size = 0.035 * blink;
+    }
     planes.instanceMatrix.needsUpdate = true;
     strobeGeo.setAttribute("position", new T.BufferAttribute(sp, 3));
     strobeGeo.setAttribute("aSeed", new T.BufferAttribute(seed, 1));
@@ -404,10 +437,22 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     } else if (following) {
       const b = airborne.find((x) => x.f.id === following);
       if (b) {
-        const want = b.p.clone().addScaledVector(b.dir, -0.9).add(new T.Vector3(0, 0.28, 0)).addScaledVector(new T.Vector3(b.dir.z, 0, -b.dir.x), 0.25);
-        camera.position.lerp(want, 0.06);
-        controls.target.lerp(b.p.clone().addScaledVector(b.dir, 0.6), 0.1);
-      } else following = null;
+        lostAt = 0;
+        camDir.lerp(b.dir, 1 - Math.exp(-dt * 1.5)).normalize();
+        const side = new T.Vector3(camDir.z, 0, -camDir.x);
+        const want = b.p.clone().addScaledVector(camDir, -0.62).add(new T.Vector3(0, 0.16, 0)).addScaledVector(side, 0.1);
+        camera.position.lerp(want, 1 - Math.exp(-dt * 2.5));
+        controls.target.lerp(b.p.clone().addScaledVector(camDir, 0.9).add(new T.Vector3(0, -0.03, 0)), 1 - Math.exp(-dt * 5));
+      } else {
+        // not in the air this frame: wait a moment (the clock may just have jumped), then give up
+        lostAt ||= now;
+        if (now - lostAt > 1500) {
+          following = null;
+          lostAt = 0;
+          fly(HOME.pos, HOME.target, 2200);
+          endFn();
+        }
+      }
     }
     controls.update();
     if (composer) composer.render();
@@ -491,6 +536,9 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     follow(id) {
       following = id;
       flight = null;
+      lostAt = 0;
+      const b = airborne.find((x) => x.f.id === id);
+      if (b) camDir.copy(b.dir);
     },
     home() {
       following = null;
@@ -502,6 +550,9 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     },
     onPick(fn) {
       pickFn = fn;
+    },
+    onFollowEnd(fn) {
+      endFn = fn;
     },
     dispose() {
       cancelAnimationFrame(raf);
@@ -517,18 +568,65 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   };
 }
 
-/** A small airliner (nose towards −z): fuselage, wings, tailplane, fin. */
+/** A small airliner (nose towards −z): rounded fuselage, swept wings with two engines, swept
+ *  tailplane and fin. About 0.24 units long at scale 1. */
 function planeGeometry(): T.BufferGeometry {
-  const part = (w: number, h: number, d: number, x: number, y: number, z: number) => new T.BoxGeometry(w, h, d).translate(x, y, z);
-  const nose = new T.ConeGeometry(0.016, 0.05, 8).rotateX(-Math.PI / 2).translate(0, 0, -0.135);
-  const body = new T.CylinderGeometry(0.016, 0.014, 0.22, 8).rotateX(Math.PI / 2);
-  return mergeGeometries([
-    body,
-    nose,
-    part(0.25, 0.006, 0.05, 0, -0.004, 0.005),
-    part(0.095, 0.005, 0.03, 0, 0.002, 0.095),
-    part(0.005, 0.05, 0.035, 0, 0.026, 0.092),
-  ])!;
+  const flat = (pts: [number, number][], thick: number) => {
+    // a planform in the x–z plane (shape y = scene z), thickness downwards
+    const sh = new T.Shape(pts.map(([x, z]) => new T.Vector2(x, z)));
+    return new T.ExtrudeGeometry(sh, { depth: thick, bevelEnabled: false }).rotateX(Math.PI / 2);
+  };
+  const side = (pts: [number, number][], thick: number) => {
+    // a profile in the z–y plane (shape x = scene z), thickness across
+    const sh = new T.Shape(pts.map(([z, y]) => new T.Vector2(z, y)));
+    return new T.ExtrudeGeometry(sh, { depth: thick, bevelEnabled: false }).rotateY(-Math.PI / 2).translate(thick / 2, 0, 0);
+  };
+  const body = new T.CapsuleGeometry(0.014, 0.2, 6, 12).rotateX(Math.PI / 2);
+  const wing = (s: number) =>
+    flat(
+      [
+        [0.012 * s, -0.03],
+        [0.13 * s, 0.035],
+        [0.13 * s, 0.05],
+        [0.012 * s, 0.035],
+      ],
+      0.004,
+    ).translate(0, -0.004, 0);
+  const tail = (s: number) =>
+    flat(
+      [
+        [0.008 * s, 0.085],
+        [0.05 * s, 0.11],
+        [0.05 * s, 0.118],
+        [0.008 * s, 0.112],
+      ],
+      0.003,
+    ).translate(0, 0.004, 0);
+  const engine = (x: number) => new T.CylinderGeometry(0.0085, 0.0075, 0.04, 10).rotateX(Math.PI / 2).translate(x, -0.014, -0.008);
+  const fin = side(
+    [
+      [0.075, 0.008],
+      [0.118, 0.008],
+      [0.124, 0.06],
+      [0.108, 0.06],
+    ],
+    0.004,
+  );
+  return mergeGeometries([body, wing(1), wing(-1), tail(1), tail(-1), engine(0.048), engine(-0.048), fin].map((g) => g.toNonIndexed()))!;
+}
+
+/** A soft round glow for point lights. */
+function glowTexture(): T.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d")!;
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, "rgba(255,255,255,1)");
+  r.addColorStop(0.3, "rgba(255,255,255,0.6)");
+  r.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  return new T.CanvasTexture(c);
 }
 
 /** The ground's colour map and its night-lights map, drawn from the country outlines. */

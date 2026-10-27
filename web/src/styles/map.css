@@ -1887,11 +1887,22 @@
 .s3-btn:hover {
   border-color: var(--orange);
 }
-.s3-ride-btn {
+.s3-ride-btn-wrap {
   position: absolute;
   right: 22px;
   bottom: 22px;
   z-index: 2;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.s3-ended {
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--s3-glass);
+  color: var(--s3-dim);
+}
+.s3-ride-btn {
   border-color: var(--orange);
   box-shadow: 0 0 0 0 rgba(214, 84, 28, 0.6);
   animation: s3-pulse 2.4s infinite;
@@ -2060,12 +2071,12 @@
   .s3-key {
     display: none;
   }
-  .s3-ride-btn,
+  .s3-ride-btn-wrap,
   .s3-ride {
     right: 14px;
     bottom: 14px;
   }
-  .s3-ride-btn {
+  .s3-ride-btn-wrap {
     left: 14px;
   }
   .s3-time {
