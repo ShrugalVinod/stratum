@@ -75,6 +75,7 @@ const Report = lazy(reloadOnce(() => import("./pages/Report").then((m) => m.Repo
 const Airlines = lazy(reloadOnce(() => import("./pages/Airlines").then((m) => m.Airlines)));
 const Sandbox = lazy(reloadOnce(() => import("./pages/Sandbox").then((m) => m.Sandbox)));
 const Replay = lazy(reloadOnce(() => import("./pages/Replay").then((m) => m.Replay)));
+const Now = lazy(reloadOnce(() => import("./pages/Now").then((m) => m.Now)));
 const NotFound = lazy(
   reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
 );
@@ -109,6 +110,7 @@ function Shell() {
             <Route path="/airlines" component={Airlines} />
             <Route path="/sandbox" component={Sandbox} />
             <Route path="/replay" component={Replay} />
+            <Route path="/now" component={Now} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
             <Route path="/results" component={Results} />

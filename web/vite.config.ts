@@ -25,9 +25,10 @@ function preloadFonts(): Plugin {
   };
 }
 
-// In development there is no Worker: answer /api/live like worker/index.js does (OpenSky for
-// India, anonymous, cached 10 min here, like the `live` Action's snapshot; adsb.lol near the
-// point, 60 s), merged by callsign.
+// In development there is no Worker. By default /api/live comes from the deployed site (with
+// aircraft types and routes); with STRATUM_LOCAL_LIVE=1 it is answered here like
+// worker/index.js does (OpenSky for India, anonymous, cached 10 min, like the `live` Action's
+// snapshot; adsb.lol near the point, 60 s), merged by callsign.
 function devLiveApi(): Plugin {
   const memo = new Map<string, { until: number; v: Promise<unknown[]> }>();
   const once = (key: string, ttl: number, load: () => Promise<unknown[]>) => {
@@ -39,7 +40,7 @@ function devLiveApi(): Plugin {
   };
   return {
     name: "stratum-dev-live-api",
-    apply: "serve",
+    apply: () => process.env.STRATUM_LOCAL_LIVE === "1",
     configureServer(server) {
       server.middlewares.use("/api/live", async (req, res) => {
         const { cell, fromOpenSky, fromReadsb, merge, INDIA_BOX, USER_AGENT } = await import("./worker/live.js");
@@ -69,10 +70,21 @@ function devLiveApi(): Plugin {
   };
 }
 
+// The data the Worker serves from data branches (forecast, report card, expected flights), and in
+// `vite preview` the live feed too, come from the deployed site when testing locally.
+const SITE = "https://stratum.aerospaceonyx.workers.dev";
+const fromSite = {
+  ...Object.fromEntries(["/data/outlook", "/data/report"].map((p) => [p, { target: SITE, changeOrigin: true }])),
+  // straight from its branch, as the Worker reads it
+  "/data/schedule": { target: "https://raw.githubusercontent.com", changeOrigin: true, rewrite: (p: string) => p.replace("/data/schedule", "/ShrugalVinod/stratum/schedule-data") },
+};
+
 // `base` is set per host at deploy time (e.g. "/" for Cloudflare Pages).
 export default defineConfig({
   plugins: [preact(), preloadFonts(), devLiveApi()],
   base: BASE,
+  server: { proxy: process.env.STRATUM_LOCAL_LIVE === "1" ? fromSite : { ...fromSite, "/api/live": { target: SITE, changeOrigin: true } } },
+  preview: { proxy: { ...fromSite, "/api/live": { target: SITE, changeOrigin: true } } },
   build: { target: "es2022", sourcemap: false },
   test: { environment: "node", include: ["tests/**/*.test.ts"] },
 });

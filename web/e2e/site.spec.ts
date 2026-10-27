@@ -1,4 +1,5 @@
 // End-to-end checks of the STRATUM website (Phase 4 open item a; port of the 19 local checks).
+import zlib from "node:zlib";
 import { expect, test, type Page } from "@playwright/test";
 
 function collectErrors(page: Page): string[] {
@@ -119,7 +120,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report", "/replay"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report", "/replay", "/now"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -319,3 +320,74 @@ test("the map says what it shows: proof (past days) or forecast", async ({ page 
   await expect(page.locator(".mp-mode a.on")).toHaveText(/Proof/i);
   await expect(page.locator(".mp-bar .warn")).toContainText("checked against the satellite");
 });
+
+test("Live advice: real-looking feeds give advice for a plane in the air and an expected flight", async ({ page }) => {
+  // every outside source is replaced: a made-up sky with lasting-contrail air only at FL360,
+  // between 74°E and 76°E, all day; one IndiGo flight cruising there now, one expected
+  const errors = collectErrors(page);
+  const now = Date.now();
+  const day = (d: number) => new Date(now + d * 86_400_000).toISOString().slice(0, 10);
+  const DEL = ["DEL", 28.5556, 77.0952];
+  const BOM = ["BOM", 19.0887, 72.8679];
+  const grid = { lat_north: 37, lat_south: 6, lon_west: 68, lon_east: 98, rows: 125, cols: 121, step_deg: 0.25, encoding: "png_uint8_hour_sprite" };
+  const manifest = {
+    contract_version: "2.0.0", build_id: "outlook", created_at: "x", git_commit: "x", config_hash: "x", pipeline_version: "x", model_version: "test",
+    days: [day(0), day(1)], days_with_flights: [], flight_levels: [280, 300, 320, 340, 360, 380, 400, 420].map((fl) => ({ fl, pressure_hpa: 250 })),
+    hours_utc: Array.from({ length: 24 }, (_, h) => h), grid, eta_for_grids: 0.3, coverage: { adsb_coverage_pct: null, note: "test" }, credits: ["test"],
+    layers: [{ id: "B1", file: "layers/B1_FL{fl}.png", per_flight_level: true, full_scale: 1, meaning: "test" }],
+  };
+  const outlook = { run: `${day(0)}T00:00Z`, issued: "x", days: manifest.days, credit: "test", threshold: 0.5, note: "test", advisories: [] };
+  await page.route("**/data/outlook/manifest.json", (r) => r.fulfill({ json: manifest }));
+  await page.route("**/data/outlook/outlook.json", (r) => r.fulfill({ json: outlook }));
+  await page.route(/\/data\/outlook\/days\/.*B1_FL(\d+)\.png$/, (r) => r.fulfill({ contentType: "image/png", body: sprite(grid, /FL360/.test(r.request().url())) }));
+  await page.route("**/api/live**", (r) =>
+    r.fulfill({ json: { t: now, centre: [20.5, 79], radius_nm: 250, credit: "test", snapshot_age_min: 1, ac: [{ cs: "IGO5001", type: "A20N", alt: 36000, lat: 23.8, lon: 75.9, trk: 215, gs: 450, t: now, vs: 0, route: [DEL, BOM] }] } }),
+  );
+  const dep = new Date(now + 2 * 3_600_000);
+  await page.route("**/data/schedule/schedule.json", (r) =>
+    r.fulfill({ json: { day: day(-1), built: "x", source: "test", n_records: 1, flights: [{ cs: "IGO5002", type: "A21N", from: DEL, to: BOM, dep: dep.getUTCHours() * 60 + dep.getUTCMinutes(), acc: 10, block: 125 }] } }),
+  );
+
+  await page.goto("/now");
+  const board = page.locator(".now-table");
+  await expect(board).toContainText("IGO5001");
+  await expect(board.locator("tr.best")).toContainText("DEL → BOM");
+  await expect(board.locator("tr.best")).toContainText("→ FL");
+  await expect(page.locator(".now-alerts b")).toHaveText("1");
+  await board.getByRole("button", { name: "IGO5001" }).click();
+  await expect(page.locator(".now-detail")).toContainText("Advice:");
+  await expect(page.locator(".now-detail")).toContainText("Cruising at FL360");
+
+  await page.getByRole("tab", { name: "Next 12 hours" }).click();
+  await expect(board).toContainText("IGO5002");
+  await expect(board.locator("tr.best")).toContainText("FL360"); // the level IGO5001 flies on the same route now
+  await board.getByRole("button", { name: "IGO5002" }).click();
+  await expect(page.locator(".now-detail")).toContainText("as airliners on this route fly now");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+/** A B1 hour sprite (rows × 24 hours of cols, 8-bit grey PNG): lasting air between 74°E and 76°E, or none. */
+function sprite(g: { rows: number; cols: number; lon_west: number; step_deg: number }, humid: boolean): Buffer {
+  const w = g.cols * 24;
+  const raw = Buffer.alloc((w + 1) * g.rows);
+  for (let r = 0; r < g.rows; r++)
+    for (let h = 0; h < 24; h++)
+      for (let c = 0; c < g.cols; c++) {
+        const lon = g.lon_west + c * g.step_deg;
+        raw[r * (w + 1) + 1 + h * g.cols + c] = humid && lon >= 74 && lon <= 76 ? 255 : 0;
+      }
+  const chunk = (type: string, data: Buffer) => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const td = Buffer.concat([Buffer.from(type), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(zlib.crc32(td));
+    return Buffer.concat([len, td, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(g.rows, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 0; // greyscale
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), chunk("IDAT", zlib.deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+}

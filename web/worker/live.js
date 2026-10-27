@@ -80,7 +80,7 @@ export function merge(...lists) {
       const a = a0.key ? a0 : { ...a0, key: a0.cs };
       const b = by.get(a.key);
       if (!b) by.set(a.key, a);
-      else by.set(a.key, { ...(a.t > b.t ? a : b), type: a.type ?? b.type });
+      else by.set(a.key, { ...(a.t > b.t ? a : b), type: a.type ?? b.type, route: a.route ?? b.route ?? null });
     }
   return [...by.values()].map(({ key: _key, ...rest }) => rest);
 }
@@ -97,4 +97,13 @@ export function outlookStale(run, now) {
   const d = new Date(now);
   const today = d.toISOString().slice(0, 10);
   return run.slice(0, 10) < today && d.getUTCHours() * 60 + d.getUTCMinutes() >= 9 * 60 + 30;
+}
+
+/** The expected-flights file is out of date: built from a day before yesterday (UTC), and it is
+ *  after 02:00 UTC, when yesterday's flight records should be in. */
+export function scheduleStale(day, now) {
+  if (typeof day !== "string") return true;
+  const d = new Date(now);
+  const yesterday = new Date(now - 86_400_000).toISOString().slice(0, 10);
+  return day < yesterday && d.getUTCHours() >= 2;
 }

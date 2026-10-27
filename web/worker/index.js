@@ -17,7 +17,7 @@
 //
 // Everything else is the static site (wrangler.jsonc: assets, single-page fallback).
 
-import { cell, fromReadsb, merge, outlookStale, USER_AGENT } from "./live.js";
+import { cell, fromReadsb, merge, outlookStale, scheduleStale, USER_AGENT } from "./live.js";
 
 const RAW = "https://raw.githubusercontent.com/ShrugalVinod/stratum/";
 const SNAPSHOT = "https://raw.githubusercontent.com/ShrugalVinod/stratum/live-data/india.json";
@@ -33,18 +33,31 @@ export default {
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname.startsWith("/data/outlook/")) return branchFile(url, "outlook", env, ctx);
     if (req.method === "GET" && url.pathname.startsWith("/data/report/")) return branchFile(url, "report", env, ctx);
+    if (req.method === "GET" && url.pathname.startsWith("/data/schedule/")) return branchFile(url, "schedule", env, ctx);
     if (req.method === "GET" && url.pathname === "/api/live") return live(url, env, ctx);
     return env.ASSETS.fetch(req);
   },
 };
 
-/** A file of a data branch: /data/outlook/* → `outlook-data`, /data/report/* → `report-data`. */
+/** A file of a data branch: /data/<name>/* → `<name>-data` (outlook, report, schedule). */
 async function branchFile(url, name, env, ctx) {
   const path = url.pathname.slice(`/data/${name}/`.length);
   if (!/^[\w./-]+$/.test(path) || path.includes("..")) return new Response("bad path", { status: 400 });
   const r = await fetch(`${RAW}${name}-data/${path}`, { cf: { cacheTtl: 600, cacheEverything: true } });
   if (!r.ok) return new Response("not found", { status: r.status === 404 ? 404 : 502 });
   const ext = path.split(".").pop();
+  if (name === "schedule" && path === "schedule.json") {
+    // a skipped daily run: a visitor who finds an old file asks for a new one
+    const text = await r.text();
+    let day = null;
+    try {
+      day = JSON.parse(text).day;
+    } catch {
+      /* served as is */
+    }
+    if (scheduleStale(day, Date.now())) await refresh(env, ctx, "schedule.yml", 3600);
+    return new Response(text, { headers: { "content-type": TYPES.json, "cache-control": "public, max-age=600" } });
+  }
   if (name === "outlook" && path === "outlook.json") {
     // GitHub's daily schedule can skip a day: a visitor who finds yesterday's forecast asks for today's
     const text = await r.text();

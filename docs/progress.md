@@ -2,6 +2,36 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-27 — Live advice (/now): which planes should move, right now
+
+**Done**
+- /now (menu: right under Map): every airliner over India now and the flights expected in the
+  next 12 hours, each checked minute by minute against today's ECMWF open-data forecast (B1,
+  physics only). Advice = a level ±2,000 / ±4,000 ft within the type's ceiling (A320 family
+  FL390), held only over each stretch in lasting-contrail air (±5 min; stretches < 10 min apart
+  joined), given only when even the cautious estimate (EF p25 per lasting minute) beats the
+  extra fuel's CO₂; numbers as on /flight (OpenAP, CoCiP EF per minute, GWP-100, efficacy 0.42).
+  Odd flight levels interpolated between the forecast's 2,000-ft levels; no advice above FL420,
+  below FL280, for turboprops, climbing/descending (|vs| > 500 ft/min) or landing aircraft.
+- MapLibre map like /map (same basemap): forecast shading for the hour, moving planes (dead
+  reckoning; the next 12 hours replayed along their routes), pulsing rings on alerts, orange
+  lasting stretches, teal dashed advised stretches, "As planned / If they listen". The chosen
+  flight's advice and the full advice board sit directly under the map.
+- Data: live snapshot now adds aircraft type (Mictronics via tar1090-db, looked up by address,
+  address not written), route (adsb.lol route database; used only if the aircraft lies on the
+  leg and heads for its next stop) and vertical rate. New `schedule.yml` + scripts/schedule.py:
+  yesterday's OpenSky flight records to/from/within India (26 Oct: 1,028 airline flights,
+  544 placed; ~1 in 5 of India's flights) → `schedule-data` branch → /data/schedule/ via the
+  Worker (re-dispatched if a day is skipped). Departure time ±10 / ±20 min depending on what
+  OpenSky placed. Planned level of an expected flight = what airliners on the same route fly now,
+  else same direction and length, else FL350 E / FL360 W.
+- Checked: today's forecast has lasting air over India only at FL380+ (none at FL340–360), so
+  the alerts are mostly high international overflights and no expected domestic flight gets
+  one today; this matches the forecast file directly.
+- adsb.lol's live API now answers HTTP 400 without a key (keys only for feeders): /live runs on
+  OpenSky alone.
+- Tests: tests/advice.test.ts (12), worker scheduleStale, e2e with every feed mocked.
+
 ## 2026-10-27 — "What if we'd listened?" (/replay)
 
 **Done**

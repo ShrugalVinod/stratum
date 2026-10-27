@@ -1373,4 +1373,129 @@ export const HI: Record<string, string> = {
     "एक नया पेज, /replay: भारत के ऊपर उड़ानों का एक असली दिन, अगल-बगल दो बार चलता है। बाईं ओर जैसा उड़ा गया वह दिन, उसकी सबसे तेज़ टिकाऊ कंट्रेल बनते और फैलते हुए; दाईं ओर वही दिन अगर STRATUM की हर चेतावनी मानी जाती, साथ में टली गर्मी और अतिरिक्त ईंधन के चलते जोड़। दूसरे विश्लेषण D-006 (वर्णनात्मक) से बना; इसके जोड़ प्रकाशित आँकड़ों से बिल्कुल मिलते हैं।",
   "One real day over India, played twice side by side: as flown, and as if every STRATUM alert had been followed. Watch the lasting contrails disappear and the warming avoided add up.":
     "भारत के ऊपर एक असली दिन, अगल-बगल दो बार: जैसा उड़ा गया, और अगर STRATUM की हर चेतावनी मानी जाती। देखिए टिकाऊ कंट्रेल कैसे गायब होती हैं और टली गर्मी कैसे जुड़ती जाती है।",
+  // ── /now ──
+  "* The planned level is not known in advance: we take the level airliners on the same route are flying now, else on trips of the same direction and length, else FL350 eastbound / FL360 westbound.":
+    "* नियोजित लेवल पहले से पता नहीं होता: हम वह लेवल लेते हैं जिस पर उसी रूट के विमान अभी उड़ रहे हैं, नहीं तो उसी दिशा और लंबाई की यात्राओं का, नहीं तो पूर्व की ओर FL350 / पश्चिम की ओर FL360।",
+  "A research demonstration: no advice is sent to any pilot, airline or air traffic controller, and none should be acted on.":
+    "यह एक शोध प्रदर्शन है: कोई सलाह किसी पायलट, एयरलाइन या हवाई यातायात नियंत्रक को नहीं भेजी जाती, और किसी पर अमल नहीं किया जाना चाहिए।",
+  "Advice":
+    "सलाह",
+  "Advice for the flights expected next":
+    "आगे अपेक्षित उड़ानों के लिए सलाह",
+  "Advice for the planes in the air":
+    "हवा में विमानों के लिए सलाह",
+  "Advice: a level 2,000 or 4,000 ft away, within the aircraft's ceiling, held only over each stretch in lasting-contrail air (5 minutes either side; stretches less than 10 minutes apart are joined). Contrail warming per minute and fuel CO₂ per minute as on Your flight (CoCiP over India; OpenAP), 100-year CO₂e with efficacy 0.42. An alert needs even the cautious estimate (25th percentile) to beat the extra fuel's CO₂; warming avoided is net of that fuel. Air traffic control, other traffic and the climb itself are not modelled.":
+    "सलाह: 2,000 या 4,000 फ़ुट दूर का लेवल, विमान की अधिकतम ऊँचाई के भीतर, केवल टिकाऊ-कंट्रेल वाली हवा के हर हिस्से में (दोनों ओर 5 मिनट; 10 मिनट से कम दूरी वाले हिस्से जोड़े जाते हैं)। प्रति मिनट कंट्रेल गर्मी और ईंधन CO₂ वैसे ही जैसे 'आपकी उड़ान' पेज पर (भारत पर CoCiP; OpenAP), 100 वर्ष का CO₂e, प्रभावकारिता 0.42। चेतावनी के लिए सतर्क अनुमान (25वाँ पर्सेंटाइल) भी अतिरिक्त ईंधन के CO₂ से ज़्यादा होना चाहिए; टली गर्मी उस ईंधन को घटाकर है। हवाई यातायात नियंत्रण, बाकी ट्रैफ़िक और चढ़ाई खुद मॉडल नहीं की गई।",
+  "Again":
+    "फिर से",
+  "As planned":
+    "जैसा नियोजित",
+  "Clear of lasting-contrail air":
+    "टिकाऊ-कंट्रेल वाली हवा से दूर",
+  "Click a plane on the map, or a flight below, to see its advice.":
+    "सलाह देखने के लिए मानचित्र पर कोई विमान, या नीचे कोई उड़ान चुनिए।",
+  "Departs":
+    "प्रस्थान",
+  "Every airliner over India right now, and the flights expected in the next 12 hours, checked against today's weather forecast. Where a plane is about to fly through air in which its contrail would last, and a level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming, STRATUM says which level, and for how long.":
+    "इस समय भारत के ऊपर हर यात्री विमान, और अगले 12 घंटों में अपेक्षित उड़ानें, आज के मौसम पूर्वानुमान से जाँची गईं। जहाँ कोई विमान ऐसी हवा से गुज़रने वाला है जिसमें उसकी कंट्रेल टिकेगी, और 2,000 या 4,000 फ़ुट दूर का लेवल कंट्रेल की गर्मी से कम CO₂ में उससे बचाता है, वहाँ STRATUM बताता है कौन-सा लेवल, और कितनी देर।",
+  "How this works, and its limits":
+    "यह कैसे काम करता है, और इसकी सीमाएँ",
+  "If they listen":
+    "अगर बात मानें",
+  "In lasting air":
+    "टिकाऊ हवा में",
+  "In the air now":
+    "अभी हवा में",
+  "Live advice":
+    "लाइव सलाह",
+  "Live advice · today's forecast":
+    "लाइव सलाह · आज का पूर्वानुमान",
+  "Loading the airliners…":
+    "विमान लोड हो रहे हैं…",
+  "Loading the expected flights…":
+    "अपेक्षित उड़ानें लोड हो रही हैं…",
+  "Map of airliners over India and the air where their contrails would last":
+    "भारत के ऊपर यात्री विमानों और उस हवा का मानचित्र जहाँ उनकी कंट्रेल टिकेंगी",
+  "Next 12 hours":
+    "अगले 12 घंटे",
+  "No level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (or the aircraft cannot fly there), so there is no advice.":
+    "2,000 या 4,000 फ़ुट दूर का कोई लेवल कंट्रेल की गर्मी से कम CO₂ में इससे नहीं बचाता (या विमान वहाँ नहीं उड़ सकता), इसलिए कोई सलाह नहीं।",
+  "None of these flights crosses lasting-contrail air right now.":
+    "इनमें से कोई उड़ान अभी टिकाऊ-कंट्रेल वाली हवा से नहीं गुज़रती।",
+  "Only those crossing lasting-contrail air":
+    "केवल टिकाऊ-कंट्रेल वाली हवा से गुज़रने वाली",
+  "Planes in the air: OpenSky positions (every few minutes, moved on by speed and heading), types from the Mictronics database and routes from adsb.lol's route database; a route is used only if the plane lies on it and is heading for the next stop, otherwise we look one hour ahead on its heading. Planes climbing, descending, below FL280 or about to land are not advised.":
+    "हवा में विमान: OpenSky की स्थितियाँ (हर कुछ मिनट, गति और दिशा से आगे बढ़ाई गईं), प्रकार Mictronics डेटाबेस से और रूट adsb.lol के रूट डेटाबेस से; रूट तभी लिया जाता है जब विमान उस पर हो और अगले पड़ाव की ओर जा रहा हो, नहीं तो उसकी दिशा में एक घंटा आगे देखा जाता है। चढ़ते, उतरते, FL280 से नीचे या उतरने वाले विमानों को सलाह नहीं दी जाती।",
+  "Reading today's forecast…":
+    "आज का पूर्वानुमान पढ़ा जा रहा है…",
+  "Route":
+    "रूट",
+  "Shading":
+    "छाया",
+  "Show":
+    "दिखाएँ",
+  "The forecast cannot be loaded right now. Try again in a minute.":
+    "पूर्वानुमान अभी लोड नहीं हो सकता। एक मिनट बाद फिर कोशिश कीजिए।",
+  "The list of expected flights is not published yet.":
+    "अपेक्षित उड़ानों की सूची अभी प्रकाशित नहीं हुई है।",
+  "Warming avoided":
+    "टली गर्मी",
+  "Weather: today's ECMWF open-data forecast, physics only (Schmidt–Appleman with ice supersaturation, hour by hour, every 2,000 ft); our learned correction is not applied, because the open forecast lacks the cloud fields it needs, and this physics flags about six times more lasting contrails over India than the satellite sees (H1). Odd flight levels are judged between the forecast's levels.":
+    "मौसम: आज का ECMWF ओपन-डेटा पूर्वानुमान, केवल भौतिकी (श्मिट–ऐपलमैन और बर्फ़ अतिसंतृप्ति, घंटे-दर-घंटे, हर 2,000 फ़ुट); हमारा सीखा हुआ सुधार लागू नहीं है, क्योंकि ओपन पूर्वानुमान में उसके लिए ज़रूरी बादल डेटा नहीं है, और यह भौतिकी भारत पर सैटेलाइट से लगभग छह गुना ज़्यादा टिकाऊ कंट्रेल बताती है (H1)। विषम फ़्लाइट लेवल पूर्वानुमान के लेवलों के बीच से आँके जाते हैं।",
+  "Which flights":
+    "कौन-सी उड़ानें",
+  "Which planes":
+    "कौन-से विमान",
+  "should move":
+    "हटें",
+  "right now?":
+    "अभी?",
+  "Which planes should move, right now":
+    "अभी कौन-से विमान हटें",
+  "about to descend":
+    "उतरने वाला",
+  "above the forecast's levels":
+    "पूर्वानुमान के लेवलों से ऊपर",
+  "advice: change level":
+    "सलाह: लेवल बदलें",
+  "airliners over India now (above FL200)":
+    "अभी भारत के ऊपर यात्री विमान (FL200 से ऊपर)",
+  "altitude changes advised":
+    "सुझाए गए ऊँचाई बदलाव",
+  "as airliners on this route fly now":
+    "जैसे इस रूट के विमान अभी उड़ रहे हैं",
+  "as on similar trips now":
+    "जैसे मिलती-जुलती यात्राओं पर अभी",
+  "below the forecast's levels":
+    "पूर्वानुमान के लेवलों से नीचे",
+  "climbing or descending":
+    "चढ़ रहा या उतर रहा",
+  "cruising":
+    "क्रूज़ में",
+  "departs":
+    "प्रस्थान",
+  "flown at the advised level instead":
+    "इसके बजाय सुझाए लेवल पर उड़ान",
+  "lasting contrail left behind":
+    "पीछे छूटी टिकाऊ कंट्रेल",
+  "lasting-contrail air, any level FL300–FL400":
+    "टिकाऊ-कंट्रेल वाली हवा, कोई भी लेवल FL300–FL400",
+  "no level nearby helps":
+    "पास का कोई लेवल मदद नहीं करता",
+  "turboprop (flies below the forecast's levels)":
+    "टर्बोप्रॉप (पूर्वानुमान के लेवलों से नीचे उड़ता है)",
+  "type unknown (A320neo assumed)":
+    "प्रकार अज्ञात (A320neo माना गया)",
+  "usual level for the direction":
+    "दिशा के लिए सामान्य लेवल",
+  "where a plane ahead would leave a lasting contrail":
+    "जहाँ आगे कोई विमान टिकाऊ कंट्रेल छोड़ेगा",
+  "will cross lasting-contrail air at their planned level":
+    "अपने नियोजित लेवल पर टिकाऊ-कंट्रेल वाली हवा से गुज़रेंगी",
+  "None of the expected flights crosses lasting-contrail air at its likely level in the next 12 hours. Use the shading menu above the map to see at which levels that air is today.":
+    "अगले 12 घंटों में कोई अपेक्षित उड़ान अपने संभावित लेवल पर टिकाऊ-कंट्रेल वाली हवा से नहीं गुज़रती। आज वह हवा किन लेवलों पर है, यह मानचित्र के ऊपर छाया मेनू से देखिए।",
+  "Live advice: which planes should move, right now":
+    "लाइव सलाह: अभी कौन-से विमान हटें",
+  "A new page, /now, right under the map in the menu: every airliner over India now, and the flights expected in the next 12 hours, checked minute by minute against today's ECMWF forecast. Where a plane is heading into air in which its contrail would last, and a level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (even on the cautious estimate), it gives the level and the times, with the extra fuel and the warming avoided. Aircraft types and routes are now added to the live feed; expected flights come from yesterday's OpenSky flight records. Physics only, and a demonstration: no advice goes to any pilot.":
+    "एक नया पेज, /now, मेनू में मानचित्र के ठीक नीचे: अभी भारत के ऊपर हर यात्री विमान, और अगले 12 घंटों में अपेक्षित उड़ानें, आज के ECMWF पूर्वानुमान से मिनट-दर-मिनट जाँची गईं। जहाँ कोई विमान ऐसी हवा की ओर जा रहा है जिसमें उसकी कंट्रेल टिकेगी, और 2,000 या 4,000 फ़ुट दूर का लेवल कंट्रेल की गर्मी से कम CO₂ में उससे बचाता है (सतर्क अनुमान पर भी), वहाँ यह लेवल और समय बताता है, अतिरिक्त ईंधन और टली गर्मी के साथ। लाइव फ़ीड में अब विमानों के प्रकार और रूट जुड़ गए हैं; अपेक्षित उड़ानें कल के OpenSky उड़ान रिकॉर्ड से आती हैं। केवल भौतिकी, और एक प्रदर्शन: कोई सलाह किसी पायलट को नहीं जाती।",
 };

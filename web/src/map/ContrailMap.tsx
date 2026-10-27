@@ -95,7 +95,7 @@ function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-function palette() {
+export function palette() {
   const v = (n: string) => cssVar(`--map-${n}`);
   return {
     ocean: v("ocean"), land: v("land"), border: v("border"), state: v("state"), grat: v("grat"), track: v("track"),
@@ -103,7 +103,7 @@ function palette() {
   };
 }
 
-function graticule(step = 5): GeoJSON.FeatureCollection {
+export function graticule(step = 5): GeoJSON.FeatureCollection {
   const f: GeoJSON.Feature[] = [];
   for (let lon = 55; lon <= 110; lon += step) f.push({ type: "Feature", properties: { kind: "lon", v: lon }, geometry: { type: "LineString", coordinates: [[lon, -2], [lon, 46]] } });
   for (let lat = 0; lat <= 45; lat += step) f.push({ type: "Feature", properties: { kind: "lat", v: lat }, geometry: { type: "LineString", coordinates: [[55, lat], [110, lat]] } });
@@ -152,7 +152,7 @@ function segmentFeatures(segs: FlaggedSegment[]): GeoJSON.FeatureCollection {
   };
 }
 
-function imageCoords(m: Manifest): [[number, number], [number, number], [number, number], [number, number]] {
+export function imageCoords(m: Manifest): [[number, number], [number, number], [number, number], [number, number]] {
   const g = m.grid;
   const h = g.step_deg / 2;
   return [
@@ -163,7 +163,7 @@ function imageCoords(m: Manifest): [[number, number], [number, number], [number,
   ];
 }
 
-const CITY_LABELS = ["Delhi", "Mumbai", "Bengaluru", "Kolkata", "Chennai", "Hyderabad", "Ahmedabad", "Jaipur", "Lucknow", "Pune", "Nagpur", "Bhopal", "Patna", "Guwahati", "Karachi", "Lahore", "Dhaka", "Kochi", "Bhubaneswar", "Srinagar", "Indore", "Vishakhapatnam", "Kathmandu", "Colombo", "Yangon"];
+export const CITY_LABELS = ["Delhi", "Mumbai", "Bengaluru", "Kolkata", "Chennai", "Hyderabad", "Ahmedabad", "Jaipur", "Lucknow", "Pune", "Nagpur", "Bhopal", "Patna", "Guwahati", "Karachi", "Lahore", "Dhaka", "Kochi", "Bhubaneswar", "Srinagar", "Indore", "Vishakhapatnam", "Kathmandu", "Colombo", "Yangon"];
 
 export function ContrailMap(p: Props) {
   const el = useRef<HTMLDivElement>(null);
@@ -557,7 +557,7 @@ function recolour(m: MLMap) {
 }
 
 /** Top-down airliner, nose up (north), white on transparent; used as an SDF so it can be tinted. */
-function planeIcon(): ImageData {
+export function planeIcon(): ImageData {
   const S = 48;
   const c = document.createElement("canvas");
   c.width = c.height = S;
@@ -594,7 +594,7 @@ function planeIcon(): ImageData {
 }
 
 let blank: string | null = null;
-function transparentPng(): string {
+export function transparentPng(): string {
   if (blank) return blank;
   const c = document.createElement("canvas");
   c.width = c.height = 1;
@@ -607,6 +607,6 @@ const fmtMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${
 function esc(s: string) {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }
-function tipHtml(callsign: string, airline: string | null, line2: string, line3: string | null) {
+export function tipHtml(callsign: string, airline: string | null, line2: string, line3: string | null) {
   return `<b>${esc(callsign)}</b>${airline ? `<span>${esc(airline)}</span>` : ""}<em>${esc(line2)}</em>${line3 ? `<strong>${esc(line3)}</strong>` : ""}`;
 }

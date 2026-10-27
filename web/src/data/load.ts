@@ -1,6 +1,6 @@
 // Loaders for the exported build (web/public/data/<build>/…), validated with the contract.
 import { z } from "zod";
-import { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightCollectionLite, type FlightFeature, GameIndex, LiveResponse, Manifest, type ModelId, OutlookInfo, ReportDay, ReportIndex, Results } from "./contract";
+import { ContrailEvent, ContrailIndex, DaySummary, ExplainDay, FlaggedSegment, FlightCollectionLite, type FlightFeature, GameIndex, LiveResponse, Manifest, type ModelId, OutlookInfo, ReportDay, ReportIndex, Results, Schedule } from "./contract";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -132,6 +132,36 @@ export async function outlookValue(m: Manifest, layer: string, date: string, hou
   }
   const s = await p;
   return (s.data[r * s.width + hour * g.cols + c] / 255) * info.full_scale;
+}
+
+/** The flights expected today (yesterday's, by flight number), or null when none is published. */
+export function loadSchedule(): Promise<Schedule | null> {
+  return json(`${BASE}/data/schedule/schedule.json`, Schedule).catch(() => null);
+}
+
+/** Every B1 hour sprite of the outlook (each day × flight level), keyed "date|fl". */
+export async function loadOutlookB1(m: Manifest): Promise<Map<string, { data: Uint8Array; width: number; height: number }>> {
+  const info = m.layers?.find((l) => l.id === "B1");
+  const out = new Map<string, { data: Uint8Array; width: number; height: number }>();
+  if (!info) return out;
+  await Promise.all(
+    m.days.flatMap((d) =>
+      m.flight_levels.map(async ({ fl }) => {
+        const url = layerUrl(OUTLOOK, d, info.file, fl);
+        let p = sprites.get(url);
+        if (!p) {
+          p = loadGridBytes(url);
+          sprites.set(url, p);
+        }
+        try {
+          out.set(`${d}|${fl}`, await p);
+        } catch {
+          sprites.delete(url);
+        }
+      }),
+    ),
+  );
+  return out;
 }
 
 /** Aircraft near a point from the site's Worker (rounded to its 0.5° cache cell before sending). */

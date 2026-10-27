@@ -6,6 +6,7 @@ import { currentTheme, setTheme, type Theme } from "./motion";
 const NAV = [
   ["/", "Home", "Move the plane. Lose the cloud."],
   ["/map", "Map", "Contrails, flights and the satellite proof"],
+  ["/now", "Live advice", "Which planes should move, right now"],
   ["/live", "Live sky", "Which plane made that contrail?"],
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
   ["/flight", "Your flight", "Its hidden contrail footprint"],

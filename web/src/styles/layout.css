@@ -3123,3 +3123,179 @@ a.contact-big:hover {
     order: 3;
   }
 }
+
+/* /now: live contrail advice — map first, the advice right under it */
+.now-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 8px;
+}
+.now-mode {
+  min-width: min(100%, 360px);
+}
+.now-shade {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+.now-shade select {
+  max-width: 100%;
+  min-width: 0;
+}
+.now-warn {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--orange);
+  background: var(--card);
+}
+.now-tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 18px;
+}
+.now-alerts b {
+  color: var(--orange-text);
+}
+.now-map {
+  height: min(74vh, 660px);
+  min-height: 380px;
+  margin-top: 18px;
+  border: 1px solid var(--rule);
+}
+.now-legend {
+  font-size: 12.5px;
+}
+.sw.now-adv {
+  height: 0;
+  border-top: 3px dashed var(--teal);
+}
+.sw.now-ring {
+  width: 12px;
+  height: 12px;
+  margin: 0 6px;
+  border: 1.6px solid var(--map-pred);
+  border-radius: 50%;
+}
+.now-time {
+  flex-wrap: wrap;
+}
+.now-listen {
+  min-width: 240px;
+}
+.now-pick {
+  margin-top: 16px;
+  min-height: 24px;
+}
+.now-detail {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ink);
+  background: var(--card);
+  padding: 14px 18px;
+}
+.now-detail.alert {
+  border-left-color: var(--orange);
+}
+.now-detail header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.now-detail header b {
+  font-size: 22px;
+}
+.now-detail header .tool {
+  margin-left: auto;
+  min-width: 36px;
+}
+.now-detail p {
+  margin: 10px 0 0;
+  max-width: 78ch;
+}
+.now-advice b {
+  color: var(--orange-text);
+}
+.now-board {
+  margin-top: 28px;
+}
+.now-board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-bottom: 12px;
+}
+.now-board-head h2 {
+  margin: 0;
+}
+.now-table-wrap {
+  overflow-x: auto;
+  border-top: 1.5px solid var(--ink);
+}
+.now-table {
+  font-size: 14px;
+  min-width: 760px;
+}
+.now-table th,
+.now-table td {
+  padding: 8px 12px 8px 0;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.now-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.now-table tbody tr:hover,
+.now-table tbody tr.sel {
+  background: var(--card);
+}
+.now-table tr.sel th {
+  box-shadow: inset 3px 0 0 var(--map-head);
+}
+.now-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.now-cs {
+  border: 0;
+  background: none;
+  padding: 0 0 0 8px;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+.now-note {
+  margin-top: 36px;
+}
+@media (max-width: 760px) {
+  .now-tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+  .now-map {
+    height: 62vh;
+    min-height: 340px;
+  }
+  .now-legend {
+    display: none;
+  }
+  .now-shade {
+    width: 100%;
+  }
+  .now-shade select {
+    flex: 1;
+  }
+}
+.now-empty {
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  max-width: 78ch;
+}

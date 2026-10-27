@@ -11,3 +11,4 @@ export function fromOpenSky(states: unknown[][] | undefined | null): Keyed[];
 export function merge(...lists: (Keyed | LiveAircraft)[][]): LiveAircraft[];
 export function slim(ac: unknown[] | undefined, now: number): LiveAircraft[];
 export function outlookStale(run: unknown, now: number): boolean;
+export function scheduleStale(day: unknown, now: number): boolean;

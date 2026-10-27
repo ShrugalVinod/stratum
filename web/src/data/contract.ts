@@ -250,8 +250,24 @@ export const LiveAircraft = z.object({
   trk: z.number().nullable(),
   gs: z.number().nullable(),
   t: z.number(),
+  vs: z.number().nullish(), // vertical rate, ft/min
+  route: z.array(z.tuple([z.string(), z.number(), z.number()])).nullish(), // stops [code, lat, lon]
 });
 export type LiveAircraft = z.infer<typeof LiveAircraft>;
+
+// Expected flights (scripts/schedule.py → schedule-data branch, /data/schedule/schedule.json)
+export const ScheduledFlight = z.object({
+  cs: z.string(),
+  type: z.string().nullable(),
+  from: z.tuple([z.string(), z.number(), z.number()]),
+  to: z.tuple([z.string(), z.number(), z.number()]),
+  dep: z.number(), // minutes after 00:00 UTC
+  acc: z.number(), // ± minutes
+  block: z.number(),
+});
+export type ScheduledFlight = z.infer<typeof ScheduledFlight>;
+export const Schedule = z.object({ day: z.string(), built: z.string(), source: z.string(), n_records: z.number(), flights: z.array(ScheduledFlight) });
+export type Schedule = z.infer<typeof Schedule>;
 export const LiveResponse = z.object({ t: z.number(), centre: z.array(z.number()), radius_nm: z.number(), credit: z.string(), snapshot_t: z.number().nullish(), refreshing: z.boolean().nullish(), sources: z.record(z.string(), z.union([z.number(), z.string()])).nullish(), ac: z.array(LiveAircraft) });
 
 // "Beat STRATUM" rounds (stratum/export/game.py → data/game/index.json + img/).
