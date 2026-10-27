@@ -235,6 +235,7 @@ export function Home() {
           <div class="try-grid rv stagger">
             {(
               [
+                ["/3d", "The sky in 3D", "One real day over India: watch lasting contrails being born behind the planes, then switch on STRATUM's advice and watch the planes dodge the humid air. With a one-minute story."],
                 ["/now", "Live advice", "Every airliner over India right now, and the flights expected next: which ones are heading into air where their contrail would last, and the level that avoids it."],
                 ["/replay", "What if we'd listened?", "One real day over India, played twice side by side: as flown, and as if every STRATUM alert had been followed. Watch the lasting contrails disappear and the warming avoided add up."],
                 ["/flight", "Your flight", "Pick a trip and see its hidden footprint: the minutes it cruises through air where contrails last, its fuel CO₂ next to its contrail's warming, and the level that avoids it."],
@@ -242,7 +243,6 @@ export function Home() {
                 ["/sandbox", "Make a contrail", "Pick the level, the air's temperature and humidity and the engine, and watch whether a contrail forms and whether it lasts."],
                 ["/report", "Report card", "Every morning, yesterday's forecast is checked against the contrails the satellite saw, and the score is kept in public."],
                 ["/airlines", "For airlines", "The EU's contrail reporting rule from 2027, where India's contrail warming comes from, and what avoiding it would cost in rupees."],
-                ["/3d", "The sky in 3D", "The humid layers over India and the flights crossing them, hour by hour."],
               ] as const
             ).map(([href, t, b], i) => (
               <a class={i < 2 ? "try-tile try-featured" : "try-tile"} href={href} style={{ "--i": i }}>

@@ -29,23 +29,38 @@ export const yOf = (fl: number) => ((fl * 30.48) / 1000) * (EXAG / KM_PER_UNIT);
 
 type Sprite = { data: Uint8Array; width: number; height: number };
 type Grid = { lat_north: number; lon_west: number; step_deg: number; rows: number; cols: number };
-export type SkyFlight = { id: string; cs: string; type: string | null; mins: number[]; xy: [number, number][]; fl: number; makesContrail: boolean };
-export type SkyContrail = { flight: string; a: [number, number]; b: [number, number]; fl: number; t0: number; t1: number; lifeMin: number };
+/** An altitude change STRATUM advised (D-006): from ``t0`` to ``t1`` (minutes UTC), ``dFl`` levels. */
+export type SkyMove = { t0: number; t1: number; dFl: number };
+export type SkyFlight = { id: string; cs: string; type: string | null; mins: number[]; xy: [number, number][]; fl: number; makesContrail: boolean; moves?: SkyMove[] };
+/** ``moved``: the stretch STRATUM advised moving, so this contrail does not form if they listen */
+export type SkyContrail = { flight: string; a: [number, number]; b: [number, number]; fl: number; t0: number; t1: number; lifeMin: number; moved?: boolean };
 export type SkyPick = { id: string; cs: string; type: string | null; fl: number; inContrail: boolean; x: number; y: number };
 
 export type SkyHandle = {
   setHumid(levels: { fl: number; sprite: Sprite }[], grid: Grid, toRel: (v: number) => number): void;
   setDay(date: string, flights: SkyFlight[], contrails: SkyContrail[]): void;
+  /** "If they had listened": advised planes change level and their contrails do not form */
+  setListened(on: boolean): void;
   /** minutes after 00:00 UTC; the scene reads it every frame */
   time: { min: number };
   follow(id: string | null): void;
   home(): void;
-  stats(): { airborne: number; contrails: number; sunElev: number };
+  stats(): { airborne: number; contrails: number; sunElev: number; moving: number };
   onPick(fn: (p: SkyPick | null, click: boolean) => void): void;
   /** the followed flight left the scene (landed or flew out of the area) */
   onFollowEnd(fn: () => void): void;
   dispose(): void;
 };
+
+const RAMP_MIN = 5; // a climb or descent of a few thousand feet takes a few minutes
+const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+/** How far through its advised level change a flight is at ``min``: 0 at its level, 1 at the advised one. */
+export function moveShare(m: SkyMove, min: number): number {
+  if (min < m.t0 - RAMP_MIN || min > m.t1 + RAMP_MIN) return 0;
+  if (min < m.t0) return ease((min - (m.t0 - RAMP_MIN)) / RAMP_MIN);
+  if (min > m.t1) return 1 - ease((min - m.t1) / RAMP_MIN);
+  return 1;
+}
 
 /** The sun over India at a UTC day and minute (NOAA's approximation): elevation and azimuth, degrees. */
 export function sunAt(date: string, min: number, lat = LAT0, lon = LON0): { elev: number; az: number } {
@@ -177,7 +192,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       void main() {
         vec2 c = gl_PointCoord - 0.5;
         float a = exp(-dot(c, c) * 18.0) * vB;
-        vec3 col = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.55, 0.2), vHot);
+        vec3 col = vHot < 0.5 ? vec3(1.0, 0.97, 0.92) : vHot < 1.5 ? vec3(1.0, 0.55, 0.2) : vec3(0.25, 0.95, 0.85);
         gl_FragColor = vec4(col * 1.6, a);
       }`,
     transparent: true,
@@ -198,15 +213,18 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   scene.add(nav);
   let flights: SkyFlight[] = [];
   let day = "2026-02-01";
+  let listenTo = 0; // 0 as flown, 1 if they had listened
+  let listen = 0; // eased towards listenTo
+  let moving = 0;
 
   // ── lasting contrails: ribbons drawn as the aircraft passes, then spreading and fading ─
-  const contrailUniforms = { uTime: { value: 0 }, uTint: { value: new T.Color(0xffffff) } };
+  const contrailUniforms = { uTime: { value: 0 }, uTint: { value: new T.Color(0xffffff) }, uListen: { value: 0 } };
   const ribbonMat = (vertical: boolean) =>
     new T.ShaderMaterial({
       uniforms: contrailUniforms,
       vertexShader: /* glsl */ `
-        attribute vec3 aA; attribute vec3 aB; attribute vec3 aT; attribute float aSeed;
-        uniform float uTime;
+        attribute vec3 aA; attribute vec3 aB; attribute vec3 aT; attribute float aSeed; attribute float aMoved;
+        uniform float uTime; uniform float uListen;
         varying float vAlpha; varying vec2 vUv; varying float vSeed;
         void main() {
           float t0 = aT.x; float t1 = aT.y; float life = aT.z;
@@ -221,7 +239,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
           p.y -= k * 0.06;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
           float shown = step(0.0, age) * step(age, life);
-          vAlpha = shown * (1.0 - smoothstep(0.55, 1.0, k)) * mix(0.95, 0.4, k);
+          vAlpha = shown * (1.0 - smoothstep(0.55, 1.0, k)) * mix(0.95, 0.4, k) * (1.0 - aMoved * uListen);
           vUv = vec2(along, position.y + 0.5);
           vSeed = aSeed;
         }`,
@@ -274,7 +292,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   const ray = new T.Raycaster();
   const mouse = new T.Vector2();
   let pickFn: (p: SkyPick | null, click: boolean) => void = () => {};
-  let airborne: { f: SkyFlight; p: T.Vector3; dir: T.Vector3; hot: boolean }[] = [];
+  let airborne: { f: SkyFlight; p: T.Vector3; dir: T.Vector3; hot: boolean; pitch: number; moving: boolean }[] = [];
   const pick = (e: PointerEvent, click: boolean) => {
     const r = renderer.domElement.getBoundingClientRect();
     mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -319,6 +337,8 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   const q = new T.Quaternion();
   const s3 = new T.Vector3(1, 1, 1);
   const fwd = new T.Vector3(0, 0, -1);
+  const xAxis = new T.Vector3(1, 0, 0);
+  const pitchQ = new T.Quaternion();
   let sunElev = 0;
   let raf = 0;
   const t0 = performance.now();
@@ -373,7 +393,10 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     }
     // airliners in the air this minute
     airborne = [];
-    const hotIds = new Set(contrails.filter((c) => min >= c.t0 && min <= c.t1).map((c) => c.flight));
+    listen += (listenTo - listen) * (1 - Math.exp(-dt * 2.2));
+    contrailUniforms.uListen.value = listen;
+    const hotIds = new Set(contrails.filter((c) => min >= c.t0 && min <= c.t1 && !(c.moved && listen > 0.5)).map((c) => c.flight));
+    moving = 0;
     for (const f of flights) {
       const ms = f.mins;
       if (min < ms[0] || min > ms[ms.length - 1]) continue;
@@ -382,10 +405,18 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       const w = ms[k] > ms[k - 1] ? (min - ms[k - 1]) / (ms[k] - ms[k - 1]) : 0;
       const [x0, z0] = [xOf(f.xy[k - 1][0]), zOf(f.xy[k - 1][1])];
       const [x1, z1] = [xOf(f.xy[k][0]), zOf(f.xy[k][1])];
-      const p = new T.Vector3(x0 + (x1 - x0) * w, yOf(f.fl), z0 + (z1 - z0) * w);
+      // the advised level change, if they listen (eased in and out over a few minutes)
+      const flAt = (t: number) => f.fl + (f.moves ?? []).reduce((s, m) => s + m.dFl * moveShare(m, t), 0) * listen;
+      const fl = flAt(min);
+      const p = new T.Vector3(x0 + (x1 - x0) * w, yOf(fl), z0 + (z1 - z0) * w);
       const d = new T.Vector3(x1 - x0, 0, z1 - z0);
+      const perMin = d.length() / Math.max(0.5, ms[k] - ms[k - 1]);
       if (d.lengthSq() < 1e-9) d.set(0, 0, -1);
-      airborne.push({ f, p, dir: d.normalize(), hot: hotIds.has(f.id) });
+      const climb = yOf(flAt(min + 0.5)) - yOf(flAt(min - 0.5)); // units per minute
+      const pitch = T.MathUtils.clamp(Math.atan2(climb, Math.max(perMin, 1e-3)), -0.45, 0.45);
+      const isMoving = Math.abs(fl - f.fl) > 0.5;
+      if (isMoving) moving++;
+      airborne.push({ f, p, dir: d.normalize(), hot: hotIds.has(f.id), pitch, moving: isMoving });
     }
     if (planes.count !== airborne.length && airborne.length > (planes.instanceMatrix.count ?? 0)) {
       scene.remove(planes);
@@ -398,13 +429,13 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     const hot = new Float32Array(airborne.length);
     const zoomScale = T.MathUtils.clamp(camera.position.distanceTo(controls.target) / 30, 0.25, 1.6);
     airborne.forEach((b, i) => {
-      q.setFromUnitVectors(fwd, b.dir);
+      q.setFromUnitVectors(fwd, b.dir).multiply(pitchQ.setFromAxisAngle(xAxis, b.pitch));
       s3.setScalar(b.f.id === following ? 0.9 : zoomScale);
       m4.compose(b.p, q, s3);
       planes.setMatrixAt(i, m4);
       sp.set([b.p.x, b.p.y + 0.012, b.p.z], i * 3);
       seed[i] = (b.f.id.charCodeAt(0) * 0.137 + b.f.id.charCodeAt(1) * 0.071) % 1;
-      hot[i] = b.hot ? 1 : 0;
+      hot[i] = b.moving ? 2 : b.hot ? 1 : 0;
     });
     planes.count = airborne.length;
     const rode = following ? airborne.find((x) => x.f.id === following) : null;
@@ -525,6 +556,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       g.setAttribute("aB", new T.InstancedBufferAttribute(new Float32Array(cs.flatMap((c) => [xOf(c.b[0]), yOf(c.fl), zOf(c.b[1])])), 3));
       g.setAttribute("aT", new T.InstancedBufferAttribute(new Float32Array(cs.flatMap((c) => [c.t0, c.t1, c.lifeMin])), 3));
       g.setAttribute("aSeed", new T.InstancedBufferAttribute(new Float32Array(cs.map(() => Math.random())), 1));
+      g.setAttribute("aMoved", new T.InstancedBufferAttribute(new Float32Array(cs.map((c) => (c.moved ? 1 : 0))), 1));
       g.instanceCount = cs.length;
       for (const mat of [ribbonFlat, ribbonUp]) {
         const mesh = new T.Mesh(g, mat);
@@ -532,6 +564,9 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
         scene.add(mesh);
         ribbons.push(mesh);
       }
+    },
+    setListened(on) {
+      listenTo = on ? 1 : 0;
     },
     follow(id) {
       following = id;
@@ -546,7 +581,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     },
     stats() {
       const min = time.min;
-      return { airborne: airborne.length, contrails: contrails.filter((c) => min >= c.t0 && min - c.t1 <= c.lifeMin).length, sunElev };
+      return { airborne: airborne.length, contrails: contrails.filter((c) => min >= c.t0 && min - c.t1 <= c.lifeMin && !(c.moved && listenTo)).length, sunElev, moving };
     },
     onPick(fn) {
       pickFn = fn;

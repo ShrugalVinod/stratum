@@ -10,7 +10,7 @@ const ALL_STEPS: { url: string; s: number; label: string; online?: boolean }[] =
   { url: "/map?date=2026-02-01&hour=00&fl=360&m=STRATUM", s: 16, label: "Map: STRATUM, busiest alert day" },
   { url: "/map?date=2026-02-01&fl=360&m=STRATUM&seg=top", s: 22, label: "Top avoidance alert and its card" },
   { url: "/map?date=2026-02-01&hour=00&fl=360&m=B1", s: 12, label: "Same day, uncorrected physics" },
-  { url: "/3d?date=2026-02-01&hour=20&layer=B1", s: 16, label: "The humid layer in 3D" },
+  { url: "/3d?tour=1", s: 72, label: "The sky in 3D: the one-minute story" },
   { url: "/now", s: 22, label: "Live advice: which planes should move now", online: true },
   { url: "/results", s: 24, label: "Results: H1–H4" },
   { url: "/methods#threats", s: 16, label: "Threats to validity" },

@@ -1916,10 +1916,8 @@
   }
 }
 .s3-stats {
-  position: absolute;
-  left: 22px;
-  top: calc(18px + clamp(30px, 4.4vw, 64px) + 34px);
-  display: flex;
+  display: inline-flex;
+  margin-top: 12px;
   flex-wrap: wrap;
   gap: 6px 18px;
   padding: 6px 12px;
@@ -2063,10 +2061,8 @@
   .s3-top {
     padding: 14px 14px 30px;
   }
-  .s3-stats {
-    left: 14px;
-    top: auto;
-    bottom: 64px;
+  .s3-right {
+    justify-items: start;
   }
   .s3-key {
     display: none;
@@ -2182,4 +2178,113 @@
 .mp-mode a.on {
   background: var(--red);
   color: var(--paper);
+}
+/* /3d: "If they had listened", the story */
+.s3-listen button.on:last-child {
+  background: #3fe0cc;
+  color: #04201c;
+}
+.s3-tour-btn {
+  border-color: rgba(238, 242, 247, 0.4);
+}
+.s3-right {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  max-width: min(640px, 100%);
+}
+.s3-ctl {
+  justify-content: flex-end;
+}
+.s3-saved {
+  display: grid;
+  gap: 2px;
+  width: min(330px, calc(100% - 44px));
+  padding: 14px 16px;
+  background: var(--s3-glass);
+  border: 1px solid var(--s3-line);
+  border-left: 3px solid #3fe0cc;
+  backdrop-filter: blur(10px);
+  animation: rise 0.5s var(--ease) both;
+}
+.s3-saved .label {
+  margin: 0;
+  color: #3fe0cc;
+}
+.s3-saved b {
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1;
+  color: var(--s3-ink);
+  font-variant-numeric: tabular-nums;
+}
+.s3-saved span {
+  font-size: 14px;
+  color: var(--s3-ink);
+}
+.s3-saved .mono-s {
+  color: var(--s3-dim);
+}
+.s3-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(980px, calc(100% - 44px));
+  margin: 0;
+  text-align: center;
+  font-size: clamp(22px, 2.8vw, 40px);
+  line-height: 1.12;
+  color: #fff;
+  text-shadow:
+    0 2px 18px rgba(0, 0, 0, 0.85),
+    0 0 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  animation: s3-cap 0.9s var(--ease) both;
+}
+@keyframes s3-cap {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    filter: none;
+  }
+}
+.s3-ride-now.cool {
+  color: #7ff0e0;
+}
+.s3-key .k-move {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3fe0cc;
+  box-shadow: 0 0 8px #3fe0cc;
+  margin-right: 18px;
+}
+@media (max-width: 760px) {
+  .s3-saved {
+    width: 100%;
+  }
+  .s3-caption {
+    bottom: 180px;
+  }
+}
+/* during the story the caption tells it: the side panels step back */
+.s3-stage .s3-key,
+.s3-stage .s3-ride,
+.s3-stage .s3-ride-btn-wrap {
+  transition: opacity 0.6s;
+}
+.s3-stage.touring .s3-key,
+.s3-stage.touring .s3-ride,
+.s3-stage.touring .s3-ride-btn-wrap {
+  opacity: 0;
+  pointer-events: none;
+}
+.s3-stage.touring .s3-caption {
+  bottom: 44px;
 }

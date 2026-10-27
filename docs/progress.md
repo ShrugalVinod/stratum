@@ -2,6 +2,25 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-27 — 3D sky: "If they had listened", and the one-minute story
+
+**Done**
+- /3d switch "As flown | If they had listened": each D-006 alert of the day (56 on 1 Feb) makes
+  its plane change level 5 minutes before its stretch and return 5 minutes after (eased, nose
+  pitched, teal strobe); the CoCiP contrails inside an advised stretch of that flight fade and
+  do not form. Live counter of warming avoided so far (p50, cautious p05), extra fuel and planes
+  moved; the day's total equals the published one (1 Feb: 2,644 t CO₂e, 11 t fuel), as on
+  /replay. Ride-along picks the next alerted plane and narrates the move (advice ahead →
+  descending → below the layer: no lasting contrail → back → what it saved).
+- The story (/3d?tour=1, or "Watch the story (1 min)"): seven captions over ~68 s, from late
+  afternoon into the night of 1 Feb 2026: the airliners, the humid layer, the contrails, the
+  switch, a ride-along dodge, the day's total, "Move the plane. Lose the cloud." Any touch,
+  drag, wheel or key hands control back. Booth mode now plays it. 3D sky is the first featured
+  tile on Home.
+- Fixed: ride-along camera (it stopped at once because the clock jump reached the scene a
+  frame late); proper airliner model with navigation lights; haze clears around the camera.
+- tests/sky.test.ts: level easing, sun position (noon, sunset, midnight), height scale.
+
 ## 2026-10-27 — The sky in 3D, rebuilt (/3d, now in the menu)
 
 **Done**

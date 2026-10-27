@@ -1608,4 +1608,28 @@ export const HI: Record<string, string> = {
     "सैटेलाइट से दिखने वाली टिकाऊ कंट्रेल की STRATUM संभावना (10 % को पूरा दिखाया गया)",
   "Real flights and ERA5 weather of this day. Humid air: where the air at each flight level was cold and humid enough for contrails to last that hour (the layer chosen above). Lasting contrails: the ones CoCiP found, drawn as the aircraft passed and for as long as CoCiP says they lasted; real ones also drift with the wind, which is not shown. A flight's level is the one CoCiP flagged, else FL350. The sun is where it was over India; heights are stretched 40 times.":
     "इस दिन की असली उड़ानें और ERA5 मौसम। नम हवा: जहाँ हर फ़्लाइट लेवल पर हवा उस घंटे इतनी ठंडी और नम थी कि कंट्रेल टिके (ऊपर चुनी गई परत)। टिकाऊ कंट्रेल: वे जो CoCiP ने पाईं, विमान के गुज़रते ही बनती हुई और उतनी देर जितनी CoCiP के अनुसार टिकीं; असली कंट्रेल हवा के साथ बहती भी हैं, जो नहीं दिखाया गया। उड़ान का लेवल वह है जो CoCiP ने चिह्नित किया, नहीं तो FL350। सूरज वहीं है जहाँ वह भारत के ऊपर था; ऊँचाइयाँ 40 गुना बढ़ाकर दिखाई गई हैं।",
+  "One real day over India: watch lasting contrails being born behind the planes, then switch on STRATUM's advice and watch the planes dodge the humid air. With a one-minute story.":
+    "भारत के ऊपर एक असली दिन: विमानों के पीछे टिकाऊ कंट्रेल बनते देखिए, फिर STRATUM की सलाह चालू कीजिए और विमानों को नम हवा से बचते देखिए। एक मिनट की कहानी के साथ।",
+  "Which sky":
+    "कौन-सा आसमान",
+  "Watch the story (1 min)":
+    "कहानी देखिए (1 मिनट)",
+  "Ride along as a plane dodges the layer":
+    "परत से बचते विमान के साथ उड़िए",
+  "changing level on STRATUM's advice":
+    "STRATUM की सलाह पर लेवल बदल रहा है",
+  "1 February 2026. Every airliner over India, on its real track.":
+    "1 फ़रवरी 2026। भारत के ऊपर हर यात्री विमान, अपने असली रास्ते पर।",
+  "The white sheets: air so cold and humid that a contrail, once made, lasts for hours.":
+    "सफ़ेद परतें: इतनी ठंडी और नम हवा कि एक बार बनी कंट्रेल घंटों टिकती है।",
+  "Planes that cross them leave contrails that spread into thin cloud and trap heat.":
+    "इन्हें पार करने वाले विमान ऐसी कंट्रेल छोड़ते हैं जो पतले बादल में फैलकर गर्मी रोकती हैं।",
+  "Now: what if every plane had followed STRATUM's advice?":
+    "अब: अगर हर विमान ने STRATUM की सलाह मानी होती?",
+  "Climb or descend 2,000 ft, cross the humid layer, come back. No lasting contrail.":
+    "2,000 फ़ुट ऊपर या नीचे, नम परत पार, फिर वापस। कोई टिकाऊ कंट्रेल नहीं।",
+  "STRATUM. Move the plane. Lose the cloud.":
+    "STRATUM। विमान हटाइए। बादल हटाइए।",
+  "If they had listened: the alerts of our second analysis D-006 (the 60 strongest stretches each day, descriptive, not a pre-registered result). Each alerted plane changes level a few minutes before its stretch and comes back after it, and its lasting contrail there is not drawn; the warming avoided is net of the extra fuel, as on What if we'd listened?. No real flight was changed.":
+    "अगर बात मानी जाती: हमारे दूसरे विश्लेषण D-006 की चेतावनियाँ (हर दिन के 60 सबसे प्रबल हिस्से, वर्णनात्मक, पहले से दर्ज नतीजा नहीं)। हर चेतावनी वाला विमान अपने हिस्से से कुछ मिनट पहले लेवल बदलता है और बाद में लौटता है, और वहाँ उसकी टिकाऊ कंट्रेल नहीं दिखाई जाती; टली गर्मी अतिरिक्त ईंधन घटाकर है, जैसे 'अगर हमारी बात मानी जाती?' पर। कोई असली उड़ान नहीं बदली गई।",
 };
