@@ -917,3 +917,14 @@ html:lang(hi) .theme-btn .word {
   position: relative;
   top: -2px;
 }
+.side-nav li.nav-group {
+  margin: 18px 0 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.side-nav li.nav-group:first-child {
+  margin-top: 0;
+}

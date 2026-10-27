@@ -1512,4 +1512,7 @@ export const HI: Record<string, string> = {
     "समय: उसी नंबर की कल की उड़ान; उतरना = प्रस्थान + सामान्य ब्लॉक समय।",
   "Times are estimates: landing from the distance left at the current ground speed plus 10 minutes of approach; departure from a typical block time.":
     "समय अनुमान हैं: उतरना बची दूरी को मौजूदा गति से तय करने और 10 मिनट की अप्रोच से; रवानगी सामान्य ब्लॉक समय से।",
+  "Things you can do": "आप क्या कर सकते हैं",
+  "Things to learn": "सीखने के लिए",
+  "Research and the rest": "शोध और बाकी",
 };
