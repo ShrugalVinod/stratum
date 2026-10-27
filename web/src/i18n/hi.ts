@@ -1553,4 +1553,5 @@ export const HI: Record<string, string> = {
     "लाइव फ़ीड बंद है।",
   "Back to the live sky":
     "लाइव आसमान पर लौटें",
+  "airliners in the recorded sky (above FL200)": "रिकॉर्ड किए गए आसमान में यात्री विमान (FL200 से ऊपर)",
 };

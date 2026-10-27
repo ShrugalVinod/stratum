@@ -379,7 +379,9 @@ export function Now() {
               {mode === "now"
                 ? near
                   ? tx(`airliners within ${NEAR_KM} km of ${near.name} now`, `अभी ${near.name} के ${NEAR_KM} किमी के भीतर यात्री विमान`)
-                  : T("airliners over India now (above FL200)")
+                  : live?.fb
+                    ? T("airliners in the recorded sky (above FL200)")
+                    : T("airliners over India now (above FL200)")
                 : near
                   ? tx(`expected flights near ${near.name} in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में ${near.name} के पास अपेक्षित उड़ानें`)
                   : tx(`expected departures in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में अपेक्षित उड़ानें`)}
