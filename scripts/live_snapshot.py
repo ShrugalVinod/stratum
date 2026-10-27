@@ -67,6 +67,7 @@ def snapshot() -> dict[str, object]:
             "lat": round(s[6], 4), "lon": round(s[5], 4),
             "trk": round(s[10]) if s[10] is not None else None,
             "gs": round(s[9] * 1.943844) if s[9] is not None else None,
+            "vs": round(s[11] * 196.85) if s[11] is not None else None,
             "t": 1000 * (s[3] or s[4]),
         })  # fmt: skip
     # every stop of the flight's route (the page checks that the aircraft is on its way there)
