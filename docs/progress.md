@@ -2,6 +2,20 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-27 — "What if we'd listened?" (/replay)
+
+**Done**
+- /replay: one real day of flights over India played twice, side by side (canvas, the whole day
+  in ~48 s, scrubbable, 12 days to pick). Left: as flown, the day's 60 strongest contrail
+  stretches (second analysis D-006, descriptive) forming and spreading, each lasting as long as
+  CoCiP says (contrail_age_h from segments_B1 for the same flight). Right: every alert followed
+  (dashed teal at the advised level, no lasting contrail). Running totals: warming avoided (p50,
+  cautious p05, GWP-100, net of extra fuel), extra fuel, alerts so far.
+- Totals over the 12 days match the published D-006 numbers exactly (666 alerts, 8,639,790 kg
+  p50 / 4,131,355 kg p05 CO₂e, 52,387 kg fuel). Caveats on the page: contrails drawn where they
+  formed (real ones drift), ATC not modelled, no real flight changed.
+- web/src/lib/replay.ts + tests/replay.test.ts; e2e test; Hindi; Home tile; menu entry.
+
 ## 2026-10-24 — For airlines (/airlines), physics sandbox (/sandbox), map switch, phone fixes
 
 **Done**

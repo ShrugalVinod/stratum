@@ -1326,4 +1326,51 @@ export const HI: Record<string, string> = {
     "एक नया पेज, /report, और रोज़ का काम: हर सुबह कल का कंट्रेल पूर्वानुमान उन कंट्रेल से मिलाया जाता है जो Meteosat-9 ने देखीं (सीखा हुआ डिटेक्टर, घंटेवार तस्वीरें), और स्कोर लगातार रिकॉर्ड के साथ सबके सामने रखा जाता है। 23 अक्टूबर की पहली जाँच (2 तस्वीरें, पुराना डिटेक्टर): देखी गई कंट्रेल में से 37 % पूर्वानुमान की हवा में थीं, जबकि संयोग से 16 %। रोज़ का काम उसकी तैयारी पूरी होने पर शुरू होगा।",
   "Fetching a fresh picture of India's sky, about five minutes. The page updates by itself.":
     "भारत के आसमान की ताज़ा तस्वीर आ रही है, लगभग पाँच मिनट। पेज अपने आप अपडेट होगा।",
+  // ── /replay ──
+  "What if we'd listened?":
+    "अगर हमारी बात मानी जाती?",
+  "One real day, replayed both ways":
+    "एक असली दिन, दोनों तरह से दोबारा",
+  "Replay · one real day":
+    "रीप्ले · एक असली दिन",
+  "Second analysis D-006 · descriptive":
+    "दूसरा विश्लेषण D-006 · वर्णनात्मक",
+  "What if we'd":
+    "अगर हमारी बात",
+  "listened?":
+    "मानी जाती?",
+  "One real day of flights over India, twice. On the left, as flown: the stretches that made the most contrail warming, forming and spreading behind the aircraft. On the right, the same day if every STRATUM alert had been followed, each one a climb or descent of 2,000 or 4,000 ft.":
+    "भारत के ऊपर उड़ानों का एक असली दिन, दो बार। बाईं ओर, जैसा उड़ा गया: वे हिस्से जिनसे कंट्रेल की सबसे ज़्यादा गर्मी बनी, विमानों के पीछे बनते और फैलते हुए। दाईं ओर, वही दिन अगर STRATUM की हर चेतावनी मानी जाती, हर एक 2,000 या 4,000 फ़ुट ऊपर या नीचे जाना।",
+  "Loading the day…":
+    "दिन लोड हो रहा है…",
+  "This day could not be loaded.":
+    "यह दिन लोड नहीं हो सका।",
+  "As flown":
+    "जैसा उड़ा गया",
+  "If they had listened":
+    "अगर बात मानी जाती",
+  "Play":
+    "चलाएँ",
+  "Time of day (UTC)":
+    "दिन का समय (UTC)",
+  "extra fuel for the new levels (already subtracted from the warming avoided)":
+    "नए लेवल के लिए अतिरिक्त ईंधन (टली गर्मी में से पहले ही घटाया गया)",
+  "lasting contrail (wider and fainter as it ages)":
+    "टिकाऊ कंट्रेल (उम्र के साथ चौड़ी और फीकी)",
+  "the same stretch flown at the advised level: no lasting contrail":
+    "वही हिस्सा सुझाए लेवल पर: कोई टिकाऊ कंट्रेल नहीं",
+  "airliners in the air":
+    "हवा में यात्री विमान",
+  "Real flights and weather of that day. Shown: the 60 stretches with the most contrail warming, from our decision layer redone with STRATUM's probabilities (second analysis D-006, descriptive, not a pre-registered result); alerts are the stretches where the cautious estimate of warming avoided is positive at 20 and 100 years. Contrails are drawn where they formed and for as long as CoCiP says they last; real contrails drift with the wind. Moving a stretch avoids most, not all, of its contrail; the numbers are net of what remains and of the extra fuel (GWP-100, efficacy 0.42). Air traffic control is not modelled, and no real flight was changed.":
+    "उस दिन की असली उड़ानें और मौसम। दिखाए गए: कंट्रेल की सबसे ज़्यादा गर्मी वाले 60 हिस्से, STRATUM की संभावनाओं से दोबारा किए गए हमारे निर्णय चरण से (दूसरा विश्लेषण D-006, वर्णनात्मक, पहले से दर्ज नतीजा नहीं); चेतावनियाँ वे हिस्से हैं जहाँ टली गर्मी का सतर्क अनुमान 20 और 100 वर्ष दोनों पर धनात्मक है। कंट्रेल वहीं दिखाई गई हैं जहाँ बनीं और उतनी देर जितनी CoCiP के अनुसार टिकती हैं; असली कंट्रेल हवा के साथ बहती हैं। किसी हिस्से को हटाने से उसकी ज़्यादातर, पर पूरी नहीं, कंट्रेल टलती है; आँकड़े बची हुई कंट्रेल और अतिरिक्त ईंधन घटाकर हैं (GWP-100, प्रभावकारिता 0.42)। हवाई यातायात नियंत्रण का मॉडल नहीं बनाया गया, और कोई असली उड़ान नहीं बदली गई।",
+  "The day if every STRATUM alert had been followed":
+    "वह दिन अगर STRATUM की हर चेतावनी मानी जाती",
+  "The day as flown, with its lasting contrails":
+    "जैसा उड़ा गया वह दिन, अपनी टिकाऊ कंट्रेल के साथ",
+  "What if we'd listened? One real day, replayed both ways":
+    "अगर हमारी बात मानी जाती? एक असली दिन, दोनों तरह से दोबारा",
+  "A new page, /replay: one real day of flights over India played twice, side by side. On the left the day as flown, with its strongest lasting contrails forming and spreading; on the right the same day if every STRATUM alert had been followed, with running totals of the warming avoided and the extra fuel. Built from the second analysis D-006 (descriptive); its totals match the published ones exactly.":
+    "एक नया पेज, /replay: भारत के ऊपर उड़ानों का एक असली दिन, अगल-बगल दो बार चलता है। बाईं ओर जैसा उड़ा गया वह दिन, उसकी सबसे तेज़ टिकाऊ कंट्रेल बनते और फैलते हुए; दाईं ओर वही दिन अगर STRATUM की हर चेतावनी मानी जाती, साथ में टली गर्मी और अतिरिक्त ईंधन के चलते जोड़। दूसरे विश्लेषण D-006 (वर्णनात्मक) से बना; इसके जोड़ प्रकाशित आँकड़ों से बिल्कुल मिलते हैं।",
+  "One real day over India, played twice side by side: as flown, and as if every STRATUM alert had been followed. Watch the lasting contrails disappear and the warming avoided add up.":
+    "भारत के ऊपर एक असली दिन, अगल-बगल दो बार: जैसा उड़ा गया, और अगर STRATUM की हर चेतावनी मानी जाती। देखिए टिकाऊ कंट्रेल कैसे गायब होती हैं और टली गर्मी कैसे जुड़ती जाती है।",
 };

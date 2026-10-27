@@ -11,6 +11,7 @@ const NAV = [
   ["/flight", "Your flight", "Its hidden contrail footprint"],
   ["/advisory", "Advisories", "Tomorrow's contrail notices"],
   ["/report", "Report card", "Was yesterday's forecast right?"],
+  ["/replay", "What if we'd listened?", "One real day, replayed both ways"],
   ["/game", "Beat STRATUM", "Can you out-guess the model?"],
   ["/results", "Results", "H1–H4 and what we found"],
   ["/routes", "Routes & airlines", "Where the warming comes from"],

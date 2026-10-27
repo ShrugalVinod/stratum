@@ -184,3 +184,13 @@ export function loadReportIndex(): Promise<ReportIndex | null> {
 export function loadReportDay(date: string): Promise<ReportDay | null> {
   return json(`${BASE}/data/report/days/${date}.json`, ReportDay).catch(() => null);
 }
+
+// ── "What if we'd listened?" (/replay): one day's flight tracks and CoCiP contrail lifetimes ─
+export async function loadReplayDay(date: string) {
+  const build = await currentBuild();
+  const [flights, b1] = await Promise.all([
+    json(dataUrl(build, `days/${date}/flights.geojson`), FlightCollectionLite) as Promise<{ type: "FeatureCollection"; features: FlightFeature[] }>,
+    json(dataUrl(build, `days/${date}/segments_B1.json`), z.array(FlaggedSegment)),
+  ]);
+  return { flights: flights.features, b1 };
+}

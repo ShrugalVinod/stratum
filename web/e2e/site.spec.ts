@@ -119,7 +119,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report", "/replay"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -285,6 +285,20 @@ test("Make a contrail: the sliders change the verdict, by the same physics as th
   await expect(page.locator(".sb-verdict")).toContainText("No contrail");
   await page.getByRole("button", { name: "Cold but dry" }).click();
   await expect(page.locator(".sb-verdict")).toContainText("short");
+  expect(errors, errors.join("\n")).toHaveLength(0);
+});
+
+test("What if we'd listened: one real day replays, with the published D-006 totals", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.emulateMedia({ reducedMotion: "reduce" }); // starts paused
+  await page.goto("/replay?day=2026-02-01");
+  await expect(page.locator(".rp-canvas")).toHaveCount(2);
+  await expect(page.locator(".rp-sum")).toContainText("56 climbs or descents");
+  await expect(page.locator(".rp-sum")).toContainText("2,644 t");
+  await page.getByLabel("Time of day (UTC)").fill("1440");
+  await expect(page.locator(".rp-clock")).toContainText("00:00 UTC");
+  await page.getByRole("tab", { name: /1 Apr 2025/ }).click();
+  await expect(page.locator(".rp-sum")).toContainText("44 climbs or descents");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
 

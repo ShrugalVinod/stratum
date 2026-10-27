@@ -236,6 +236,7 @@ export function Home() {
             {(
               [
                 ["/flight", "Your flight", "Pick a trip and see its hidden footprint: the minutes it cruises through air where contrails last, its fuel CO₂ next to its contrail's warming, and the level that avoids it."],
+                ["/replay", "What if we'd listened?", "One real day over India, played twice side by side: as flown, and as if every STRATUM alert had been followed. Watch the lasting contrails disappear and the warming avoided add up."],
                 ["/live", "Live sky", "Which plane made that contrail? The airliners above you right now, and whether their air keeps a contrail."],
                 ["/spot", "Spot a contrail", "Took a photo of a contrail? Find the airliner that drew it. Your photo stays on your phone."],
                 ["/routes", "Routes & airlines", "Where India's contrail warming comes from: by airline, route, hour and flight level."],
@@ -244,8 +245,8 @@ export function Home() {
                 ["/3d", "The sky in 3D", "The humid layers over India and the flights crossing them, hour by hour."],
               ] as const
             ).map(([href, t, b], i) => (
-              <a class={i === 0 ? "try-tile try-featured" : "try-tile"} href={href} style={{ "--i": i }}>
-                <span class="mono-s">{i === 0 ? T("New") : `0${i}`}</span>
+              <a class={i < 2 ? "try-tile try-featured" : "try-tile"} href={href} style={{ "--i": i }}>
+                <span class="mono-s">{i < 2 ? T("New") : `0${i - 1}`}</span>
                 <b class="display">{T(t)}</b>
                 <span>{T(b)}</span>
                 <span class="try-go" aria-hidden="true">
