@@ -1,0 +1,68 @@
+# Expected airline flights for the website's live advice page (/now): yesterday's flights to,
+# from and within India from OpenSky's flight records (airline flight numbers repeat daily),
+# published as ONE commit on the `schedule-data` branch, replaced each day. Callsigns, types and
+# airports only; no aircraft addresses are written. The Worker serves it at /data/schedule/.
+name: schedule
+
+on:
+  schedule:
+    - cron: "10 1 * * *" # OpenSky adds the previous day's flight records overnight
+    - cron: "10 5 * * *" # backup (GitHub starts scheduled runs late or not at all)
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "UTC day of the flight records (YYYY-MM-DD); empty = yesterday"
+        required: false
+      publish:
+        description: "Publish the result (untick for a test run that prints counts only)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: schedule
+  cancel-in-progress: false
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Already built today?
+        id: done
+        if: github.event_name == 'schedule'
+        run: |
+          day=$(date -u -d yesterday +%F)
+          have=$(curl -fsS "https://raw.githubusercontent.com/${{ github.repository }}/schedule-data/schedule.json" 2>/dev/null | jq -r .day || true)
+          if [ "$have" = "$day" ]; then echo "$day already built"; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Test run (counts only)
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/schedule.py --dry ${{ inputs.day }}
+
+      - name: Build and publish
+        if: steps.done.outputs.skip != '1' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          python3 scripts/schedule.py "$RUNNER_TEMP/out/schedule.json" ${{ inputs.day }}
+          cd "$RUNNER_TEMP/out"
+          git init -q -b schedule-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Expected flights from $(jq -r .day schedule.json)"
+          git push -q --force "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" schedule-data
