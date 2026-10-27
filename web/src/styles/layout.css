@@ -3299,3 +3299,32 @@ a.contact-big:hover {
   background: var(--card);
   max-width: 78ch;
 }
+.now-detail {
+  animation: rise 0.5s var(--ease) both;
+}
+.now-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 18px;
+  margin: 14px 0 0;
+}
+.now-facts dt {
+  color: var(--muted);
+  padding-top: 3px;
+}
+.now-facts dd {
+  margin: 0;
+  max-width: 78ch;
+}
+.now-est {
+  margin-top: 12px !important;
+}
+@media (max-width: 560px) {
+  .now-facts {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .now-facts dd {
+    margin-bottom: 8px;
+  }
+}

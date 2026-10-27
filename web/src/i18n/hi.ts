@@ -1498,4 +1498,18 @@ export const HI: Record<string, string> = {
     "लाइव सलाह: अभी कौन-से विमान हटें",
   "A new page, /now, right under the map in the menu: every airliner over India now, and the flights expected in the next 12 hours, checked minute by minute against today's ECMWF forecast. Where a plane is heading into air in which its contrail would last, and a level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (even on the cautious estimate), it gives the level and the times, with the extra fuel and the warming avoided. Aircraft types and routes are now added to the live feed; expected flights come from yesterday's OpenSky flight records. Physics only, and a demonstration: no advice goes to any pilot.":
     "एक नया पेज, /now, मेनू में मानचित्र के ठीक नीचे: अभी भारत के ऊपर हर यात्री विमान, और अगले 12 घंटों में अपेक्षित उड़ानें, आज के ECMWF पूर्वानुमान से मिनट-दर-मिनट जाँची गईं। जहाँ कोई विमान ऐसी हवा की ओर जा रहा है जिसमें उसकी कंट्रेल टिकेगी, और 2,000 या 4,000 फ़ुट दूर का लेवल कंट्रेल की गर्मी से कम CO₂ में उससे बचाता है (सतर्क अनुमान पर भी), वहाँ यह लेवल और समय बताता है, अतिरिक्त ईंधन और टली गर्मी के साथ। लाइव फ़ीड में अब विमानों के प्रकार और रूट जुड़ गए हैं; अपेक्षित उड़ानें कल के OpenSky उड़ान रिकॉर्ड से आती हैं। केवल भौतिकी, और एक प्रदर्शन: कोई सलाह किसी पायलट को नहीं जाती।",
+  "Departed":
+    "रवाना हुआ",
+  "Lands":
+    "उतरेगा",
+  "Travel time":
+    "यात्रा समय",
+  "Contrails":
+    "कंट्रेल",
+  "Click for the details":
+    "पूरी जानकारी के लिए क्लिक करें",
+  "Times: yesterday's flight under the same number; landing = departure + a typical block time.":
+    "समय: उसी नंबर की कल की उड़ान; उतरना = प्रस्थान + सामान्य ब्लॉक समय।",
+  "Times are estimates: landing from the distance left at the current ground speed plus 10 minutes of approach; departure from a typical block time.":
+    "समय अनुमान हैं: उतरना बची दूरी को मौजूदा गति से तय करने और 10 मिनट की अप्रोच से; रवानगी सामान्य ब्लॉक समय से।",
 };

@@ -3,26 +3,27 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { setLang, T, useLang } from "../i18n";
 import { currentTheme, setTheme, type Theme } from "./motion";
 
+// Things to do first, then things to learn, then the research behind it and who we are
 const NAV = [
   ["/", "Home", "Move the plane. Lose the cloud."],
   ["/map", "Map", "Contrails, flights and the satellite proof"],
   ["/now", "Live advice", "Which planes should move, right now"],
+  ["/flight", "Your flight", "Its hidden contrail footprint"],
   ["/live", "Live sky", "Which plane made that contrail?"],
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
-  ["/flight", "Your flight", "Its hidden contrail footprint"],
-  ["/advisory", "Advisories", "Tomorrow's contrail notices"],
-  ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/replay", "What if we'd listened?", "One real day, replayed both ways"],
   ["/game", "Beat STRATUM", "Can you out-guess the model?"],
-  ["/results", "Results", "H1–H4 and what we found"],
-  ["/routes", "Routes & airlines", "Where the warming comes from"],
-  ["/airlines", "For airlines", "The rules, and what avoiding contrails costs"],
   ["/sandbox", "Make a contrail", "The physics, with sliders"],
+  ["/advisory", "Advisories", "Tomorrow's contrail notices"],
+  ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
+  ["/airlines", "For airlines", "The rules, and what avoiding contrails costs"],
+  ["/routes", "Routes & airlines", "Where the warming comes from"],
+  ["/results", "Results", "H1–H4 and what we found"],
   ["/methods", "Methods", "Written down before results"],
   ["/progress", "Progress", "The lab diary"],
-  ["/team", "Team", "Who we are"],
   ["/about-data", "Data & code", "Sources, licences, how to reproduce"],
+  ["/team", "Team", "Who we are"],
   ["/contact", "Contact", "Get in touch"],
 ] as const;
 

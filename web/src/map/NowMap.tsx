@@ -14,8 +14,9 @@ setWorkerUrl(workerUrl);
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
-const FRAME_MS = 80; // plane positions ~12 times a second
+const FADE_MS = 600; // the shading cross-fades from one hour to the next
 const PULSE_MS = 1800;
+const RISK_OPACITY = 0.9;
 
 type Props = {
   manifest: Manifest;
@@ -71,13 +72,16 @@ export function NowMap(p: Props) {
       m.addSource("countries", { type: "geojson", data: countries });
       m.addSource("states", { type: "geojson", data: states });
       m.addSource("grat", { type: "geojson", data: graticule() });
-      m.addSource("risk", { type: "image", url: props.current.risk ?? transparentPng(), coordinates: imageCoords(props.current.manifest) });
+      // two copies of the shading, so one hour can fade into the next
+      m.addSource("riskA", { type: "image", url: props.current.risk ?? transparentPng(), coordinates: imageCoords(props.current.manifest) });
+      m.addSource("riskB", { type: "image", url: transparentPng(), coordinates: imageCoords(props.current.manifest) });
       m.addSource("lines", { type: "geojson", data: props.current.lines });
       m.addSource("planes", { type: "geojson", data: EMPTY });
 
       m.addLayer({ id: "land", type: "fill", source: "countries", paint: { "fill-color": col.land } });
       m.addLayer({ id: "grat", type: "line", source: "grat", paint: { "line-color": col.grat, "line-width": 1 } });
-      m.addLayer({ id: "risk", type: "raster", source: "risk", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 0.9 } });
+      m.addLayer({ id: "riskA", type: "raster", source: "riskA", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": RISK_OPACITY } });
+      m.addLayer({ id: "riskB", type: "raster", source: "riskB", paint: { "raster-resampling": "linear", "raster-fade-duration": 0, "raster-opacity": 0 } });
       m.addLayer({ id: "states", type: "line", source: "states", paint: { "line-color": col.state, "line-width": 0.7 } });
       m.addLayer({ id: "borders", type: "line", source: "countries", paint: { "line-color": col.border, "line-width": 1 } });
       m.addLayer({ id: "ahead", type: "line", source: "lines", filter: ["==", ["get", "kind"], "ahead"], layout: { "line-cap": "round" }, paint: { "line-color": col.track, "line-width": 1.6, "line-opacity": 0.55, "line-dasharray": [1, 2] } });
@@ -131,17 +135,13 @@ export function NowMap(p: Props) {
       el.current?.classList.add("ready");
       m.fitBounds([[67, 6], [98, 36.5]], { padding: 16, duration: still ? 0 : 1600 });
 
-      // planes move; alert rings pulse (still frames for people who prefer less motion)
-      let last = 0;
+      // planes move every frame; alert rings pulse (still rings for people who prefer less motion)
       const loop = (now: number) => {
-        if (now - last >= FRAME_MS) {
-          last = now;
-          (m.getSource("planes") as GeoJSONSource | undefined)?.setData(props.current.frame());
-          if (!still) {
-            const k = (now % PULSE_MS) / PULSE_MS;
-            m.setPaintProperty("pulse", "circle-radius", 6 + 14 * k);
-            m.setPaintProperty("pulse", "circle-stroke-opacity", 0.8 * (1 - k));
-          }
+        (m.getSource("planes") as GeoJSONSource | undefined)?.setData(props.current.frame());
+        if (!still) {
+          const k = (now % PULSE_MS) / PULSE_MS;
+          m.setPaintProperty("pulse", "circle-radius", 6 + 14 * k);
+          m.setPaintProperty("pulse", "circle-stroke-opacity", 0.8 * (1 - k));
         }
         raf = requestAnimationFrame(loop);
       };
@@ -173,9 +173,26 @@ export function NowMap(p: Props) {
     };
   }, []);
 
+  // a new hour (or level) of shading fades in over the old one
+  const front = useRef<"riskA" | "riskB">("riskA");
   useEffect(() => {
-    const s = map.current?.getSource("risk") as ImageSource | undefined;
-    if (ready.current && s) s.updateImage({ url: p.risk ?? transparentPng(), coordinates: imageCoords(p.manifest) });
+    const m = map.current;
+    if (!m || !ready.current) return;
+    const back = front.current === "riskA" ? "riskB" : "riskA";
+    const was = front.current;
+    (m.getSource(back) as ImageSource).updateImage({ url: p.risk ?? transparentPng(), coordinates: imageCoords(p.manifest) });
+    front.current = back;
+    const t0 = performance.now();
+    const ms = reducedMotion() ? 0 : FADE_MS;
+    let raf = 0;
+    const step = (now: number) => {
+      const k = ms ? Math.min(1, (now - t0) / ms) : 1;
+      m.setPaintProperty(back, "raster-opacity", RISK_OPACITY * k);
+      m.setPaintProperty(was, "raster-opacity", RISK_OPACITY * (1 - k));
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, [p.risk]);
 
   useEffect(() => {
@@ -184,7 +201,7 @@ export function NowMap(p: Props) {
 
   useEffect(() => {
     const m = map.current;
-    if (m && ready.current && p.focus) m.easeTo({ center: p.focus, zoom: Math.max(m.getZoom(), 5), duration: reducedMotion() ? 0 : 900 });
+    if (m && ready.current && p.focus) m.easeTo({ center: p.focus, zoom: Math.max(m.getZoom(), 5), duration: reducedMotion() ? 0 : 1200, easing: (t) => 1 - (1 - t) ** 3 });
   }, [p.focus?.[0], p.focus?.[1]]);
 
   return <div ref={el} class="map-canvas" role="region" aria-label={p.label} />;

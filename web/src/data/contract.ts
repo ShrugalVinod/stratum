@@ -251,7 +251,7 @@ export const LiveAircraft = z.object({
   gs: z.number().nullable(),
   t: z.number(),
   vs: z.number().nullish(), // vertical rate, ft/min
-  route: z.array(z.tuple([z.string(), z.number(), z.number()])).nullish(), // stops [code, lat, lon]
+  route: z.array(z.tuple([z.string(), z.number(), z.number()], z.string())).nullish(), // stops [code, lat, lon, city?]
 });
 export type LiveAircraft = z.infer<typeof LiveAircraft>;
 
@@ -259,8 +259,8 @@ export type LiveAircraft = z.infer<typeof LiveAircraft>;
 export const ScheduledFlight = z.object({
   cs: z.string(),
   type: z.string().nullable(),
-  from: z.tuple([z.string(), z.number(), z.number()]),
-  to: z.tuple([z.string(), z.number(), z.number()]),
+  from: z.tuple([z.string(), z.number(), z.number()], z.string()), // [code, lat, lon, city?]
+  to: z.tuple([z.string(), z.number(), z.number()], z.string()),
   dep: z.number(), // minutes after 00:00 UTC
   acc: z.number(), // ± minutes
   block: z.number(),

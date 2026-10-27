@@ -31,6 +31,12 @@ Newest first. What was done, what's next, blockers.
 - adsb.lol's live API now answers HTTP 400 without a key (keys only for feeders): /live runs on
   OpenSky alone.
 - Tests: tests/advice.test.ts (12), worker scheduleStale, e2e with every feed mocked.
+- Same day, later: clicking (or hovering) any plane shows its trip: cities, departure, landing,
+  travel time (estimates; route required), level and speed, and until when its lasting contrails
+  could stay in the sky (CoCiP lifetimes over India: 2.5–5.3 h, median 3.8 h, 3,284 pieces, same
+  by day and night). Smoother map: planes drawn every frame, glide to each new report, shading
+  cross-fades between hours. Menu reordered: things to do first, then to learn, then research,
+  data and team.
 
 ## 2026-10-27 — "What if we'd listened?" (/replay)
 

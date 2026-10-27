@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Manifest, ScheduledFlight } from "../src/data/contract";
-import { advise, b1At, co2At, legOf, routePosition, type Sample, sampler, type Stop, stretches, totals, track, upcoming, usualLevel } from "../src/lib/advice";
+import { advise, b1At, blockMin, co2At, contrailsUntil, LIFE_H, legOf, routePosition, type Sample, sampler, type Stop, stretches, totals, track, upcoming, usualLevel } from "../src/lib/advice";
 import { co2eKg, cruisePath, EF_PER_MIN_J, type Point } from "../src/lib/footprint";
+import { distBearing } from "../src/lib/geo";
 
 const T0 = Date.parse("2026-10-27T06:00:00Z");
 // a made-up sky: lasting-contrail air at FL360 and FL380 between 76°E and 78°E, dry elsewhere
@@ -101,6 +102,23 @@ describe("airliners in the air now", () => {
     expect(t.path.length).toBeGreaterThan(20); // to Mumbai's descent
   });
 
+  it("estimates when a flight on a known route left and lands", () => {
+    const t = track({ cs: "IGO1", type: "A20N", alt: 36000, lat: 23.8, lon: 75, trk: 215, gs: 450, t: T0, vs: 0, route: [DEL, BOM] }, T0, sky);
+    const left = distBearing(23.8, 75, BOM[1], BOM[2])[0];
+    expect((t.timing!.arr - T0) / 60_000).toBeCloseTo((left / (450 * 1.852)) * 60 + 10, 6);
+    expect(t.timing!.total).toBeCloseTo(blockMin(DEL, BOM), 6);
+    expect(t.timing!.dep).toBeLessThanOrEqual(T0);
+    expect(track({ cs: "X", type: null, alt: 36000, lat: 20, lon: 74, trk: 90, gs: 450, t: T0 }, T0, sky).timing).toBeNull(); // no route
+  });
+
+  it("says until when the lasting contrails ahead could stay in the sky", () => {
+    const p = eastPath(40);
+    const a = advise(p, 360, "A20N", sky);
+    const lastT = p[a.lasting.lastIndexOf(true)].t;
+    expect(contrailsUntil(a, p)).toEqual([lastT + LIFE_H.p25 * 3_600_000, lastT + LIFE_H.p75 * 3_600_000]);
+    expect(contrailsUntil(advise(eastPath(10), 360, "A20N", sky), eastPath(10))).toBeNull();
+  });
+
   it("moves the aircraft on from its last report", () => {
     const t = track({ cs: "IGO1", type: null, alt: 36000, lat: 20, lon: 74, trk: 90, gs: 450, t: T0 - 60_000 }, T0, sky);
     expect(t.lon - 74).toBeCloseTo((450 * 1.852) / 60 / (111.2 * Math.cos((20 * Math.PI) / 180)), 2);
@@ -119,6 +137,7 @@ describe("flights expected in the next hours", () => {
     expect(up.map((u) => u.cs)).toEqual(["B", "E", "C"]); // A left at 05:00; C at 00:02 tomorrow
     expect(up[0].fl).toBe(360); // westbound, no live reference: FL360
     expect(up[0].flHow).toBe("rule");
+    expect(up[0].arr - up[0].dep).toBe(125 * 60_000); // the schedule's block time
   });
 
   it("takes the planned level from airliners flying the same route now", () => {

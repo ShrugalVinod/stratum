@@ -1,11 +1,12 @@
+import type { ComponentChildren } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Manifest, OutlookInfo, Schedule } from "../data/contract";
 import { colourise } from "../data/format";
 import { loadLive, loadOutlook, loadOutlookB1, loadSchedule } from "../data/load";
 import { T, tx } from "../i18n";
-import { type Advice, type Live, routePosition, type Sample, sampler, totals, track, type Tracked, upcoming, type Upcoming, usualLevel } from "../lib/advice";
-import { FLS, type Point } from "../lib/footprint";
+import { type Advice, contrailsUntil, LIFE_H, type Live, routePosition, type Sample, sampler, type Stop, type Timing, totals, track, type Tracked, upcoming, type Upcoming, usualLevel } from "../lib/advice";
+import { AIRPORTS, FLS, type Point } from "../lib/footprint";
 import { dirName, move } from "../lib/geo";
 import type { NowMap as NowMapT } from "../map/NowMap";
 import "../styles/map.css";
@@ -19,6 +20,7 @@ const HOURS = 12;
 const HOUR = 3_600_000;
 const REFRESH_MS = 60_000;
 const NEXT_SPEED = (HOURS * HOUR) / 48_000; // the next 12 hours in 48 s
+const GLIDE_MS = 1500;
 const SHADE_FLS = FLS.filter((f) => f >= 300 && f <= 400);
 const pad = (n: number) => String(n).padStart(2, "0");
 const utc = (t: number) => `${pad(new Date(t).getUTCHours())}:${pad(new Date(t).getUTCMinutes())}`;
@@ -192,19 +194,35 @@ export function Now() {
     return { type: "FeatureCollection" as const, features: f };
   }, [rows, chosen, listened, mode, mode === "next" ? minute : 0]);
 
-  // plane positions for the map's animation loop (read every frame)
+  // plane positions for the map's animation loop (read every frame). When a new position report
+  // arrives, each plane glides from where it is drawn to its new place over GLIDE_MS.
   const frameData = useRef({ mode, tracked, next, at: live?.at ?? 0, sel });
   frameData.current = { mode, tracked, next, at: live?.at ?? 0, sel };
+  const drawn = useRef(new Map<string, [number, number, number]>());
+  const glide = useRef({ at: 0, from: new Map<string, [number, number, number]>() });
+  useEffect(() => {
+    glide.current = { at: performance.now(), from: mode === "now" ? new Map(drawn.current) : new Map() };
+    if (mode !== "now") drawn.current.clear();
+  }, [tracked, mode]);
   const frame = useMemo(
     () => (): GeoJSON.FeatureCollection => {
       const d = frameData.current;
       const feats: GeoJSON.Feature[] = [];
-      if (d.mode === "now")
+      if (d.mode === "now") {
+        const k = Math.min(1, (performance.now() - glide.current.at) / GLIDE_MS);
+        const w = 1 - (1 - k) ** 3; // ease out
         for (const t of d.tracked ?? []) {
           const [lat, lon] = move(t.lat, t.lon, t.trk, (t.kmh * (Date.now() - d.at)) / HOUR);
-          feats.push(pt(t.cs, lon, lat, t.trk, !!t.advice?.alert, t.cs === d.sel));
+          let p: [number, number, number] = [lon, lat, t.trk];
+          const f = glide.current.from.get(t.cs);
+          if (f && w < 1) {
+            const turn = ((t.trk - f[2] + 540) % 360) - 180;
+            p = [f[0] + (lon - f[0]) * w, f[1] + (lat - f[1]) * w, f[2] + turn * w];
+          }
+          drawn.current.set(t.cs, p);
+          feats.push(pt(t.cs, p[0], p[1], p[2], !!t.advice?.alert, t.cs === d.sel));
         }
-      else
+      } else
         for (const u of d.next ?? []) {
           const p = routePosition(u, simRef.current);
           if (p) feats.push(pt(u.cs, p[0], p[1], p[2], !!u.advice?.alert, u.cs === d.sel));
@@ -215,11 +233,21 @@ export function Now() {
   );
   const tipFor = (id: string) => {
     const r = rows.find((x) => x.id === id) ?? null;
-    const t = tracked?.find((x) => x.cs === id);
-    if (!r && !t) return null;
-    const head = `<b>${esc(id)}</b><span>${esc([r?.type ?? t?.type, r?.route ?? (t ? routeText(t) : "")].filter(Boolean).join(" · "))}</span>`;
-    const lvl = `<em>${r ? flName(r.fl) : t ? `${flName(t.fl)} · ${T(STATUS[t.status])}` : ""}</em>`;
-    return head + lvl + (r?.advice ? `<strong>${esc(adviceShort(r.advice))}</strong>` : "");
+    const t = mode === "now" ? tracked?.find((x) => x.cs === id) ?? null : null;
+    const u = mode === "next" ? next?.find((x) => x.cs === id) ?? null : null;
+    if (!r && !t && !u) return null;
+    const from = t?.from ?? u?.from;
+    const to = t?.to ?? u?.to;
+    const route = from && to ? `${place(from)} → ${place(to)}` : t ? routeText(t) : "";
+    const tm = t?.timing ?? (u ? { arr: u.arr, total: u.total, dep: u.dep } : null);
+    const a = r?.advice ?? t?.advice ?? null;
+    const until = contrailsUntil(a, r?.path ?? t?.path ?? []);
+    const lines = [
+      t ? `${flName(t.fl)} · ${T(STATUS[t.status])}` : u ? `${T("departs")} ${utc(u.dep)} UTC · ${flName(u.fl)}` : "",
+      tm ? tx(`lands about ${utc(tm.arr)} UTC · ${dur(tm.total)} trip`, `लगभग ${utc(tm.arr)} UTC उतरेगा · ${dur(tm.total)} की यात्रा`) : "",
+      until ? tx(`lasting contrails until about ${utc(until[0])}–${utc(until[1])} UTC`, `टिकाऊ कंट्रेल लगभग ${utc(until[0])}–${utc(until[1])} UTC तक`) : "",
+    ].filter(Boolean);
+    return `<b>${esc(id)}</b><span>${esc([r?.type ?? t?.type ?? u?.type, route].filter(Boolean).join(" · "))}</span>${lines.map((l) => `<em>${esc(l)}</em>`).join("")}${a?.alert ? `<strong>${esc(adviceShort(a))}</strong>` : ""}<em>${esc(T("Click for the details"))}</em>`;
   };
   const focus = useMemo((): [number, number] | null => {
     if (chosenTrack) return [chosenTrack.lon, chosenTrack.lat];
@@ -369,8 +397,8 @@ export function Now() {
 
         {/* right under the map: the chosen flight, then every flight with advice */}
         <section class="now-pick" aria-live="polite">
-          {chosen || chosenTrack ? (
-            <Detail row={chosen} t={chosenTrack} up={chosenUp} onClose={() => setSel(null)} />
+          {chosen || chosenTrack || chosenUp ? (
+            <Detail key={`${mode}-${sel}`} row={chosen} t={chosenTrack} up={chosenUp} onClose={() => setSel(null)} />
           ) : (
             <p class="mono-s muted">{T("Click a plane on the map, or a flight below, to see its advice.")}</p>
           )}
@@ -499,46 +527,67 @@ function adviceShort(a: Advice) {
   return T("Clear of lasting-contrail air");
 }
 
+/** "Delhi (DEL)" from a route stop; the city as the route database or airport list names it. */
+function place(st: Stop) {
+  const city = st[3] || AIRPORTS.find((a) => a.code === st[0])?.city;
+  return city ? `${city} (${st[0]})` : st[0];
+}
+const dur = (min: number) => {
+  const m = Math.max(0, Math.round(min));
+  return m >= 60 ? `${Math.floor(m / 60)} h ${pad(m % 60)} min` : `${m} min`;
+};
+const both = (t: number) => `${utc(t)} UTC (${ist(t)} IST)`;
+
+/** Everything about the chosen flight, right under the map: its trip, its contrails, the advice. */
 function Detail({ row, t, up, onClose }: { row: Row | null; t: Tracked | null; up: Upcoming | null; onClose: () => void }) {
-  const a = row?.advice ?? null;
-  const cs = row?.cs ?? t?.cs ?? "";
-  const type = row?.type ?? t?.type ?? null;
-  const head = (
-    <header>
-      <b class="mono">{cs}</b>
-      <span class="mono-s muted">
-        {[type ?? T("type unknown (A320neo assumed)"), row?.route ?? (t ? routeText(t) : ""), up ? `${T("departs")} ${utc(up.dep)} UTC ±${up.acc} (${ist(up.dep)} IST)` : null].filter(Boolean).join(" · ")}
-      </span>
-      <button class="tool" onClick={onClose} aria-label={T("Close")}>
-        ×
-      </button>
-    </header>
-  );
-  if (t && t.status !== "cruise")
-    return (
-      <div class="now-detail">
-        {head}
-        <p>{tx(`At ${flName(t.fl)}, ${STATUS[t.status]}: no advice is given.`, `${flName(t.fl)} पर, ${T(STATUS[t.status])}: कोई सलाह नहीं दी जाती।`)}</p>
-      </div>
-    );
-  if (!row || !a) return <div class="now-detail">{head}</div>;
-  const span = (i: number, j: number) => `${utc(row.path[i].t)}–${utc(row.path[j].t)} UTC`;
-  const first = a.lasting.indexOf(true);
-  const last = a.lasting.lastIndexOf(true);
-  const where = t && !t.to ? tx(" (route unknown: the next hour on its heading)", " (रूट अज्ञात: उसकी दिशा में अगला एक घंटा)") : "";
-  const level = up ? tx(`Planned at about ${flName(row.fl)} (${row.flNote})`, `लगभग ${flName(row.fl)} पर नियोजित (${row.flNote})`) : tx(`Cruising at ${flName(row.fl)}`, `${flName(row.fl)} पर क्रूज़`);
+  const a = row?.advice ?? t?.advice ?? null;
+  const cs = row?.cs ?? t?.cs ?? up?.cs ?? "";
+  const type = row?.type ?? t?.type ?? up?.type ?? null;
+  const from = t?.from ?? up?.from ?? null;
+  const to = t?.to ?? up?.to ?? null;
+  const tm: Timing | null = t?.timing ?? (up ? { dep: up.dep, arr: up.arr, total: up.total } : null);
+  const path = row?.path ?? t?.path ?? up?.path ?? [];
+  const until = contrailsUntil(a, path);
+  const now = Date.now();
+  const fl = row?.fl ?? t?.fl ?? up?.fl ?? 0;
+  const facts: [string, ComponentChildren][] = [
+    [T("Route"), from && to ? `${place(from)} → ${place(to)}` : tx(`Unknown: not in the route database, or not on its listed route (heading ${t ? dirName(t.trk) : "?"}), so its departure and landing times are not known either`, `अज्ञात: रूट डेटाबेस में नहीं, या अपने दर्ज रूट पर नहीं (${t ? dirName(t.trk) : "?"} की ओर), इसलिए इसके रवाना होने और उतरने का समय भी पता नहीं`)],
+    [up ? T("Departs") : T("Departed"), up ? `${both(up.dep)} ±${up.acc} min` : tm ? tx(`about ${both(tm.dep)}`, `लगभग ${both(tm.dep)}`) : "–"],
+    [T("Lands"), tm ? tx(`about ${both(tm.arr)}`, `लगभग ${both(tm.arr)}`) : "–"],
+    [T("Travel time"), tm ? (up ? tx(`about ${dur(tm.total)}`, `लगभग ${dur(tm.total)}`) : tx(`about ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} left`, `लगभग ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} बाकी`)) : "–"],
+    [T("Level"), up ? tx(`about ${flName(fl)} (${row?.flNote ?? ""})`, `लगभग ${flName(fl)} (${row?.flNote ?? ""})`) : t ? `${flName(t.fl)} · ${Math.round(t.kmh)} km/h · ${T(STATUS[t.status])}` : flName(fl)],
+    [
+      T("Contrails"),
+      t && t.status !== "cruise"
+        ? tx(`Not checked: the aircraft is ${STATUS[t.status]}.`, `जाँचा नहीं गया: विमान ${T(STATUS[t.status])} है।`)
+        : !a
+          ? "–"
+          : until
+            ? tx(
+                `It would leave lasting contrails for ${a.nLasting} min of ${up ? `its ${a.minutes} min of cruise` : `the next ${a.minutes}`} (${utc(path[a.lasting.indexOf(true)].t)}–${utc(path[a.lasting.lastIndexOf(true)].t)} UTC). Contrails like these stayed in the sky for about ${LIFE_H.p25.toFixed(1)}–${LIFE_H.p75.toFixed(1)} h (median ${LIFE_H.p50.toFixed(1)} h) in our CoCiP runs over India, so these could last until about ${utc(until[0])}–${utc(until[1])} UTC.`,
+                `यह ${up ? `अपने ${a.minutes} मिनट के क्रूज़` : `अगले ${a.minutes}`} में से ${a.nLasting} मिनट टिकाऊ कंट्रेल छोड़ेगा (${utc(path[a.lasting.indexOf(true)].t)}–${utc(path[a.lasting.lastIndexOf(true)].t)} UTC)। भारत पर हमारे CoCiP रन में ऐसी कंट्रेल लगभग ${LIFE_H.p25.toFixed(1)}–${LIFE_H.p75.toFixed(1)} घंटे (माध्यिका ${LIFE_H.p50.toFixed(1)} घंटे) आसमान में रहीं, इसलिए ये लगभग ${utc(until[0])}–${utc(until[1])} UTC तक रह सकती हैं।`,
+              )
+            : tx(`None that last: the next ${a.minutes} min of its cruise stay out of air where contrails persist, so any contrail it draws fades within minutes.`, `कोई टिकाऊ नहीं: इसके क्रूज़ के अगले ${a.minutes} मिनट ऐसी हवा से बाहर रहते हैं जहाँ कंट्रेल टिकती है, इसलिए इसकी कोई भी कंट्रेल कुछ ही मिनटों में मिट जाएगी।`),
+    ],
+  ];
   return (
-    <div class={`now-detail ${a.alert ? "alert" : ""}`}>
-      {head}
-      <p>
-        {a.nLasting
-          ? tx(
-              `${level}. In ${a.minutes} minutes of cruise checked${where}, it flies ${a.nLasting} minutes through air where its contrail would last (${span(first, last)}).`,
-              `${level}। जाँचे गए ${a.minutes} मिनट के क्रूज़ में${where}, यह ${a.nLasting} मिनट ऐसी हवा से गुज़रता है जहाँ इसकी कंट्रेल टिकेगी (${span(first, last)})।`,
-            )
-          : tx(`${level}. Its ${a.minutes} minutes of cruise checked${where} stay clear of air where its contrail would last.`, `${level}। जाँचे गए इसके ${a.minutes} मिनट के क्रूज़${where} में ऐसी हवा नहीं आती जहाँ इसकी कंट्रेल टिके।`)}
-      </p>
-      {a.alert ? (
+    <div class={`now-detail ${a?.alert ? "alert" : ""}`}>
+      <header>
+        <b class="mono">{cs}</b>
+        <span class="mono-s muted">{type ?? T("type unknown (A320neo assumed)")}</span>
+        <button class="tool" onClick={onClose} aria-label={T("Close")}>
+          ×
+        </button>
+      </header>
+      <dl class="now-facts">
+        {facts.filter(([, v]) => v !== "–").map(([k, v]) => (
+          <>
+            <dt class="mono-s">{k}</dt>
+            <dd>{v}</dd>
+          </>
+        ))}
+      </dl>
+      {a?.alert && row ? (
         <p class="now-advice">
           {tx(
             <>
@@ -557,9 +606,10 @@ function Detail({ row, t, up, onClose }: { row: Row | null; t: Tracked | null; u
             </>,
           )}
         </p>
-      ) : a.nLasting ? (
+      ) : a?.nLasting ? (
         <p class="muted">{T("No level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (or the aircraft cannot fly there), so there is no advice.")}</p>
       ) : null}
+      {tm && <p class="mono-s muted now-est">{up ? T("Times: yesterday's flight under the same number; landing = departure + a typical block time.") : T("Times are estimates: landing from the distance left at the current ground speed plus 10 minutes of approach; departure from a typical block time.")}</p>}
     </div>
   );
 }

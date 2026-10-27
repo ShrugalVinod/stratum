@@ -154,7 +154,7 @@ export function stretches(lasting: boolean[], pad: number): [number, number][] {
 
 // ── airliners in the air now ────────────────────────────────────────────────
 
-export type Stop = [string, number, number]; // [code, lat, lon]
+export type Stop = [string, number, number, ...string[]]; // [code, lat, lon, city?]
 export type Live = LiveAircraft & { route?: Stop[] | null; vs?: number | null };
 export type Tracked = {
   cs: string;
@@ -169,7 +169,28 @@ export type Tracked = {
   path: Point[]; // the cruise ahead, one point a minute
   status: "cruise" | "climb" | "low" | "high" | "turboprop" | "landing";
   advice: Advice | null;
+  timing: Timing | null; // when it left and lands (route known)
 };
+
+/** A trip's times (ms) and typical block time (minutes); estimates, see ``blockMin``. */
+export type Timing = { dep: number; arr: number; total: number };
+
+/** Typical block time between two airports: great circle at 780 km/h plus 15 minutes (as
+ *  scripts/schedule.py uses for the expected flights). */
+export const blockMin = (a: Stop, b: Stop) => (distBearing(a[1], a[2], b[1], b[2])[0] / 780) * 60 + 15;
+
+/** How long a lasting contrail stayed in the sky in our CoCiP runs over India (B1, raw ERA5,
+ *  12 days, 3,284 contrail pieces; 25th / 50th / 75th percentile, hours; the same by day and
+ *  night). The live forecast says only whether a contrail would last, not for how long. */
+export const LIFE_H = { p25: 2.45, p50: 3.82, p75: 5.25, n: 3284 };
+
+/** Until when the contrails of the lasting minutes ahead could stay in the sky (typical range,
+ *  ms), or null without any. */
+export function contrailsUntil(a: Advice | null, path: Point[]): [number, number] | null {
+  if (!a?.nLasting) return null;
+  const t = path[a.lasting.lastIndexOf(true)].t;
+  return [t + LIFE_H.p25 * HOUR, t + LIFE_H.p75 * HOUR];
+}
 
 const flOf = (ft: number) => Math.round(ft / 1000) * 10;
 
@@ -200,7 +221,14 @@ export function track(a: Live, now: number, sample: Sample): Tracked {
   const [lat, lon] = a.trk == null ? [a.lat, a.lon] : move(a.lat, a.lon, a.trk, (kmh * Math.max(0, now - a.t)) / HOUR);
   const fl = flOf(a.alt);
   const leg = legOf(a.route, lat, lon, a.trk);
-  const out: Tracked = { cs: a.cs, type: a.type, lat, lon, trk: a.trk ?? 0, kmh, fl, from: leg?.[0] ?? null, to: leg?.[1] ?? null, path: [], status: "cruise", advice: null };
+  // on a known leg: lands after the distance left at its ground speed plus ~10 minutes of approach
+  let timing: Timing | null = null;
+  if (leg) {
+    const total = blockMin(leg[0], leg[1]);
+    const arr = now + (distBearing(lat, lon, leg[1][1], leg[1][2])[0] / kmh) * HOUR + 10 * 60_000;
+    timing = { dep: Math.min(now, arr - total * 60_000), arr, total };
+  }
+  const out: Tracked = { cs: a.cs, type: a.type, lat, lon, trk: a.trk ?? 0, kmh, fl, from: leg?.[0] ?? null, to: leg?.[1] ?? null, path: [], status: "cruise", advice: null, timing };
   if (a.type && TURBOPROP.test(a.type)) return { ...out, status: "turboprop" };
   if (a.vs != null && Math.abs(a.vs) > 500) return { ...out, status: "climb" };
   if (fl < MIN_FL) return { ...out, status: "low" };
@@ -244,6 +272,8 @@ export type Upcoming = {
   to: Stop;
   dep: number; // expected departure today, ms
   acc: number; // ± minutes
+  arr: number; // expected landing, ms
+  total: number; // typical block time, minutes
   path: Point[];
   fl: number;
   flHow: "route" | "similar" | "rule";
@@ -264,7 +294,8 @@ export function upcoming(list: ScheduledFlight[], now: number, hours: number, ai
       const b = { lat: f.to[1], lon: f.to[2] };
       const path = cruisePath(a, b, dep);
       const lv = level(f.from, f.to);
-      out.push({ cs: f.cs, type: f.type, from: f.from, to: f.to, dep, acc: f.acc, path, fl: lv.fl, flHow: lv.how, advice: path.length ? advise(path, lv.fl, f.type ?? "", sample) : null });
+      const total = f.block || blockMin(f.from, f.to);
+      out.push({ cs: f.cs, type: f.type, from: f.from, to: f.to, dep, acc: f.acc, arr: dep + total * 60_000, total, path, fl: lv.fl, flHow: lv.how, advice: path.length ? advise(path, lv.fl, f.type ?? "", sample) : null });
     }
   }
   return out.sort((x, y) => x.dep - y.dep);

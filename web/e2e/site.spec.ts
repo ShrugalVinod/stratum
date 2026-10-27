@@ -355,14 +355,18 @@ test("Live advice: real-looking feeds give advice for a plane in the air and an 
   await expect(board.locator("tr.best")).toContainText("→ FL");
   await expect(page.locator(".now-alerts b")).toHaveText("1");
   await board.getByRole("button", { name: "IGO5001" }).click();
-  await expect(page.locator(".now-detail")).toContainText("Advice:");
-  await expect(page.locator(".now-detail")).toContainText("Cruising at FL360");
+  const card = page.locator(".now-detail");
+  await expect(card).toContainText("Advice:");
+  await expect(card).toContainText("Delhi (DEL) → Mumbai (BOM)"); // cities from the site's airport list
+  await expect(card.locator("dt")).toContainText(["Route", "Departed", "Lands", "Travel time", "Level", "Contrails"]);
+  await expect(card).toContainText("could last until about");
 
   await page.getByRole("tab", { name: "Next 12 hours" }).click();
   await expect(board).toContainText("IGO5002");
   await expect(board.locator("tr.best")).toContainText("FL360"); // the level IGO5001 flies on the same route now
   await board.getByRole("button", { name: "IGO5002" }).click();
-  await expect(page.locator(".now-detail")).toContainText("as airliners on this route fly now");
+  await expect(card).toContainText("as airliners on this route fly now");
+  await expect(card).toContainText("Departs");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
 
