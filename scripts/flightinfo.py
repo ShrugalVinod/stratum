@@ -24,7 +24,7 @@ AIRPORTS_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 UA = "STRATUM-research/1.0 (+https://stratum.aerospaceonyx.workers.dev/contact)"
 INDIA = ("VA", "VE", "VI", "VO")  # ICAO airport prefixes of India
 
-Stop = list  # [code (IATA, else ICAO), lat, lon]
+Stop = list  # [code (IATA, else ICAO), lat, lon, city]
 
 
 def _get(url: str, timeout: int = 60) -> bytes:
@@ -57,7 +57,7 @@ def load_types(path: str | None = None) -> dict[str, str]:
 
 
 def load_airports(path: str | None = None) -> dict[str, Stop]:
-    """ICAO code → [IATA (else ICAO), lat, lon]: airports with an IATA code or scheduled flights."""
+    """ICAO code → [IATA (else ICAO), lat, lon, city] of airports with an IATA code or airlines."""
     out: dict[str, Stop] = {}
     for r in csv.DictReader(io.StringIO(_cached(AIRPORTS_URL, path).decode("utf-8", "replace"))):
         code = r.get("ident") or ""
@@ -66,6 +66,7 @@ def load_airports(path: str | None = None) -> dict[str, Stop]:
                 r.get("iata_code") or code,
                 round(float(r["latitude_deg"]), 4),
                 round(float(r["longitude_deg"]), 4),
+                r.get("municipality") or r.get("name") or "",
             ]
     return out
 
@@ -77,7 +78,12 @@ def route(cs: str) -> list[Stop] | None:
     except (urllib.error.URLError, TimeoutError, ValueError):
         return None
     stops = [
-        [a.get("iata") or a.get("icao"), round(float(a["lat"]), 4), round(float(a["lon"]), 4)]
+        [
+            a.get("iata") or a.get("icao"),
+            round(float(a["lat"]), 4),
+            round(float(a["lon"]), 4),
+            a.get("location") or a.get("name") or "",
+        ]
         for a in d.get("_airports") or []
         if a.get("lat") is not None
     ]
