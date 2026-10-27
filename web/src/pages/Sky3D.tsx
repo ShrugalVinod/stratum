@@ -1,43 +1,52 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import type * as THREE_NS from "three";
 import type { FlaggedSegment, Manifest } from "../data/contract";
-import { currentBuild, layerUrl, loadDay, loadGridBytes, loadManifest, spriteHour } from "../data/load";
-import { T } from "../i18n";
+import { currentBuild, layerUrl, loadGridBytes, loadManifest, loadReplayDay } from "../data/load";
+import { T, tx } from "../i18n";
+import type { SkyContrail, SkyFlight, SkyHandle, SkyPick } from "../three/sky";
 import "../styles/map.css";
 
-/** /3d — the humid layers in three dimensions: for one hour, every 0.5° column of the study
- *  domain at each dashboard flight level where a layer (physics B1 / B3: share of the hour with
- *  persistent-contrail conditions; STRATUM: probability) is high, drawn as a translucent block,
- *  with the day's flagged flight portions as lines at their flight level. Height is exaggerated
- *  ~100×. three.js is loaded only on this page. */
+/** /3d — the sky over India in 3D: one real day, minute by minute, with the sun where it was,
+ *  the humid air where contrails last, every airliner of the day, and the lasting contrails CoCiP
+ *  found forming behind them, spreading and fading. Scene: three/sky.ts (loaded only here). */
 
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-const Y_PER_FL = 0.045; // scene units (≈ degrees) per flight level: FL280–FL420 → 6.3 units tall
-const FL0 = 260;
 const LAYERS = [
-  { id: "B1", label: "Physics", title: "Raw ERA5 physics: share of the hour with persistent-contrail conditions", min: 0.34 },
-  { id: "B3", label: "Published fix", title: "The published humidity correction: share of the hour with persistent-contrail conditions", min: 0.34 },
-  { id: "STRATUM", label: "STRATUM", title: "STRATUM's probability of a satellite-visible persistent contrail (strong = 8 % or more)", min: 0.25 },
+  { id: "B1", label: "Physics", title: "Raw ERA5 physics: share of the hour with persistent-contrail conditions" },
+  { id: "B3", label: "Published fix", title: "The published humidity correction" },
+  { id: "STRATUM", label: "STRATUM", title: "STRATUM's probability of a satellite-visible persistent contrail (10 % shown as full)" },
 ] as const;
 type LayerId = (typeof LAYERS)[number]["id"];
-
-const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#888";
-const yOf = (fl: number) => (fl - FL0) * Y_PER_FL;
+const SPEEDS = [
+  { k: "ride", label: "Real feel", perSec: 2 },
+  { k: "fast", label: "Fast", perSec: 20 },
+  { k: "day", label: "Whole day", perSec: 60 },
+] as const;
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
+const hhmm = (m: number) => `${pad((m / 60) % 24)}:${pad(m % 60)}`;
+const minOf = (iso: string, day: string) => (Date.parse(iso) - Date.parse(`${day}T00:00:00Z`)) / 60_000;
 
 export function Sky3D() {
   const box = useRef<HTMLDivElement>(null);
-  const three = useRef<{ T: typeof THREE_NS; scene: THREE_NS.Scene; voxels: THREE_NS.Group; tracks: THREE_NS.Group; render: () => void } | null>(null);
+  const eng = useRef<SkyHandle | null>(null);
+  const sim = useRef(720);
   const [man, setMan] = useState<Manifest | null>(null);
   const [build, setBuild] = useState("");
   const [date, setDate] = useState<string | null>(null);
-  const [hour, setHour] = useState(6);
   const [layer, setLayer] = useState<LayerId>("B1");
-  const [segs, setSegs] = useState<FlaggedSegment[]>([]);
-  const [play, setPlay] = useState(false);
-  const [count, setCount] = useState(0);
-  const [err, setErr] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [play, setPlay] = useState(true);
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]["k"]>("fast");
+  const [clock, setClock] = useState(720);
+  const [stats, setStats] = useState({ airborne: 0, contrails: 0, sunElev: 0 });
+  const [hover, setHover] = useState<SkyPick | null>(null);
+  const [following, setFollowing] = useState<SkyFlight | null>(null);
+  const [contrails, setContrails] = useState<SkyContrail[]>([]);
+  const flightsRef = useRef<SkyFlight[]>([]);
+  const contrailsRef = useRef<SkyContrail[]>([]);
 
+  // the build, the day, the hour and the layer (from the address when given)
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     Promise.all([loadManifest(), currentBuild()])
@@ -45,11 +54,14 @@ export function Sky3D() {
         setMan(manifest);
         setBuild(b);
         const d = q.get("date");
-        setDate(d && manifest.days.includes(d) ? d : (manifest.days_with_flights[0] ?? manifest.days[0]));
+        const days = manifest.days_with_flights.length ? manifest.days_with_flights : manifest.days;
+        setDate(d && days.includes(d) ? d : days.includes("2026-02-01") ? "2026-02-01" : days[days.length - 1]);
         const h = Number(q.get("hour"));
-        if (Number.isInteger(h) && h >= 0 && h < 24) setHour(h);
+        if (q.get("hour") && Number.isInteger(h) && h >= 0 && h < 24) sim.current = h * 60;
+        else sim.current = 13 * 60; // early evening in India: the sun sets and the contrails come out
         const l = q.get("layer");
         if (l && LAYERS.some((x) => x.id === l)) setLayer(l as LayerId);
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) setPlay(false);
       })
       .catch((e) => setErr(String(e.message ?? e)));
   }, []);
@@ -58,254 +70,273 @@ export function Sky3D() {
   useEffect(() => {
     if (!man || !box.current) return;
     let stop = false;
-    let cleanup = () => {};
-    Promise.all([import("three"), import("three/examples/jsm/controls/OrbitControls.js"), fetch(`${BASE}/geo/countries.geojson`).then((r) => r.json())]).then(([T, { OrbitControls }, countries]) => {
-      if (stop || !box.current) return;
-      const el = box.current;
-      const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      el.appendChild(renderer.domElement);
-      const scene = new T.Scene();
-      const g = man.grid;
-      const cx = (g.lon_west + g.lon_east) / 2;
-      const cz = -(g.lat_north + g.lat_south) / 2;
-      const camera = new T.PerspectiveCamera(40, 1, 0.1, 500);
-      // a narrow (phone) screen needs the camera further back to fit India
-      const far = el.clientWidth < el.clientHeight ? 1.9 : 1;
-      camera.position.set(cx - 4, 26 * far, cz + 40 * far);
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.target.set(cx, 2, cz);
-      controls.enableDamping = true;
-      controls.maxPolarAngle = Math.PI * 0.49;
-      controls.minDistance = 8;
-      controls.maxDistance = 120;
-      // the ground: country outlines clipped to a little beyond the domain
-      const pts: number[] = [];
-      const inBox = (lon: number, lat: number) => lon > g.lon_west - 3 && lon < g.lon_east + 3 && lat > g.lat_south - 3 && lat < g.lat_north + 3;
-      const ring = (r: number[][]) => {
-        for (let i = 1; i < r.length; i++) if (inBox(r[i - 1][0], r[i - 1][1]) || inBox(r[i][0], r[i][1])) pts.push(r[i - 1][0], 0, -r[i - 1][1], r[i][0], 0, -r[i][1]);
-      };
-      for (const f of countries.features as GeoJSON.Feature[]) {
-        const geom = f.geometry;
-        if (geom.type === "Polygon") geom.coordinates.forEach(ring);
-        else if (geom.type === "MultiPolygon") geom.coordinates.forEach((p) => p.forEach(ring));
-      }
-      const lineGeo = new T.BufferGeometry();
-      lineGeo.setAttribute("position", new T.Float32BufferAttribute(pts, 3));
-      scene.add(new T.LineSegments(lineGeo, new T.LineBasicMaterial({ color: css("--ink"), transparent: true, opacity: 0.55 })));
-      const plate = new T.Mesh(
-        new T.PlaneGeometry(g.lon_east - g.lon_west, g.lat_north - g.lat_south),
-        new T.MeshBasicMaterial({ color: css("--map-ocean"), transparent: true, opacity: 0.35, side: T.DoubleSide }),
-      );
-      plate.rotation.x = -Math.PI / 2;
-      plate.position.set(cx, -0.01, cz);
-      scene.add(plate);
-      // flight-level ticks on one corner post
-      const ticks: number[] = [];
-      for (const f of man.flight_levels) ticks.push(g.lon_west, yOf(f.fl), -g.lat_south, g.lon_west + 0.8, yOf(f.fl), -g.lat_south);
-      ticks.push(g.lon_west, 0, -g.lat_south, g.lon_west, yOf(man.flight_levels[man.flight_levels.length - 1].fl), -g.lat_south);
-      const tg = new T.BufferGeometry();
-      tg.setAttribute("position", new T.Float32BufferAttribute(ticks, 3));
-      scene.add(new T.LineSegments(tg, new T.LineBasicMaterial({ color: css("--muted") })));
-      // their labels (canvas sprites)
-      for (const f of man.flight_levels.filter((_, i, a) => i === 0 || i === a.length - 1 || i === Math.floor(a.length / 2))) {
-        const cv = document.createElement("canvas");
-        cv.width = 192;
-        cv.height = 64;
-        const cx2 = cv.getContext("2d")!;
-        cx2.font = "600 34px 'Martian Mono Variable', monospace";
-        cx2.fillStyle = css("--ink");
-        cx2.fillText(`FL${f.fl}`, 4, 44);
-        const sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), depthWrite: false }));
-        sp.scale.set(2.4, 0.8, 1);
-        sp.position.set(g.lon_west - 1.6, yOf(f.fl), -g.lat_south);
-        scene.add(sp);
-      }
-      const voxels = new T.Group();
-      const tracks = new T.Group();
-      scene.add(voxels, tracks);
-
-      const resize = () => {
-        const w = el.clientWidth;
-        const h = el.clientHeight;
-        renderer.setSize(w, h);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      };
-      resize();
-      const ro = new ResizeObserver(resize);
-      ro.observe(el);
-      let raf = 0;
-      const loop = () => {
-        controls.update();
-        renderer.render(scene, camera);
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
-      three.current = { T, scene, voxels, tracks, render: () => renderer.render(scene, camera) };
-      setReady(true);
-      cleanup = () => {
-        cancelAnimationFrame(raf);
-        ro.disconnect();
-        controls.dispose();
-        renderer.dispose();
-        el.removeChild(renderer.domElement);
-      };
-    });
+    const el = box.current;
+    Promise.all([import("../three/sky"), ...["countries", "india_states", "cities"].map((n) => fetch(`${BASE}/geo/${n}.geojson`).then((r) => r.json()))])
+      .then(([mod, countries, states, cities]) => {
+        if (stop) return;
+        const e = (mod as typeof import("../three/sky")).createSky(el, { countries, states, cities });
+        e.time.min = sim.current;
+        e.onPick((p, click) => {
+          setHover(click ? null : p);
+          if (click && p) ride(p.id);
+        });
+        eng.current = e;
+        setReady(true);
+      })
+      .catch((e) => setErr(String(e?.message ?? e)));
     return () => {
       stop = true;
-      cleanup();
-      three.current = null;
+      eng.current?.dispose();
+      eng.current = null;
     };
   }, [man]);
 
-  // the day's flagged portions
+  // the day's flights and the lasting contrails CoCiP found
   useEffect(() => {
-    if (!build || !date) return;
-    loadDay(build, date)
-      .then((d) => setSegs(d.lists.STRATUM?.length ? d.lists.STRATUM : (d.lists.B1 ?? [])))
-      .catch(() => setSegs([]));
-  }, [build, date]);
+    if (!ready || !date) return;
+    setLoading(true);
+    loadReplayDay(date)
+      .then(({ flights, b1 }) => {
+        const byFlight = new Map<string, FlaggedSegment[]>();
+        for (const s of b1) (byFlight.get(s.flight_id) ?? byFlight.set(s.flight_id, []).get(s.flight_id)!).push(s);
+        const fls: SkyFlight[] = flights
+          .filter((f) => f.properties.minutes?.length === f.geometry.coordinates.length && f.geometry.coordinates.length > 1)
+          .map((f) => {
+            const segs = byFlight.get(f.properties.flight_id) ?? [];
+            const levels = segs.map((s) => s.fl).sort((a, b) => a - b);
+            return {
+              id: f.properties.flight_id,
+              cs: f.properties.callsign,
+              type: f.properties.aircraft_type,
+              mins: f.properties.minutes,
+              xy: f.geometry.coordinates as [number, number][],
+              fl: levels.length ? levels[levels.length >> 1] : 350,
+              makesContrail: segs.length > 0,
+            };
+          });
+        const cs: SkyContrail[] = b1.map((s) => {
+          const t0 = minOf(s.time_utc, date);
+          return {
+            flight: s.flight_id,
+            a: [s.lon_start, s.lat_start],
+            b: [s.lon_end, s.lat_end],
+            fl: s.fl,
+            t0,
+            t1: s.time_end_utc ? minOf(s.time_end_utc, date) : t0 + (s.n_segments ?? 1),
+            lifeMin: (s.contrail_age_h ?? 3) * 60,
+          };
+        });
+        flightsRef.current = fls;
+        contrailsRef.current = cs;
+        setContrails(cs);
+        eng.current?.setDay(date, fls, cs);
+      })
+      .catch(() => setErr(T("This day could not be loaded.")))
+      .finally(() => setLoading(false));
+  }, [ready, date]);
 
-  // voxels for the hour
+  // the humid air for the day, every flight level
   useEffect(() => {
-    const t3 = three.current;
-    if (!t3 || !man || !date || !ready) return;
+    if (!ready || !man || !date || !build) return;
     const info = man.layers?.find((l) => l.id === layer);
     if (!info) return;
     let alive = true;
-    const g = man.grid;
-    const min = LAYERS.find((l) => l.id === layer)!.min;
-    Promise.all(man.flight_levels.map((f) => loadGridBytes(layerUrl(build, date, info.file, f.fl)).then((s) => [f.fl, spriteHour(s, hour, g.cols)] as const))).then((grids) => {
-      if (!alive) return;
-      const { T, voxels } = t3;
-      voxels.clear();
-      const step = 2; // 0.5° columns
-      const geo = new T.BoxGeometry(g.step_deg * step * 0.92, Y_PER_FL * 20 * 0.85, g.step_deg * step * 0.92);
-      const low = new T.Color(css("--teal"));
-      const high = new T.Color(css("--orange"));
-      const bins = [0, 1, 2, 3].map((k) => ({ k, items: [] as number[][] }));
-      for (const [fl, v] of grids) {
-        for (let r = 0; r + step <= g.rows; r += step)
-          for (let c = 0; c + step <= g.cols; c += step) {
-            let s = 0;
-            for (let i = 0; i < step; i++) for (let j = 0; j < step; j++) s += v[(r + i) * g.cols + c + j];
-            const val = (s / (step * step) / 255) * info.full_scale;
-            const rel = layer === "STRATUM" ? val / 0.1 : val; // STRATUM: 10 % is already a high probability
-            if (rel < min) continue;
-            const bin = Math.min(3, Math.floor(((rel - min) / (1 - min)) * 4));
-            bins[bin].items.push([g.lon_west + (c + step / 2 - 0.5) * g.step_deg, yOf(fl), -(g.lat_north - (r + step / 2 - 0.5) * g.step_deg)]);
-          }
-      }
-      let n = 0;
-      const m = new T.Matrix4();
-      for (const b of bins) {
-        if (!b.items.length) continue;
-        const mat = new T.MeshBasicMaterial({ color: low.clone().lerp(high, b.k / 3), transparent: true, opacity: 0.22 + 0.16 * b.k, depthWrite: false });
-        const mesh = new T.InstancedMesh(geo, mat, b.items.length);
-        b.items.forEach((p, i) => mesh.setMatrixAt(i, m.makeTranslation(p[0], p[1], p[2])));
-        voxels.add(mesh);
-        n += b.items.length;
-      }
-      setCount(n);
-    });
+    Promise.all(man.flight_levels.map((f) => loadGridBytes(layerUrl(build, date, info.file, f.fl)).then((sprite) => ({ fl: f.fl, sprite }))))
+      .then((levels) => {
+        if (!alive) return;
+        const scale = info.full_scale;
+        eng.current?.setHumid(levels, man.grid, (v) => (layer === "STRATUM" ? (v * scale) / 0.1 : v * scale));
+      })
+      .catch(() => undefined);
     return () => {
       alive = false;
     };
-  }, [ready, man, build, date, hour, layer]);
+  }, [ready, man, build, date, layer]);
 
-  // flagged portions: those flown within ±1 h of the chosen hour stand out
+  // the clock: the scene reads the time every frame; the page redraws ~10 times a second
   useEffect(() => {
-    const t3 = three.current;
-    if (!t3 || !ready) return;
-    const { T, tracks } = t3;
-    tracks.clear();
-    const near: number[] = [];
-    const far: number[] = [];
-    for (const s of segs) {
-      const h = Number(s.time_utc.slice(11, 13));
-      const arr = Math.abs(h - hour) <= 1 ? near : far;
-      const y = yOf(s.fl);
-      arr.push(s.lon_start, y, -s.lat_start, s.lon_end, y, -s.lat_end);
-    }
-    for (const [arr, op] of [
-      [far, 0.18],
-      [near, 1],
-    ] as const) {
-      if (!arr.length) continue;
-      const geo = new T.BufferGeometry();
-      geo.setAttribute("position", new T.Float32BufferAttribute(arr, 3));
-      tracks.add(new T.LineSegments(geo, new T.LineBasicMaterial({ color: css("--red"), transparent: true, opacity: op })));
-    }
-  }, [ready, segs, hour]);
+    if (!ready) return;
+    let raf = 0;
+    let last = performance.now();
+    let drawn = 0;
+    const per = SPEEDS.find((s) => s.k === speed)!.perSec;
+    const step = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (play) sim.current = (sim.current + dt * per) % 1440;
+      if (eng.current) eng.current.time.min = sim.current;
+      if (now - drawn > 100) {
+        drawn = now;
+        setClock(sim.current);
+        if (eng.current) setStats(eng.current.stats());
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [ready, play, speed]);
 
   useEffect(() => {
-    if (!play) return;
-    const t = setInterval(() => setHour((h) => (h + 1) % 24), 1100);
-    return () => clearInterval(t);
-  }, [play]);
+    if (!date) return;
+    history.replaceState(null, "", `/3d?date=${date}&hour=${Math.floor(clock / 60)}&layer=${layer}`);
+  }, [date, layer, Math.floor(clock / 60)]);
 
   useEffect(() => {
-    if (!man || !date) return;
-    history.replaceState(null, "", `/3d?date=${date}&hour=${hour}&layer=${layer}`);
-  }, [man, date, hour, layer]);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === " " && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLButtonElement)) {
+        e.preventDefault();
+        setPlay((p) => !p);
+      }
+      if (e.key === "Escape") stopRide();
+    };
+    addEventListener("keydown", key);
+    return () => removeEventListener("keydown", key);
+  }, []);
 
+  /** Ride behind a flight: the one given, or the next one about to leave a lasting contrail. */
+  function ride(id?: string) {
+    const fls = flightsRef.current;
+    let f = id ? fls.find((x) => x.id === id) : undefined;
+    if (!f) {
+      const cs = [...contrailsRef.current];
+      const next = cs.filter((c) => c.t0 >= sim.current + 6).sort((a, b) => a.t0 - b.t0)[0] ?? cs.sort((a, b) => a.t0 - b.t0)[0];
+      if (!next) return;
+      f = fls.find((x) => x.id === next.flight);
+      if (!f) return;
+      sim.current = Math.max(f.mins[0], next.t0 - 8);
+    } else if (sim.current < f.mins[0] || sim.current > f.mins[f.mins.length - 1]) sim.current = f.mins[0];
+    setSpeed("ride");
+    setPlay(true);
+    setFollowing(f);
+    eng.current?.follow(f.id);
+  }
+  function stopRide() {
+    setFollowing(null);
+    setSpeed("fast");
+    eng.current?.home();
+  }
+
+  const ist = (clock + 330) % 1440;
+  const phase = stats.sunElev > 8 ? T("Day") : stats.sunElev > -6 ? (clock / 60 + 5.5) % 24 < 12 ? T("Dawn") : T("Dusk") : T("Night");
   const avail = LAYERS.filter((l) => man?.layers?.some((x) => x.id === l.id));
+  const ridingContrail = following && contrails.some((c) => c.flight === following.id && clock >= c.t0 && clock <= c.t1);
+
   return (
     <div class="sky3d">
-      <div class="s3-bar mp-bar" role="toolbar" aria-label={T("3D view controls")}>
-        <h1 class="mp-title mono-s">{T("Humid layers in 3D · height ×100")}</h1>
-        <span class="mp-tools">
-          <span class="seg-ctl" role="radiogroup" aria-label={T("Layer")}>
-            {avail.map((l) => (
-              <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={T(l.title)} onClick={() => setLayer(l.id)}>
-                {T(l.label)}
-              </button>
-            ))}
-          </span>
-          {man && date && (
-            <label class="date-pick">
-              <span class="sr-only">{T("Date")}</span>
-              <select value={date} onChange={(e) => setDate((e.target as HTMLSelectElement).value)}>
-                {man.days.map((d) => (
-                  <option value={d}>
-                    {d}
-                    {man.days_with_flights.includes(d) ? " ✈" : ""}
-                  </option>
+      <div class="s3-stage" ref={box}>
+        {err && <p class="s3-msg mono">{err}</p>}
+        {(!ready || loading) && !err && <p class="s3-msg mono s3-loading">{T("Building the sky over India…")}</p>}
+
+        <div class="s3-top">
+          <div class="s3-title">
+            <p class="label">{T("The sky over India · one real day")}</p>
+            <h1 class="display">{T("Where contrails are born")}</h1>
+          </div>
+          <div class="s3-ctl">
+            {man && date && (
+              <select class="s3-select" value={date} onChange={(e) => (stopRide(), setDate((e.target as HTMLSelectElement).value))} aria-label={T("Day")}>
+                {(man.days_with_flights.length ? man.days_with_flights : man.days).map((d) => (
+                  <option value={d}>{new Date(`${d}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</option>
                 ))}
               </select>
-            </label>
-          )}
-          <a class="tool" href={`/map?date=${date ?? ""}&hour=${hour}`}>
-            {T("2D map")}
-          </a>
-        </span>
-      </div>
-      <div class="s3-stage" ref={box}>
-        {err && <p class="muted mono s3-msg">{err}</p>}
-        {!ready && !err && <p class="muted mono s3-msg">{T("Building the sky…")}</p>}
+            )}
+            <span class="s3-seg" role="radiogroup" aria-label={T("Humid air shown")}>
+              {avail.map((l) => (
+                <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={T(l.title)} onClick={() => setLayer(l.id)}>
+                  {T(l.label)}
+                </button>
+              ))}
+            </span>
+          </div>
+        </div>
+
+        <div class="s3-stats mono-s" aria-live="polite">
+          <span>
+            <b>{stats.airborne}</b> {T("airliners in the air")}
+          </span>
+          <span>
+            <b>{stats.contrails}</b> {T("lasting contrails in the sky")}
+          </span>
+          <span>{phase}</span>
+        </div>
+
+        {following ? (
+          <div class="s3-ride">
+            <p class="label">{T("Riding along")}</p>
+            <b class="mono">{following.cs}</b>
+            <span class="mono-s">
+              {[following.type, `FL${following.fl}`].filter(Boolean).join(" · ")}
+            </span>
+            <p class={`s3-ride-now ${ridingContrail ? "hot" : ""}`}>
+              {ridingContrail ? T("Inside air where its contrail lasts: watch it stay behind and spread.") : following.makesContrail ? T("Heading for air where its contrail will last.") : T("Its contrails fade within minutes.")}
+            </p>
+            <button class="s3-btn" onClick={stopRide}>
+              {T("Back to all of India")} (Esc)
+            </button>
+          </div>
+        ) : (
+          ready && (
+            <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
+              ✈ {T("Ride along with a contrail-maker")}
+            </button>
+          )
+        )}
+
+        {hover && !following && (
+          <div class="s3-tip" style={{ left: `${hover.x + 14}px`, top: `${hover.y + 14}px` }}>
+            <b class="mono">{hover.cs}</b>
+            <span class="mono-s">{[hover.type, `FL${hover.fl}`].filter(Boolean).join(" · ")}</span>
+            {hover.inContrail && <span class="hot">{T("leaving a lasting contrail now")}</span>}
+            <em>{T("Click to ride along")}</em>
+          </div>
+        )}
+
         <div class="s3-key mono-s">
           <span>
-            <i class="k-low" /> {T("layer present")}
+            <i class="k-humid" /> {T("humid air where contrails last")}
           </span>
           <span>
-            <i class="k-high" /> {T("strong")}
+            <i class="k-trail" /> {T("lasting contrail (CoCiP)")}
           </span>
           <span>
-            <i class="k-seg" /> {T("flagged flight portions")} ({segs.length})
+            <i class="k-plane" /> {T("airliner (orange: making one now)")}
           </span>
-          <span class="muted">
-            {count.toLocaleString()} {T("blocks · drag to turn, scroll to zoom")}
-          </span>
+          <span class="muted">{T("height ×40 · drag to turn · scroll to zoom")}</span>
         </div>
       </div>
+
       <div class="s3-time">
-        <button class="tool" onClick={() => setPlay(!play)} aria-pressed={play}>
-          {play ? `❚❚ ${T("Pause")}` : `▶ ${T("Play the day")}`}
+        <button class="s3-btn" onClick={() => setPlay(!play)} aria-pressed={play}>
+          {play ? `❚❚ ${T("Pause")}` : `▶ ${T("Play")}`}
         </button>
-        <input type="range" min={0} max={23} value={hour} aria-label={T("Hour (UTC)")} onInput={(e) => (setPlay(false), setHour(Number((e.target as HTMLInputElement).value)))} />
-        <span class="mono s3-hour">{String(hour).padStart(2, "0")}00 UTC</span>
+        <input
+          type="range"
+          min={0}
+          max={1439}
+          step={1}
+          value={Math.round(clock)}
+          aria-label={T("Time of day (UTC)")}
+          onInput={(e) => {
+            sim.current = Number((e.target as HTMLInputElement).value);
+            setClock(sim.current);
+          }}
+        />
+        <span class="mono s3-clock">
+          {hhmm(clock)} UTC · {hhmm(ist)} IST
+        </span>
+        <span class="s3-seg" role="radiogroup" aria-label={T("Speed")}>
+          {SPEEDS.map((s) => (
+            <button role="radio" aria-checked={speed === s.k} class={speed === s.k ? "on" : ""} onClick={() => setSpeed(s.k)}>
+              {T(s.label)}
+            </button>
+          ))}
+        </span>
       </div>
+      <p class="s3-note small">
+        {T(
+          "Real flights and ERA5 weather of this day. Humid air: where the air at each flight level was cold and humid enough for contrails to last that hour (the layer chosen above). Lasting contrails: the ones CoCiP found, drawn as the aircraft passed and for as long as CoCiP says they lasted; real ones also drift with the wind, which is not shown. A flight's level is the one CoCiP flagged, else FL350. The sun is where it was over India; heights are stretched 40 times.",
+        )}
+      </p>
     </div>
   );
 }

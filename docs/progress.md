@@ -2,6 +2,22 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-27 — The sky in 3D, rebuilt (/3d, now in the menu)
+
+**Done**
+- web/src/three/sky.ts + pages/Sky3D.tsx: one real day over India, minute by minute.
+  Physically based sky (three.js Sky) with the sun where it was over India (NOAA solar
+  position), day → dusk → night with stars and city lights (cities.geojson by population plus a
+  scatter of towns); ground drawn from Natural Earth outlines. Humid air (B1 / B3 / STRATUM,
+  every flight level) as soft shimmering particle sheets, blended hour to hour. All ~2,100
+  tracked airliners of the day fly their real tracks (level: the one CoCiP flagged, else
+  FL350), with strobes, orange while making a lasting contrail. The 300 CoCiP lasting
+  contrails (segments_B1) are drawn as the aircraft passes, then spread and fade over their
+  CoCiP lifetime. "Ride along": a chase camera behind the next contrail-maker (or any plane
+  clicked). Cinematic opening, bloom on desktop, heights ×40. 60 fps on a laptop GPU.
+- Honest labels on the page: real flights and ERA5 weather; contrails do not drift with the
+  wind here; heights stretched 40×.
+
 ## 2026-10-27 — Site trimmed for the Conrad prototype
 
 **Done**

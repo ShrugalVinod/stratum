@@ -1554,4 +1554,58 @@ export const HI: Record<string, string> = {
   "Back to the live sky":
     "लाइव आसमान पर लौटें",
   "airliners in the recorded sky (above FL200)": "रिकॉर्ड किए गए आसमान में यात्री विमान (FL200 से ऊपर)",
+  "Watch contrails being born over India":
+    "भारत के ऊपर कंट्रेल बनते देखिए",
+  "The sky over India · one real day":
+    "भारत के ऊपर आसमान · एक असली दिन",
+  "Where contrails are born":
+    "जहाँ कंट्रेल जन्म लेती हैं",
+  "Building the sky over India…":
+    "भारत के ऊपर आसमान बन रहा है…",
+  "Humid air shown":
+    "दिखाई गई नम हवा",
+  "lasting contrails in the sky":
+    "आसमान में टिकाऊ कंट्रेल",
+  "Dawn":
+    "भोर",
+  "Dusk":
+    "शाम",
+  "Riding along":
+    "साथ उड़ते हुए",
+  "Inside air where its contrail lasts: watch it stay behind and spread.":
+    "उस हवा के भीतर जहाँ इसकी कंट्रेल टिकती है: देखिए वह पीछे रहती और फैलती है।",
+  "Heading for air where its contrail will last.":
+    "ऐसी हवा की ओर जा रहा है जहाँ इसकी कंट्रेल टिकेगी।",
+  "Its contrails fade within minutes.":
+    "इसकी कंट्रेल कुछ ही मिनटों में मिट जाती हैं।",
+  "Back to all of India":
+    "पूरे भारत पर लौटें",
+  "Ride along with a contrail-maker":
+    "कंट्रेल बनाने वाले विमान के साथ उड़िए",
+  "leaving a lasting contrail now":
+    "अभी टिकाऊ कंट्रेल छोड़ रहा है",
+  "Click to ride along":
+    "साथ उड़ने के लिए क्लिक करें",
+  "humid air where contrails last":
+    "नम हवा जहाँ कंट्रेल टिकती है",
+  "lasting contrail (CoCiP)":
+    "टिकाऊ कंट्रेल (CoCiP)",
+  "airliner (orange: making one now)":
+    "यात्री विमान (नारंगी: अभी बना रहा है)",
+  "height ×40 · drag to turn · scroll to zoom":
+    "ऊँचाई ×40 · घुमाने के लिए खींचें · ज़ूम के लिए स्क्रॉल करें",
+  "Real feel":
+    "असली रफ़्तार",
+  "Fast":
+    "तेज़",
+  "Whole day":
+    "पूरा दिन",
+  "Speed":
+    "रफ़्तार",
+  "The published humidity correction":
+    "प्रकाशित नमी सुधार",
+  "STRATUM's probability of a satellite-visible persistent contrail (10 % shown as full)":
+    "सैटेलाइट से दिखने वाली टिकाऊ कंट्रेल की STRATUM संभावना (10 % को पूरा दिखाया गया)",
+  "Real flights and ERA5 weather of this day. Humid air: where the air at each flight level was cold and humid enough for contrails to last that hour (the layer chosen above). Lasting contrails: the ones CoCiP found, drawn as the aircraft passed and for as long as CoCiP says they lasted; real ones also drift with the wind, which is not shown. A flight's level is the one CoCiP flagged, else FL350. The sun is where it was over India; heights are stretched 40 times.":
+    "इस दिन की असली उड़ानें और ERA5 मौसम। नम हवा: जहाँ हर फ़्लाइट लेवल पर हवा उस घंटे इतनी ठंडी और नम थी कि कंट्रेल टिके (ऊपर चुनी गई परत)। टिकाऊ कंट्रेल: वे जो CoCiP ने पाईं, विमान के गुज़रते ही बनती हुई और उतनी देर जितनी CoCiP के अनुसार टिकीं; असली कंट्रेल हवा के साथ बहती भी हैं, जो नहीं दिखाया गया। उड़ान का लेवल वह है जो CoCiP ने चिह्नित किया, नहीं तो FL350। सूरज वहीं है जहाँ वह भारत के ऊपर था; ऊँचाइयाँ 40 गुना बढ़ाकर दिखाई गई हैं।",
 };

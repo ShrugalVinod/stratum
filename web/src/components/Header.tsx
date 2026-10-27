@@ -11,6 +11,7 @@ const NAV = [
   ["/flight", "Your flight", "Its hidden contrail footprint"],
   ["/spot", "Spot a contrail", "Your photo → the plane that drew it"],
   ["/replay", "What if we'd listened?", "One real day, replayed both ways"],
+  ["/3d", "The sky in 3D", "Watch contrails being born over India"],
   ["/sandbox", "Make a contrail", "The physics, with sliders"],
   ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
