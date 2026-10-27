@@ -67,7 +67,7 @@ def _minutes(a: list, b: list) -> float:
 
 def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[str, list]) -> dict:
     start = dt.datetime(day.year, day.month, day.day, tzinfo=dt.UTC).timestamp()
-    seen: dict[str, dict] = {}
+    recs: list[dict] = []
     for f in raw:
         cs = (f.get("callsign") or "").strip()
         dep, arr = f.get("estDepartureAirport") or "", f.get("estArrivalAirport") or ""
@@ -83,14 +83,12 @@ def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[s
             "last": (f["lastSeen"] - start) / 60,
             "placed": "from" if dep else "to" if arr else "",
         }
-        # one record per callsign and day: the first leg seen
-        if cs not in seen or rec["seen"] < seen[cs]["seen"]:
-            seen[cs] = rec
+        recs.append(rec)
     # fill unplaced airports from the route database (the stop list must contain the known one)
-    gaps = [cs for cs, r in seen.items() if not (r["from"] and r["to"])]
-    for cs, stops in routes(gaps).items():
-        r = seen[cs]
-        if not stops:
+    by_cs = routes([r["cs"] for r in recs if not (r["from"] and r["to"])])
+    for r in recs:
+        stops = by_cs.get(r["cs"])
+        if (r["from"] and r["to"]) or not stops:
             continue
         codes = [s[0] for s in stops]
         if r["from"] and r["from"][0] in codes:
@@ -101,8 +99,8 @@ def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[s
             r["from"] = stops[i - 1] if i > 0 else None
         elif len(stops) == 2 and not r["from"] and not r["to"]:
             r["from"], r["to"] = stops
-    flights = []
-    for r in seen.values():
+    flights: dict[tuple, dict] = {}
+    for r in recs:
         a, b = r["from"], r["to"]
         if not a or not b or a[0] == b[0]:
             continue
@@ -117,18 +115,19 @@ def build(day: dt.date, raw: list[dict], types: dict[str, str], airports: dict[s
         else:
             lo = min(r["last"] - d, r["seen"])
             dep, acc = (lo + r["seen"]) / 2, max(15, (r["seen"] - lo) / 2)
-        flights.append(
-            {"cs": r["cs"], "type": r["type"], "from": a, "to": b}
-            | {"dep": round(dep), "acc": round(acc), "block": round(d)}
-        )
-    flights.sort(key=lambda f: f["dep"])
+        # minutes after 00:00 UTC (a flight that left the evening before counts at its clock time)
+        rec = {"cs": r["cs"], "type": r["type"], "from": a, "to": b}
+        rec |= {"dep": round(dep) % 1440, "acc": round(acc), "block": round(d)}
+        key = (r["cs"], a[0], b[0])  # one per leg: a flight number can fly several legs a day
+        if key not in flights or rec["acc"] < flights[key]["acc"]:
+            flights[key] = rec
     return {
         "day": day.isoformat(),
         "built": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%MZ"),
         "source": "The OpenSky Network (flight records); routes: adsb.lol (ODbL); "
         "types: Mictronics; airports: OurAirports",
-        "n_records": len(seen),
-        "flights": flights,
+        "n_records": len(recs),
+        "flights": sorted(flights.values(), key=lambda f: f["dep"]),
     }
 
 
