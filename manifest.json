@@ -1,14 +1,14 @@
 {
  "contract_version": "2.0.0",
  "build_id": "outlook",
- "created_at": "2026-10-27T12:52:50+00:00",
- "git_commit": "274f5ac268255ce370b92b42c0abbfd20baf95e1",
+ "created_at": "2026-10-28T16:10:13+00:00",
+ "git_commit": "5bffecef38976286c2159c4d3da1e62842073c23",
  "config_hash": "n/a",
  "pipeline_version": "outlook-v1",
- "model_version": "ECMWF IFS open-data forecast, run 2026-10-27 00 UTC; physics only (experimental)",
+ "model_version": "ECMWF IFS open-data forecast, run 2026-10-28 00 UTC; physics only (experimental)",
  "days": [
-  "2026-10-27",
-  "2026-10-28"
+  "2026-10-28",
+  "2026-10-29"
  ],
  "days_with_flights": [],
  "flight_levels": [
