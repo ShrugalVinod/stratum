@@ -2,6 +2,25 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-28 — 3D sky: "What the satellite saw" (proof from space)
+
+**Done**
+- A third view on /3d: Meteosat-9 in the sky (south-west, drawn large and labelled "36,000 km
+  up · not to scale"), its scan sweeping India south to north every 15 minutes as a curtain of
+  light (shown only when the clock runs slowly enough to read it), and the contrails our
+  learned detector (v3) found in that day's real Meteosat-9 images and matched to the flight,
+  as cyan lines at each image time, where the satellite saw them (drifted by the wind), with a
+  flash as they appear. Derived lines only, never the images; EUMETSAT credited on the page.
+- Counter: contrails confirmed so far / the day's total (1 Feb 2026: 183), with the H1 line
+  ("physics flags about 6× more lasting contrails than the satellite sees").
+- Ride-along in this view joins the next plane whose contrail the satellite confirms while it is
+  still flying, 12 minutes before: "Meteosat-9 will image this stretch at 16:15 UTC…" →
+  "✓ Confirmed by Meteosat-9 at 16:15 UTC"; the camera swings out to show the cyan line and
+  the plane together.
+- The story (/3d?tour=1, now ~1½ min) adds the satellite beat between the contrails and the
+  advice: "Is it real?…", the confirmation, then the H1 line. Fixed: the story's ride saw the
+  view a render late; a plane leaving mid-story no longer speeds the clock past midnight.
+
 ## 2026-10-27 — 3D sky: "If they had listened", and the one-minute story
 
 **Done**

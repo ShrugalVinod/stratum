@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { FlaggedSegment, Manifest } from "../data/contract";
-import { currentBuild, layerUrl, loadGridBytes, loadManifest, loadReplayDay, loadWeighted } from "../data/load";
+import { currentBuild, layerUrl, loadContrailDay, loadGridBytes, loadManifest, loadReplayDay, loadWeighted } from "../data/load";
 import { T, tx } from "../i18n";
-import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick } from "../three/sky";
+import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick, SkyProof, SkyView } from "../three/sky";
 import "../styles/map.css";
 
 /** /3d — the sky over India in 3D: one real day, minute by minute, with the sun where it was,
@@ -52,14 +52,20 @@ export function Sky3D() {
   const flightsRef = useRef<SkyFlight[]>([]);
   const contrailsRef = useRef<SkyContrail[]>([]);
   // "If they had listened": the day's alerts, flown at the advised level
-  const [listened, setListened] = useState(false);
-  const listenedRef = useRef(false);
-  listenedRef.current = listened;
+  const [view, setView] = useState<SkyView>("flown");
+  const listened = view === "listened";
+  const viewRef = useRef<SkyView>("flown");
+  viewRef.current = view;
+  // the contrails Meteosat-9 confirmed this day: per flight, the satellite image times
+  const [seenBy, setSeenBy] = useState<Map<string, number[]>>(new Map());
+  const seenRef = useRef<{ flight: string; t0: number; first: number }[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const alertsRef = useRef<Alert[]>([]);
   // the one-minute story (?tour=1, or the button)
   const [tour, setTour] = useState(false);
   const [caption, setCaption] = useState<string | null>(null);
+  const tourRef = useRef(false);
+  tourRef.current = tour;
 
   // the build, the day, the hour and the layer (from the address when given)
   useEffect(() => {
@@ -77,7 +83,8 @@ export function Sky3D() {
         const l = q.get("layer");
         if (l && LAYERS.some((x) => x.id === l)) setLayer(l as LayerId);
         if (matchMedia("(prefers-reduced-motion: reduce)").matches) setPlay(false);
-        if (q.get("listened") === "1") setListened(true);
+        const v = q.get("view");
+        if (v === "listened" || v === "satellite") setView(v);
         if (q.get("tour") === "1") setTour(true);
       })
       .catch((e) => setErr(String(e.message ?? e)));
@@ -98,7 +105,7 @@ export function Sky3D() {
             if (f) setEnded(f.cs);
             return null;
           });
-          setSpeed("fast");
+          setSpeed(tourRef.current ? "tour" : "fast"); // the story keeps its own pace
         });
         e.onPick((p, click) => {
           setHover(click ? null : p);
@@ -119,8 +126,26 @@ export function Sky3D() {
   useEffect(() => {
     if (!ready || !date) return;
     setLoading(true);
-    Promise.all([loadReplayDay(date), loadWeighted(date)])
-      .then(([{ flights, b1 }, weighted]) => {
+    Promise.all([loadReplayDay(date), loadWeighted(date), loadContrailDay(date).catch(() => [])])
+      .then(([{ flights, b1 }, weighted, seen]) => {
+        // what the satellite saw: the detector's matched lines in each image, at the flight's level
+        const proofs: SkyProof[] = [];
+        const times = new Map<string, number[]>();
+        for (const e of seen)
+          for (const sl of e.slots) {
+            const lines = sl.detected.filter((d) => d.matched && d.lon.length > 1).map((d) => d.lon.map((lo, i) => [lo, d.lat[i]] as [number, number]));
+            if (!lines.length) continue;
+            const t = minOf(sl.t, date);
+            proofs.push({ flight: e.flight_id, t, fl: e.fl ?? 350, lines });
+            (times.get(e.flight_id) ?? times.set(e.flight_id, []).get(e.flight_id)!).push(t);
+          }
+        for (const ts of times.values()) ts.sort((a, b) => a - b);
+        seenRef.current = seen
+          .map((e) => ({ flight: e.flight_id, t0: minOf(e.t_start, date), first: Math.min(...(times.get(e.flight_id) ?? [Infinity])) }))
+          .filter((x) => Number.isFinite(x.first))
+          .sort((a, b) => a.first - b.first);
+        setSeenBy(times);
+        eng.current?.setProofs(proofs);
         // the day's alerts (D-006): which flights move, when, by how much, and what it saves
         const al: Alert[] = (weighted ?? [])
           .filter((w) => w.alert && w.best_alternative_fl != null)
@@ -176,8 +201,8 @@ export function Sky3D() {
   }, [ready, date]);
 
   useEffect(() => {
-    eng.current?.setListened(listened);
-  }, [ready, listened]);
+    eng.current?.setView(view);
+  }, [ready, view]);
 
   // the humid air for the day, every flight level
   useEffect(() => {
@@ -222,8 +247,8 @@ export function Sky3D() {
 
   useEffect(() => {
     if (!date) return;
-    history.replaceState(null, "", `/3d?date=${date}&hour=${Math.floor(clock / 60)}&layer=${layer}${listened ? "&listened=1" : ""}`);
-  }, [date, layer, listened, Math.floor(clock / 60)]);
+    history.replaceState(null, "", `/3d?date=${date}&hour=${Math.floor(clock / 60)}&layer=${layer}${view !== "flown" ? `&view=${view}` : ""}`);
+  }, [date, layer, view, Math.floor(clock / 60)]);
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -241,7 +266,18 @@ export function Sky3D() {
   function ride(id?: string) {
     const fls = flightsRef.current;
     let f = id ? fls.find((x) => x.id === id) : undefined;
-    if (!f && listenedRef.current) {
+    if (!f && viewRef.current === "satellite") {
+      // the next contrail the satellite confirms while its plane is still flying: join 12 minutes before
+      const flying = (id: string, a: number, z: number) => {
+        const x = fls.find((y) => y.id === id);
+        return x && x.mins[0] <= a && x.mins[x.mins.length - 1] >= z ? x : undefined;
+      };
+      const ok = seenRef.current.filter((x) => flying(x.flight, x.first - 12, x.first + 3));
+      const ev = ok.find((x) => x.first >= sim.current + 14) ?? ok[0];
+      f = ev ? flying(ev.flight, ev.first - 12, ev.first + 3) : undefined;
+      if (!f || !ev) return;
+      sim.current = ev.first - 12;
+    } else if (!f && viewRef.current === "listened") {
       const al = alertsRef.current;
       const next = al.find((a) => a.t0 >= sim.current + 10) ?? al[0];
       f = next ? fls.find((x) => x.id === next.flight) : undefined;
@@ -286,7 +322,7 @@ export function Sky3D() {
       [0, () => {
         setFollowing(null);
         eng.current?.home();
-        setListened(false);
+        setView("flown");
         sim.current = 11 * 60 + 10;
         setSpeed("tour");
         setPlay(true);
@@ -294,21 +330,33 @@ export function Sky3D() {
       }],
       [7000, () => setCaption(T("The white sheets: air so cold and humid that a contrail, once made, lasts for hours."))],
       [14000, () => setCaption(T("Planes that cross them leave contrails that spread into thin cloud and trap heat."))],
-      [22000, () => {
-        setListened(true);
-        setCaption(T("Now: what if every plane had followed STRATUM's advice?"))
+      [21000, () => {
+        viewRef.current = "satellite"; // ride() must see the new view now, not on the next render
+        setView("satellite");
+        ride();
+        setCaption(T("Is it real? Meteosat-9 scans India every 15 minutes."));
       }],
-      [28000, () => {
+      [28500, () => setCaption(T("Cyan: the contrail our detector found in the real satellite image, matched to the plane that made it."))],
+      [43000, () => {
+        stopRide();
+        setSpeed("tour");
+        setCaption(T("Physics alone flags about six times more lasting contrails than the satellite sees. STRATUM checks the forecast against the satellite every day."));
+      }],
+      [52000, () => {
+        setView("listened");
+        setCaption(T("Now: what if every plane had followed STRATUM's advice?"));
+      }],
+      [58000, () => {
         ride();
         setCaption(T("Climb or descend 2,000 ft, cross the humid layer, come back. No lasting contrail."));
       }],
-      [50000, () => {
+      [80000, () => {
         stopRide();
         setSpeed("tour");
         setCaption(tx(`In this one day: ${al.length} altitude changes avoid about ${tonnes(total)} t CO₂e of contrail warming, for ${tonnes(fuel)} t of extra fuel.`, `केवल इस एक दिन में: ${al.length} ऊँचाई बदलाव लगभग ${tonnes(total)} t CO₂e कंट्रेल गर्मी टालते हैं, ${tonnes(fuel)} t अतिरिक्त ईंधन के बदले।`));
       }],
-      [60000, () => setCaption(T("STRATUM. Move the plane. Lose the cloud."))],
-      [68000, () => {
+      [90000, () => setCaption(T("STRATUM. Move the plane. Lose the cloud."))],
+      [98000, () => {
         setCaption(null);
         setSpeed("fast");
         setTour(false);
@@ -353,6 +401,18 @@ export function Sky3D() {
     return tx(`Done: about ${tonnes(mine.p50)} t CO₂e of warming avoided (cautious ${tonnes(mine.low)} t), for ${Math.round(mine.fuelKg)} kg of extra fuel.`, `पूरा: लगभग ${tonnes(mine.p50)} t CO₂e गर्मी टली (सतर्क ${tonnes(mine.low)} t), ${Math.round(mine.fuelKg)} kg अतिरिक्त ईंधन के बदले।`);
   })();
 
+  // the satellite: how many of the day's confirmed contrails it has seen so far, and the ridden one
+  const seenSoFar = seenRef.current.filter((x) => clock >= x.first).length;
+  const seenTimes = following ? seenBy.get(following.id) : undefined;
+  const proofText = (() => {
+    if (!seenTimes?.length || listened) return null;
+    const next = seenTimes.find((t) => t > clock);
+    const last = [...seenTimes].reverse().find((t) => t <= clock);
+    if (last != null && clock - last <= 30) return tx(`✓ Confirmed by Meteosat-9 at ${hhmm(last)} UTC: our detector found this contrail in the real satellite image.`, `✓ ${hhmm(last)} UTC पर Meteosat-9 ने पुष्टि की: हमारे डिटेक्टर ने यह कंट्रेल असली सैटेलाइट तस्वीर में पाई।`);
+    if (next != null && last == null) return tx(`Meteosat-9 will image this stretch at ${hhmm(next)} UTC. Watch for cyan.`, `Meteosat-9 इस हिस्से की तस्वीर ${hhmm(next)} UTC पर लेगा। नीले रंग पर नज़र रखिए।`);
+    return null;
+  })();
+
   const ist = (clock + 330) % 1440;
   const phase = stats.sunElev > 8 ? T("Day") : stats.sunElev > -6 ? (clock / 60 + 5.5) % 24 < 12 ? T("Dawn") : T("Dusk") : T("Night");
   const avail = LAYERS.filter((l) => man?.layers?.some((x) => x.id === l.id));
@@ -381,16 +441,19 @@ export function Sky3D() {
           <div class="s3-right">
             <div class="s3-ctl">
               <span class="s3-seg s3-listen" role="radiogroup" aria-label={T("Which sky")}>
-                <button role="radio" aria-checked={!listened} class={!listened ? "on" : ""} onClick={() => setListened(false)}>
+                <button role="radio" aria-checked={view === "flown"} class={view === "flown" ? "on" : ""} onClick={() => setView("flown")}>
                   {T("As flown")}
                 </button>
-                <button role="radio" aria-checked={listened} class={listened ? "on" : ""} onClick={() => setListened(true)}>
+                <button role="radio" aria-checked={view === "satellite"} class={view === "satellite" ? "on sat" : "sat"} onClick={() => setView("satellite")}>
+                  {T("What the satellite saw")}
+                </button>
+                <button role="radio" aria-checked={listened} class={listened ? "on" : ""} onClick={() => setView("listened")}>
                   {T("If they had listened")}
                 </button>
               </span>
               {!tour && (
                 <button class="s3-btn s3-tour-btn" onClick={() => setTour(true)}>
-                  ▶ {T("Watch the story (1 min)")}
+                  ▶ {T("Watch the story (1½ min)")}
                 </button>
               )}
               {man && date && (
@@ -408,6 +471,14 @@ export function Sky3D() {
                 ))}
               </span>
             </div>
+            {view === "satellite" && (
+              <div class="s3-saved s3-seen" aria-live="polite">
+                <p class="label">{T("What the satellite saw")}</p>
+                <b class="display">{seenSoFar}</b>
+                <span>{tx(`contrails confirmed by Meteosat-9 so far today, of ${seenRef.current.length}`, `आज अब तक Meteosat-9 द्वारा पुष्ट कंट्रेल, ${seenRef.current.length} में से`)}</span>
+                <span class="mono-s">{T("Over our 12 days, physics flags about 6× more lasting contrails than the satellite sees (H1): most are too thin to detect.")}</span>
+              </div>
+            )}
             {listened && (
               <div class="s3-saved" aria-live="polite">
                 <p class="label">{T("If they had listened")}</p>
@@ -434,6 +505,7 @@ export function Sky3D() {
             <span class="mono-s">
               {[following.type, `FL${following.fl}`].filter(Boolean).join(" · ")}
             </span>
+            {proofText && <p class="s3-ride-now seen">{proofText}</p>}
             <p class={`s3-ride-now ${rideText ? "cool" : ridingContrail ? "hot" : ""}`}>
               {rideText ??
                 (ridingContrail ? T("Inside air where its contrail lasts: watch it stay behind and spread.") : following.makesContrail ? T("Heading for air where its contrail will last.") : T("Its contrails fade within minutes."))}
@@ -447,7 +519,7 @@ export function Sky3D() {
             <div class="s3-ride-btn-wrap">
               {ended && <p class="s3-ended mono-s">{tx(`${ended} has left the area.`, `${ended} क्षेत्र से बाहर चला गया।`)}</p>}
               <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
-                ✈ {listened ? T("Ride along as a plane dodges the layer") : T("Ride along with a contrail-maker")}
+                ✈ {listened ? T("Ride along as a plane dodges the layer") : view === "satellite" ? T("Ride along until the satellite sees it") : T("Ride along with a contrail-maker")}
               </button>
             </div>
           )
@@ -458,6 +530,7 @@ export function Sky3D() {
             <b class="mono">{hover.cs}</b>
             <span class="mono-s">{[hover.type, `FL${hover.fl}`].filter(Boolean).join(" · ")}</span>
             {hover.inContrail && <span class="hot">{T("leaving a lasting contrail now")}</span>}
+            {seenBy.has(hover.id) && <span class="seen">{T("its contrail was seen by Meteosat-9")}</span>}
             <em>{T("Click to ride along")}</em>
           </div>
         )}
@@ -475,6 +548,11 @@ export function Sky3D() {
           {listened && (
             <span>
               <i class="k-move" /> {T("changing level on STRATUM's advice")}
+            </span>
+          )}
+          {!listened && (
+            <span>
+              <i class="k-seen" /> {T("contrail seen by Meteosat-9 (our detector)")}
             </span>
           )}
           <span class="muted">{T("height ×40 · drag to turn · scroll to zoom")}</span>
@@ -508,6 +586,11 @@ export function Sky3D() {
           ))}
         </span>
       </div>
+      <p class="s3-note small">
+        {T(
+          "What the satellite saw: the contrail lines our learned detector (v3) found in the Meteosat-9 images of this day and matched to the flight that made them (in two images), shown at each image's time and where the satellite saw them, drifted by the wind. Only these derived lines are shown, never the images. Meteosat-9 imagery © EUMETSAT 2026.",
+        )}
+      </p>
       <p class="s3-note small">
         {T(
           "If they had listened: the alerts of our second analysis D-006 (the 60 strongest stretches each day, descriptive, not a pre-registered result). Each alerted plane changes level a few minutes before its stretch and comes back after it, and its lasting contrail there is not drawn; the warming avoided is net of the extra fuel, as on What if we'd listened?. No real flight was changed.",

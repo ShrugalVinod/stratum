@@ -2288,3 +2288,25 @@
 .s3-stage.touring .s3-caption {
   bottom: 44px;
 }
+/* /3d: what the satellite saw (cyan, like the confirmed contrails on the map) */
+.s3-listen button.sat.on {
+  background: #36d1f0;
+  color: #031a22;
+}
+.s3-saved.s3-seen {
+  border-left-color: #36d1f0;
+}
+.s3-saved.s3-seen .label {
+  color: #36d1f0;
+}
+.s3-ride-now.seen,
+.s3-tip .seen {
+  color: #7fe6ff;
+}
+.s3-key .k-seen {
+  height: 4px;
+  vertical-align: 2px;
+  background: #36d1f0;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #36d1f0;
+}

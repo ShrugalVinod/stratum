@@ -21,6 +21,7 @@ const KM_PER_UNIT = 111.2;
 const GROUND = { w: 50, e: 112, s: -6, n: 46 };
 export const DEFAULT_FL = 350; // a flight with no level in our data is drawn here
 const HOME = { pos: new T.Vector3(-3, 15, 27), target: new T.Vector3(0, 2.2, 0) };
+const SAT_VIEW = { pos: new T.Vector3(16, 14, 40), target: new T.Vector3(-6, 5, 8) };
 
 /** Scene coordinates: x east, y up, z south; one unit ≈ one degree. */
 export const xOf = (lon: number) => lon - LON0;
@@ -34,6 +35,10 @@ export type SkyMove = { t0: number; t1: number; dFl: number };
 export type SkyFlight = { id: string; cs: string; type: string | null; mins: number[]; xy: [number, number][]; fl: number; makesContrail: boolean; moves?: SkyMove[] };
 /** ``moved``: the stretch STRATUM advised moving, so this contrail does not form if they listen */
 export type SkyContrail = { flight: string; a: [number, number]; b: [number, number]; fl: number; t0: number; t1: number; lifeMin: number; moved?: boolean };
+/** A contrail Meteosat-9 saw: the lines our detector found in one satellite image (time ``t``,
+ *  minutes UTC), matched to the flight, at the flight's level. Positions as seen (drifted). */
+export type SkyProof = { flight: string; t: number; fl: number; lines: [number, number][][] };
+export type SkyView = "flown" | "listened" | "satellite";
 export type SkyPick = { id: string; cs: string; type: string | null; fl: number; inContrail: boolean; x: number; y: number };
 
 export type SkyHandle = {
@@ -41,11 +46,15 @@ export type SkyHandle = {
   setDay(date: string, flights: SkyFlight[], contrails: SkyContrail[]): void;
   /** "If they had listened": advised planes change level and their contrails do not form */
   setListened(on: boolean): void;
+  /** the contrails the satellite saw this day */
+  setProofs(p: SkyProof[]): void;
+  /** as flown / if they had listened / what the satellite saw */
+  setView(v: SkyView): void;
   /** minutes after 00:00 UTC; the scene reads it every frame */
   time: { min: number };
   follow(id: string | null): void;
   home(): void;
-  stats(): { airborne: number; contrails: number; sunElev: number; moving: number };
+  stats(): { airborne: number; contrails: number; sunElev: number; moving: number; seen: number };
   onPick(fn: (p: SkyPick | null, click: boolean) => void): void;
   /** the followed flight left the scene (landed or flew out of the area) */
   onFollowEnd(fn: () => void): void;
@@ -218,13 +227,13 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   let moving = 0;
 
   // ── lasting contrails: ribbons drawn as the aircraft passes, then spreading and fading ─
-  const contrailUniforms = { uTime: { value: 0 }, uTint: { value: new T.Color(0xffffff) }, uListen: { value: 0 } };
+  const contrailUniforms = { uTime: { value: 0 }, uTint: { value: new T.Color(0xffffff) }, uListen: { value: 0 }, uDim: { value: 1 } };
   const ribbonMat = (vertical: boolean) =>
     new T.ShaderMaterial({
       uniforms: contrailUniforms,
       vertexShader: /* glsl */ `
         attribute vec3 aA; attribute vec3 aB; attribute vec3 aT; attribute float aSeed; attribute float aMoved;
-        uniform float uTime; uniform float uListen;
+        uniform float uTime; uniform float uListen; uniform float uDim;
         varying float vAlpha; varying vec2 vUv; varying float vSeed;
         void main() {
           float t0 = aT.x; float t1 = aT.y; float life = aT.z;
@@ -239,7 +248,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
           p.y -= k * 0.06;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
           float shown = step(0.0, age) * step(age, life);
-          vAlpha = shown * (1.0 - smoothstep(0.55, 1.0, k)) * mix(0.95, 0.4, k) * (1.0 - aMoved * uListen);
+          vAlpha = shown * (1.0 - smoothstep(0.55, 1.0, k)) * mix(0.95, 0.4, k) * (1.0 - aMoved * uListen) * uDim;
           vUv = vec2(along, position.y + 0.5);
           vSeed = aSeed;
         }`,
@@ -261,6 +270,70 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
   const ribbonUp = ribbonMat(true);
   let ribbons: T.Mesh[] = [];
   let contrails: SkyContrail[] = [];
+
+  // ── what the satellite saw: Meteosat-9, its scan, and the contrails it confirmed ─
+  // over 45.5°E on the equator, really 36,000 km up: drawn in the south-west sky, not to scale
+  const SAT = new T.Vector3(-14, 11, 14);
+  const sat = satelliteModel();
+  sat.position.copy(SAT);
+  sat.lookAt(new T.Vector3(0, 0, 0));
+  scene.add(sat);
+  // the scan: SEVIRI sweeps the disc from south to north in about 12½ minutes, every 15 minutes
+  const curtainMat = new T.ShaderMaterial({
+    uniforms: { uOp: { value: 0 } },
+    vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `
+      uniform float uOp; varying vec2 vUv;
+      void main() {
+        float edge = smoothstep(0.0, 0.08, vUv.x) * smoothstep(1.0, 0.92, vUv.x) * smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.6, vUv.y);
+        gl_FragColor = vec4(0.25, 0.85, 1.0, uOp * edge * 0.2);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    side: T.DoubleSide,
+    blending: T.AdditiveBlending,
+  });
+  const curtain = new T.Mesh(new T.PlaneGeometry(36, 3.6), curtainMat);
+  curtain.position.set(xOf(83), 2.9, 0);
+  scene.add(curtain);
+  const beamGeo = new T.BufferGeometry();
+  beamGeo.setAttribute("position", new T.Float32BufferAttribute(new Float32Array(12), 3));
+  const beam = new T.LineSegments(beamGeo, new T.LineBasicMaterial({ color: 0x5fd8ff, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false }));
+  scene.add(beam);
+  const proofMat = new T.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uVis: { value: 0 } },
+    vertexShader: /* glsl */ `
+      attribute float aT; attribute float aEdge;
+      uniform float uTime; uniform float uVis;
+      varying float vA; varying float vEdge;
+      void main() {
+        float age = uTime - aT;
+        float on = step(0.0, age) * (1.0 - smoothstep(15.0, 30.0, age));
+        float flash = 1.0 + 2.5 * exp(-max(age, 0.0) * 0.9);
+        vA = on * flash * uVis;
+        vEdge = aEdge;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: /* glsl */ `
+      varying float vA; varying float vEdge;
+      void main() {
+        float a = vA * exp(-vEdge * vEdge * 3.0);
+        if (a < 0.004) discard;
+        gl_FragColor = vec4(vec3(0.16, 0.78, 0.95) * 1.1, min(a, 1.0));
+      }`,
+    transparent: true,
+    depthWrite: false,
+    side: T.DoubleSide,
+    blending: T.AdditiveBlending,
+  });
+  let proofMesh: T.Mesh | null = null;
+  let proofAt: { flight: string; t: number; c: T.Vector3 }[] = []; // each image's lines, their middle
+  let reveal = 0; // the ride camera swings out to show a confirmation (eased 0 → 1)
+  let proofs: SkyProof[] = [];
+  let view: SkyView = "flown";
+  const vis = { proof: 0.55, dim: 1, sat: 0.6 }; // eased towards the view's targets
+  let lastMin = 0;
+  let rate = 0; // simulated minutes per real second, smoothed (the scan shows only when it is slow enough to read)
 
   // ── post-processing: a soft glow on lights, the sun and the strobes ───────
   let composer: EffectComposer | null = null;
@@ -458,6 +531,33 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     strobeMat.uniforms.uTime.value = secs;
     strobeMat.uniforms.uNight.value = 1 - dayK;
     contrailUniforms.uTime.value = min;
+    // the satellite layer
+    const want = view === "satellite" ? { proof: 1, dim: 0.35, sat: 1 } : view === "listened" ? { proof: 0, dim: 1, sat: 0.25 } : { proof: 0.55, dim: 1, sat: 0.6 };
+    const ek = 1 - Math.exp(-dt * 2.5);
+    vis.proof += (want.proof - vis.proof) * ek;
+    vis.dim += (want.dim - vis.dim) * ek;
+    vis.sat += (want.sat - vis.sat) * ek;
+    contrailUniforms.uDim.value = vis.dim;
+    proofMat.uniforms.uTime.value = min;
+    proofMat.uniforms.uVis.value = vis.proof;
+    if (dt > 0) rate += ((((min - lastMin + 1440) % 1440) / dt - rate) * Math.min(1, dt * 3));
+    lastMin = min;
+    const phase = (min % 15) / 12.5; // the scan's progress, south to north
+    const readable = T.MathUtils.clamp(1 - (rate - 4) / 8, 0, 1);
+    const scanOp = phase <= 1 ? vis.sat * readable * Math.sin(Math.PI * Math.min(1, phase * 1.2)) ** 0.5 : 0;
+    curtainMat.uniforms.uOp.value = scanOp;
+    curtain.visible = scanOp > 0.01;
+    const lat = 4 + 35 * Math.min(1, phase);
+    curtain.position.z = zOf(lat);
+    const bp = beamGeo.getAttribute("position") as T.BufferAttribute;
+    for (const [k, lon] of [[0, 66], [1, 100]] as const) {
+      bp.setXYZ(k * 2, SAT.x, SAT.y, SAT.z);
+      bp.setXYZ(k * 2 + 1, xOf(lon), 5.6, zOf(lat));
+    }
+    bp.needsUpdate = true;
+    (beam.material as T.LineBasicMaterial).opacity = scanOp * 0.5;
+    sat.visible = vis.sat > 0.05;
+    sat.scale.setScalar(1.2 + 0.8 * vis.sat);
     // camera: a scripted move, a ride along, or free orbit
     if (flight) {
       const k = Math.min(1, (now - flight.t0) / flight.ms);
@@ -471,9 +571,22 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
         lostAt = 0;
         camDir.lerp(b.dir, 1 - Math.exp(-dt * 1.5)).normalize();
         const side = new T.Vector3(camDir.z, 0, -camDir.x);
-        const want = b.p.clone().addScaledVector(camDir, -0.62).add(new T.Vector3(0, 0.16, 0)).addScaledVector(side, 0.1);
+        // just confirmed by the satellite (the lines are behind, where the wind took the contrail):
+        // swing out to the side and up so the plane and the cyan lines share the shot
+        const seen = view !== "listened" ? proofAt.find((x) => x.flight === b.f.id && min - x.t >= 0 && min - x.t <= 9) : undefined;
+        reveal += ((seen ? 1 : 0) - reveal) * (1 - Math.exp(-dt * 1.2));
+        const close = b.p.clone().addScaledVector(camDir, -0.62).add(new T.Vector3(0, 0.16, 0)).addScaledVector(side, 0.1);
+        const look = b.p.clone().addScaledVector(camDir, 0.9).add(new T.Vector3(0, -0.03, 0));
+        let want = close;
+        let aim = look;
+        if (seen || reveal > 0.01) {
+          const mid = seen ? b.p.clone().lerp(seen.c, 0.7) : b.p.clone();
+          const wide = mid.clone().addScaledVector(side, 2.2).add(new T.Vector3(0, 1.6, 0)).addScaledVector(camDir, -0.6);
+          want = close.clone().lerp(wide, reveal);
+          aim = look.clone().lerp(mid, reveal);
+        }
         camera.position.lerp(want, 1 - Math.exp(-dt * 2.5));
-        controls.target.lerp(b.p.clone().addScaledVector(camDir, 0.9).add(new T.Vector3(0, -0.03, 0)), 1 - Math.exp(-dt * 5));
+        controls.target.lerp(aim, 1 - Math.exp(-dt * 5));
       } else {
         // not in the air this frame: wait a moment (the clock may just have jumped), then give up
         lostAt ||= now;
@@ -568,6 +681,53 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     setListened(on) {
       listenTo = on ? 1 : 0;
     },
+    setView(v) {
+      // the satellite view frames Meteosat-9 and India together (unless riding along)
+      if (v === "satellite" && view !== "satellite" && !following) fly(SAT_VIEW.pos, SAT_VIEW.target, 2400);
+      view = v;
+      listenTo = v === "listened" ? 1 : 0;
+    },
+    setProofs(ps) {
+      proofs = ps;
+      proofAt = ps.map((p) => {
+        const pts = p.lines.flat();
+        const c = pts.reduce((v, [lo, la]) => v.add(new T.Vector3(xOf(lo), yOf(p.fl), zOf(la))), new T.Vector3()).divideScalar(Math.max(1, pts.length));
+        return { flight: p.flight, t: p.t, c };
+      });
+      if (proofMesh) {
+        scene.remove(proofMesh);
+        proofMesh.geometry.dispose();
+        proofMesh = null;
+      }
+      const pos: number[] = [];
+      const at: number[] = [];
+      const edge: number[] = [];
+      const quad = (a: T.Vector3, b: T.Vector3, side: T.Vector3, t: number) => {
+        const corners = [a.clone().add(side), a.clone().sub(side), b.clone().add(side), b.clone().sub(side)];
+        for (const k of [0, 1, 2, 1, 3, 2]) {
+          pos.push(corners[k].x, corners[k].y, corners[k].z);
+          at.push(t);
+          edge.push(k % 2 === 0 ? 1 : -1);
+        }
+      };
+      for (const p of ps)
+        for (const line of p.lines)
+          for (let i = 1; i < line.length; i++) {
+            const a = new T.Vector3(xOf(line[i - 1][0]), yOf(p.fl), zOf(line[i - 1][1]));
+            const b = new T.Vector3(xOf(line[i][0]), yOf(p.fl), zOf(line[i][1]));
+            const d = b.clone().sub(a).normalize();
+            quad(a, b, new T.Vector3(-d.z, 0, d.x).multiplyScalar(0.045), p.t); // flat, seen from above
+            quad(a, b, new T.Vector3(0, 0.03, 0), p.t); // upright, seen from the side
+          }
+      if (!pos.length) return;
+      const g = new T.BufferGeometry();
+      g.setAttribute("position", new T.Float32BufferAttribute(pos, 3));
+      g.setAttribute("aT", new T.Float32BufferAttribute(at, 1));
+      g.setAttribute("aEdge", new T.Float32BufferAttribute(edge, 1));
+      proofMesh = new T.Mesh(g, proofMat);
+      proofMesh.frustumCulled = false;
+      scene.add(proofMesh);
+    },
     follow(id) {
       following = id;
       flight = null;
@@ -581,7 +741,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
     },
     stats() {
       const min = time.min;
-      return { airborne: airborne.length, contrails: contrails.filter((c) => min >= c.t0 && min - c.t1 <= c.lifeMin && !(c.moved && listenTo)).length, sunElev, moving };
+      return { airborne: airborne.length, contrails: contrails.filter((c) => min >= c.t0 && min - c.t1 <= c.lifeMin && !(c.moved && listenTo)).length, sunElev, moving, seen: new Set(proofs.filter((p) => min >= p.t && min - p.t <= 30).map((p) => p.flight)).size };
     },
     onPick(fn) {
       pickFn = fn;
@@ -648,6 +808,51 @@ function planeGeometry(): T.BufferGeometry {
     0.004,
   );
   return mergeGeometries([body, wing(1), wing(-1), tail(1), tail(-1), engine(0.048), engine(-0.048), fin].map((g) => g.toNonIndexed()))!;
+}
+
+/** Meteosat-9, drawn large enough to see (the real one is 36,000 km away): body, solar drum
+ *  band, antenna, and a label. */
+function satelliteModel(): T.Group {
+  const g = new T.Group();
+  const gold = new T.MeshStandardMaterial({ color: 0xd9b25a, metalness: 0.7, roughness: 0.35, emissive: 0x6a4a10, emissiveIntensity: 0.9, fog: false });
+  const cells = new T.MeshStandardMaterial({ color: 0x2a4f8e, metalness: 0.5, roughness: 0.4, emissive: 0x1a3a7a, emissiveIntensity: 1.1, fog: false });
+  // MSG satellites are spinning drums covered in solar cells
+  const drum = new T.Mesh(new T.CylinderGeometry(0.55, 0.55, 0.8, 24), cells);
+  const top = new T.Mesh(new T.CylinderGeometry(0.56, 0.56, 0.08, 24), gold);
+  top.position.y = 0.44;
+  const bottom = top.clone();
+  bottom.position.y = -0.44;
+  const mast = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 0.7, 8), gold);
+  mast.position.y = 0.8;
+  const dish = new T.Mesh(new T.SphereGeometry(0.22, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.6), gold);
+  dish.position.y = 1.15;
+  g.add(drum, top, bottom, mast, dish);
+  // a glow so it is findable, and its name
+  const glow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture(), color: 0x7fdcff, transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
+  glow.scale.setScalar(3.2);
+  g.add(glow);
+  const c = document.createElement("canvas");
+  c.width = 640;
+  c.height = 128;
+  const x = c.getContext("2d")!;
+  // a dark tag, so the name reads against a bright day sky too
+  x.fillStyle = "rgba(6, 14, 28, 0.78)";
+  x.beginPath();
+  x.roundRect(0, 0, 640, 128, 18);
+  x.fill();
+  x.fillStyle = "#36d1f0";
+  x.fillRect(0, 0, 8, 128);
+  x.font = "700 46px 'Archivo', system-ui, sans-serif";
+  x.fillStyle = "#e9f6ff";
+  x.fillText("METEOSAT-9", 28, 56);
+  x.font = "500 30px 'Martian Mono', monospace";
+  x.fillStyle = "#8fbcd6";
+  x.fillText("36,000 km up · not to scale", 28, 104);
+  const label = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(c), transparent: true, depthWrite: false, fog: false }));
+  label.scale.set(4, 0.8, 1);
+  label.position.set(0, -1.5, 0);
+  g.add(label);
+  return g;
 }
 
 /** A soft round glow for point lights. */

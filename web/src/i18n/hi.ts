@@ -1632,4 +1632,24 @@ export const HI: Record<string, string> = {
     "STRATUM। विमान हटाइए। बादल हटाइए।",
   "If they had listened: the alerts of our second analysis D-006 (the 60 strongest stretches each day, descriptive, not a pre-registered result). Each alerted plane changes level a few minutes before its stretch and comes back after it, and its lasting contrail there is not drawn; the warming avoided is net of the extra fuel, as on What if we'd listened?. No real flight was changed.":
     "अगर बात मानी जाती: हमारे दूसरे विश्लेषण D-006 की चेतावनियाँ (हर दिन के 60 सबसे प्रबल हिस्से, वर्णनात्मक, पहले से दर्ज नतीजा नहीं)। हर चेतावनी वाला विमान अपने हिस्से से कुछ मिनट पहले लेवल बदलता है और बाद में लौटता है, और वहाँ उसकी टिकाऊ कंट्रेल नहीं दिखाई जाती; टली गर्मी अतिरिक्त ईंधन घटाकर है, जैसे 'अगर हमारी बात मानी जाती?' पर। कोई असली उड़ान नहीं बदली गई।",
+  "What the satellite saw":
+    "सैटेलाइट ने क्या देखा",
+  "Watch the story (1½ min)":
+    "कहानी देखिए (1½ मिनट)",
+  "Over our 12 days, physics flags about 6× more lasting contrails than the satellite sees (H1): most are too thin to detect.":
+    "हमारे 12 दिनों में भौतिकी सैटेलाइट से लगभग 6× ज़्यादा टिकाऊ कंट्रेल बताती है (H1): ज़्यादातर इतनी पतली हैं कि दिखती नहीं।",
+  "Ride along until the satellite sees it":
+    "सैटेलाइट के देखने तक साथ उड़िए",
+  "its contrail was seen by Meteosat-9":
+    "इसकी कंट्रेल Meteosat-9 ने देखी",
+  "contrail seen by Meteosat-9 (our detector)":
+    "Meteosat-9 द्वारा देखी गई कंट्रेल (हमारा डिटेक्टर)",
+  "Is it real? Meteosat-9 scans India every 15 minutes.":
+    "क्या यह असली है? Meteosat-9 हर 15 मिनट में भारत को स्कैन करता है।",
+  "Cyan: the contrail our detector found in the real satellite image, matched to the plane that made it.":
+    "नीला: वह कंट्रेल जो हमारे डिटेक्टर ने असली सैटेलाइट तस्वीर में पाई, उसे बनाने वाले विमान से मिलाई गई।",
+  "Physics alone flags about six times more lasting contrails than the satellite sees. STRATUM checks the forecast against the satellite every day.":
+    "अकेली भौतिकी सैटेलाइट से लगभग छह गुना ज़्यादा टिकाऊ कंट्रेल बताती है। STRATUM हर दिन पूर्वानुमान को सैटेलाइट से जाँचता है।",
+  "What the satellite saw: the contrail lines our learned detector (v3) found in the Meteosat-9 images of this day and matched to the flight that made them (in two images), shown at each image's time and where the satellite saw them, drifted by the wind. Only these derived lines are shown, never the images. Meteosat-9 imagery © EUMETSAT 2026.":
+    "सैटेलाइट ने क्या देखा: वे कंट्रेल रेखाएँ जो हमारे सीखे हुए डिटेक्टर (v3) ने इस दिन की Meteosat-9 तस्वीरों में पाईं और उन्हें बनाने वाली उड़ान से मिलाईं (दो तस्वीरों में), हर तस्वीर के समय पर और वहीं जहाँ सैटेलाइट ने उन्हें देखा, हवा से खिसकी हुई। केवल ये निकाली गई रेखाएँ दिखाई गई हैं, तस्वीरें कभी नहीं। Meteosat-9 imagery © EUMETSAT 2026।",
 };
