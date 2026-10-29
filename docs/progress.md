@@ -2,6 +2,18 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-29 — "Be the controller" and the narrated story
+
+**Done**
+- /3d "🎮 Be the controller": 1 Feb 2026, 18:30–19:30 IST. Twelve real airliners heading into
+  lasting-contrail air, chosen where a wrong call is costly and mixing the right answers
+  (descend / climb / leave it). The visitor picks ▲ 2,000 ft, ▼ 2,000 ft or – for each, flies the
+  hour (planes change level, contrails form or not), then You vs STRATUM: warming avoided net of
+  the extra fuel's CO₂ and the fuel, scored with Live advice's sums (lib/advice levelChoice);
+  STRATUM picks from the same three moves. "Watch STRATUM's choices" replays its hour.
+  Check: all ▼ 115 t for 999 kg vs STRATUM 126 t for 585 kg; all ▲ −3.9 t; all – 0.
+- The story is narrated (browser speech, English or Hindi with the site's language; 🔊 switch).
+
 ## 2026-10-29 — "Your flight, in 3D"
 
 **Done**

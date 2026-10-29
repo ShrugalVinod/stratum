@@ -5,7 +5,8 @@ import { type Live, sampler, upcoming, usualLevel } from "../lib/advice";
 import { AIRPORTS, airport, PLAN_TYPES } from "../lib/footprint";
 import { buildLiveSky, buildMyFlight, fromUpcoming, type MyFlight, type MyTrip } from "../lib/liveSky";
 import { loadSchedule } from "../data/load";
-import { T, tx } from "../i18n";
+import { T, tx, useLang } from "../i18n";
+import { applyMoves, type GamePlane, gamePlanes, type Move, score } from "../lib/controller";
 import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick, SkyProof, SkyView } from "../three/sky";
 import "../styles/map.css";
 
@@ -25,6 +26,7 @@ const SPEEDS = [
   { k: "day", label: "Whole day", perSec: 60 },
   { k: "tour", label: "", perSec: 10 }, // the story's own pace (no button)
   { k: "live", label: "Real time", perSec: 1 / 60 }, // live: one minute a minute
+  { k: "game", label: "", perSec: 3 }, // "Be the controller": the hour in 20 s
 ] as const;
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
@@ -34,6 +36,10 @@ const tonnes = (kg: number) => (kg >= 9_950 ? Math.round(kg / 1000).toLocaleStri
 /** One of the day's STRATUM alerts (second analysis D-006): a stretch, its advised level, what it saves. */
 type Alert = { flight: string; cs: string; t0: number; t1: number; fl: number; alt: number; low: number; p50: number; fuelKg: number };
 const TOUR_DAY = "2026-02-01";
+// "Be the controller": one hour of that real evening (18:30–19:30 IST)
+const GAME_W0 = 13 * 60;
+const GAME_W1 = 14 * 60;
+type Game = { phase: "loading" | "plan" | "fly" | "result"; planes: GamePlane[]; choice: Record<string, Move>; who: "you" | "stratum" };
 const LIVE = "live"; // the day menu's "Live now": today's real airliners and today's forecast
 const YOU = "you"; // "Your flight": one planned trip on the forecast, runway to runway
 const CAR_KG_PER_KM = 0.14; // CO₂ of a typical petrol car per km (approximate), for the postcard
@@ -78,6 +84,10 @@ export function Sky3D() {
   const alertsRef = useRef<Alert[]>([]);
   // the one-minute story (?tour=1, or the button)
   const [tour, setTour] = useState(false);
+  const [game, setGame] = useState<Game | null>(null);
+  const [dayKey, setDayKey] = useState(0); // bumped to reload the day after a game
+  const [voice, setVoice] = useState(true);
+  const lang = useLang();
   const [caption, setCaption] = useState<string | null>(null);
   const tourRef = useRef(false);
   tourRef.current = tour;
@@ -314,7 +324,7 @@ export function Sky3D() {
       })
       .catch(() => setErr(T("This day could not be loaded.")))
       .finally(() => setLoading(false));
-  }, [ready, date, trip]);
+  }, [ready, date, trip, dayKey]);
 
   useEffect(() => {
     eng.current?.setView(view);
@@ -502,6 +512,76 @@ export function Sky3D() {
     };
   }, [tour, ready, loading, date]);
 
+  // "Be the controller": the hour's planes, once the day is loaded
+  useEffect(() => {
+    if (game?.phase !== "loading" || !ready || loading || date !== TOUR_DAY || !man || !build || !flightsRef.current.length) return;
+    const info = man.layers?.find((l) => l.id === "B1");
+    if (!info) return;
+    (async () => {
+      const sprites = new Map<string, { data: Uint8Array; width: number; height: number }>();
+      await Promise.all(man.flight_levels.map(async ({ fl }) => sprites.set(`${TOUR_DAY}|${fl}`, await loadGridBytes(layerUrl(build, TOUR_DAY, info.file, fl)))));
+      const planes = gamePlanes(flightsRef.current, Date.parse(`${TOUR_DAY}T00:00:00Z`), GAME_W0, GAME_W1, sampler(man, sprites));
+      setFollowing(null);
+      eng.current?.home();
+      setPlay(false);
+      sim.current = GAME_W0 - 2;
+      if (eng.current) eng.current.time.min = sim.current;
+      viewRef.current = "listened";
+      setView("listened");
+      setGame({ phase: "plan", planes, choice: {}, who: "you" });
+      flyGame({}, planes, false);
+    })().catch(() => setGame(null));
+  }, [game?.phase, ready, loading, date, man, build]);
+
+  // the scene for a set of choices: the hour's planes moved as chosen (no other advice applied)
+  function flyGame(choice: Record<string, Move>, planes: GamePlane[], go = true) {
+    const day0 = Date.parse(`${TOUR_DAY}T00:00:00Z`);
+    const { moves, contrails } = applyMoves(planes, choice, day0);
+    const ids = new Set(planes.map((p) => p.f.id));
+    const fls = flightsRef.current.map((f) => ({ ...f, moves: moves.get(f.id) }));
+    const base = contrailsRef.current.filter((c) => !ids.has(c.flight)).map((c) => ({ ...c, moved: false }));
+    eng.current?.setDay(TOUR_DAY, fls, [...base, ...contrails]);
+    if (!go) return;
+    sim.current = GAME_W0 - 3;
+    if (eng.current) eng.current.time.min = sim.current;
+    setSpeed("game");
+    setPlay(true);
+  }
+  useEffect(() => {
+    if (game?.phase === "fly" && clock >= GAME_W1 + 2) {
+      setPlay(false);
+      setGame((g) => g && { ...g, phase: "result" });
+    }
+  }, [clock, game?.phase]);
+  function startGame() {
+    stopRide();
+    setTour(false);
+    setTrip(null);
+    if (date !== TOUR_DAY) setDate(TOUR_DAY);
+    setGame({ phase: "loading", planes: [], choice: {}, who: "you" });
+  }
+  function endGame() {
+    setGame(null);
+    setSpeed("fast");
+    setView("flown");
+    setDayKey((k) => k + 1); // the day as it really was
+  }
+
+  // the story read aloud (the browser's own voice, in the site's language)
+  useEffect(() => {
+    if (typeof speechSynthesis === "undefined") return;
+    if (!tour || !caption || !voice) return speechSynthesis.cancel();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(caption);
+    const code = lang === "hi" ? "hi" : "en";
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find((x) => x.lang.replace("_", "-").startsWith(`${code}-IN`)) ?? voices.find((x) => x.lang.startsWith(code));
+    if (v) u.voice = v;
+    u.lang = code === "hi" ? "hi-IN" : "en-IN";
+    u.rate = 0.98;
+    speechSynthesis.speak(u);
+  }, [caption, tour, voice, lang]);
+
   // what the advice has saved so far today (if they listened)
   const sofar = alerts.filter((a) => clock >= a.t0);
   const saved = { n: sofar.length, p50: sofar.reduce((s, a) => s + a.p50, 0), low: sofar.reduce((s, a) => s + a.low, 0), fuel: sofar.reduce((s, a) => s + a.fuelKg, 0) };
@@ -556,7 +636,7 @@ export function Sky3D() {
 
   return (
     <div class="sky3d">
-      <div class={`s3-stage ${tour ? "touring" : ""}`} ref={box}>
+      <div class={`s3-stage ${tour ? "touring" : ""} ${game ? "gaming" : ""}`} ref={box}>
         {err && <p class="s3-msg mono">{err}</p>}
         {(!ready || loading) && !err && <p class="s3-msg mono s3-loading">{T("Building the sky over India…")}</p>}
 
@@ -598,6 +678,14 @@ export function Sky3D() {
                   {T("If they had listened")}
                 </button>
               </span>
+              <button class="s3-btn s3-game-btn" onClick={startGame}>
+                🎮 {T("Be the controller")}
+              </button>
+              {tour && (
+                <button class="s3-btn" onClick={() => setVoice(!voice)} aria-pressed={voice}>
+                  {voice ? "🔊" : "🔇"} {T("Narration")}
+                </button>
+              )}
               <button class="s3-btn s3-fly-btn" onClick={() => setPlanner(true)}>
                 ✈ {T("Fly your own flight")}
               </button>
@@ -666,6 +754,11 @@ export function Sky3D() {
             start={trip}
           />
         )}
+        {game && <GamePanel game={game} clock={clock} onChoose={(id, m) => setGame((g) => g && { ...g, choice: { ...g.choice, [id]: m } })} onFly={() => (setGame((g) => g && { ...g, phase: "fly", who: "you" }), flyGame(game.choice, game.planes))} onStratum={() => {
+          const best = Object.fromEntries(game.planes.map((p) => [p.f.id, p.best]));
+          setGame((g) => g && { ...g, phase: "fly", who: "stratum" });
+          flyGame(best, game.planes);
+        }} onAgain={() => (setGame((g) => g && { ...g, phase: "plan", choice: {}, who: "you" }), flyGame({}, game.planes, false), (sim.current = GAME_W0 - 2), setPlay(false))} onExit={endGame} />}
         {caption && (
           <p class="s3-caption display" key={caption}>
             {caption}
@@ -933,6 +1026,107 @@ function Postcard({ trip, me, again, plan }: { trip: MyTrip; me: MyFlight; again
           ✈ {T("Another flight")}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** "Be the controller": choose a move for each plane, fly the hour, then compare with STRATUM. */
+function GamePanel(p: {
+  game: Game;
+  clock: number;
+  onChoose: (id: string, m: Move) => void;
+  onFly: () => void;
+  onStratum: () => void;
+  onAgain: () => void;
+  onExit: () => void;
+}) {
+  const g = p.game;
+  if (g.phase === "loading") return <div class="s3-game"><p class="label">{T("Be the controller")}</p><p>{T("Getting the hour ready…")}</p></div>;
+  const you = score(g.planes, g.choice);
+  const best = score(g.planes, Object.fromEntries(g.planes.map((x) => [x.f.id, x.best])));
+  const t = (kg: number) => `${(kg / 1000).toFixed(1)} t`;
+  return (
+    <div class="s3-game" role="dialog" aria-label={T("Be the controller")}>
+      <p class="label">{T("Be the controller")} · 1 Feb 2026 · 18:30–19:30 IST</p>
+      {g.phase === "plan" && (
+        <>
+          <p class="small">{T("These airliners are heading into air where their contrails would last. For each one: climb 2,000 ft, descend 2,000 ft, or leave it. Every move costs fuel. Then fly the hour and see how STRATUM did with the same choices.")}</p>
+          <ul class="s3-game-list">
+            {g.planes.map((x) => {
+              const c = g.choice[x.f.id] ?? "none";
+              return (
+                <li>
+                  <span class="mono">{x.f.cs}</span>
+                  <span class="mono-s muted">
+                    {x.f.type ?? ""} · FL{x.f.fl} · {tx(`${x.n} min in lasting air`, `${x.n} मिनट टिकाऊ हवा में`)}
+                  </span>
+                  <span class="s3-game-moves" role="radiogroup" aria-label={x.f.cs}>
+                    <button role="radio" aria-checked={c === "up"} class={c === "up" ? "on" : ""} disabled={!x.up} onClick={() => p.onChoose(x.f.id, "up")} title={T("Climb 2,000 ft")}>
+                      ▲
+                    </button>
+                    <button role="radio" aria-checked={c === "none"} class={c === "none" ? "on" : ""} onClick={() => p.onChoose(x.f.id, "none")} title={T("Leave it")}>
+                      –
+                    </button>
+                    <button role="radio" aria-checked={c === "down"} class={c === "down" ? "on" : ""} disabled={!x.down} onClick={() => p.onChoose(x.f.id, "down")} title={T("Descend 2,000 ft")}>
+                      ▼
+                    </button>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <div class="s3-form-go">
+            <button class="s3-btn" onClick={p.onExit}>
+              {T("Exit")}
+            </button>
+            <button class="s3-btn s3-fly-go" onClick={p.onFly}>
+              ▶ {T("Fly the hour")}
+            </button>
+          </div>
+        </>
+      )}
+      {g.phase === "fly" && (
+        <p>
+          {g.who === "you" ? T("Flying your choices…") : T("Flying STRATUM's choices…")} <span class="mono">{hhmm((p.clock + 330) % 1440)} IST</span>
+        </p>
+      )}
+      {g.phase === "result" && (
+        <>
+          <div class="s3-game-score">
+            <div>
+              <span class="label">{T("You")}</span>
+              <b class="display">{t(you.net)}</b>
+              <span class="mono-s">{tx(`CO₂e avoided · ${Math.round(you.fuel)} kg fuel · ${you.moved} moved`, `CO₂e टली · ${Math.round(you.fuel)} kg ईंधन · ${you.moved} हटे`)}</span>
+            </div>
+            <div class="stratum">
+              <span class="label">STRATUM</span>
+              <b class="display">{t(best.net)}</b>
+              <span class="mono-s">{tx(`CO₂e avoided · ${Math.round(best.fuel)} kg fuel · ${best.moved} moved`, `CO₂e टली · ${Math.round(best.fuel)} kg ईंधन · ${best.moved} हटे`)}</span>
+            </div>
+          </div>
+          <p>
+            {g.who === "stratum"
+              ? T("That was STRATUM's hour: it knew which humid air really lasts, and when a move costs more fuel than it saves.")
+              : you.net >= best.net - 1
+                ? T("You matched STRATUM. Air-traffic control is hiring.")
+                : tx(`You got ${Math.max(0, Math.round((you.net / Math.max(1, best.net)) * 100))} % of what STRATUM avoided.`, `आपने STRATUM की टाली गर्मी का ${Math.max(0, Math.round((you.net / Math.max(1, best.net)) * 100))} % पाया।`)}
+          </p>
+          <p class="mono-s muted">{T("Scored with the same physics and fuel numbers as Live advice (warming net of the extra fuel's CO₂, central estimate); STRATUM picks from the same three moves. Real flights and weather of that evening; no real flight was changed.")}</p>
+          <div class="s3-form-go">
+            <button class="s3-btn" onClick={p.onExit}>
+              {T("Exit")}
+            </button>
+            <button class="s3-btn" onClick={p.onAgain}>
+              ↻ {T("Play again")}
+            </button>
+            {g.who === "you" && (
+              <button class="s3-btn s3-fly-go" onClick={p.onStratum}>
+                ▶ {T("Watch STRATUM's choices")}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

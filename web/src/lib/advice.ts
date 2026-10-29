@@ -332,3 +332,28 @@ export function totals(list: (Advice | null)[]) {
     }
   return { n, p50, low, fuel };
 }
+
+/** "Be the controller" (/3d): what flying ``alt`` instead of ``fl`` would do over the stretches
+ *  of ``path`` in lasting-contrail air — the same sums as advise(), for any one move. Null when the
+ *  move is not possible (outside FL280–FL420 or above the type's ceiling) or there is nothing to avoid. */
+export function levelChoice(path: Point[], fl: number, alt: number, type: string, sample: Sample) {
+  const lasting = path.map((p) => {
+    const v = b1At(sample, p, fl);
+    return v != null && v >= LASTING;
+  });
+  const n = lasting.filter(Boolean).length;
+  const co2Here = co2At(type, fl);
+  const co2Alt = co2At(type, alt);
+  if (!n || co2Here == null || co2Alt == null || alt < MIN_FL || alt > Math.min(MAX_FL, ceiling(type))) return null;
+  const spans = stretches(lasting, PAD_MIN);
+  let left = 0;
+  let win = 0;
+  for (const [a, b] of spans)
+    for (let i = a; i < b; i++) {
+      win++;
+      const v = b1At(sample, path[i], alt);
+      if (v == null || v >= LASTING) left++;
+    }
+  const extraCo2 = (co2Alt - co2Here) * win;
+  return { net: (n - left) * co2eKg(EF_PER_MIN_J.p50) - extraCo2, fuelKg: extraCo2 / CO2_PER_FUEL, spans, lasting, left, n };
+}

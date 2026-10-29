@@ -1696,4 +1696,34 @@ export const HI: Record<string, string> = {
     "उस हवा में जहाँ कंट्रेल टिकती है: आपकी कंट्रेल घंटों पीछे रहेगी।",
   "The sky over India · your flight": "भारत के ऊपर आसमान · आपकी उड़ान",
   "Fly it in 3D": "इसे 3D में उड़ाइए",
+  "Be the controller":
+    "नियंत्रक बनिए",
+  "Narration":
+    "आवाज़",
+  "Getting the hour ready…":
+    "घंटा तैयार हो रहा है…",
+  "These airliners are heading into air where their contrails would last. For each one: climb 2,000 ft, descend 2,000 ft, or leave it. Every move costs fuel. Then fly the hour and see how STRATUM did with the same choices.":
+    "ये विमान ऐसी हवा की ओर जा रहे हैं जहाँ उनकी कंट्रेल टिकेगी। हर एक के लिए: 2,000 फ़ुट ऊपर, 2,000 फ़ुट नीचे, या वैसे ही छोड़ दें। हर बदलाव में ईंधन लगता है। फिर घंटा उड़ाइए और देखिए STRATUM ने उन्हीं विकल्पों से क्या किया।",
+  "Climb 2,000 ft":
+    "2,000 फ़ुट ऊपर",
+  "Leave it":
+    "वैसे ही छोड़ें",
+  "Descend 2,000 ft":
+    "2,000 फ़ुट नीचे",
+  "Exit":
+    "बाहर",
+  "Fly the hour":
+    "घंटा उड़ाइए",
+  "Flying your choices…":
+    "आपके फ़ैसले उड़ रहे हैं…",
+  "Flying STRATUM's choices…":
+    "STRATUM के फ़ैसले उड़ रहे हैं…",
+  "That was STRATUM's hour: it knew which humid air really lasts, and when a move costs more fuel than it saves.":
+    "यह STRATUM का घंटा था: उसे पता था कि कौन-सी नम हवा सच में टिकती है, और कब कोई बदलाव बचत से ज़्यादा ईंधन लेता है।",
+  "You matched STRATUM. Air-traffic control is hiring.":
+    "आपने STRATUM की बराबरी की। हवाई यातायात नियंत्रण में भर्ती चल रही है।",
+  "Scored with the same physics and fuel numbers as Live advice (warming net of the extra fuel's CO₂, central estimate); STRATUM picks from the same three moves. Real flights and weather of that evening; no real flight was changed.":
+    "लाइव सलाह वाली ही भौतिकी और ईंधन आँकड़ों से अंक (अतिरिक्त ईंधन का CO₂ घटाकर गर्मी, मध्य अनुमान); STRATUM उन्हीं तीन विकल्पों में से चुनता है। उस शाम की असली उड़ानें और मौसम; कोई असली उड़ान नहीं बदली गई।",
+  "Watch STRATUM's choices":
+    "STRATUM के फ़ैसले देखिए",
 };

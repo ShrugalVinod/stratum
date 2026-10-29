@@ -2430,3 +2430,114 @@
     grid-template-columns: 1fr;
   }
 }
+/* /3d: be the controller */
+.s3-game-btn {
+  border-color: #3fe0cc;
+}
+.s3-game {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  top: 150px;
+  z-index: 4;
+  width: min(430px, calc(100% - 44px));
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px 20px;
+  background: rgba(6, 12, 24, 0.9);
+  border: 1px solid var(--s3-line);
+  border-top: 3px solid #3fe0cc;
+  backdrop-filter: blur(12px);
+  color: var(--s3-ink);
+  animation: rise 0.5s var(--ease) both;
+}
+.s3-game .label {
+  margin: 0;
+  color: #3fe0cc;
+}
+.s3-game p {
+  margin: 0;
+}
+.s3-game-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.s3-game-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--s3-line);
+}
+.s3-game-list .mono-s {
+  grid-column: 1;
+}
+.s3-game-moves {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  display: inline-flex;
+  border: 1px solid var(--s3-line);
+}
+.s3-game-moves button {
+  width: 38px;
+  height: 32px;
+  border: 0;
+  border-right: 1px solid var(--s3-line);
+  background: none;
+  color: var(--s3-ink);
+  cursor: pointer;
+  font-size: 14px;
+}
+.s3-game-moves button:last-child {
+  border-right: 0;
+}
+.s3-game-moves button.on {
+  background: #3fe0cc;
+  color: #04201c;
+}
+.s3-game-moves button:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.s3-game-score {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.s3-game-score > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--s3-line);
+}
+.s3-game-score .stratum {
+  border-color: #3fe0cc;
+}
+.s3-game-score b {
+  font-size: clamp(30px, 3.4vw, 46px);
+  line-height: 1;
+  color: var(--s3-ink);
+}
+.s3-stage.gaming .s3-key,
+.s3-stage.gaming .s3-ride,
+.s3-stage.gaming .s3-ride-btn-wrap,
+.s3-stage.gaming .s3-saved {
+  display: none;
+}
+@media (max-width: 760px) {
+  .s3-game {
+    left: 14px;
+    right: 14px;
+    width: auto;
+    top: auto;
+    bottom: 14px;
+    max-height: 70%;
+  }
+}
