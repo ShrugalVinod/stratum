@@ -2,6 +2,19 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-29 — The 3D sky, live ("● Live now")
+
+**Done**
+- /3d?date=live: the airliners in the air over India right now (the live feed, with routes and
+  types; the recorded sky if OpenSky is down, labelled) on their paths ahead, over today's
+  ECMWF forecast humid air (outlook B1, every level), in real time by default. Each plane's
+  lasting contrails are drawn where its path crosses lasting-contrail air (as on Live advice,
+  lifetime the CoCiP median 3.8 h), and "If they had listened" applies Live advice's alerts:
+  the planes change level around each stretch and those contrails do not form. Ride-along works
+  live. The satellite view stays for past days. web/src/lib/liveSky.ts + tests.
+- First run (29 Oct, 17:40 IST): 233 airliners, 3 alerts, 21 t CO₂e of warming avoided if
+  followed.
+
 ## 2026-10-28 — 3D sky: "What the satellite saw" (proof from space)
 
 **Done**

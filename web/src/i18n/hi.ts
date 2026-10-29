@@ -1652,4 +1652,20 @@ export const HI: Record<string, string> = {
     "अकेली भौतिकी सैटेलाइट से लगभग छह गुना ज़्यादा टिकाऊ कंट्रेल बताती है। STRATUM हर दिन पूर्वानुमान को सैटेलाइट से जाँचता है।",
   "What the satellite saw: the contrail lines our learned detector (v3) found in the Meteosat-9 images of this day and matched to the flight that made them (in two images), shown at each image's time and where the satellite saw them, drifted by the wind. Only these derived lines are shown, never the images. Meteosat-9 imagery © EUMETSAT 2026.":
     "सैटेलाइट ने क्या देखा: वे कंट्रेल रेखाएँ जो हमारे सीखे हुए डिटेक्टर (v3) ने इस दिन की Meteosat-9 तस्वीरों में पाईं और उन्हें बनाने वाली उड़ान से मिलाईं (दो तस्वीरों में), हर तस्वीर के समय पर और वहीं जहाँ सैटेलाइट ने उन्हें देखा, हवा से खिसकी हुई। केवल ये निकाली गई रेखाएँ दिखाई गई हैं, तस्वीरें कभी नहीं। Meteosat-9 imagery © EUMETSAT 2026।",
+  "Live now":
+    "अभी लाइव",
+  "Live":
+    "लाइव",
+  "The live sky cannot be loaded right now. Try again in a minute.":
+    "लाइव आसमान अभी लोड नहीं हो सकता। एक मिनट बाद फिर कोशिश कीजिए।",
+  "The satellite check is for past days":
+    "सैटेलाइट जाँच पिछले दिनों के लिए है",
+  "today's forecast is not published yet":
+    "आज का पूर्वानुमान अभी प्रकाशित नहीं हुआ",
+  "Real time":
+    "असली समय",
+  "The sky over India · live":
+    "भारत के ऊपर आसमान · लाइव",
+  "lasting contrail (today's forecast)":
+    "टिकाऊ कंट्रेल (आज का पूर्वानुमान)",
 };

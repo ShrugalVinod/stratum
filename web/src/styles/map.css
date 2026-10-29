@@ -2310,3 +2310,27 @@
   border-radius: 2px;
   box-shadow: 0 0 8px #36d1f0;
 }
+/* /3d live */
+.s3-live {
+  margin: 8px 0 0;
+  max-width: 560px;
+  padding: 6px 12px;
+  background: var(--s3-glass);
+  border: 1px solid var(--s3-line);
+  border-left: 3px solid #ff4d4d;
+  color: var(--s3-dim);
+  backdrop-filter: blur(8px);
+}
+.s3-live b {
+  color: #ff6b6b;
+  animation: s3-blink 1.6s infinite;
+}
+@keyframes s3-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+.s3-seg button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { FlaggedSegment, Manifest } from "../data/contract";
-import { currentBuild, layerUrl, loadContrailDay, loadGridBytes, loadManifest, loadReplayDay, loadWeighted } from "../data/load";
+import { currentBuild, layerUrl, loadContrailDay, loadGridBytes, loadLive, loadManifest, loadOutlook, loadOutlookB1, loadReplayDay, loadWeighted } from "../data/load";
+import { type Live, sampler } from "../lib/advice";
+import { buildLiveSky } from "../lib/liveSky";
 import { T, tx } from "../i18n";
 import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick, SkyProof, SkyView } from "../three/sky";
 import "../styles/map.css";
@@ -20,6 +22,7 @@ const SPEEDS = [
   { k: "fast", label: "Fast", perSec: 20 },
   { k: "day", label: "Whole day", perSec: 60 },
   { k: "tour", label: "", perSec: 10 }, // the story's own pace (no button)
+  { k: "live", label: "Real time", perSec: 1 / 60 }, // live: one minute a minute
 ] as const;
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
@@ -29,6 +32,7 @@ const tonnes = (kg: number) => (kg >= 9_950 ? Math.round(kg / 1000).toLocaleStri
 /** One of the day's STRATUM alerts (second analysis D-006): a stretch, its advised level, what it saves. */
 type Alert = { flight: string; cs: string; t0: number; t1: number; fl: number; alt: number; low: number; p50: number; fuelKg: number };
 const TOUR_DAY = "2026-02-01";
+const LIVE = "live"; // the day menu's "Live now": today's real airliners and today's forecast
 
 export function Sky3D() {
   const box = useRef<HTMLDivElement>(null);
@@ -49,6 +53,7 @@ export function Sky3D() {
   const [following, setFollowing] = useState<SkyFlight | null>(null);
   const [contrails, setContrails] = useState<SkyContrail[]>([]);
   const [ended, setEnded] = useState<string | null>(null);
+  const [liveInfo, setLiveInfo] = useState<{ n: number; run: string; fb: { recorded_t: number; reason: string } | null; covered: boolean } | null>(null);
   const flightsRef = useRef<SkyFlight[]>([]);
   const contrailsRef = useRef<SkyContrail[]>([]);
   // "If they had listened": the day's alerts, flown at the advised level
@@ -76,7 +81,7 @@ export function Sky3D() {
         setBuild(b);
         const d = q.get("date");
         const days = manifest.days_with_flights.length ? manifest.days_with_flights : manifest.days;
-        setDate(d && days.includes(d) ? d : days.includes("2026-02-01") ? "2026-02-01" : days[days.length - 1]);
+        setDate(d === LIVE || (d && days.includes(d)) ? d : days.includes("2026-02-01") ? "2026-02-01" : days[days.length - 1]);
         const h = Number(q.get("hour"));
         if (q.get("hour") && Number.isInteger(h) && h >= 0 && h < 24) sim.current = h * 60;
         else sim.current = 13 * 60; // early evening in India: the sun sets and the contrails come out
@@ -126,6 +131,43 @@ export function Sky3D() {
   useEffect(() => {
     if (!ready || !date) return;
     setLoading(true);
+    if (date === LIVE) {
+      // live: the airliners in the air now on their paths ahead, today's forecast humid air,
+      // the contrails they would leave, and STRATUM's advice for them (as on Live advice)
+      (async () => {
+        const o = await loadOutlook();
+        if (!o) throw new Error("no forecast");
+        const [sprites, feed] = await Promise.all([loadOutlookB1(o.manifest), loadLive(20.5, 78.9, "allow")]);
+        const at = Date.now();
+        const today = new Date(at).toISOString().slice(0, 10);
+        const sky = buildLiveSky(feed.ac as Live[], at, sampler(o.manifest, sprites));
+        const scale = o.manifest.layers?.find((l) => l.id === "B1")?.full_scale ?? 1;
+        const levels = o.manifest.flight_levels.flatMap(({ fl }) => {
+          const sprite = sprites.get(`${today}|${fl}`);
+          return sprite ? [{ fl, sprite }] : [];
+        });
+        eng.current?.setHumid(levels, o.manifest.grid, (v) => v * scale);
+        seenRef.current = [];
+        setSeenBy(new Map());
+        eng.current?.setProofs([]);
+        alertsRef.current = sky.alerts.sort((a, b) => a.t0 - b.t0);
+        setAlerts(alertsRef.current);
+        flightsRef.current = sky.flights;
+        contrailsRef.current = sky.contrails;
+        setContrails(sky.contrails);
+        eng.current?.setDay(today, sky.flights, sky.contrails);
+        sim.current = (at - Date.parse(`${today}T00:00:00Z`)) / 60_000;
+        setSpeed("live");
+        setPlay(true);
+        setView((v) => (v === "satellite" ? "flown" : v));
+        setLiveInfo({ n: feed.ac.length, run: o.info.run, fb: feed.fallback ?? null, covered: levels.length > 0 });
+      })()
+        .catch(() => setErr(T("The live sky cannot be loaded right now. Try again in a minute.")))
+        .finally(() => setLoading(false));
+      return;
+    }
+    setLiveInfo(null);
+    setSpeed((sp) => (sp === "live" ? "fast" : sp));
     Promise.all([loadReplayDay(date), loadWeighted(date), loadContrailDay(date).catch(() => [])])
       .then(([{ flights, b1 }, weighted, seen]) => {
         // what the satellite saw: the detector's matched lines in each image, at the flight's level
@@ -206,7 +248,7 @@ export function Sky3D() {
 
   // the humid air for the day, every flight level
   useEffect(() => {
-    if (!ready || !man || !date || !build) return;
+    if (!ready || !man || !date || !build || date === LIVE) return;
     const info = man.layers?.find((l) => l.id === layer);
     if (!info) return;
     let alive = true;
@@ -426,7 +468,7 @@ export function Sky3D() {
 
         <div class="s3-top">
           <div class="s3-title">
-            <p class="label">{T("The sky over India · one real day")}</p>
+            <p class="label">{date === LIVE ? T("The sky over India · live") : T("The sky over India · one real day")}</p>
             <h1 class="display">{T("Where contrails are born")}</h1>
             <div class="s3-stats mono-s" aria-live="polite">
               <span>
@@ -437,6 +479,17 @@ export function Sky3D() {
               </span>
               <span>{phase}</span>
             </div>
+            {liveInfo && date === LIVE && (
+              <p class="s3-live mono-s">
+                <b>● {T("Live")}</b>{" "}
+                {liveInfo.fb
+                  ? tx(`The live feed is down: the real sky recorded at ${hhmm((liveInfo.fb.recorded_t % 86_400_000) / 60_000)} UTC, shown as if now.`, `लाइव फ़ीड बंद है: ${hhmm((liveInfo.fb.recorded_t % 86_400_000) / 60_000)} UTC पर रिकॉर्ड किया गया असली आसमान, ऐसे दिखाया गया जैसे अभी हो।`)
+                  : tx(`${liveInfo.n} airliners over India right now (OpenSky) on their paths ahead`, `अभी भारत के ऊपर ${liveInfo.n} यात्री विमान (OpenSky), अपने आगे के रास्तों पर`)}
+                {" · "}
+                {tx(`today's ECMWF forecast (run ${liveInfo.run.slice(0, 10)}), physics only`, `आज का ECMWF पूर्वानुमान (रन ${liveInfo.run.slice(0, 10)}), केवल भौतिकी`)}
+                {!liveInfo.covered && ` · ${T("today's forecast is not published yet")}`}
+              </p>
+            )}
           </div>
           <div class="s3-right">
             <div class="s3-ctl">
@@ -444,7 +497,7 @@ export function Sky3D() {
                 <button role="radio" aria-checked={view === "flown"} class={view === "flown" ? "on" : ""} onClick={() => setView("flown")}>
                   {T("As flown")}
                 </button>
-                <button role="radio" aria-checked={view === "satellite"} class={view === "satellite" ? "on sat" : "sat"} onClick={() => setView("satellite")}>
+                <button role="radio" aria-checked={view === "satellite"} class={view === "satellite" ? "on sat" : "sat"} disabled={date === LIVE} title={date === LIVE ? T("The satellite check is for past days") : undefined} onClick={() => setView("satellite")}>
                   {T("What the satellite saw")}
                 </button>
                 <button role="radio" aria-checked={listened} class={listened ? "on" : ""} onClick={() => setView("listened")}>
@@ -458,18 +511,21 @@ export function Sky3D() {
               )}
               {man && date && (
                 <select class="s3-select" value={date} onChange={(e) => (stopRide(), setDate((e.target as HTMLSelectElement).value))} aria-label={T("Day")}>
+                  <option value={LIVE}>● {T("Live now")}</option>
                   {(man.days_with_flights.length ? man.days_with_flights : man.days).map((d) => (
                     <option value={d}>{new Date(`${d}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</option>
                   ))}
                 </select>
               )}
-              <span class="s3-seg" role="radiogroup" aria-label={T("Humid air shown")}>
-                {avail.map((l) => (
-                  <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={T(l.title)} onClick={() => setLayer(l.id)}>
-                    {T(l.label)}
-                  </button>
-                ))}
-              </span>
+              {date !== LIVE && (
+                <span class="s3-seg" role="radiogroup" aria-label={T("Humid air shown")}>
+                  {avail.map((l) => (
+                    <button role="radio" aria-checked={layer === l.id} class={layer === l.id ? "on" : ""} title={T(l.title)} onClick={() => setLayer(l.id)}>
+                      {T(l.label)}
+                    </button>
+                  ))}
+                </span>
+              )}
             </div>
             {view === "satellite" && (
               <div class="s3-saved s3-seen" aria-live="polite">
@@ -485,7 +541,9 @@ export function Sky3D() {
                 <b class="display">{tonnes(saved.p50)} t</b>
                 <span>{tx(`CO₂e of contrail warming avoided so far (cautious ${tonnes(saved.low)} t)`, `अब तक टली कंट्रेल गर्मी, CO₂e (सतर्क ${tonnes(saved.low)} t)`)}</span>
                 <span class="mono-s">
-                  {tx(`${saved.n} of ${alerts.length} planes moved · +${tonnes(saved.fuel)} t fuel · whole day ${tonnes(dayTotal)} t`, `${alerts.length} में से ${saved.n} विमान हटे · +${tonnes(saved.fuel)} t ईंधन · पूरा दिन ${tonnes(dayTotal)} t`)}
+                  {date === LIVE
+                    ? tx(`${saved.n} of ${alerts.length} planes advised now have moved · +${tonnes(saved.fuel)} t fuel · all advice now ${tonnes(dayTotal)} t`, `अभी सलाह पाए ${alerts.length} में से ${saved.n} विमान हटे · +${tonnes(saved.fuel)} t ईंधन · अभी की सारी सलाह ${tonnes(dayTotal)} t`)
+                    : tx(`${saved.n} of ${alerts.length} planes moved · +${tonnes(saved.fuel)} t fuel · whole day ${tonnes(dayTotal)} t`, `${alerts.length} में से ${saved.n} विमान हटे · +${tonnes(saved.fuel)} t ईंधन · पूरा दिन ${tonnes(dayTotal)} t`)}
                 </span>
               </div>
             )}
@@ -540,7 +598,7 @@ export function Sky3D() {
             <i class="k-humid" /> {T("humid air where contrails last")}
           </span>
           <span>
-            <i class="k-trail" /> {T("lasting contrail (CoCiP)")}
+            <i class="k-trail" /> {date === LIVE ? T("lasting contrail (today's forecast)") : T("lasting contrail (CoCiP)")}
           </span>
           <span>
             <i class="k-plane" /> {T("airliner (orange: making one now)")}
@@ -550,7 +608,7 @@ export function Sky3D() {
               <i class="k-move" /> {T("changing level on STRATUM's advice")}
             </span>
           )}
-          {!listened && (
+          {!listened && date !== LIVE && (
             <span>
               <i class="k-seen" /> {T("contrail seen by Meteosat-9 (our detector)")}
             </span>
@@ -579,7 +637,7 @@ export function Sky3D() {
           {hhmm(clock)} UTC · {hhmm(ist)} IST
         </span>
         <span class="s3-seg" role="radiogroup" aria-label={T("Speed")}>
-          {SPEEDS.filter((s) => s.label).map((s) => (
+          {SPEEDS.filter((s) => s.label && (s.k !== "live" || date === LIVE)).map((s) => (
             <button role="radio" aria-checked={speed === s.k} class={speed === s.k ? "on" : ""} onClick={() => setSpeed(s.k)}>
               {T(s.label)}
             </button>
