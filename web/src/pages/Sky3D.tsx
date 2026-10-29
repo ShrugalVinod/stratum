@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { FlaggedSegment, Manifest } from "../data/contract";
 import { currentBuild, layerUrl, loadContrailDay, loadGridBytes, loadLive, loadManifest, loadOutlook, loadOutlookB1, loadReplayDay, loadWeighted } from "../data/load";
-import { type Live, sampler } from "../lib/advice";
-import { buildLiveSky } from "../lib/liveSky";
+import { type Live, sampler, upcoming, usualLevel } from "../lib/advice";
+import { AIRPORTS, airport, PLAN_TYPES } from "../lib/footprint";
+import { buildLiveSky, buildMyFlight, fromUpcoming, type MyFlight, type MyTrip } from "../lib/liveSky";
+import { loadSchedule } from "../data/load";
 import { T, tx } from "../i18n";
 import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick, SkyProof, SkyView } from "../three/sky";
 import "../styles/map.css";
@@ -33,6 +35,9 @@ const tonnes = (kg: number) => (kg >= 9_950 ? Math.round(kg / 1000).toLocaleStri
 type Alert = { flight: string; cs: string; t0: number; t1: number; fl: number; alt: number; low: number; p50: number; fuelKg: number };
 const TOUR_DAY = "2026-02-01";
 const LIVE = "live"; // the day menu's "Live now": today's real airliners and today's forecast
+const YOU = "you"; // "Your flight": one planned trip on the forecast, runway to runway
+const CAR_KG_PER_KM = 0.14; // CO₂ of a typical petrol car per km (approximate), for the postcard
+const istOf = (m: number) => hhmm((((m + 330) % 1440) + 1440) % 1440);
 
 export function Sky3D() {
   const box = useRef<HTMLDivElement>(null);
@@ -53,6 +58,11 @@ export function Sky3D() {
   const [following, setFollowing] = useState<SkyFlight | null>(null);
   const [contrails, setContrails] = useState<SkyContrail[]>([]);
   const [ended, setEnded] = useState<string | null>(null);
+  // your flight: the trip asked for, and the flight built from it
+  const [trip, setTrip] = useState<MyTrip | null>(null);
+  const [myFlight, setMyFlight] = useState<MyFlight | null>(null);
+  const [planner, setPlanner] = useState(false);
+  const [landed, setLanded] = useState(false);
   const [liveInfo, setLiveInfo] = useState<{ n: number; run: string; fb: { recorded_t: number; reason: string } | null; covered: boolean } | null>(null);
   const flightsRef = useRef<SkyFlight[]>([]);
   const contrailsRef = useRef<SkyContrail[]>([]);
@@ -79,9 +89,14 @@ export function Sky3D() {
       .then(([{ manifest }, b]) => {
         setMan(manifest);
         setBuild(b);
-        const d = q.get("date");
+        const fly = q.get("fly")?.split("-");
+        const from = airport(fly?.[0]);
+        const to = airport(fly?.[1]);
+        const dep = Date.parse(q.get("dep") ?? "");
+        if (from && to && Number.isFinite(dep)) setTrip({ from, to, dep, type: q.get("type") ?? "A20N", fl: Number(q.get("fl")) || 360 });
+        const d = from && to && Number.isFinite(dep) ? YOU : q.get("date");
         const days = manifest.days_with_flights.length ? manifest.days_with_flights : manifest.days;
-        setDate(d === LIVE || (d && days.includes(d)) ? d : days.includes("2026-02-01") ? "2026-02-01" : days[days.length - 1]);
+        setDate(d === LIVE || d === YOU || (d && days.includes(d)) ? d : days.includes("2026-02-01") ? "2026-02-01" : days[days.length - 1]);
         const h = Number(q.get("hour"));
         if (q.get("hour") && Number.isInteger(h) && h >= 0 && h < 24) sim.current = h * 60;
         else sim.current = 13 * 60; // early evening in India: the sun sets and the contrails come out
@@ -107,7 +122,8 @@ export function Sky3D() {
         e.time.min = sim.current;
         e.onFollowEnd(() => {
           setFollowing((f) => {
-            if (f) setEnded(f.cs);
+            if (f?.id === "you") setLanded(true);
+            else if (f) setEnded(f.cs);
             return null;
           });
           setSpeed(tourRef.current ? "tour" : "fast"); // the story keeps its own pace
@@ -131,6 +147,64 @@ export function Sky3D() {
   useEffect(() => {
     if (!ready || !date) return;
     setLoading(true);
+    if (date === YOU) {
+      if (!trip) return setLoading(false);
+      (async () => {
+        const o = await loadOutlook();
+        if (!o) throw new Error("no forecast");
+        const depDay = new Date(trip.dep).toISOString().slice(0, 10);
+        if (!o.manifest.days.includes(depDay)) throw new Error("outside");
+        const [sprites, sched] = await Promise.all([loadOutlookB1(o.manifest), loadSchedule()]);
+        const sample = sampler(o.manifest, sprites);
+        const day0 = Date.parse(`${depDay}T00:00:00Z`);
+        const me = buildMyFlight(trip, day0, sample);
+        if (!me) throw new Error("short");
+        // the other flights expected around yours, from yesterday's records
+        const around = sched ? upcoming(sched.flights, trip.dep - 3 * 3_600_000, 7, new Set(), usualLevel([]), sample) : [];
+        const others = fromUpcoming(around, day0);
+        const scale = o.manifest.layers?.find((l) => l.id === "B1")?.full_scale ?? 1;
+        const levels = o.manifest.flight_levels.flatMap(({ fl }) => {
+          const sprite = sprites.get(`${depDay}|${fl}`);
+          return sprite ? [{ fl, sprite }] : [];
+        });
+        eng.current?.setHumid(levels, o.manifest.grid, (v) => v * scale);
+        seenRef.current = [];
+        setSeenBy(new Map());
+        eng.current?.setProofs([]);
+        alertsRef.current = me.alert ? [me.alert] : [];
+        setAlerts(alertsRef.current);
+        flightsRef.current = [me.flight, ...others.flights];
+        contrailsRef.current = [...me.contrails, ...others.contrails];
+        setContrails(contrailsRef.current);
+        eng.current?.setDay(depDay, flightsRef.current, contrailsRef.current);
+        setMyFlight(me);
+        setLanded(false);
+        setLiveInfo(null);
+        // ride along from the runway, STRATUM's advice on
+        sim.current = me.flight.mins[0] - 1;
+        viewRef.current = "listened";
+        setView("listened");
+        setSpeed("ride");
+        setPlay(true);
+        if (eng.current) {
+          eng.current.time.min = sim.current;
+          eng.current.follow("you");
+        }
+        setFollowing(me.flight);
+      })()
+        .catch((e) =>
+          setErr(
+            String(e?.message) === "short"
+              ? T("This trip is too short to reach cruise level: it makes no lasting contrail.")
+              : String(e?.message) === "outside"
+                ? T("That departure is outside the forecast (today and tomorrow). Pick another time.")
+                : T("Your flight cannot be loaded right now. Try again in a minute."),
+          ),
+        )
+        .finally(() => setLoading(false));
+      return;
+    }
+    setMyFlight(null);
     if (date === LIVE) {
       // live: the airliners in the air now on their paths ahead, today's forecast humid air,
       // the contrails they would leave, and STRATUM's advice for them (as on Live advice)
@@ -240,7 +314,7 @@ export function Sky3D() {
       })
       .catch(() => setErr(T("This day could not be loaded.")))
       .finally(() => setLoading(false));
-  }, [ready, date]);
+  }, [ready, date, trip]);
 
   useEffect(() => {
     eng.current?.setView(view);
@@ -248,7 +322,7 @@ export function Sky3D() {
 
   // the humid air for the day, every flight level
   useEffect(() => {
-    if (!ready || !man || !date || !build || date === LIVE) return;
+    if (!ready || !man || !date || !build || date === LIVE || date === YOU) return;
     const info = man.layers?.find((l) => l.id === layer);
     if (!info) return;
     let alive = true;
@@ -274,7 +348,7 @@ export function Sky3D() {
     const step = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      if (play) sim.current = (sim.current + dt * per) % 1440;
+      if (play) sim.current = date === LIVE || date === YOU ? sim.current + dt * per : (sim.current + dt * per) % 1440;
       if (eng.current) eng.current.time.min = sim.current;
       if (now - drawn > 100) {
         drawn = now;
@@ -285,10 +359,12 @@ export function Sky3D() {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [ready, play, speed]);
+  }, [ready, play, speed, date]);
 
   useEffect(() => {
     if (!date) return;
+    if (date === YOU && trip)
+      return history.replaceState(null, "", `/3d?fly=${trip.from.code}-${trip.to.code}&dep=${new Date(trip.dep).toISOString().slice(0, 16)}Z&type=${trip.type}&fl=${trip.fl}`);
     history.replaceState(null, "", `/3d?date=${date}&hour=${Math.floor(clock / 60)}&layer=${layer}${view !== "flown" ? `&view=${view}` : ""}`);
   }, [date, layer, view, Math.floor(clock / 60)]);
 
@@ -455,6 +531,24 @@ export function Sky3D() {
     return null;
   })();
 
+  // your flight: what is happening on board, minute by minute
+  const yourText = (() => {
+    if (date !== YOU || !myFlight || !trip || following?.id !== "you") return null;
+    const f = myFlight.flight;
+    const a = myFlight.advice!;
+    const [c0, c1] = [f.mins[1], f.mins[f.mins.length - 2]];
+    const [from, to] = [trip.from.city, trip.to.city];
+    if (clock < f.mins[0]) return tx(`Ready for take-off from ${from}.`, `${from} से उड़ान के लिए तैयार।`);
+    if (clock < c0) return tx(`Taking off from ${from}, climbing to FL${f.fl}.`, `${from} से उड़ान, FL${f.fl} की ओर चढ़ते हुए।`);
+    if (clock > c1) return tx(`Descending into ${to}.`, `${to} की ओर उतरते हुए।`);
+    if (listened && rideText) return rideText;
+    const i = Math.max(0, Math.round(clock - c0));
+    if (a.lasting[i]) return tx("In air where contrails last: yours will stay behind you for hours.", "उस हवा में जहाँ कंट्रेल टिकती है: आपकी कंट्रेल घंटों पीछे रहेगी।");
+    const j = a.lasting.findIndex((x, k) => x && k > i);
+    if (j > 0 && j - i <= 30) return tx(`Air where contrails last, ${j - i} min ahead.`, `${j - i} मिनट आगे वह हवा जहाँ कंट्रेल टिकती है।`);
+    return tx(`Cruising at FL${f.fl}, in air where a contrail fades within minutes.`, `FL${f.fl} पर क्रूज़, ऐसी हवा में जहाँ कंट्रेल मिनटों में मिट जाती है।`);
+  })();
+
   const ist = (clock + 330) % 1440;
   const phase = stats.sunElev > 8 ? T("Day") : stats.sunElev > -6 ? (clock / 60 + 5.5) % 24 < 12 ? T("Dawn") : T("Dusk") : T("Night");
   const avail = LAYERS.filter((l) => man?.layers?.some((x) => x.id === l.id));
@@ -468,7 +562,7 @@ export function Sky3D() {
 
         <div class="s3-top">
           <div class="s3-title">
-            <p class="label">{date === LIVE ? T("The sky over India · live") : T("The sky over India · one real day")}</p>
+            <p class="label">{date === LIVE ? T("The sky over India · live") : date === YOU ? T("The sky over India · your flight") : T("The sky over India · one real day")}</p>
             <h1 class="display">{T("Where contrails are born")}</h1>
             <div class="s3-stats mono-s" aria-live="polite">
               <span>
@@ -497,13 +591,16 @@ export function Sky3D() {
                 <button role="radio" aria-checked={view === "flown"} class={view === "flown" ? "on" : ""} onClick={() => setView("flown")}>
                   {T("As flown")}
                 </button>
-                <button role="radio" aria-checked={view === "satellite"} class={view === "satellite" ? "on sat" : "sat"} disabled={date === LIVE} title={date === LIVE ? T("The satellite check is for past days") : undefined} onClick={() => setView("satellite")}>
+                <button role="radio" aria-checked={view === "satellite"} class={view === "satellite" ? "on sat" : "sat"} disabled={date === LIVE || date === YOU} title={date === LIVE || date === YOU ? T("The satellite check is for past days") : undefined} onClick={() => setView("satellite")}>
                   {T("What the satellite saw")}
                 </button>
                 <button role="radio" aria-checked={listened} class={listened ? "on" : ""} onClick={() => setView("listened")}>
                   {T("If they had listened")}
                 </button>
               </span>
+              <button class="s3-btn s3-fly-btn" onClick={() => setPlanner(true)}>
+                ✈ {T("Fly your own flight")}
+              </button>
               {!tour && (
                 <button class="s3-btn s3-tour-btn" onClick={() => setTour(true)}>
                   ▶ {T("Watch the story (1½ min)")}
@@ -511,6 +608,11 @@ export function Sky3D() {
               )}
               {man && date && (
                 <select class="s3-select" value={date} onChange={(e) => (stopRide(), setDate((e.target as HTMLSelectElement).value))} aria-label={T("Day")}>
+                  {trip && (
+                    <option value={YOU}>
+                      ✈ {trip.from.code} → {trip.to.code}
+                    </option>
+                  )}
                   <option value={LIVE}>● {T("Live now")}</option>
                   {(man.days_with_flights.length ? man.days_with_flights : man.days).map((d) => (
                     <option value={d}>{new Date(`${d}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</option>
@@ -550,6 +652,20 @@ export function Sky3D() {
           </div>
         </div>
 
+        {landed && myFlight && trip && date === YOU && <Postcard trip={trip} me={myFlight} again={() => (setLanded(false), setTrip((t) => t && { ...t }))} plan={() => setPlanner(true)} />}
+        {planner && (
+          <Planner
+            onClose={() => setPlanner(false)}
+            onFly={(t) => {
+              stopRide();
+              setErr(null);
+              setPlanner(false);
+              setTrip(t);
+              setDate(YOU);
+            }}
+            start={trip}
+          />
+        )}
         {caption && (
           <p class="s3-caption display" key={caption}>
             {caption}
@@ -564,8 +680,9 @@ export function Sky3D() {
               {[following.type, `FL${following.fl}`].filter(Boolean).join(" · ")}
             </span>
             {proofText && <p class="s3-ride-now seen">{proofText}</p>}
-            <p class={`s3-ride-now ${rideText ? "cool" : ridingContrail ? "hot" : ""}`}>
-              {rideText ??
+            <p class={`s3-ride-now ${rideText || (yourText && listened) ? "cool" : ridingContrail ? "hot" : ""}`}>
+              {yourText ??
+                rideText ??
                 (ridingContrail ? T("Inside air where its contrail lasts: watch it stay behind and spread.") : following.makesContrail ? T("Heading for air where its contrail will last.") : T("Its contrails fade within minutes."))}
             </p>
             <button class="s3-btn" onClick={stopRide}>
@@ -573,7 +690,8 @@ export function Sky3D() {
             </button>
           </div>
         ) : (
-          ready && (
+          ready &&
+          date !== YOU && (
             <div class="s3-ride-btn-wrap">
               {ended && <p class="s3-ended mono-s">{tx(`${ended} has left the area.`, `${ended} क्षेत्र से बाहर चला गया।`)}</p>}
               <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
@@ -659,6 +777,162 @@ export function Sky3D() {
           "Real flights and ERA5 weather of this day. Humid air: where the air at each flight level was cold and humid enough for contrails to last that hour (the layer chosen above). Lasting contrails: the ones CoCiP found, drawn as the aircraft passed and for as long as CoCiP says they lasted; real ones also drift with the wind, which is not shown. A flight's level is the one CoCiP flagged, else FL350. The sun is where it was over India; heights are stretched 40 times.",
         )}
       </p>
+    </div>
+  );
+}
+
+/** Plan a trip to fly in 3D: two airports, a departure in the forecast's window, the aircraft
+ *  and the cruise level (the same choices as Your flight). */
+function Planner({ onClose, onFly, start }: { onClose: () => void; onFly: (t: MyTrip) => void; start: MyTrip | null }) {
+  const [slots, setSlots] = useState<number[]>([]);
+  const [from, setFrom] = useState(start?.from.code ?? "BLR");
+  const [to, setTo] = useState(start?.to.code ?? "DEL");
+  const [dep, setDep] = useState<number>(start?.dep ?? 0);
+  const [type, setType] = useState(start?.type ?? "A20N");
+  const [fl, setFl] = useState(start?.fl ?? 360);
+  useEffect(() => {
+    // every half hour from now to the end of the forecast (today and tomorrow)
+    loadOutlook().then((o) => {
+      if (!o) return;
+      const last = Date.parse(`${o.manifest.days[o.manifest.days.length - 1]}T22:00:00Z`);
+      const out: number[] = [];
+      for (let t = Math.ceil(Date.now() / 1_800_000) * 1_800_000; t <= last; t += 1_800_000) out.push(t);
+      setSlots(out);
+      // default: this evening in India (the hours when lasting contrails are commonest)
+      setDep((d) => d || (out.find((t) => new Date(t + 330 * 60_000).getUTCHours() === 20) ?? out[0] ?? 0));
+    });
+  }, []);
+  const a = airport(from);
+  const b = airport(to);
+  const ok = a && b && a.code !== b.code && dep > 0;
+  const label = (t: number) =>
+    `${new Date(t + 330 * 60_000).toLocaleDateString(tx("en-GB", "hi-IN"), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} · ${istOf((t % 86_400_000) / 60_000)} IST`;
+  return (
+    <div class="s3-planner" role="dialog" aria-label={T("Fly your own flight")}>
+      <p class="label">{T("Fly your own flight")}</p>
+      <p class="small">{T("Pick a trip in the forecast's window. You will fly it from the runway, through tomorrow's real forecast sky, with STRATUM's advice.")}</p>
+      <div class="s3-form">
+        <label>
+          {T("From")}
+          <select value={from} onChange={(e) => setFrom((e.target as HTMLSelectElement).value)}>
+            {AIRPORTS.map((x) => (
+              <option value={x.code}>
+                {x.city} ({x.code})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {T("To")}
+          <select value={to} onChange={(e) => setTo((e.target as HTMLSelectElement).value)}>
+            {AIRPORTS.map((x) => (
+              <option value={x.code}>
+                {x.city} ({x.code})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {T("Departs")}
+          <select value={String(dep)} onChange={(e) => setDep(Number((e.target as HTMLSelectElement).value))}>
+            {slots.map((t) => (
+              <option value={String(t)}>{label(t)}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {T("Aircraft")}
+          <select value={type} onChange={(e) => setType((e.target as HTMLSelectElement).value)}>
+            {PLAN_TYPES.map((x) => (
+              <option value={x}>{x}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {T("Cruise level")}
+          <select value={String(fl)} onChange={(e) => setFl(Number((e.target as HTMLSelectElement).value))}>
+            {[300, 320, 340, 360, 380, 400].map((x) => (
+              <option value={String(x)}>FL{x}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div class="s3-form-go">
+        <button class="s3-btn" onClick={onClose}>
+          {T("Close")}
+        </button>
+        <button class="s3-btn s3-fly-go" disabled={!ok} onClick={() => ok && onFly({ from: a!, to: b!, dep, type, fl })}>
+          ✈ {T("Take off")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** After landing: what the trip met on the forecast, the advice, and what it saves. */
+function Postcard({ trip, me, again, plan }: { trip: MyTrip; me: MyFlight; again: () => void; plan: () => void }) {
+  const a = me.advice!;
+  const [copied, setCopied] = useState(false);
+  const m0 = (trip.dep % 86_400_000) / 60_000;
+  const span = (i: number, j: number) => `${istOf((me.path[i].t % 86_400_000) / 60_000)}–${istOf((me.path[j - 1].t % 86_400_000) / 60_000)} IST`;
+  const day = new Date(trip.dep + 330 * 60_000).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", timeZone: "UTC" });
+  return (
+    <div class="s3-postcard" role="dialog" aria-label={T("Your flight")}>
+      <p class="label">{T("Your flight · landed")}</p>
+      <b class="display">
+        {trip.from.city} → {trip.to.city}
+      </b>
+      <span class="mono-s">
+        {day} · {istOf(m0)} IST · {trip.type} · FL{trip.fl}
+      </span>
+      {a.nLasting ? (
+        <>
+          <p>{tx(`On the forecast, your cruise crossed ${a.nLasting} min of air where a contrail lasts for hours.`, `पूर्वानुमान पर, आपका क्रूज़ ${a.nLasting} मिनट ऐसी हवा से गुज़रा जहाँ कंट्रेल घंटों टिकती है।`)}</p>
+          {a.alert ? (
+            <>
+              <p class="s3-pc-adv">
+                {tx(
+                  `STRATUM's advice: ${a.alt! > a.fl ? "climb" : "descend"} ${(Math.abs(a.alt! - a.fl) * 100).toLocaleString()} ft to FL${a.alt} for ${a.spans.map(([i, j]) => span(i, j)).join(" and ")}.`,
+                  `STRATUM की सलाह: ${a.spans.map(([i, j]) => span(i, j)).join(" और ")} के दौरान FL${a.alt} पर।`,
+                )}
+              </p>
+              <b class="s3-pc-big">{(a.avoided.p50 / 1000).toFixed(1)} t</b>
+              <span>
+                {tx(
+                  `CO₂e of contrail warming avoided (cautious ${(a.avoided.low / 1000).toFixed(1)} t), for ${Math.round(a.extraFuelKg)} kg of extra fuel: about the CO₂ of driving a petrol car ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} km.`,
+                  `CO₂e कंट्रेल गर्मी टली (सतर्क ${(a.avoided.low / 1000).toFixed(1)} t), ${Math.round(a.extraFuelKg)} kg अतिरिक्त ईंधन के बदले: लगभग एक पेट्रोल कार के ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} किमी चलने का CO₂।`,
+                )}
+              </span>
+            </>
+          ) : (
+            <p>{T("No level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (or the aircraft cannot fly there), so there is no advice.")}</p>
+          )}
+        </>
+      ) : (
+        <p>{T("No lasting contrail expected on your route on the forecast: nothing to avoid.")}</p>
+      )}
+      <p class="mono-s muted">{T("A demonstration on the ECMWF forecast, physics only; car comparison at about 0.14 kg CO₂ per km. No real flight was changed.")}</p>
+      <div class="s3-form-go">
+        <button class="s3-btn" onClick={again}>
+          ↻ {T("Fly it again")}
+        </button>
+        <button
+          class="s3-btn"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(location.href);
+              setCopied(true);
+            } catch {
+              /* nothing to do */
+            }
+          }}
+        >
+          {copied ? T("Link copied") : T("Copy the link")}
+        </button>
+        <button class="s3-btn s3-fly-go" onClick={plan}>
+          ✈ {T("Another flight")}
+        </button>
+      </div>
     </div>
   );
 }

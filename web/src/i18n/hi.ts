@@ -1668,4 +1668,32 @@ export const HI: Record<string, string> = {
     "भारत के ऊपर आसमान · लाइव",
   "lasting contrail (today's forecast)":
     "टिकाऊ कंट्रेल (आज का पूर्वानुमान)",
+  "Fly your own flight":
+    "अपनी उड़ान उड़ाइए",
+  "Pick a trip in the forecast's window. You will fly it from the runway, through tomorrow's real forecast sky, with STRATUM's advice.":
+    "पूर्वानुमान की अवधि में एक यात्रा चुनिए। आप उसे रनवे से, कल के असली पूर्वानुमान वाले आसमान से होते हुए, STRATUM की सलाह के साथ उड़ाएँगे।",
+  "Take off":
+    "उड़ान भरिए",
+  "Your flight · landed":
+    "आपकी उड़ान · उतर गई",
+  "No lasting contrail expected on your route on the forecast: nothing to avoid.":
+    "पूर्वानुमान पर आपके रूट पर कोई टिकाऊ कंट्रेल अपेक्षित नहीं: बचने को कुछ नहीं।",
+  "A demonstration on the ECMWF forecast, physics only; car comparison at about 0.14 kg CO₂ per km. No real flight was changed.":
+    "ECMWF पूर्वानुमान पर एक प्रदर्शन, केवल भौतिकी; कार की तुलना लगभग 0.14 kg CO₂ प्रति किमी पर। कोई असली उड़ान नहीं बदली गई।",
+  "Fly it again":
+    "फिर से उड़ाइए",
+  "Copy the link":
+    "लिंक कॉपी करें",
+  "Link copied":
+    "लिंक कॉपी हुआ",
+  "Another flight":
+    "दूसरी उड़ान",
+  "That departure is outside the forecast (today and tomorrow). Pick another time.":
+    "वह प्रस्थान पूर्वानुमान (आज और कल) से बाहर है। कोई और समय चुनिए।",
+  "Your flight cannot be loaded right now. Try again in a minute.":
+    "आपकी उड़ान अभी लोड नहीं हो सकती। एक मिनट बाद फिर कोशिश कीजिए।",
+  "In air where contrails last: yours will stay behind you for hours.":
+    "उस हवा में जहाँ कंट्रेल टिकती है: आपकी कंट्रेल घंटों पीछे रहेगी।",
+  "The sky over India · your flight": "भारत के ऊपर आसमान · आपकी उड़ान",
+  "Fly it in 3D": "इसे 3D में उड़ाइए",
 };

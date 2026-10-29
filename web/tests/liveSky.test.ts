@@ -30,3 +30,26 @@ describe("the live 3D sky", () => {
     expect(flights[0].xy[1][0]).toBeGreaterThan(74);
   });
 });
+
+describe("your flight in 3D", () => {
+  it("flies runway to runway: on the ground at both ends, at its level in cruise, advised away from the humid band", async () => {
+    const { buildMyFlight } = await import("../src/lib/liveSky");
+    const { airport } = await import("../src/lib/footprint");
+    const dep = Date.parse("2026-10-29T15:00:00Z");
+    const day0 = Date.parse("2026-10-29T00:00:00Z");
+    // BOM → CCU crosses 76–78°E at FL360 (the made-up humid band)
+    const me = buildMyFlight({ from: airport("BOM")!, to: airport("CCU")!, dep, type: "A20N", fl: 360 }, day0, sky)!;
+    const f = me.flight;
+    expect(f.mins[0]).toBe(15 * 60); // take-off
+    expect(f.alt![0]).toBe(0);
+    expect(f.alt![f.alt!.length - 1]).toBe(0); // landed
+    expect(f.alt![5]).toBe(360);
+    expect(me.arr).toBeGreaterThan(me.path[me.path.length - 1].t);
+    expect(me.advice!.nLasting).toBeGreaterThan(0);
+    expect(me.alert?.flight).toBe("you");
+    expect(me.contrails.every((c) => c.moved)).toBe(true);
+    // too short to cruise: nothing to fly
+    const { buildMyFlight: b2 } = await import("../src/lib/liveSky");
+    expect(b2({ from: airport("BLR")!, to: airport("MAA")!, dep, type: "A20N", fl: 360 }, day0, sky)).toBeNull();
+  });
+});

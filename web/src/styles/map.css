@@ -2334,3 +2334,99 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+/* /3d: your flight (planner and landing postcard) */
+.s3-fly-btn {
+  border-color: #ffb27a;
+}
+.s3-planner,
+.s3-postcard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  width: min(560px, calc(100% - 28px));
+  max-height: calc(100% - 28px);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding: 22px 24px;
+  background: rgba(6, 12, 24, 0.9);
+  border: 1px solid var(--s3-line);
+  border-top: 3px solid #ffb27a;
+  backdrop-filter: blur(12px);
+  color: var(--s3-ink);
+  animation: s3-pop 0.5s var(--ease) both;
+}
+@keyframes s3-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.97);
+  }
+}
+.s3-planner .label,
+.s3-postcard .label {
+  margin: 0;
+  color: #ffb27a;
+}
+.s3-planner p,
+.s3-postcard p {
+  margin: 0;
+}
+.s3-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+}
+.s3-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--s3-dim);
+}
+.s3-form select {
+  background: #0b1424;
+  color: var(--s3-ink);
+  border: 1px solid var(--s3-line);
+  padding: 8px;
+  font: inherit;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.s3-form-go {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.s3-fly-go {
+  background: #ffb27a;
+  color: #1a0d03;
+  border-color: #ffb27a;
+}
+.s3-fly-go:disabled {
+  opacity: 0.4;
+}
+.s3-postcard b.display {
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1;
+  color: var(--s3-ink);
+}
+.s3-pc-adv {
+  color: #7ff0e0;
+}
+.s3-pc-big {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1;
+  color: #3fe0cc;
+}
+@media (max-width: 560px) {
+  .s3-form {
+    grid-template-columns: 1fr;
+  }
+}

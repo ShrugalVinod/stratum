@@ -32,7 +32,8 @@ type Sprite = { data: Uint8Array; width: number; height: number };
 type Grid = { lat_north: number; lon_west: number; step_deg: number; rows: number; cols: number };
 /** An altitude change STRATUM advised (D-006): from ``t0`` to ``t1`` (minutes UTC), ``dFl`` levels. */
 export type SkyMove = { t0: number; t1: number; dFl: number };
-export type SkyFlight = { id: string; cs: string; type: string | null; mins: number[]; xy: [number, number][]; fl: number; makesContrail: boolean; moves?: SkyMove[] };
+/** ``alt``: the flight level at each point (take-off, climb, cruise, descent), else ``fl`` throughout */
+export type SkyFlight = { id: string; cs: string; type: string | null; mins: number[]; xy: [number, number][]; fl: number; makesContrail: boolean; moves?: SkyMove[]; alt?: number[] };
 /** ``moved``: the stretch STRATUM advised moving, so this contrail does not form if they listen */
 export type SkyContrail = { flight: string; a: [number, number]; b: [number, number]; fl: number; t0: number; t1: number; lifeMin: number; moved?: boolean };
 /** A contrail Meteosat-9 saw: the lines our detector found in one satellite image (time ``t``,
@@ -479,7 +480,14 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       const [x0, z0] = [xOf(f.xy[k - 1][0]), zOf(f.xy[k - 1][1])];
       const [x1, z1] = [xOf(f.xy[k][0]), zOf(f.xy[k][1])];
       // the advised level change, if they listen (eased in and out over a few minutes)
-      const flAt = (t: number) => f.fl + (f.moves ?? []).reduce((s, m) => s + m.dFl * moveShare(m, t), 0) * listen;
+      const baseAt = (t: number) => {
+        if (!f.alt) return f.fl;
+        let j = 1;
+        while (j < ms.length - 1 && ms[j] < t) j++;
+        const u = ms[j] > ms[j - 1] ? T.MathUtils.clamp((t - ms[j - 1]) / (ms[j] - ms[j - 1]), 0, 1) : 0;
+        return f.alt[j - 1] + (f.alt[j] - f.alt[j - 1]) * u;
+      };
+      const flAt = (t: number) => baseAt(t) + (f.moves ?? []).reduce((s, m) => s + m.dFl * moveShare(m, t), 0) * listen;
       const fl = flAt(min);
       const p = new T.Vector3(x0 + (x1 - x0) * w, yOf(fl), z0 + (z1 - z0) * w);
       const d = new T.Vector3(x1 - x0, 0, z1 - z0);
@@ -487,7 +495,7 @@ export function createSky(el: HTMLElement, geo: { countries: GeoJSON.FeatureColl
       if (d.lengthSq() < 1e-9) d.set(0, 0, -1);
       const climb = yOf(flAt(min + 0.5)) - yOf(flAt(min - 0.5)); // units per minute
       const pitch = T.MathUtils.clamp(Math.atan2(climb, Math.max(perMin, 1e-3)), -0.45, 0.45);
-      const isMoving = Math.abs(fl - f.fl) > 0.5;
+      const isMoving = Math.abs(fl - baseAt(min)) > 0.5;
       if (isMoving) moving++;
       airborne.push({ f, p, dir: d.normalize(), hot: hotIds.has(f.id), pitch, moving: isMoving });
     }

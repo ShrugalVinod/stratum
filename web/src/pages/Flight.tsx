@@ -348,7 +348,15 @@ export function Flight() {
             )}
             {err && <p class="mono-s live-err">{err}</p>}
 
-            {res && <Result r={res} shapes={shapes} onCopy={copyLink} copied={copied} />}
+            {res && (
+              <Result
+                r={res}
+                shapes={shapes}
+                onCopy={copyLink}
+                copied={copied}
+                fly={mode === "plan" ? `/3d?fly=${plan.from}-${plan.to}&dep=${new Date(plan.dep).toISOString().slice(0, 16)}Z&type=${plan.type}&fl=${plan.fl}` : null}
+              />
+            )}
           </>
         )}
       </div>
@@ -356,7 +364,7 @@ export function Flight() {
   );
 }
 
-function Result({ r, shapes, onCopy, copied }: { r: Done; shapes: { india: boolean; d: string }[]; onCopy: () => void; copied: boolean }) {
+function Result({ r, shapes, onCopy, copied, fly }: { r: Done; shapes: { india: boolean; d: string }[]; onCopy: () => void; copied: boolean; fly: string | null }) {
   const { fp, path } = r;
   const p = fp.planned;
   const co2 = p.co2 ?? 0;
@@ -464,6 +472,11 @@ function Result({ r, shapes, onCopy, copied }: { r: Done; shapes: { india: boole
           <button class="tool" onClick={onCopy}>
             {T(copied ? "Link copied ✓" : "Copy link")}
           </button>
+          {fly && (
+            <a class="tool strong" href={fly}>
+              ✈ {T("Fly it in 3D")}
+            </a>
+          )}
         </div>
       </div>
 

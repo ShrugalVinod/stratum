@@ -4,8 +4,9 @@
 // minutes after 00:00 UTC today, like the past days in the 3D sky.
 
 import type { SkyContrail, SkyFlight, SkyMove } from "../three/sky";
-import { type Live, LIFE_H, type Sample, track } from "./advice";
-import { move } from "./geo";
+import { type Advice, advise, type Live, LIFE_H, type Sample, track, type Upcoming } from "./advice";
+import { type Airport, CRUISE_KMH, cruisePath, type Point } from "./footprint";
+import { distBearing, move } from "./geo";
 
 /** One live alert, in the shape the 3D page counts. */
 export type LiveAlert = { flight: string; cs: string; t0: number; t1: number; fl: number; alt: number; low: number; p50: number; fuelKg: number };
@@ -65,4 +66,68 @@ export function buildLiveSky(ac: Live[], at: number, sample: Sample): { flights:
     }
   }
   return { flights, contrails, alerts };
+}
+
+// ── "Your flight, in 3D": one planned trip, runway to runway, on the forecast ─────────────
+
+export type MyTrip = { from: Airport; to: Airport; dep: number; type: string; fl: number };
+export type MyFlight = { flight: SkyFlight; contrails: SkyContrail[]; alert: LiveAlert | null; advice: Advice | null; path: Point[]; arr: number };
+
+/** The whole trip: the take-off and climb from ``from``, the cruise (one point a minute, as on
+ *  Your flight), the descent to ``to``; the advice for its cruise and the contrails it would leave. */
+export function buildMyFlight(t: MyTrip, day0: number, sample: Sample): MyFlight | null {
+  const path = cruisePath(t.from, t.to, t.dep);
+  if (!path.length) return null;
+  const minute = (ms: number) => (ms - day0) / 60_000;
+  const last = path[path.length - 1];
+  const descentMin = (distBearing(last.lat, last.lon, t.to.lat, t.to.lon)[0] / CRUISE_KMH) * 60 + 6;
+  const arr = last.t + descentMin * 60_000;
+  const adv = advise(path, t.fl, t.type, sample);
+  const id = "you";
+  const mins = [minute(t.dep), ...path.map((p) => minute(p.t)), minute(arr)];
+  const xy: [number, number][] = [[t.from.lon, t.from.lat], ...path.map((p) => [p.lon, p.lat] as [number, number]), [t.to.lon, t.to.lat]];
+  const alt = [0, ...path.map(() => t.fl), 0];
+  // the path's indices are one less than the flight's (the runway point comes first)
+  const moves: SkyMove[] = adv.alert ? adv.spans.map(([i, j]) => ({ t0: minute(path[i].t), t1: minute(path[j - 1].t), dFl: adv.alt! - adv.fl })) : [];
+  const flight: SkyFlight = { id, cs: `${t.from.code} → ${t.to.code}`, type: t.type, mins, xy, fl: t.fl, makesContrail: adv.nLasting > 0, moves, alt };
+  const alert = adv.alert
+    ? { flight: id, cs: flight.cs, t0: minute(path[adv.from].t), t1: minute(path[adv.to - 1].t), fl: adv.fl, alt: adv.alt!, low: adv.avoided.low, p50: adv.avoided.p50, fuelKg: adv.extraFuelKg }
+    : null;
+  const contrails: SkyContrail[] = [];
+  const inSpan = (i: number) => adv.alert && adv.spans.some(([a0, b0]) => i >= a0 && i < b0);
+  for (let i = 0; i < adv.lasting.length; ) {
+    if (!adv.lasting[i]) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j + 1 < adv.lasting.length && adv.lasting[j + 1] && j + 1 - i < PIECE_MIN) j++;
+    const k = Math.min(j + 1, path.length - 1);
+    contrails.push({ flight: id, a: [path[i].lon, path[i].lat], b: [path[k].lon, path[k].lat], fl: t.fl, t0: minute(path[i].t), t1: minute(path[k].t), lifeMin: LIFE_H.p50 * 60, moved: inSpan(i) });
+    i = j + 1;
+  }
+  return { flight, contrails, alert, advice: adv, path, arr };
+}
+
+/** Tonight's other expected flights (lib/advice upcoming) as 3D flights, with their contrails. */
+export function fromUpcoming(list: Upcoming[], day0: number): { flights: SkyFlight[]; contrails: SkyContrail[] } {
+  const minute = (ms: number) => (ms - day0) / 60_000;
+  const flights: SkyFlight[] = [];
+  const contrails: SkyContrail[] = [];
+  list.forEach((u, n) => {
+    if (u.path.length < 2) return;
+    const id = `up-${u.cs}-${n}`;
+    flights.push({ id, cs: u.cs, type: u.type, mins: u.path.map((p) => minute(p.t)), xy: u.path.map((p) => [p.lon, p.lat]), fl: u.fl, makesContrail: !!u.advice?.nLasting });
+    const adv = u.advice;
+    if (!adv?.nLasting) return;
+    for (let i = 0; i < adv.lasting.length; i++) {
+      if (!adv.lasting[i]) continue;
+      let j = i;
+      while (j + 1 < adv.lasting.length && adv.lasting[j + 1] && j + 1 - i < PIECE_MIN) j++;
+      const k = Math.min(j + 1, u.path.length - 1);
+      contrails.push({ flight: id, a: [u.path[i].lon, u.path[i].lat], b: [u.path[k].lon, u.path[k].lat], fl: u.fl, t0: minute(u.path[i].t), t1: minute(u.path[k].t), lifeMin: LIFE_H.p50 * 60 });
+      i = j;
+    }
+  });
+  return { flights, contrails };
 }

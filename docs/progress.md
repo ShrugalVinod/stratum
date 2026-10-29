@@ -2,6 +2,20 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-10-29 — "Your flight, in 3D"
+
+**Done**
+- /3d "✈ Fly your own flight" (and "Fly it in 3D" on /flight): pick two airports, a departure
+  in the forecast window, the aircraft and the level; the 3D sky rides along from the runway:
+  take-off and climb (per-point altitude in the engine), cruise on the forecast with Live
+  advice's maths (spans, ceilings, cautious alert), STRATUM's advice applied ("If they had
+  listened" on by default), descent and landing, then a postcard: minutes in lasting-contrail
+  air, the advice, warming avoided (p50, cautious) and extra fuel, a car-km comparison at
+  ~0.14 kg CO₂/km (stated as approximate), "no real flight was changed". The flights expected
+  around it (yesterday's records) fly too. Shareable link /3d?fly=CCU-DEL&dep=…&type=…&fl=….
+- Test 29 Oct, CCU→DEL 20:30 IST, A20N FL380: 28 min in lasting air, descend to FL360,
+  17.0 t CO₂e avoided (cautious 4.6 t) for 43 kg fuel. BLR→DEL at FL360: no lasting air.
+
 ## 2026-10-29 — The 3D sky, live ("● Live now")
 
 **Done**
