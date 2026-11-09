@@ -13,29 +13,33 @@ STRATUM on it? (Paper §3.3.)
   (`data/reference/scheduled_flights.csv`: each row has a source link and who checked
   it).
 * For each source we rebuilt flights from the ADS-B reports, kept the parts inside the
-  corridor (±75 km of the great circle) at or above FL250, and called a track
-  *continuous* if no two reports were more than 10 minutes
-  apart.
+  corridor (±75 km of the great circle) at or above FL250, and counted a flight when its
+  track was *end to end*: no two reports more than 10 minutes
+  apart, and seen on both sides of the corridor's middle (north of 26°N and south of
+  22°N). (D-007: the first version only checked gaps between reports, so a flight seen on
+  half the route counted; that number is shown as *continuous*.)
 * Tracks were matched to scheduled flights by airline + flight number, else by airline,
   direction and departure time.
 
 ## Numbers
-| source | scheduled | observed | continuous | fraction continuous |
-|---|---|---|---|---|
-| adsblol | 468 | 118 | 115 | 0.25 |
+| source | scheduled | observed | continuous | end to end | fraction end to end |
+|---|---|---|---|---|---|
+| adsblol | 468 | 118 | 115 | 0 | 0.00 |
 
 Per-day detail: `reports/coverage_audit/coverage_audit.csv`; maps and gap histogram in
 the same folder.
 
 ## Decision (applied mechanically, pre-registered)
-Rule: opensky if fraction ≥ 0.5 (max gap 10.0 min) else adsbx.
+Rule: opensky if the end-to-end fraction ≥ 0.5 (cruise track crosses the corridor, max gap 10 min) else adsbx.
 
 **Chosen source: adsbx** — OpenSky not audited (no historical access) → treated as 0.
 
 ## Implications
-* STRATUM uses the 12 free ADS-B Exchange days (1st of each month, March 2025 –
-  February 2026). Every result will state this smaller sample.
-* Each season contributes only 2–4 days, so confidence intervals (day bootstrap) will
-  be wide, and reaching 300 matched contrails (paper Table 6) is not guaranteed.
-* ADS-B Exchange (JETNET) terms require written permission to publish derived data;
-  a permission request has been drafted.
+* The research's logged runs (H1–H4, on the 12 free ADS-B Exchange days, 1st of each
+  month, March 2025 – February 2026) do not change whatever the audit says.
+* OpenSky does not meet the rule, so the 12 ADS-B Exchange days stay the flight data;
+  each season has only 2–4 days, so intervals (day bootstrap) stay wide.
+* ADS-B Exchange gave written permission (16 Oct 2026) to show derived flight lines
+  with credit; raw data are never released.
+* adsb.lol (free archive, extra source, not in the rule) is checked too: it cannot
+  replace either source unless it sees flights end to end.
