@@ -180,3 +180,12 @@ def test_a_source_that_saw_nothing_scores_zero(tmp_path: Path) -> None:
 
     rows, _m, _t = cv.audit_day(_schedule(tmp_path), empty_frame(), "opensky", POLY, P)
     assert sum(r["scheduled"] for r in rows) == 4 and sum(r["end_to_end"] for r in rows) == 0
+
+
+def test_run_audit_with_an_empty_source(tmp_path: Path) -> None:
+    from stratum.io.adsb_schema import empty_frame
+
+    _schedule(tmp_path)
+    days = {("adsbx", "2026-01-01"): _adsb(), ("opensky", "2026-01-01"): empty_frame()}
+    res = cv.run_audit(tmp_path / "s.csv", days, POLY, tmp_path / "out", P)
+    assert res["decision"]["opensky_fraction"] == 0.0

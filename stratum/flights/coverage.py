@@ -323,7 +323,7 @@ def run_audit(
     srcs = sorted({k[0] for k in adsb_days})
     fig, axes = plt.subplots(1, len(srcs), figsize=(5 * len(srcs), 5), squeeze=False)
     for ax, src in zip(axes[0], srcs, strict=True):
-        mine = [a for a in all_points if a["source"].iloc[0] == src]
+        mine = [a for a in all_points if len(a) and a["source"].iloc[0] == src]
         pts = pd.concat(mine) if mine else None
         if pts is not None and len(pts):
             ax.hexbin(pts["lon"], pts["lat"], gridsize=80, bins="log", cmap="cividis", mincnt=1)
