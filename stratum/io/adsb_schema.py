@@ -23,7 +23,8 @@ gs_kt          float or null, kt      ground speed
 track_deg      float or null, °       track over ground, 0–360 from true north
 vrate_fpm      float or null, ft/min  vertical rate
 on_ground      bool                   aircraft reports being on the ground
-source         "opensky" | "adsbx"    which adapter produced the row
+source         "opensky" | "adsbx"    which adapter produced the row; "adsblol" is used
+                                      by the coverage audit only
 typecode       str or null            ICAO type designator if the source carries it (extra)
 registration   str or null            registration if the source carries it (extra)
 =============  =====================  ===============================================
@@ -38,7 +39,7 @@ import pandas as pd
 import pandera.pandas as pa
 
 ICAO24_PATTERN = r"^[0-9a-f]{6}$"
-SOURCES = ("opensky", "adsbx")
+SOURCES = ("opensky", "adsbx", "adsblol")
 
 COLUMNS: tuple[str, ...] = (
     "icao24",

@@ -245,3 +245,12 @@ Classical line-filter detector (build prompt §3.1), settings in `configs/pipeli
 
 ## 2026-10-22 — Safety video dropped
 - Shrugal: the site works reliably, so no interim "safety" video; only the final demo video (after the feature freeze, 29 Dec – 4 Jan).
+
+## 2026-11-09 — Coverage audit: days and sources as run (the planned 1–7 Nov lookups were missed)
+- **What was planned (14 Oct):** schedules for 1–7 Nov looked up on 2 and 5 Nov; ADS-B Exchange's free 1 Nov day; OpenSky through historical access. The lookups were not done on time, FlightStats only shows about ±3 days (1–4 Nov were gone by 9 Nov), and OpenSky historical access is still pending (its REST API serves only the last hour).
+- **What is run instead (not pre-registered; the rule itself is unchanged: OpenSky if ≥ 50 % of scheduled corridor flights have a continuous cruise track, no gap > 10 min):**
+  1. **Schedules** for 5–8 Nov (468 flights, both directions; codeshares once; all carriers incl. Alliance Air and Blue Dart cargo) taken from FlightStats route pages on 9 Nov by `scripts/flightstats_schedule.py`, every row with its source page; compiled by Claude for S. Vinod (the README asked for a human; a teammate can spot-check rows against the links).
+  2. **adsb.lol** (free daily archive, ODbL) for 5–8 Nov, cut to the corridor box by `.github/workflows/audit.yml`: an extra source, reported next to the rule's two, not part of it.
+  3. **OpenSky** recorded live over the corridor box every 2 min for all of **10 Nov** (same workflow), so the rule can be applied to a real OpenSky day; 10 Nov's schedule and adsb.lol day are added on 11 Nov.
+  4. ADS-B Exchange is not audited (its only free November day, 1 Nov, has no schedule left online); its 12 free days are what the research used.
+- Recording the decision (`stratum audit-coverage --record`) waits for Team OK.

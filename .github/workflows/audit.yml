@@ -1,0 +1,224 @@
+# Coverage audit (paper §3.3), Nov 2026: collect the flight data, then audit on a laptop with
+# `stratum audit-coverage` (data/reference/README.md). Nothing is committed: results are run
+# artifacts (kept 14 days), and they hold no aircraft addresses.
+#   adsblol: the adsb.lol archive days given, cut to the corridor box (scripts/adsblol_corridor.py)
+#   opensky: OpenSky recorded over the corridor box until `until`, in chained jobs of
+#            under 6 h (scripts/opensky_corridor.py); OpenSky only serves the last hour.
+name: audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      what:
+        description: "adsblol or opensky"
+        required: true
+        default: adsblol
+      days:
+        description: "adsblol: UTC days, comma-separated (YYYY-MM-DD)"
+        default: "2026-11-05,2026-11-06,2026-11-07,2026-11-08"
+      until:
+        description: "opensky: stop recording at this UTC time"
+        default: "2026-11-11T00:20:00Z"
+
+permissions:
+  contents: read
+
+jobs:
+  days:
+    if: inputs.what == 'adsblol'
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.m.outputs.list }}
+    steps:
+      - id: m
+        run: echo "list=$(jq -cn --arg d '${{ inputs.days }}' '$d | split(",")')" >> "$GITHUB_OUTPUT"
+
+  adsblol:
+    needs: days
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        day: ${{ fromJSON(needs.days.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/adsblol_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Stream the day's archive through the corridor filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(echo '${{ matrix.day }}' | tr - .)-planes-readsb-prod-0"
+          base="https://github.com/adsblol/globe_history_$(echo '${{ matrix.day }}' | cut -c1-4)/releases/download/$tag"
+          parts=$(gh release view "$tag" -R "adsblol/globe_history_$(echo '${{ matrix.day }}' | cut -c1-4)" --json assets -q '.assets[].name' | sort)
+          echo "$parts"
+          { for p in $parts; do curl -fsSL "$base/$p"; done; } | python3 scripts/adsblol_corridor.py "adsblol_${{ matrix.day }}.csv.gz"
+          ls -la
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adsblol-${{ matrix.day }}
+          path: adsblol_${{ matrix.day }}.csv.gz
+          retention-days: 14
+
+  # OpenSky: up to 8 chained jobs (~46 h); a job with nothing left to record stops at once.
+  opensky1:
+    if: inputs.what == 'opensky'
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky2:
+    if: inputs.what == 'opensky'
+    needs: opensky1
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky3:
+    if: inputs.what == 'opensky'
+    needs: opensky2
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky4:
+    if: inputs.what == 'opensky'
+    needs: opensky3
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky5:
+    if: inputs.what == 'opensky'
+    needs: opensky4
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky6:
+    if: inputs.what == 'opensky'
+    needs: opensky5
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky7:
+    if: inputs.what == 'opensky'
+    needs: opensky6
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14
+  opensky8:
+    if: inputs.what == 'opensky'
+    needs: opensky7
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/opensky_corridor.py
+          sparse-checkout-cone-mode: false
+      - name: Record
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python3 scripts/opensky_corridor.py "opensky_${{ github.job }}.csv.gz" "${{ inputs.until }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opensky-${{ github.job }}
+          path: opensky_${{ github.job }}.csv.gz
+          retention-days: 14

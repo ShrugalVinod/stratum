@@ -1864,6 +1864,10 @@ def audit_coverage(
     record: Annotated[
         bool, typer.Option(help="write the decision to configs + decision log")
     ] = False,
+    collected: Annotated[
+        str,
+        typer.Option(help="folder of <source>_<YYYY-MM-DD>.csv.gz files from the audit workflow"),
+    ] = "",
 ) -> None:
     """Coverage audit (paper §3.3): apply the pre-registered rule to every audit day on disk."""
     import datetime as _dt
@@ -1883,6 +1887,12 @@ def audit_coverage(
         p = drive_root() / "raw" / "adsb" / "adsbx" / d
         if p.exists():
             days[("adsbx", d)] = adsb_adsbx.read_day(p)
+        # adsb.lol days and OpenSky recordings (.github/workflows/audit.yml); OpenSky's parts
+        # may span midnight, so each file's rows are kept to its own UTC day
+        for f in sorted(Path(collected).glob(f"*_{d}.csv.gz")) if collected else []:
+            src = f.name.split("_")[0]
+            df = coverage.read_collected(f)
+            days[(src, d)] = df[df["time"].dt.strftime("%Y-%m-%d") == d].reset_index(drop=True)
     corridor = cfg.corridor_polygon(cfg.load_domain().corridor)
     out = repo_root() / "reports" / "coverage_audit"
     res = coverage.run_audit(sched_path, days, corridor, out)

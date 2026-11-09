@@ -141,3 +141,17 @@ def test_memo_numbers_come_from_results(tmp_path: Path) -> None:
     memo = (tmp_path / "out" / "coverage_audit_memo.md").read_text()
     assert "| adsbx | 4 | 3 | 2 | 0.50 |" in memo  # 4 scheduled, 3 observed, 2 continuous
     assert "Chosen source: adsbx" in memo
+
+
+def test_collected_files_audit_like_any_source(tmp_path: Path) -> None:
+    """Files written by scripts/adsblol_corridor.py / opensky_corridor.py read back and audit."""
+    cols = "icao24 callsign time lat lon baro_alt_ft geo_alt_ft gs_kt track_deg vrate_fpm on_ground source"
+    df = _adsb().assign(source="adsblol", time=lambda d: d["time"].map(lambda t: t.isoformat()))
+    f = tmp_path / "adsblol_2026-01-01.csv.gz"
+    df[cols.split()].to_csv(f, index=False)
+    back = cv.read_collected(f)
+    assert len(back) == len(df) and str(back["time"].dtype) == "datetime64[ns, UTC]"
+    rows, _m, _t = cv.audit_day(_schedule(tmp_path), back, "adsblol", POLY, P)
+    by = {r["direction"]: r for r in rows}
+    assert by["DEL-BOM"]["observed"] == 2 and by["DEL-BOM"]["continuous"] == 1
+    assert cv.decide_source(pd.DataFrame(rows), P)["adsblol_fraction"] == 0.5

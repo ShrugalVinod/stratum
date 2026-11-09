@@ -47,7 +47,11 @@ from shapely.geometry import Polygon
 from stratum.flights.clean import assign_flights, basic_clean
 
 # IATA (schedules) → ICAO (callsigns) for carriers on the corridor. Extend with care.
-IATA_TO_ICAO: dict[str, str] = {"6E": "IGO", "AI": "AIC", "IX": "AXB", "QP": "AKJ", "SG": "SEJ"}
+IATA_TO_ICAO: dict[str, str] = {
+    "6E": "IGO", "AI": "AIC", "IX": "AXB", "QP": "AKJ", "SG": "SEJ",
+    "9I": "LLR",  # Alliance Air
+    "BZ": "BDA",  # Blue Dart Aviation (cargo)
+}  # fmt: skip
 DIRECTIONS = ("DEL-BOM", "BOM-DEL")
 SCHEDULE_COLUMNS = (
     "date",
@@ -240,6 +244,7 @@ def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
         "chosen_source": choice,
         "opensky_fraction": f_os,
         "adsbx_fraction": f_ax,
+        "adsblol_fraction": pooled("adsblol"),  # extra source, for information (not in the rule)
         "rule": f"opensky if fraction ≥ {p.min_fraction} (max gap {p.max_gap_min} min) else adsbx",
         "max_gap_min": p.max_gap_min,
         "reason": reason,
@@ -362,8 +367,9 @@ def write_memo(results: pd.DataFrame, decision: dict[str, Any], out_path: Any) -
         "",
         "## Method",
         f"* Audit days: {', '.join(days)} ({len(days)} days).",
-        "* Scheduled flights per day and direction were compiled by the team from public sources",
-        "  (`data/reference/scheduled_flights.csv`, with a source link for every row).",
+        "* Scheduled flights per day and direction come from public timetables",
+        "  (`data/reference/scheduled_flights.csv`: each row has a source link and who checked",
+        "  it).",
         "* For each source we rebuilt flights from the ADS-B reports, kept the parts inside the",
         "  corridor (±75 km of the great circle) at or above FL250, and called a track",
         f"  *continuous* if no two reports were more than {decision['max_gap_min']:g} minutes",
@@ -406,3 +412,26 @@ def write_memo(results: pd.DataFrame, decision: dict[str, Any], out_path: Any) -
             "* Coverage gaps are reported with every result (per-direction fractions above).",
         ]
     Path(out_path).write_text("\n".join(lines) + "\n")
+
+
+def read_collected(path: Any) -> pd.DataFrame:
+    """One day collected by ``.github/workflows/audit.yml`` → the normalised table.
+
+    Written by scripts/adsblol_corridor.py or scripts/opensky_corridor.py: the corridor's
+    bounding box at or above FL200, pseudonymous ``icao24`` (never the real address)."""
+    from stratum.io.adsb_adsbx import dedupe
+    from stratum.io.adsb_schema import COLUMNS, validate
+
+    df = pd.read_csv(path, dtype={"icao24": str, "callsign": str})
+    df["time"] = pd.to_datetime(df["time"], utc=True, format="ISO8601").astype(
+        "datetime64[ns, UTC]"
+    )
+    for c in ("lat", "lon", "baro_alt_ft", "geo_alt_ft", "gs_kt", "track_deg", "vrate_fpm"):
+        df[c] = pd.to_numeric(df[c], errors="coerce").astype(float)
+    df["callsign"] = df["callsign"].where(df["callsign"].fillna("").str.len() > 0)
+    df["on_ground"] = df["on_ground"].astype(bool)
+    df["typecode"] = None
+    df["registration"] = None
+    df = df.dropna(subset=["lat", "lon", "baro_alt_ft"])
+    df = df[df["baro_alt_ft"].between(-2000, 70000) & df["gs_kt"].fillna(0).between(0, 1000)]
+    return validate(dedupe(df[list(COLUMNS)]))
