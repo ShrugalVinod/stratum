@@ -4,9 +4,18 @@
 #   adsblol: the adsb.lol archive days given, cut to the corridor box (scripts/adsblol_corridor.py)
 #   opensky: OpenSky recorded over the corridor box until `until`, in chained jobs of
 #            under 6 h (scripts/opensky_corridor.py); OpenSky only serves the last hour.
+#   finish:  (also on 11-12 Nov by schedule) the audit day's schedule (FlightStats) and adsb.lol
+#            day, the OpenSky recording and the earlier adsb.lol days → `stratum audit-coverage
+#            --record` (Team OK 9 Nov, D-007) → commit the report and the decision.
 name: audit
 
 on:
+  schedule:
+    # the 10 Nov recording ends 00:20 UTC on 11 Nov and adsb.lol publishes the day ~03:30;
+    # later runs are retries (the job stops once the decision is recorded)
+    - cron: "15 5 11 11 *"
+    - cron: "15 10 11 11 *"
+    - cron: "15 5 12 11 *"
   workflow_dispatch:
     inputs:
       what:
@@ -19,9 +28,23 @@ on:
       until:
         description: "opensky: stop recording at this UTC time"
         default: "2026-11-11T00:20:00Z"
+      day:
+        description: "finish: the recorded audit day"
+        default: "2026-11-10"
+      recording_run:
+        description: "finish: run id of the OpenSky recording"
+        default: "42559749845"
+      adsblol_run:
+        description: "finish: run id of the earlier adsb.lol days"
+        default: "42559746352"
+      dry_run:
+        description: "finish: audit only, record and commit nothing"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   days:
@@ -222,3 +245,68 @@ jobs:
           name: opensky-${{ github.job }}
           path: opensky_${{ github.job }}.csv.gz
           retention-days: 14
+
+  finish:
+    if: github.event_name == 'schedule' || inputs.what == 'finish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DAY: ${{ inputs.day || '2026-11-10' }}
+      REC_RUN: ${{ inputs.recording_run || '42559749845' }}
+      LOL_RUN: ${{ inputs.adsblol_run || '42559746352' }}
+      DRY: ${{ inputs.dry_run && 'yes' || 'no' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Already recorded?
+        id: done
+        run: |
+          if grep -q "chosen_source: pending" configs/data_sources.yaml || [ "$DRY" = yes ]; then echo "go=yes" >> "$GITHUB_OUTPUT"; else echo "Decision already recorded."; fi
+      - if: steps.done.outputs.go == 'yes'
+        uses: astral-sh/setup-uv@v6
+      - if: steps.done.outputs.go == 'yes'
+        run: uv sync --frozen --python 3.12
+      - name: Collect the days
+        if: steps.done.outputs.go == 'yes'
+        run: |
+          D="$RUNNER_TEMP/collected"; mkdir -p "$D"
+          uv run python scripts/flightstats_schedule.py "$DAY" --append
+          y=$(echo "$DAY" | cut -c1-4); tag="v$(echo "$DAY" | tr - .)-planes-readsb-prod-0"
+          parts=$(gh release view "$tag" -R "adsblol/globe_history_$y" --json assets -q '.assets[].name' | sort)
+          { for p in $parts; do curl -fsSL "https://github.com/adsblol/globe_history_$y/releases/download/$tag/$p"; done; } | python3 scripts/adsblol_corridor.py "$D/adsblol_$DAY.csv.gz"
+          gh run download "$LOL_RUN" -D "$RUNNER_TEMP/lol" && find "$RUNNER_TEMP/lol" -name "adsblol_*.csv.gz" -exec mv {} "$D/" \;
+          gh run download "$REC_RUN" -D "$RUNNER_TEMP/os" -p "opensky-*" || echo "no OpenSky recording found"
+          python3 - "$RUNNER_TEMP/os" "$D/opensky_$DAY.csv.gz" <<'PY'
+          import glob, gzip, sys
+          files = sorted(glob.glob(f"{sys.argv[1]}/**/*.csv.gz", recursive=True))
+          n = 0
+          with gzip.open(sys.argv[2], "wt") as out:
+              for i, f in enumerate(files):
+                  with gzip.open(f, "rt") as fh:
+                      head = fh.readline()
+                      if i == 0:
+                          out.write(head)
+                      for line in fh:
+                          out.write(line)
+                          n += 1
+          print(f"OpenSky: {len(files)} parts, {n} positions")
+          PY
+          ls -la "$D"
+          echo "COLLECTED=$D" >> "$GITHUB_ENV"
+      - name: Audit
+        if: steps.done.outputs.go == 'yes'
+        run: |
+          uv run stratum audit-coverage --collected "$COLLECTED" $([ "$DRY" = no ] && echo --record)
+          cat reports/coverage_audit/coverage_audit.md
+      - name: Commit the report and the decision
+        if: steps.done.outputs.go == 'yes' && env.DRY == 'no'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/coverage_audit data/reference/scheduled_flights.csv configs/data_sources.yaml docs/decisions.md
+          git commit -m "Coverage audit: decision recorded ($DAY OpenSky day + adsb.lol days)"
+          git push origin HEAD:main
+          git push origin HEAD:ui-chart-redesign

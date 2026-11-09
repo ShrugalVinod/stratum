@@ -195,3 +195,18 @@ both runs (build prompt §6.8).
   excess 0.27 [0.24, 0.34] (raw physics 0.24 [0.21, 0.31], logged 0.36 [−0.03, 0.45]): with
   STRATUM-weighted physics the night effect is clear and concentration is as strong as with
   raw physics.
+
+## D-007 — 2026-11-09 — Coverage audit: a flight counts only if its cruise track is seen end to end
+- Keys: none of the pre-registered values change (coverage_rule: 50 %, no gap > 10 min). What
+  changes is how "a continuous cruise track" is measured in `stratum/flights/coverage.py`.
+- Reason: the first version checked only the gaps *between* reports inside the corridor, so a
+  flight seen on just one half of the route had no gap and counted. adsb.lol on 5–8 Nov 2026
+  showed the problem: 25 % "continuous" by that measure, yet no flight was seen across the
+  corridor's middle (no reports at cruise between ~23° and 26.3°N). Now a flight counts only if
+  its track has no gap > 10 min **and** is seen north of 26°N and south of 22°N (it crosses the
+  middle ~450 km; the cruise part of a Delhi–Mumbai flight runs from ~27.5° to ~20.5°N). The
+  first measure is still reported, as "continuous (gaps only)".
+- Results seen before the change: the adsb.lol 5–8 Nov audit (an extra source, not in the
+  rule). No OpenSky or ADS-B Exchange audit result existed; OpenSky's day (10 Nov) is recorded
+  but not scored.
+- Team OK: Shrugal Vinod, 2026-11-09 (chat: "yes use the end to end version team ok")

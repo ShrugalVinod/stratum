@@ -94,8 +94,9 @@ def test_audit_day_counts(tmp_path: Path) -> None:
 
 
 def test_decide_source_is_mechanical() -> None:
-    def res(src: str, cont: int, sched: int) -> dict[str, object]:
-        return {"source": src, "continuous": cont, "scheduled": sched}
+    def res(src: str, e2e: int, sched: int, cont: int | None = None) -> dict[str, object]:
+        c = e2e if cont is None else cont
+        return {"source": src, "end_to_end": e2e, "continuous": c, "scheduled": sched}
 
     yes = cv.decide_source(pd.DataFrame([res("opensky", 50, 100), res("adsbx", 90, 100)]), P)
     assert yes["chosen_source"] == "opensky"  # exactly 0.50 counts as "at least half"
@@ -103,6 +104,9 @@ def test_decide_source_is_mechanical() -> None:
     assert no["chosen_source"] == "adsbx"
     none = cv.decide_source(pd.DataFrame([res("adsbx", 90, 100)]), P)
     assert none["chosen_source"] == "adsbx" and none["opensky_fraction"] is None
+    # D-007: tracks on half the route are "continuous" but do not count
+    half = cv.decide_source(pd.DataFrame([res("opensky", 20, 100, cont=80)]), P)
+    assert half["chosen_source"] == "adsbx" and half["gaps_only"]["opensky"] == 0.8
 
 
 def test_schedule_rejects_bad_direction(tmp_path: Path) -> None:
@@ -139,7 +143,7 @@ def test_memo_numbers_come_from_results(tmp_path: Path) -> None:
     _schedule(tmp_path)
     cv.run_audit(sched_path, {("adsbx", "2026-01-01"): _adsb()}, POLY, tmp_path / "out", P)
     memo = (tmp_path / "out" / "coverage_audit_memo.md").read_text()
-    assert "| adsbx | 4 | 3 | 2 | 0.50 |" in memo  # 4 scheduled, 3 observed, 2 continuous
+    assert "| adsbx | 4 | 3 | 2 | 2 | 0.50 |" in memo  # 4 scheduled, 3 observed, 2 end to end
     assert "Chosen source: adsbx" in memo
 
 

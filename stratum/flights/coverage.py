@@ -71,10 +71,10 @@ class AuditParams:
     cruise_fl: int = 250  # pre-registered (domain.min_flight_level)
     min_corridor_minutes: float = 20.0  # a real corridor flight spends ≥ 20 min in it
     time_window_min: float = 90.0  # first corridor report within 90 min of sched. departure
-    # End to end (added 9 Nov 2026, reported next to the rule, not part of it): the cruise track
-    # also reaches north of e2e_north_lat and south of e2e_south_lat, i.e. it crosses the
-    # corridor's middle (~450 km). A track seen on only one half has no internal gap > 10 min,
-    # so "continuous" alone counts it (docs/decisions.md 2026-11-09).
+    # End to end (D-007, Team OK 9 Nov 2026; the rule's measure): the cruise track also reaches
+    # north of e2e_north_lat and south of e2e_south_lat, i.e. it crosses the corridor's middle
+    # (~450 km). A track seen on only one half has no internal gap > 10 min, so "continuous"
+    # alone (the first version) counted it.
     e2e_north_lat: float = 26.0
     e2e_south_lat: float = 22.0
 
@@ -238,11 +238,13 @@ def audit_day(
 def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
     """Apply the pre-registered rule mechanically to the pooled OpenSky result.
 
-    Pooled fraction = Σ continuous ÷ Σ scheduled over all audited days and both directions.
+    Pooled fraction = Σ end-to-end ÷ Σ scheduled over all audited days and both directions:
+    a flight counts if its cruise track crosses the corridor with no gap > 10 min (D-007, Team
+    OK 9 Nov 2026; the first version counted tracks on half the route, shown as "gaps only").
     If OpenSky wasn't audited (no access), its fraction is treated as 0 → ADS-B Exchange.
     """
 
-    def pooled(src: str, col: str = "continuous") -> float | None:
+    def pooled(src: str, col: str = "end_to_end") -> float | None:
         r = results[results["source"] == src]
         n = r["scheduled"].sum()
         return float(r[col].sum() / n) if n and col in r else None
@@ -250,7 +252,8 @@ def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
     f_os, f_ax = pooled("opensky"), pooled("adsbx")
     choice = "opensky" if (f_os is not None and f_os >= p.min_fraction) else "adsbx"
     reason = (
-        f"OpenSky pooled fraction {f_os:.3f} {'≥' if choice == 'opensky' else '<'} {p.min_fraction}"
+        f"OpenSky pooled end-to-end fraction {f_os:.3f} "
+        f"{'≥' if choice == 'opensky' else '<'} {p.min_fraction}"
         if f_os is not None
         else "OpenSky not audited (no historical access) → treated as 0"
     )
@@ -259,9 +262,12 @@ def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
         "opensky_fraction": f_os,
         "adsbx_fraction": f_ax,
         "adsblol_fraction": pooled("adsblol"),  # extra source, for information (not in the rule)
-        # end to end (crosses the corridor's middle), for information (not in the rule)
-        "end_to_end": {s: pooled(s, "end_to_end") for s in ("opensky", "adsbx", "adsblol")},
-        "rule": f"opensky if fraction ≥ {p.min_fraction} (max gap {p.max_gap_min} min) else adsbx",
+        # the first version's measure (gaps between reports only), for information
+        "gaps_only": {s: pooled(s, "continuous") for s in ("opensky", "adsbx", "adsblol")},
+        "rule": (
+            f"opensky if the end-to-end fraction ≥ {p.min_fraction} (cruise track crosses the "
+            f"corridor, max gap {p.max_gap_min:g} min) else adsbx"
+        ),
         "max_gap_min": p.max_gap_min,
         "reason": reason,
     }
@@ -346,17 +352,19 @@ def run_audit(
         "",
         f"**Decision (mechanical): `{decision['chosen_source']}`** — {decision['reason']}.",
         "",
-        "*End to end* (not part of the rule; added 9 Nov 2026): continuous **and** seen north",
-        f"of {p.e2e_north_lat:g}°N and south of {p.e2e_south_lat:g}°N (across the middle).",
+        "*End to end* (the rule's measure, D-007): no gap > 10 min **and** seen north of",
+        f"{p.e2e_north_lat:g}°N and south of {p.e2e_south_lat:g}°N (across the corridor's middle).",
+        "*Continuous* is the first version (gaps between reports only; half a route counted).",
         "",
-        "| date | source | direction | scheduled | observed | continuous | fraction | end to end |",
+        "| date | source | direction | scheduled | observed | continuous | end to end | fraction |",
         "|---|---|---|---|---|---|---|---|",
     ]
     for _, r in results.iterrows():
-        frac = "—" if r["fraction_continuous"] is None else f"{r['fraction_continuous']:.2f}"
+        n = r["scheduled"]
+        frac = f"{r['end_to_end'] / n:.2f}" if n else "—"
         lines.append(
-            f"| {r['date']} | {r['source']} | {r['direction']} | {r['scheduled']} | "
-            f"{r['observed']} | {r['continuous']} | {frac} | {r['end_to_end']} |"
+            f"| {r['date']} | {r['source']} | {r['direction']} | {n} | "
+            f"{r['observed']} | {r['continuous']} | {r['end_to_end']} | {frac} |"
         )
     lines += ["", "![track density](track_density.png)", "", "![gaps](gap_histogram.png)", ""]
     (out / "coverage_audit.md").write_text("\n".join(lines).rstrip("\n") + "\n")
@@ -372,7 +380,7 @@ def write_memo(results: pd.DataFrame, decision: dict[str, Any], out_path: Any) -
     """
     from pathlib import Path
 
-    by_src = results.groupby("source")[["scheduled", "observed", "continuous"]].sum()
+    by_src = results.groupby("source")[["scheduled", "observed", "continuous", "end_to_end"]].sum()
     days = sorted(results["date"].dropna().unique())
     lines = [
         "# Coverage audit memo — Delhi–Mumbai corridor",
@@ -390,19 +398,22 @@ def write_memo(results: pd.DataFrame, decision: dict[str, Any], out_path: Any) -
         "  (`data/reference/scheduled_flights.csv`: each row has a source link and who checked",
         "  it).",
         "* For each source we rebuilt flights from the ADS-B reports, kept the parts inside the",
-        "  corridor (±75 km of the great circle) at or above FL250, and called a track",
-        f"  *continuous* if no two reports were more than {decision['max_gap_min']:g} minutes",
-        "  apart.",
+        "  corridor (±75 km of the great circle) at or above FL250, and counted a flight when its",
+        f"  track was *end to end*: no two reports more than {decision['max_gap_min']:g} minutes",
+        "  apart, and seen on both sides of the corridor's middle (north of 26°N and south of",
+        "  22°N). (D-007: the first version only checked gaps between reports, so a flight seen on",
+        "  half the route counted; that number is shown as *continuous*.)",
         "* Tracks were matched to scheduled flights by airline + flight number, else by airline,",
         "  direction and departure time.",
         "",
         "## Numbers",
-        "| source | scheduled | observed | continuous | fraction continuous |",
-        "|---|---|---|---|---|",
+        "| source | scheduled | observed | continuous | end to end | fraction end to end |",
+        "|---|---|---|---|---|---|",
     ]
     for src, r in by_src.iterrows():
-        frac = r["continuous"] / r["scheduled"] if r["scheduled"] else float("nan")
-        cells = [src, r["scheduled"], r["observed"], r["continuous"], f"{frac:.2f}"]
+        frac = r["end_to_end"] / r["scheduled"] if r["scheduled"] else float("nan")
+        cells = [src, r["scheduled"], r["observed"], r["continuous"], r["end_to_end"]]
+        cells.append(f"{frac:.2f}")
         lines.append("| " + " | ".join(str(c) for c in cells) + " |")
     lines += [
         "",
@@ -416,19 +427,27 @@ def write_memo(results: pd.DataFrame, decision: dict[str, Any], out_path: Any) -
         "",
         "## Implications",
     ]
+    lines.append(
+        "* The research's logged runs (H1–H4, on the 12 free ADS-B Exchange days, 1st of each"
+    )
+    lines.append("  month, March 2025 – February 2026) do not change whatever the audit says.")
     if decision["chosen_source"] == "adsbx":
         lines += [
-            "* STRATUM uses the 12 free ADS-B Exchange days (1st of each month, March 2025 –",
-            "  February 2026). Every result will state this smaller sample.",
-            "* Each season contributes only 2–4 days, so confidence intervals (day bootstrap) will",
-            "  be wide, and reaching 300 matched contrails (paper Table 6) is not guaranteed.",
-            "* ADS-B Exchange (JETNET) terms require written permission to publish derived data;",
-            "  a permission request has been drafted.",
+            "* OpenSky does not meet the rule, so the 12 ADS-B Exchange days stay the flight data;",
+            "  each season has only 2–4 days, so intervals (day bootstrap) stay wide.",
+            "* ADS-B Exchange gave written permission (16 Oct 2026) to show derived flight lines",
+            "  with credit; raw data are never released.",
         ]
     else:
         lines += [
-            "* STRATUM uses OpenSky for every day of the evaluation year.",
-            "* Coverage gaps are reported with every result (per-direction fractions above).",
+            "* OpenSky meets the rule: it is the source for any new flight days (the live pages",
+            "  already use it). Past days need OpenSky's historical access (requested 14 Oct 2026,",
+            "  pending); until then a day can only be recorded as it happens.",
+        ]
+    if "adsblol" in by_src.index:
+        lines += [
+            "* adsb.lol (free archive, extra source, not in the rule) is checked too: it cannot",
+            "  replace either source unless it sees flights end to end.",
         ]
     Path(out_path).write_text("\n".join(lines) + "\n")
 
