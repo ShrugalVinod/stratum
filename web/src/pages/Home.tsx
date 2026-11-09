@@ -1,5 +1,6 @@
 import { Arrow } from "../components/Footer";
 import { SpreadFigure } from "../components/Figures";
+import { HomeFilm } from "../components/film/HomeFilm";
 import { Hero } from "../components/Hero";
 import { Plane } from "../components/Plane";
 import { Split } from "../components/Split";
@@ -27,8 +28,10 @@ export function Home() {
         </div>
       </div>
 
+      <HomeFilm skipTo="why-title-sec" />
+
       {/* §1 */}
-      <section class="section" aria-labelledby="why-title">
+      <section class="section" id="why-title-sec" aria-labelledby="why-title">
         <div class="wrap">
           <div class="sec-head rv">
             <p class="label red">{T("§1 · The problem · The India gap · Our approach")}</p>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { SideView } from "../components/Figures";
+import { PipelineFilm } from "../components/film/PipelineFilm";
 import { PageHead } from "../components/PageHead";
 import { pipeline } from "../content/site";
 import { T, tx } from "../i18n";
@@ -50,7 +51,9 @@ export function HowItWorks() {
         lines={["From a ping", "to a decision."]}
         lede="Every prediction STRATUM makes follows the same route. Each waypoint takes something in and hands something on."
       />
-      <div class="wrap">
+      <PipelineFilm skipTo="waypoints" />
+      <div class="wrap" id="waypoints">
+        <p class="label red film-after">{tx("Every waypoint in detail", "हर पड़ाव विस्तार से")}</p>
         <ol class="wpts" ref={list}>
           <span class="wpts-fill" aria-hidden="true" />
           {pipeline.map((s, i) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
+import { ResultsFilm } from "../components/film/ResultsFilm";
 import { PageHead } from "../components/PageHead";
 import type { Results as ResultsT } from "../data/contract";
 import { loadManifest, loadResults, loadWeightedSummary } from "../data/load";
@@ -40,7 +41,9 @@ export function Results() {
         lines={["What we found."]}
         lede="Four hypotheses, each tested once with its rule fixed in advance. A hypothesis that is not supported is a result too, and we show it the same way."
       />
-      <div class="wrap">
+      {r && <ResultsFilm r={r} skipTo="results-detail" />}
+      <div class="wrap" id="results-detail">
+        {r && <p class="label red film-after">{tx("Every number, table and interval", "हर संख्या, तालिका और दायरा")}</p>}
         {err && <p class="muted mono">{T(err)}</p>}
         {!r && !err && <p class="muted mono">{T("Loading results…")}</p>}
         {r && (
