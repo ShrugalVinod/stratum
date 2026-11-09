@@ -155,3 +155,17 @@ def test_collected_files_audit_like_any_source(tmp_path: Path) -> None:
     by = {r["direction"]: r for r in rows}
     assert by["DEL-BOM"]["observed"] == 2 and by["DEL-BOM"]["continuous"] == 1
     assert cv.decide_source(pd.DataFrame(rows), P)["adsblol_fraction"] == 0.5
+
+
+def test_end_to_end_needs_the_corridor_middle(tmp_path: Path) -> None:
+    """A track seen only on the Delhi half has no internal gap but is not end to end."""
+    full = _track("800001", "IGO2134", "2026-01-01T02:50", True, 1.0)
+    half = full[full["lat"] > 24.5].assign(icao24="800002", callsign="AIC887")
+    half = half.assign(time=half["time"] + pd.Timedelta(minutes=90))
+    rows, _m, tracks = cv.audit_day(_schedule(tmp_path), pd.concat([full, half]), "adsbx", POLY, P)
+    by = {r["direction"]: r for r in rows}
+    assert by["DEL-BOM"]["continuous"] == 2 and by["DEL-BOM"]["end_to_end"] == 1
+    assert tracks.set_index("callsign")["end_to_end"].to_dict() == {
+        "IGO2134": True,
+        "AIC887": False,
+    }

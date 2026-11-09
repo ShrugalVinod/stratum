@@ -71,6 +71,12 @@ class AuditParams:
     cruise_fl: int = 250  # pre-registered (domain.min_flight_level)
     min_corridor_minutes: float = 20.0  # a real corridor flight spends ≥ 20 min in it
     time_window_min: float = 90.0  # first corridor report within 90 min of sched. departure
+    # End to end (added 9 Nov 2026, reported next to the rule, not part of it): the cruise track
+    # also reaches north of e2e_north_lat and south of e2e_south_lat, i.e. it crosses the
+    # corridor's middle (~450 km). A track seen on only one half has no internal gap > 10 min,
+    # so "continuous" alone counts it (docs/decisions.md 2026-11-09).
+    e2e_north_lat: float = 26.0
+    e2e_south_lat: float = 22.0
 
     @classmethod
     def from_preregistered(cls) -> AuditParams:
@@ -125,6 +131,7 @@ def corridor_tracks(adsb: pd.DataFrame, corridor: Polygon, p: AuditParams) -> pd
                 "max_gap_min",
                 "n_reports",
                 "continuous",
+                "end_to_end",
             ]
         )
     g = cruise.groupby("flight_id", sort=False)
@@ -137,6 +144,8 @@ def corridor_tracks(adsb: pd.DataFrame, corridor: Polygon, p: AuditParams) -> pd
             "t_last": g["time"].max(),
             "lat_first": g["lat"].first(),
             "lat_last": g["lat"].last(),
+            "lat_min": g["lat"].min(),
+            "lat_max": g["lat"].max(),
             "n_reports": g.size(),
             "max_gap_min": gaps.groupby(cruise["flight_id"]).max().fillna(0.0),
         }
@@ -147,7 +156,9 @@ def corridor_tracks(adsb: pd.DataFrame, corridor: Polygon, p: AuditParams) -> pd
     out["number"] = out["callsign"].map(lambda c: _digits(c[3:]) if c else "")
     out = out[out["minutes_in_corridor"] >= p.min_corridor_minutes]
     out["continuous"] = out["max_gap_min"] <= p.max_gap_min
-    return out.reset_index().drop(columns=["lat_first", "lat_last"])
+    spans = (out["lat_max"] >= p.e2e_north_lat) & (out["lat_min"] <= p.e2e_south_lat)
+    out["end_to_end"] = out["continuous"] & spans
+    return out.reset_index().drop(columns=["lat_first", "lat_last", "lat_min", "lat_max"])
 
 
 def match_schedule(sched: pd.DataFrame, tracks: pd.DataFrame, p: AuditParams) -> pd.DataFrame:
@@ -156,12 +167,14 @@ def match_schedule(sched: pd.DataFrame, tracks: pd.DataFrame, p: AuditParams) ->
     out["flight_id"] = None
     out["match_method"] = None
     out["continuous"] = False
+    out["end_to_end"] = False
     used: set[str] = set()
 
     def take(i: Any, row: pd.Series, method: str) -> None:
         out.loc[i, "flight_id"] = row["flight_id"]
         out.loc[i, "match_method"] = method
         out.loc[i, "continuous"] = bool(row["continuous"])
+        out.loc[i, "end_to_end"] = bool(row["end_to_end"])
         used.add(row["flight_id"])
 
     # Pass 1: airline + flight number + direction.
@@ -209,6 +222,7 @@ def audit_day(
                 "observed": n_obs,
                 "continuous": n_cont,
                 "fraction_continuous": round(n_cont / n_sched, 4) if n_sched else None,
+                "end_to_end": int(m["end_to_end"].sum()),
                 "matched_by_time_window": int((m["match_method"] == "time_window").sum()),
                 "unscheduled_corridor_tracks": int(
                     (
@@ -228,10 +242,10 @@ def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
     If OpenSky wasn't audited (no access), its fraction is treated as 0 → ADS-B Exchange.
     """
 
-    def pooled(src: str) -> float | None:
+    def pooled(src: str, col: str = "continuous") -> float | None:
         r = results[results["source"] == src]
         n = r["scheduled"].sum()
-        return float(r["continuous"].sum() / n) if n else None
+        return float(r[col].sum() / n) if n and col in r else None
 
     f_os, f_ax = pooled("opensky"), pooled("adsbx")
     choice = "opensky" if (f_os is not None and f_os >= p.min_fraction) else "adsbx"
@@ -245,6 +259,8 @@ def decide_source(results: pd.DataFrame, p: AuditParams) -> dict[str, Any]:
         "opensky_fraction": f_os,
         "adsbx_fraction": f_ax,
         "adsblol_fraction": pooled("adsblol"),  # extra source, for information (not in the rule)
+        # end to end (crosses the corridor's middle), for information (not in the rule)
+        "end_to_end": {s: pooled(s, "end_to_end") for s in ("opensky", "adsbx", "adsblol")},
         "rule": f"opensky if fraction ≥ {p.min_fraction} (max gap {p.max_gap_min} min) else adsbx",
         "max_gap_min": p.max_gap_min,
         "reason": reason,
@@ -330,17 +346,20 @@ def run_audit(
         "",
         f"**Decision (mechanical): `{decision['chosen_source']}`** — {decision['reason']}.",
         "",
-        "| date | source | direction | scheduled | observed | continuous | fraction |",
-        "|---|---|---|---|---|---|---|",
+        "*End to end* (not part of the rule; added 9 Nov 2026): continuous **and** seen north",
+        f"of {p.e2e_north_lat:g}°N and south of {p.e2e_south_lat:g}°N (across the middle).",
+        "",
+        "| date | source | direction | scheduled | observed | continuous | fraction | end to end |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for _, r in results.iterrows():
         frac = "—" if r["fraction_continuous"] is None else f"{r['fraction_continuous']:.2f}"
         lines.append(
             f"| {r['date']} | {r['source']} | {r['direction']} | {r['scheduled']} | "
-            f"{r['observed']} | {r['continuous']} | {frac} |"
+            f"{r['observed']} | {r['continuous']} | {frac} | {r['end_to_end']} |"
         )
     lines += ["", "![track density](track_density.png)", "", "![gaps](gap_histogram.png)", ""]
-    (out / "coverage_audit.md").write_text("\n".join(lines) + "\n")
+    (out / "coverage_audit.md").write_text("\n".join(lines).rstrip("\n") + "\n")
     write_memo(results, decision, out / "coverage_audit_memo.md")
     return {"decision": decision, "rows": len(results), "out_dir": str(out)}
 

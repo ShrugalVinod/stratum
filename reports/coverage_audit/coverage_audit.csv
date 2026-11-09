@@ -1,0 +1,9 @@
+date,source,direction,scheduled,observed,continuous,fraction_continuous,end_to_end,matched_by_time_window,unscheduled_corridor_tracks
+2026-11-05,adsblol,DEL-BOM,62,38,38,0.6129,0,38,25
+2026-11-05,adsblol,BOM-DEL,63,19,18,0.2857,0,19,9
+2026-11-06,adsblol,DEL-BOM,60,27,27,0.45,0,27,13
+2026-11-06,adsblol,BOM-DEL,63,14,13,0.2063,0,14,6
+2026-11-07,adsblol,DEL-BOM,62,5,5,0.0806,0,5,2
+2026-11-07,adsblol,BOM-DEL,62,6,5,0.0806,0,5,1
+2026-11-08,adsblol,DEL-BOM,48,8,8,0.1667,0,8,1
+2026-11-08,adsblol,BOM-DEL,48,1,1,0.0208,0,1,0
