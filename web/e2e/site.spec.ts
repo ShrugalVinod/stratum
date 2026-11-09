@@ -99,7 +99,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
   await expect(page.locator(".lightbox")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".lightbox")).toHaveCount(0);
-  await page.locator(".theme-btn").click();
+  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
   // the map restyles for night mode; with software WebGL (CI) that keeps the page busy, so wait
   // until the new style has loaded before toggling back
@@ -107,7 +107,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
     .poll(() => page.evaluate(() => (window as any).__map?.isStyleLoaded?.() ?? true), { timeout: 120_000 })
     .toBe(true);
   await mapStill(page);
-  await page.locator(".theme-btn").click();
+  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
   // a January day without flights offers the nearest flight day
   await page.locator(".date-pick select").first().selectOption("2026-01-20");
   await expect(page.locator(".empty")).toBeVisible();
