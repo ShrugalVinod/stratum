@@ -263,7 +263,7 @@ export function Home() {
 
       <a class="cta-band" href="/map">
         <span class="wrap cta-inner">
-          <span class="mono-s">{T("1 Jan 2026 · 1,458 flights · every hour · 8 flight levels")}</span>
+          <span class="mono-s">{T("1 Jan 2026 · 1,909 flights · every hour · 8 flight levels")}</span>
           <span class="display cta-big">
             {T("Open the contrail map")} <Arrow />
           </span>

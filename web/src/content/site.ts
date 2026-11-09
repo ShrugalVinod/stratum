@@ -45,8 +45,8 @@ export const loop = [
 // Ticker under the hero. Numbers are from the exported build (day.json, manifest.json) or the
 // logged final run (docs/phase_reports/phase6_gate_report.md).
 export const facts = [
-  "1 Jan 2026 · 1,458 commercial flights on the map",
-  "66 persistent-contrail segments from 6 flights (physics only, B1)",
+  "1 Jan 2026 · 1,909 commercial flights on the map",
+  "248 flights with a lasting contrail on 1 Jan 2026 (physics only, B1)",
   "31 days × 8 flight levels × 24 hours of contrail conditions",
   "Meteosat-9 checks every 15 minutes",
   "Analysis plan locked 13 Oct 2026",
