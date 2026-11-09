@@ -173,3 +173,10 @@ def test_end_to_end_needs_the_corridor_middle(tmp_path: Path) -> None:
         "IGO2134": True,
         "AIC887": False,
     }
+
+
+def test_a_source_that_saw_nothing_scores_zero(tmp_path: Path) -> None:
+    from stratum.io.adsb_schema import empty_frame
+
+    rows, _m, _t = cv.audit_day(_schedule(tmp_path), empty_frame(), "opensky", POLY, P)
+    assert sum(r["scheduled"] for r in rows) == 4 and sum(r["end_to_end"] for r in rows) == 0

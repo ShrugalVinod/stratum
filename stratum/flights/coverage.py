@@ -194,6 +194,8 @@ def match_schedule(sched: pd.DataFrame, tracks: pd.DataFrame, p: AuditParams) ->
             & (tracks["direction"] == s["direction"])
             & ~tracks["flight_id"].isin(used)
         ]
+        if c.empty:  # also when the source saw nothing that day (no typed columns to subtract)
+            continue
         dt = (c["t_first"] - s["sched_dep_utc"]).dt.total_seconds() / 60.0
         c = c[(dt >= 0) & (dt <= p.time_window_min)]
         if len(c):
