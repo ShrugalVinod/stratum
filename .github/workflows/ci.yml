@@ -44,7 +44,7 @@ jobs:
         run: uv run pytest -m "not network" --cov --cov-report=term-missing:skip-covered
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     timeout-minutes: 15
     defaults:
       run:
@@ -68,7 +68,7 @@ jobs:
           CI: "1"
 
   labeller:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     timeout-minutes: 15
     defaults:
       run:
