@@ -18,8 +18,10 @@ import {
 } from "preact-iso";
 import { Footer } from "./components/Footer";
 import { Booth, boothRequested } from "./components/Booth";
+import { Descent } from "./components/Descent";
 import { Header } from "./components/Header";
 import { startMotion } from "./components/motion";
+import { StarSky } from "./components/StarSky";
 import { useLang } from "./i18n";
 import { Home } from "./pages/Home";
 
@@ -94,6 +96,13 @@ function Shell() {
   const { path } = useLocation();
   return (
     <>
+      {/* the sky behind every page: the real stars, and now and then an airliner crossing, seen as you see one at night: by its lights */}
+      <StarSky />
+      <div class="sky-traffic" aria-hidden="true">
+        <i class="st-a" />
+        <i class="st-b" />
+        <i class="st-c" />
+      </div>
       <Header />
       <main id="main" class={path === "/map" || path === "/3d" ? "is-map" : ""}>
         <ErrorBoundary>
@@ -124,6 +133,7 @@ function Shell() {
         </ErrorBoundary>
       </main>
       <Footer />
+      <Descent />
       {boothRequested() && <Booth />}
     </>
   );

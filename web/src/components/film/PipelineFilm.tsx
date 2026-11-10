@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { detectorCheck as DC, secondAnalysis as SA } from "../../content/site";
 import type { ContrailEvent } from "../../data/contract";
 import { contrailImg } from "../../data/load";
-import { tx, useLang } from "../../i18n";
+import { useLang } from "../../i18n";
 import { eIce, eWater, isaPressure, sac } from "../../lib/sac";
 import { at, type Flight, type Land, loadLand, loadProof, loadStoryDay, PROOF_DAY, type Seg, type StoryDay } from "./data";
 import { Line, Morph, Segs } from "./HomeFilm";
@@ -70,76 +70,55 @@ export function PipelineFilm({ skipTo }: { skipTo: string }) {
 
   const scenes: Scene[] = [
     {
-      k: ["01 · ADSB · flight tracks", "01 · ADSB · उड़ान ट्रैक"],
-      t: [`Follow one real flight: Qatar Airways ${CS}.`, `एक असली उड़ान के साथ चलिए: Qatar Airways ${CS}।`],
-      b: [
-        `1 January 2026, ${d ? hhmm(d.fl.m[0]) : "05:24"} UTC: an A350 at FL400, over Sri Lanka and the tip of India and out over the Arabian Sea. Its position reports are cleaned and cut into ${mins} one-minute cruise segments.`,
-        `1 जनवरी 2026, ${d ? hhmm(d.fl.m[0]) : "05:24"} UTC: FL400 पर एक A350, श्रीलंका और भारत के दक्षिणी सिरे के ऊपर से अरब सागर की ओर। उसकी स्थिति-रिपोर्टें साफ़ करके ${mins} एक-मिनट के क्रूज़ खंडों में काटी जाती हैं।`,
-      ],
+      k: "01 · ADSB · flight tracks",
+      t: `Follow one real flight: Qatar Airways ${CS}.`,
+      b: `1 January 2026, ${d ? hhmm(d.fl.m[0]) : "05:24"} UTC: an A350 at FL400, over Sri Lanka and the tip of India and out over the Arabian Sea. Its position reports are cleaned and cut into ${mins} one-minute cruise segments.`,
     },
     {
-      k: ["02 · ERA5 · weather", "02 · ERA5 · मौसम"],
-      t: ["What was the air like up there?", "ऊपर हवा कैसी थी?"],
-      b: [
-        `ERA5 gives temperature and humidity on 12 pressure levels. Interpolated to the aircraft's height, the air at FL400 was ${Tc}, with ${RH} relative humidity over ice: ice-supersaturated.`,
-        `ERA5 12 दाब-स्तरों पर तापमान और नमी देता है। विमान की ऊँचाई तक अंतर्वेशित करने पर FL400 पर हवा ${Tc} थी, और बर्फ़ के सापेक्ष नमी ${RH}: यानी बर्फ़-अतिसंतृप्त।`,
-      ],
+      k: "02 · ERA5 · weather",
+      t: "What was the air like up there?",
+      b: `ERA5 gives temperature and humidity on 12 pressure levels. Interpolated to the aircraft's height, the air at FL400 was ${Tc}, with ${RH} relative humidity over ice: ice-supersaturated.`,
     },
     {
-      k: ["03 · SAC · Schmidt–Appleman", "03 · SAC · श्मिट–ऐपलमैन"],
-      t: ["Will a contrail form? Will it last?", "क्या कंट्रेल बनेगी? क्या वह टिकेगी?"],
-      b: [
-        "Hot, wet exhaust mixes with the cold air along a straight line. If that line crosses water saturation, droplets form and freeze: a contrail. If the air is also above ice saturation, it does not evaporate.",
-        "गर्म, नम धुआँ ठंडी हवा में एक सीधी रेखा के साथ मिलता है। अगर वह रेखा जल-संतृप्ति को पार करे, तो बूँदें बनकर जम जाती हैं: कंट्रेल। अगर हवा बर्फ़-संतृप्ति से भी ऊपर हो, तो वह भाप बनकर नहीं उड़ती।",
-      ],
+      k: "03 · SAC · Schmidt–Appleman",
+      t: "Will a contrail form? Will it last?",
+      b: "Hot, wet exhaust mixes with the cold air along a straight line. If that line crosses water saturation, droplets form and freeze: a contrail. If the air is also above ice saturation, it does not evaporate.",
     },
     {
-      k: ["04 · CoCiP · contrail model", "04 · CoCiP · कंट्रेल मॉडल"],
-      t: ["How long will it live, and how much will it warm?", "वह कितनी देर जिएगी, और कितना गर्म करेगी?"],
-      b: [
-        `CoCiP follows the contrail as it spreads and drifts. Raw-ERA5 physics gives this stretch a ${age}-hour life and ${ef} of energy forcing. For decisions it is rerun 100 times with different humidity, model and climate-metric assumptions.`,
-        `CoCiP कंट्रेल के फैलने और बहने के साथ चलता है। कच्चे-ERA5 की भौतिकी इस हिस्से को ${age} घंटे की उम्र और ${ef} का ऊर्जा बल देती है। निर्णयों के लिए इसे अलग-अलग नमी, मॉडल और जलवायु-माप की मान्यताओं के साथ 100 बार दोबारा चलाया जाता है।`,
-      ],
+      k: "04 · CoCiP · contrail model",
+      t: "How long will it live, and how much will it warm?",
+      b: `CoCiP follows the contrail as it spreads and drifts. Raw-ERA5 physics gives this stretch a ${age}-hour life and ${ef} of energy forcing. For decisions it is rerun 100 times with different humidity, model and climate-metric assumptions.`,
     },
     {
-      k: ["05 · SAT · satellite check", "05 · SAT · उपग्रह जाँच"],
-      t: ["Did a contrail actually appear?", "क्या सचमुच कंट्रेल दिखी?"],
-      b: [
-        `${CS}'s stretch was not caught on camera, so here is one that was: ALK266, 1 Nov 2025. Wind drift and parallax place the prediction; a match needs two images; a wrong-day test measures how often matches happen by chance.`,
-        `${CS} का हिस्सा कैमरे में नहीं आया, इसलिए यहाँ वह है जो आया: ALK266, 1 नवंबर 2025। हवा का बहाव और पैरलैक्स अनुमान की जगह तय करते हैं; मिलान के लिए दो तस्वीरें चाहिए; और "ग़लत दिन" परीक्षण मापता है कि मिलान कितनी बार संयोग से होते हैं।`,
-      ],
+      k: "05 · SAT · satellite check",
+      t: "Did a contrail actually appear?",
+      b: `${CS}'s stretch was not caught on camera, so here is one that was: ALK266, 1 Nov 2025. Wind drift and parallax place the prediction; a match needs two images; a wrong-day test measures how often matches happen by chance.`,
     },
     {
-      k: ["06 · CORR · learned correction", "06 · CORR · सीखा हुआ सुधार"],
-      t: ["Learn where the physics is wrong.", "सीखिए कि भौतिकी कहाँ ग़लत है।"],
-      b: [
-        "Gradient-boosted trees learn from the satellite labels: trained west of 80°E, tested east of it, one season held out at a time. They rank which flights make a visible contrail far better than physics rules.",
-        "ग्रेडिएंट-बूस्टेड पेड़ उपग्रह के लेबलों से सीखते हैं: 80°E के पश्चिम में प्रशिक्षित, पूर्व में परखे गए, हर बार एक मौसम अलग रखकर। कौन-सी उड़ानें दिखने वाली कंट्रेल बनाएँगी, यह क्रम वे भौतिकी के नियमों से कहीं बेहतर लगाते हैं।",
-      ],
+      k: "06 · CORR · learned correction",
+      t: "Learn where the physics is wrong.",
+      b: "Gradient-boosted trees learn from the satellite labels: trained west of 80°E, tested east of it, one season held out at a time. They rank which flights make a visible contrail far better than physics rules.",
     },
     {
-      k: ["07 · DEC · decision", "07 · DEC · निर्णय"],
-      t: ["Climb 2,000 ft. Save fuel. Lose the cloud.", "2,000 फ़ुट चढ़िए। ईंधन बचाइए। बादल हटाइए।"],
-      b: [
-        `STRATUM tries ±2,000 and ±4,000 ft, adds the fuel and CO₂, and reruns the physics 100 times. Only FL${d?.st.best_alternative_fl ?? 420} keeps its cautious (5th-percentile) estimate above zero, partly because the higher level burns ${save} kg less fuel. Alert.`,
-        `STRATUM ±2,000 और ±4,000 फ़ुट आज़माता है, ईंधन और CO₂ जोड़ता है, और भौतिकी को 100 बार दोबारा चलाता है। केवल FL${d?.st.best_alternative_fl ?? 420} का सतर्क (5वाँ प्रतिशतक) अनुमान शून्य से ऊपर रहता है, आंशिक रूप से इसलिए कि ऊँचे स्तर पर ${save} किलो कम ईंधन जलता है। चेतावनी।`,
-      ],
+      k: "07 · DEC · decision",
+      t: "Climb 2,000 ft. Save fuel. Lose the cloud.",
+      b: `STRATUM tries ±2,000 and ±4,000 ft, adds the fuel and CO₂, and reruns the physics 100 times. Only FL${d?.st.best_alternative_fl ?? 420} keeps its cautious (5th-percentile) estimate above zero, partly because the higher level burns ${save} kg less fuel. Alert.`,
     },
   ];
 
   const extra = (
     <div class="film-cta">
       <a class="btn primary" href={`/flight`}>
-        {tx("Check your own flight", "अपनी उड़ान जाँचें")} →
+        {"Check your own flight"} →
       </a>
       <a class="btn" href="/sandbox">
-        {tx("Make a contrail", "कंट्रेल बनाइए")}
+        {"Make a contrail"}
       </a>
     </div>
   );
 
   return (
-    <Film id="pipeline-film" label={["One flight through the pipeline", "पाइपलाइन से गुज़रती एक उड़ान"]} scenes={scenes} vh={135} skipTo={skipTo} extra={extra}>
+    <Film id="pipeline-film" label={"One flight through the pipeline"} scenes={scenes} vh={135} skipTo={skipTo} extra={extra}>
       {(f) => <Stage f={f} d={d} land={land} ev={ev} />}
     </Film>
   );
@@ -201,7 +180,7 @@ function Adsb({ t, d, land }: { t: number; d: D; land: Land | null }) {
     .map((lo, i) => `${i ? "L" : "M"}${X(lo).toFixed(1)},${Y(fl.lat[i]).toFixed(1)}`)
     .join("");
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx(`Track of ${CS} with its position reports and one-minute segments`, `${CS} का ट्रैक, उसकी स्थिति-रिपोर्टें और एक-मिनट खंड`)}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={`Track of ${CS} with its position reports and one-minute segments`}>
       <defs>
         <clipPath id="pf-clip-a">
           <rect width={W} height={H} rx="6" />
@@ -238,12 +217,12 @@ function Adsb({ t, d, land }: { t: number; d: D; land: Land | null }) {
           {CS} · A350-900 · FL{d.st.fl}
         </text>
         <text y="20" class="pf-lab">
-          {tx("cruise ≥ FL250 · 4–39°N, 66–100°E · commercial only", "क्रूज़ ≥ FL250 · 4–39°N, 66–100°E · केवल व्यावसायिक")}
+          {"cruise ≥ FL250 · 4–39°N, 66–100°E · commercial only"}
         </text>
       </g>
       <g transform={`translate(${W - 16} ${H - 22})`} style={{ opacity: tickT }}>
         <text text-anchor="end" class="pf-count">
-          <Num to={m1 - m0} t={tickT} /> {tx("one-minute segments", "एक-मिनट खंड")}
+          <Num to={m1 - m0} t={tickT} /> {"one-minute segments"}
         </text>
       </g>
     </svg>
@@ -264,12 +243,12 @@ function Era5({ t, d }: { t: number; d: D }) {
     .join("");
   const planeT = seg(t, 0.6, 0.95);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx("ERA5 humidity and temperature above and below the flight", "उड़ान के ऊपर-नीचे ERA5 नमी और तापमान")}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={"ERA5 humidity and temperature above and below the flight"}>
       <text x={bx} y="22" class="pf-ax-t">
-        {tx("Relative humidity over ice (ERA5)", "बर्फ़ के सापेक्ष नमी (ERA5)")}
+        {"Relative humidity over ice (ERA5)"}
       </text>
       <text x={tx0} y="22" class="pf-ax-t">
-        {tx("Temperature", "तापमान")}
+        {"Temperature"}
       </text>
       <rect x={rx(1)} y="30" width={rx(1.3) - rx(1)} height="376" class="pf-iss" />
       <line x1={rx(1)} x2={rx(1)} y1="30" y2="406" class="pf-ref" />
@@ -337,7 +316,7 @@ function SacPanel({ t, d }: { t: number; d: D }) {
   const Tm = lerp(Ta, Tend, mixT);
   const resT = seg(t, 0.72, 0.95);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx("Schmidt–Appleman diagram for this flight", "इस उड़ान के लिए श्मिट–ऐपलमैन आरेख")}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={"Schmidt–Appleman diagram for this flight"}>
       <line x1={x0} x2={x1} y1={y0} y2={y0} class="pf-axis" />
       <line x1={x0} x2={x0} y1={y0} y2={y1} class="pf-axis" />
       {[210, 220, 230, 240].map((T) => (
@@ -351,15 +330,15 @@ function SacPanel({ t, d }: { t: number; d: D }) {
         </text>
       ))}
       <text x={x0} y={y1 - 14} class="pf-ax-t">
-        {tx("water vapour pressure (Pa)", "जल-वाष्प दाब (Pa)")}
+        {"water vapour pressure (Pa)"}
       </text>
       <path d={curve(eWater)} class="pf-cw" pathLength={1} style={{ strokeDasharray: 1, strokeDashoffset: 1 - curveT }} />
       <path d={curve(eIce)} class="pf-ci" pathLength={1} style={{ strokeDasharray: 1, strokeDashoffset: 1 - curveT }} />
       <text x={X(226) - 8} y={Y(eWater(226)) - 6} class="pf-lab cw" style={{ opacity: curveT }} text-anchor="end">
-        {tx("water saturation", "जल-संतृप्ति")}
+        {"water saturation"}
       </text>
       <text x={X(231) + 8} y={Y(eIce(231)) + 14} class="pf-lab ci" style={{ opacity: curveT }}>
-        {tx("ice saturation", "बर्फ़-संतृप्ति")}
+        {"ice saturation"}
       </text>
       {/* T_LC */}
       <g style={{ opacity: resT }}>
@@ -371,24 +350,24 @@ function SacPanel({ t, d }: { t: number; d: D }) {
       <line x1={X(Ta)} y1={Y(ea)} x2={X(Tm)} y2={Y(ea + s.G * (Tm - Ta))} class="pf-mix" />
       {mixT > 0.5 && (
         <text x={X(lerp(Ta, Tend, 0.42)) - 10} y={Y(ea + s.G * (lerp(Ta, Tend, 0.42) - Ta))} text-anchor="end" class="pf-lab mx" style={{ opacity: seg(mixT, 0.5, 0.8) }}>
-          {tx("exhaust mixing with ambient air", "धुएँ का आसपास की हवा से मिलना")}
+          {"exhaust mixing with ambient air"}
         </text>
       )}
       <circle cx={X(Ta)} cy={Y(ea)} r={lerp(0, 7, easeOut(ptT))} class="pf-amb" />
       <text x={X(Ta)} y={Y(ea) + 26} text-anchor="middle" class="pf-lab big" style={{ opacity: ptT }}>
-        {tx("air at FL400", "FL400 की हवा")}
+        {"air at FL400"}
       </text>
       <g transform={`translate(${x1 - 210} ${y0 - 64})`} style={{ opacity: resT }}>
         <rect x="-12" y="-22" width="222" height="58" rx="4" class="pf-tip" />
         <text class={`pf-res ${s.forms ? "ok" : "no"}`}>
-          {s.forms ? "✓" : "✗"} {tx("forms: T ≤ T_LC", "बनती है: T ≤ T_LC")}
+          {s.forms ? "✓" : "✗"} {"forms: T ≤ T_LC"}
         </text>
         <text y="24" class={`pf-res ${s.persists ? "ok" : "no"}`}>
-          {s.persists ? "✓" : "✗"} {tx("lasts: RHi ≥ 100 %", "टिकती है: RHi ≥ 100 %")}
+          {s.persists ? "✓" : "✗"} {"lasts: RHi ≥ 100 %"}
         </text>
       </g>
       <text x={x1} y={H - 6} text-anchor="end" class="pf-note">
-        {tx(`same code as /sandbox · propulsion efficiency ${ETA} for illustration`, `/sandbox वाला ही कोड · उदाहरण के लिए प्रणोदन दक्षता ${ETA}`)}
+        {`same code as /sandbox · propulsion efficiency ${ETA} for illustration`}
       </text>
     </svg>
   );
@@ -405,7 +384,7 @@ function Cocip({ t, d }: { t: number; d: D }) {
   const xs = (h: number) => 70 + (h / life) * 500;
   const snaps = [0, 0.15, 0.35, 0.6, 0.85, 1];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx("A contrail spreading over its lifetime", "अपनी उम्र भर फैलती कंट्रेल")}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={"A contrail spreading over its lifetime"}>
       <defs>
         <radialGradient id="pf-plume">
           <stop offset="0" stop-color="#fff" stop-opacity="0.85" />
@@ -414,7 +393,7 @@ function Cocip({ t, d }: { t: number; d: D }) {
         </radialGradient>
       </defs>
       <text x="70" y="40" class="pf-ax-t">
-        {tx("Contrail cross-section over its life (schematic)", "उम्र भर कंट्रेल का अनुप्रस्थ काट (रेखाचित्र)")}
+        {"Contrail cross-section over its life (schematic)"}
       </text>
       <line x1="70" x2="570" y1="300" y2="300" class="pf-axis" />
       {snaps.map((q) =>
@@ -429,13 +408,13 @@ function Cocip({ t, d }: { t: number; d: D }) {
       ))}
       <line x1={xs(hours)} x2={xs(hours)} y1="80" y2="300" class="pf-now" />
       <g transform="translate(70 372)">
-        <text class="pf-big-l">{tx("age", "उम्र")}</text>
+        <text class="pf-big-l">{"age"}</text>
         <text y="34" class="pf-big">
           {hours.toFixed(1)} h
         </text>
       </g>
       <g transform="translate(300 372)">
-        <text class="pf-big-l">{tx("energy forcing (raw ERA5, central run)", "ऊर्जा बल (कच्चा ERA5, केंद्रीय रन)")}</text>
+        <text class="pf-big-l">{"energy forcing (raw ERA5, central run)"}</text>
         <text y="34" class="pf-big o">
           {sci(b1.ef_J * run)} J
         </text>
@@ -472,7 +451,7 @@ function Sat({ t, ev }: { t: number; ev: ContrailEvent | null }) {
         {ev.slots.map((x, i) => (
           <img src={contrailImg(PROOF_DAY, x.img)} alt="" class="hf-img" style={{ opacity: i === si ? 1 : 0 }} />
         ))}
-        <svg viewBox="0 0 96 96" preserveAspectRatio="none" role="img" aria-label={tx("Meteosat-9 crop with track, predicted contrail and detected line", "Meteosat-9 का अंश: ट्रैक, अनुमानित कंट्रेल और पाई गई रेखा")}>
+        <svg viewBox="0 0 96 96" preserveAspectRatio="none" role="img" aria-label={"Meteosat-9 crop with track, predicted contrail and detected line"}>
           <Segs segs={s.track} t={1} cls="hf-track" />
           <Morph from={s.track} to={s.drift} t={drift} cls="hf-drift" />
           {s.detected.map((q) => (
@@ -488,22 +467,22 @@ function Sat({ t, ev }: { t: number; ev: ContrailEvent | null }) {
       </div>
       <div class="pf-sat-side">
         <ol class="pf-checks mono-s">
-          <li class={det > 0.5 ? "on" : ""}>{tx("learned detector finds lines", "सीखा हुआ डिटेक्टर रेखाएँ खोजता है")}</li>
-          <li class={drift > 0.5 ? "on" : ""}>{tx(`wind drift ${Math.round(ev.slots[0].age_min)} min + parallax ${ev.slots[0].vza_deg?.toFixed(0)}°`, `हवा का बहाव ${Math.round(ev.slots[0].age_min)} मिनट + पैरलैक्स ${ev.slots[0].vza_deg?.toFixed(0)}°`)}</li>
+          <li class={det > 0.5 ? "on" : ""}>{"learned detector finds lines"}</li>
+          <li class={drift > 0.5 ? "on" : ""}>{`wind drift ${Math.round(ev.slots[0].age_min)} min + parallax ${ev.slots[0].vza_deg?.toFixed(0)}°`}</li>
           <li class={seen >= 2 ? "on" : ""}>
-            {tx("matched in ≥ 2 images", "≥ 2 तस्वीरों में मिलान")} · {seen}/{n}
+            {"matched in ≥ 2 images"} · {seen}/{n}
           </li>
-          <li class={chance > 0.2 ? "on" : ""}>{tx("wrong-day test: how much is chance?", "ग़लत-दिन परीक्षण: कितना संयोग है?")}</li>
+          <li class={chance > 0.2 ? "on" : ""}>{"wrong-day test: how much is chance?"}</li>
         </ol>
         <div class="pf-chance" style={{ opacity: chance }}>
           {rows.map((r, i) => (
             <div>
-              <span class="mono-s">{tx(r.name, r.name === "Line filter (logged)" ? "लाइन फ़िल्टर (दर्ज)" : r.name.replace("Learned", "सीखा हुआ"))}</span>
+              <span class="mono-s">{r.name}</span>
               <i style={{ width: `${r.v * 2.2}%`, transform: `scaleX(${easeOut(clamp(chance * 1.6 - i * 0.25))})` }} class={i ? "c" : "o"} />
               <b class="mono-s">{r.v} %</b>
             </div>
           ))}
-          <p class="mono-s">{tx(`detector F1 on ${DC.scenes} expert scenes: 0.22 → 0.49`, `${DC.scenes} विशेषज्ञ दृश्यों पर डिटेक्टर F1: 0.22 → 0.49`)}</p>
+          <p class="mono-s">{`detector F1 on ${DC.scenes} expert scenes: 0.22 → 0.49`}</p>
         </div>
       </div>
     </div>
@@ -521,10 +500,10 @@ function Corr({ t, land }: { t: number; land: Land | null }) {
   const india = land?.find((c) => c.iso === "IND");
   const ip = india?.rings.map((r) => r.map(([lo, la], i) => `${i ? "L" : "M"}${X(lo).toFixed(1)},${Y(la).toFixed(1)}`).join("") + "Z").join("");
   const ax = (v: number) => 330 + ((v - 0.4) / 0.5) * 280;
-  const seasons = [tx("winter", "सर्दी"), tx("pre-monsoon", "मानसून-पूर्व"), tx("monsoon", "मानसून"), tx("post-monsoon", "मानसून-पश्चात")];
+  const seasons = ["winter", "pre-monsoon", "monsoon", "post-monsoon"];
   const held = Math.min(3, Math.floor(seg(t, 0.1, 0.9) * 4));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx("Training and test split, and ranking skill", "प्रशिक्षण-परीक्षण विभाजन, और क्रम-कौशल")}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={"Training and test split, and ranking skill"}>
       <defs>
         <clipPath id="pf-west">
           <rect x="0" y="0" width={X(80)} height={H} />
@@ -542,10 +521,10 @@ function Corr({ t, land }: { t: number; land: Land | null }) {
       )}
       <line x1={X(80)} x2={X(80)} y1="40" y2="330" class="pf-ref" style={{ opacity: split }} />
       <text x={X(80) - 6} y="52" text-anchor="end" class="pf-lab t" style={{ opacity: split }}>
-        {tx("train", "प्रशिक्षण")}
+        {"train"}
       </text>
       <text x={X(80) + 6} y="52" class="pf-lab o" style={{ opacity: split }}>
-        {tx("test", "परीक्षण")} · 80°E
+        {"test"} · 80°E
       </text>
       <g transform="translate(30 372)">
         {seasons.map((s, i) => (
@@ -557,15 +536,15 @@ function Corr({ t, land }: { t: number; land: Land | null }) {
           </g>
         ))}
         <text y="44" class="pf-lab">
-          {tx("one season held out at a time", "हर बार एक मौसम अलग रखा")}
+          {"one season held out at a time"}
         </text>
       </g>
       <text x="330" y="80" class="pf-ax-t">
-        {tx("Ranking skill on held-out seasons (AUROC)", "अलग रखे मौसमों पर क्रम-कौशल (AUROC)")}
+        {"Ranking skill on held-out seasons (AUROC)"}
       </text>
       <line x1={ax(0.5)} x2={ax(0.5)} y1="96" y2="250" class="pf-ref" />
       <text x={ax(0.5)} y="270" text-anchor="middle" class="pf-lab">
-        0.5 {tx("= coin flip", "= सिक्का उछालना")}
+        0.5 {"= coin flip"}
       </text>
       {[0.4, 0.6, 0.8, 0.9].map((v) => (
         <text x={ax(v)} y="288" text-anchor="middle" class="pf-lab">
@@ -574,8 +553,8 @@ function Corr({ t, land }: { t: number; land: Land | null }) {
       ))}
       {(
         [
-          [tx("physics rules (B1–B3)", "भौतिकी नियम (B1–B3)"), 0.42, 0.66, "o"],
-          [tx("STRATUM", "STRATUM"), 0.65, 0.83, "c"],
+          ["physics rules (B1–B3)", 0.42, 0.66, "o"],
+          ["STRATUM", 0.65, 0.83, "c"],
         ] as const
       ).map(([name, lo, hi, c], i) => {
         const g = easeOut(clamp(bars * 1.5 - i * 0.4));
@@ -608,12 +587,12 @@ function Dec({ t, d }: { t: number; d: D }) {
   const best = st.best_alternative_fl;
   const done = seg(t, 0.82, 0.98);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={tx("Alternative flight levels with fuel and warming ranges", "वैकल्पिक उड़ान-स्तर, ईंधन और गर्मी के दायरों के साथ")}>
+    <svg viewBox={`0 0 ${W} ${H}`} class="pf-svg" role="img" aria-label={"Alternative flight levels with fuel and warming ranges"}>
       <text x="330" y="22" class="pf-ax-t">
-        {tx("Warming avoided, 100 yr (kg CO₂e)", "बची गर्मी, 100 वर्ष (kg CO₂e)")}
+        {"Warming avoided, 100 yr (kg CO₂e)"}
       </text>
       <text x="330" y="38" class="pf-lab">
-        {tx("bar: 5th–95th percentile · dot: median", "पट्टी: 5वाँ–95वाँ प्रतिशतक · बिंदु: माध्यिका")}
+        {"bar: 5th–95th percentile · dot: median"}
       </text>
       <line x1={ax(0)} x2={ax(0)} y1="48" y2="380" class="pf-ref" />
       {[-100, 0, 100, 1000, 10000].map((v) => (
@@ -625,7 +604,7 @@ function Dec({ t, d }: { t: number; d: D }) {
         <g>
           <line x1="30" x2="300" y1={y(fl)} y2={y(fl)} class={fl === st.fl ? "pf-lane cur" : "pf-lane"} />
           <text x="30" y={y(fl) - 8} class={`pf-lab ${fl === best && done > 0 ? "g" : ""}`}>
-            FL{fl} {fl === st.fl ? tx("· planned", "· योजना") : ""}
+            FL{fl} {fl === st.fl ? "· planned" : ""}
           </text>
         </g>
       ))}
@@ -640,7 +619,7 @@ function Dec({ t, d }: { t: number; d: D }) {
           <g style={{ opacity: g }}>
             <path d={`M80,${y(st.fl)} C150,${y(st.fl)} 150,${yy} 230,${yy}`} class={`pf-alt ${a.fl === best && done > 0 ? "best" : ""}`} pathLength={1} style={{ strokeDasharray: 1, strokeDashoffset: 1 - easeOut(g) }} />
             <text x="236" y={yy + 4} class="pf-lab">
-              {a.feasible && a.extra_fuel_kg != null ? `${a.extra_fuel_kg > 0 ? "+" : ""}${a.extra_fuel_kg.toFixed(0)} kg ${tx("fuel", "ईंधन")}` : ""}
+              {a.feasible && a.extra_fuel_kg != null ? `${a.extra_fuel_kg > 0 ? "+" : ""}${a.extra_fuel_kg.toFixed(0)} kg ${"fuel"}` : ""}
             </text>
             {r ? (
               <>
@@ -653,7 +632,7 @@ function Dec({ t, d }: { t: number; d: D }) {
               </>
             ) : (
               <text x="330" y={yy + 4} class="pf-lab r">
-                ✗ {tx(a.reason, a.reason.replace("above OpenAP ceiling", "OpenAP सीमा से ऊपर"))}
+                ✗ {a.reason}
               </text>
             )}
           </g>
@@ -661,13 +640,13 @@ function Dec({ t, d }: { t: number; d: D }) {
       })}
       <g transform="translate(330 420)" style={{ opacity: done }}>
         <text class="pf-lab g">
-          {tx("alert only if the 5th percentile > 0 at 20 and 100 yr", "चेतावनी तभी: 20 और 100 वर्ष पर 5वाँ प्रतिशतक > 0")}
+          {"alert only if the 5th percentile > 0 at 20 and 100 yr"}
         </text>
       </g>
       <g transform={`translate(110 ${y(best ?? st.fl) - 34}) rotate(-6) scale(${lerp(1.7, 1, easeOut(clamp(done * 4)))})`} style={{ opacity: clamp(done * 4) }}>
         <rect x="-4" y="-17" width="196" height="28" class="pf-stamp" />
         <text x="92" y="2" text-anchor="middle" class="pf-stamp-t">
-          {tx(`ALERT · CLIMB TO FL${best}`, `चेतावनी · FL${best} पर चढ़ें`)}
+          {`ALERT · CLIMB TO FL${best}`}
         </text>
       </g>
     </svg>
@@ -675,5 +654,5 @@ function Dec({ t, d }: { t: number; d: D }) {
 }
 
 function Loading() {
-  return <div class="pf-loading mono-s">{tx("Loading the real data…", "असली डेटा लोड हो रहा है…")}</div>;
+  return <div class="pf-loading mono-s">{"Loading the real data…"}</div>;
 }

@@ -1,7 +1,7 @@
 import { useEffect } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { dataSources } from "../content/site";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 export function AboutData() {
   // lazy page: jump to #privacy / #ai-use once it exists
@@ -12,7 +12,7 @@ export function AboutData() {
     <div class="page">
       <PageHead
         label="About the data"
-        note={tx(`${dataSources.length} sources`, `${dataSources.length} स्रोत`)}
+        note={`${dataSources.length} sources`}
         lines={["Sources & limits."]}
         lede="Every dataset, what we use it for, who to credit, and where it falls short."
       />
@@ -57,7 +57,7 @@ export function AboutData() {
             <p class="label red">§3 · {T("Privacy")}</p>
             <p>
               {T(
-                'Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose "use my location", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your photo is never uploaded; its time and place are read on your device and only the rounded location is sent. Your language choice (English or Hindi) is remembered in your browser only.',
+                'Only commercial airline flights are shown. Aircraft identifiers are replaced by salted hashes; business jets, private and government flights never appear. No login, no forms, no cookies, no analytics, no trackers. Live sky: if you choose "use my location", your position stays in your browser; our server only receives it rounded to half a degree (about 50 km), to fetch the aircraft nearby, and keeps nothing. Live aircraft addresses (ICAO24) are never shown or stored. Spot a contrail: your photo is never uploaded; its time and place are read on your device and only the rounded location is sent.',
               )}
             </p>
           </section>
@@ -65,7 +65,7 @@ export function AboutData() {
             <p class="label red">§4 · {T("AI use")}</p>
             <p>
               {T(
-                "The research question, hypotheses, pre-registered analysis plan, and every foundational design decision were entirely conceived and directed by the team. To execute the project, we worked openly with Anthropic Claude as an engineering and development assistant. Under our direct supervision, Claude generated and tested a significant portion of the analysis codebase, co-built the project website, assisted with literature summarization, verified calculations, and drafted documentation. Additionally, the Hindi translation of the website was generated via AI and checked by the team. The team reviewed and tested the work and takes responsibility for everything published.",
+                "The research question, hypotheses, pre-registered analysis plan, and every foundational design decision were entirely conceived and directed by the team. To execute the project, we worked openly with Anthropic Claude as an engineering and development assistant. Under our direct supervision, Claude generated and tested a significant portion of the analysis codebase, co-built the project website, assisted with literature summarization, verified calculations, and drafted documentation. The team reviewed and tested the work and takes responsibility for everything published.",
               )}
             </p>
             <p>
@@ -77,15 +77,6 @@ export function AboutData() {
           </section>
           <section class="note rv" id="code">
             <p class="label red">§5 · {T("Code, data and how to cite")}</p>
-            {tx(
-              null,
-              <p>
-                <b>हिंदी में सार:</b> कोड Apache-2.0 के तहत है। हमारा व्युत्पन्न डेटा (छिपी ID वाली व्यावसायिक उड़ानों के हिस्सों के अनुमान और लेबल, मॉडल फ़ाइलें,
-                मूल्यांकन रिपोर्ट, पूर्व-पंजीकरण लॉक और अंतिम-रन लॉग) CC BY 4.0 के तहत जारी है (DLR विशेषज्ञ लेबलों से बने हिस्से: CC BY-NC 4.0)। कच्चा डेटा
-                दोबारा वितरित नहीं किया जाता; उसे रिपॉज़िटरी की स्क्रिप्ट से फिर डाउनलोड किया जाता है। नीचे लाइसेंस, दोबारा करने और उद्धरण का पूरा विवरण
-                अंग्रेज़ी में है।
-              </p>,
-            )}
             <p>
               <b>Code:</b> Apache-2.0. <b>Our derived data</b> (segment-level predictions and labels for commercial flights with hashed ids, model
               files, evaluation reports, the pre-registration lock and the final-runs log) are released under CC BY 4.0 (parts derived from the DLR

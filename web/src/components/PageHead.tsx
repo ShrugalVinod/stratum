@@ -10,13 +10,6 @@ export function PageHead(p0: { label: string; note?: ComponentChildren; lines: s
   let k = 0;
   return (
     <header class="wrap page-head">
-      <div class="ph-sky" aria-hidden="true">
-        <i class="l1" data-fl="FL380" />
-        <span class="band" />
-        <i class="l2" data-fl="FL360 · ISSR" />
-        <i class="l3" data-fl="FL340" />
-        <span class="fly" />
-      </div>
       <div class="page-head-top rv rv-fade">
         <p class="label red">{p.label}</p>
         {p.note && <div class="mono-s muted page-note">{p.note}</div>}

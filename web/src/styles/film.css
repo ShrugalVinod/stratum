@@ -383,10 +383,6 @@
     opacity: 0;
   }
 }
-html:lang(hi) .h-title {
-  font-size: clamp(50px, 8.6vw, 156px);
-  line-height: 1 !important;
-}
 
 /* phones: picture on top, captions below */
 @media (max-width: 899px) {
@@ -457,10 +453,7 @@ html:lang(hi) .h-title {
     font-size: 9.5px;
     letter-spacing: 0.06em;
   }
-  html:lang(hi) .h-title {
-    font-size: clamp(42px, 12.6vw, 84px);
   }
-}
 
 /* reduced motion: a storyboard */
 .film-still {
@@ -991,9 +984,6 @@ html:lang(hi) .h-title {
   fill: var(--f-muted);
   font: 500 9.5px var(--font-mono);
   letter-spacing: 0.2em;
-}
-html:lang(hi) .hf-sv-h {
-  font-size: 15px;
 }
 
 /* ── Pipeline film (How it works) ─────────────────────────── */
@@ -1592,7 +1582,56 @@ html:lang(hi) .hf-sv-h {
   .hf-sv-tag {
     font-size: 15px;
   }
-  html:lang(hi) .hf-sv-h {
-    font-size: 23px;
+  }
+
+/* the last scene's two aircraft: plain labels pinned to real-looking contrails */
+.hf-dawnlab {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  margin-top: -58px;
+  padding-right: 10px;
+  border-right: 1px solid currentColor;
+  text-align: right;
+  white-space: nowrap;
+  transform: translateX(calc(-100% - 16px));
+  text-shadow: 0 0 10px #03050a, 0 0 3px #03050a;
+}
+.hf-dawnlab.a {
+  color: #ffb98a;
+}
+.hf-dawnlab.b {
+  color: #bfe9ff;
+  margin-top: 16px;
+}
+.hf-dawnlab b {
+  font: 800 15px var(--font-display);
+  font-stretch: 78%;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.hf-dawnlab span {
+  font-size: 13px;
+  color: var(--f-ink-2);
+}
+.hf-illus {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  color: var(--f-muted);
+  letter-spacing: 0.14em;
+  transform: translateY(-100%);
+}
+@media (max-width: 899px) {
+  .hf-dawnlab b {
+    font-size: 12px;
+  }
+  .hf-dawnlab span {
+    font-size: 11px;
+  }
+  .hf-illus {
+    font-size: 9px;
+    letter-spacing: 0.06em;
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Advisory as Adv, Manifest, OutlookInfo } from "../data/contract";
 import { loadOutlook } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 /** /advisory — contrail advisories in NOTAM style, written every morning from the ECMWF
  *  open-data forecast (stratum/export/outlook.py): boxes where lasting contrails are likely,
@@ -24,15 +24,10 @@ const where = (a: Adv) => {
   const m = /\(([^)]+)\)/.exec(a.text);
   const t = (m ? m[1] : a.near).toLowerCase().replace(/ km /, " km ");
   const en = t.replace(/\b(goa|pune|delhi|mumbai|kolkata|chennai|bengaluru|hyderabad|ahmedabad|nagpur|bhopal|lucknow|jaipur|varanasi|patna|bhubaneswar|visakhapatnam|kochi|thiruvananthapuram|guwahati|srinagar|amritsar|raipur|ranchi|indore|udaipur|port blair|arabian sea|bay of bengal)\b/g, (w) => w.replace(/\b\w/g, (c) => c.toUpperCase())).replace("Of Bengal", "of Bengal");
-  // Hindi: "near Goa" → "गोवा के पास", "over the Arabian Sea" → "अरब सागर के ऊपर", "450 km from Goa" → "गोवा से 450 किमी"
-  const near = /^near (.+)$/.exec(en);
-  const over = /^over the (.+)$/.exec(en);
-  const from = /^(\d+) km from (.+)$/.exec(en);
-  const hi = near ? `${T(near[1])} के पास` : over ? `${T(over[1])} के ऊपर` : from ? `${T(from[2])} से ${from[1]} किमी` : en;
-  return tx(en, hi);
+  return en;
 };
 const win = (a: Adv) => `${a.valid_from.slice(11, 16)}–${a.valid_to.slice(11, 16)} UTC`;
-const dayOf = (iso: string) => new Date(iso.slice(0, 10) + "T00:00:00Z").toLocaleDateString(tx("en-GB", "hi-IN"), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const dayOf = (iso: string) => new Date(iso.slice(0, 10) + "T00:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const ist = (iso: string) => {
   const d = new Date(new Date(iso).getTime() + 5.5 * 3_600_000);
   return `${String(d.getUTCHours()).padStart(2, "0")}${String(d.getUTCMinutes()).padStart(2, "0")} IST`;
@@ -75,10 +70,7 @@ export function Advisory() {
         label="Contrail advisories · experimental"
         note={
           ol
-            ? tx(
-                `Issued ${issued} · forecast run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC`,
-                `जारी ${issued} · पूर्वानुमान रन ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC`,
-              )
+            ? `Issued ${issued} · forecast run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 16)} UTC`
             : ol === null
               ? "Not published yet"
               : "Loading…"
@@ -101,7 +93,7 @@ export function Advisory() {
 
             <div class="adv-grid">
               <figure class="adv-map rv rv-fade">
-                <svg viewBox={`0 0 ${W} ${H.toFixed(0)}`} role="img" aria-label={tx(`Advisory areas on ${day}`, `${day} के चेतावनी क्षेत्र`)}>
+                <svg viewBox={`0 0 ${W} ${H.toFixed(0)}`} role="img" aria-label={`Advisory areas on ${day}`}>
                   <rect width={W} height={H} class="adv-sea" />
                   {shapes.map((s) => (
                     <path d={s.d} class={s.india ? "adv-in" : "adv-land"} />
@@ -154,22 +146,13 @@ export function Advisory() {
             <section class="section adv-how rv">
               <p class="label red">{T("How these are written")}</p>
               <p>
-                {tx(
-                  <>
+                {<>
                     The forecast humidity and temperature (ECMWF's open data, the latest 00 UTC run) go through the same test as our physics baseline B1:
                     does a contrail form (Schmidt–Appleman), and is the air ice-supersaturated so it lasts? The domain is cut into 3° boxes; a box gets a
                     notice for a 6-hour window when at least {Math.round(0.4 * 100)} % of it has lasting-contrail air for at least half of some hour, at a
                     level between FL300 and FL400. Neighbouring boxes with the same levels are joined, at most five notices per window. "Drier levels nearby"
                     are the flight levels with the least lasting-contrail air inside the box.
-                  </>,
-                  <>
-                    पूर्वानुमान की नमी और तापमान (ECMWF का खुला डेटा, नवीनतम 00 UTC रन) उसी परीक्षण से गुज़रते हैं जो हमारे भौतिकी बेसलाइन B1 में है: क्या
-                    कंट्रेल बनती है (श्मिट–ऐपलमैन), और क्या हवा बर्फ़-अतिसंतृप्त है ताकि वह टिके? क्षेत्र को 3° के खानों में बाँटा जाता है; किसी खाने को 6
-                    घंटे की अवधि के लिए सूचना तब मिलती है जब उसके कम से कम {Math.round(0.4 * 100)} % हिस्से में किसी घंटे के कम से कम आधे समय टिकाऊ-कंट्रेल
-                    वाली हवा हो, FL300 और FL400 के बीच किसी लेवल पर। एक जैसे लेवल वाले पड़ोसी खाने जोड़ दिए जाते हैं, हर अवधि में ज़्यादा से ज़्यादा पाँच
-                    सूचनाएँ। "पास के सूखे लेवल" वे फ़्लाइट लेवल हैं जिन पर खाने के अंदर सबसे कम टिकाऊ-कंट्रेल वाली हवा है।
-                  </>,
-                )}
+                  </>}
               </p>
               <p class="small muted">
                 {T(
@@ -204,18 +187,11 @@ E) ${a.text}
 F) FL${String(a.fl_low).padStart(3, "0")}  G) FL${String(a.fl_high).padStart(3, "0")}`}
       </pre>
       <p class="small">
-        {tx(
-          <>
+        {<>
             In plain words: between {a.valid_from.slice(11, 16)} and {a.valid_to.slice(11, 16)} UTC ({ist(a.valid_from)}–{ist(a.valid_to)}), aircraft
             cruising at FL{band} {where(a)} are likely to leave contrails that last and spread.
             {a.drier_fls.length ? ` Flying at ${a.drier_fls.map((f) => `FL${f}`).join(" or ")} would cross drier air.` : ""}
-          </>,
-          <>
-            सरल शब्दों में: {a.valid_from.slice(11, 16)} से {a.valid_to.slice(11, 16)} UTC ({ist(a.valid_from)}–{ist(a.valid_to)}) के बीच, {where(a)} FL{band}{" "}
-            पर क्रूज़ करते विमान ऐसी कंट्रेल छोड़ सकते हैं जो टिकें और फैलें।
-            {a.drier_fls.length ? ` ${a.drier_fls.map((f) => `FL${f}`).join(" या ")} पर उड़ने से सूखी हवा मिलेगी।` : ""}
-          </>,
-        )}
+          </>}
       </p>
       <p class="adv-actions">
         <a class="tool" href={`/map?build=outlook&date=${a.valid_from.slice(0, 10)}&hour=${hour}&fl=${fl}`}>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { eIce, eWater, isaPressure, sac } from "../lib/sac";
 
 /** /sandbox — the physics behind every STRATUM forecast, as a toy: pick the flight level, the
@@ -82,19 +82,10 @@ export function Sandbox() {
               </b>
               <span class="small">
                 {kind === "none"
-                  ? tx(
-                      `For this humidity the air must be colder than ${(r.TLC - K).toFixed(1)} °C; it is ${tc} °C.`,
-                      `इस नमी पर हवा ${(r.TLC - K).toFixed(1)} °C से ठंडी होनी चाहिए; वह ${tc} °C है।`,
-                    )
+                  ? `For this humidity the air must be colder than ${(r.TLC - K).toFixed(1)} °C; it is ${tc} °C.`
                   : kind === "short"
-                    ? tx(
-                        `Cold enough (below ${(r.TLC - K).toFixed(1)} °C), but at ${rhi} % humidity over ice the ice crystals evaporate. Above 100 % they would grow.`,
-                        `काफ़ी ठंडा (${(r.TLC - K).toFixed(1)} °C से नीचे), पर बर्फ़ के सापेक्ष ${rhi} % नमी पर बर्फ़ के कण भाप बन जाते हैं। 100 % से ऊपर वे बढ़ते।`,
-                      )
-                    : tx(
-                        `Cold enough (below ${(r.TLC - K).toFixed(1)} °C) and ice-supersaturated (${rhi} % over ice): the crystals keep growing. This is the air STRATUM looks for.`,
-                        `काफ़ी ठंडा (${(r.TLC - K).toFixed(1)} °C से नीचे) और बर्फ़-अतिसंतृप्त (बर्फ़ के सापेक्ष ${rhi} %): कण बढ़ते रहते हैं। STRATUM यही हवा खोजता है।`,
-                      )}
+                    ? `Cold enough (below ${(r.TLC - K).toFixed(1)} °C), but at ${rhi} % humidity over ice the ice crystals evaporate. Above 100 % they would grow.`
+                    : `Cold enough (below ${(r.TLC - K).toFixed(1)} °C) and ice-supersaturated (${rhi} % over ice): the crystals keep growing. This is the air STRATUM looks for.`}
               </span>
             </figcaption>
           </figure>
@@ -131,10 +122,7 @@ export function Sandbox() {
             )}
           </p>
           <p class="small muted">
-            {tx(
-              `Pressure from the standard atmosphere at FL${fl}; mixing-line slope G = ${r.G.toFixed(2)} Pa/K; threshold in saturated air T_LM = ${(r.TLM - K).toFixed(1)} °C. Saturation over water and ice: Murphy & Koop (2005), as in our pre-registered physics.`,
-              `FL${fl} पर मानक वायुमंडल से दबाव; मिश्रण-रेखा ढलान G = ${r.G.toFixed(2)} Pa/K; संतृप्त हवा में सीमा T_LM = ${(r.TLM - K).toFixed(1)} °C। पानी और बर्फ़ पर संतृप्ति: Murphy & Koop (2005), हमारी पहले से दर्ज भौतिकी की तरह।`,
-            )}{" "}
+            {`Pressure from the standard atmosphere at FL${fl}; mixing-line slope G = ${r.G.toFixed(2)} Pa/K; threshold in saturated air T_LM = ${(r.TLM - K).toFixed(1)} °C. Saturation over water and ice: Murphy & Koop (2005), as in our pre-registered physics.`}{" "}
             <a href="/how-it-works">{T("How STRATUM uses it")} →</a>
           </p>
         </section>

@@ -3,7 +3,7 @@
 // (their paths carry the build id), images, media and fonts: cache first — they never change
 // under the same URL; the daily outlook (/data/outlook/) is network first. Anything else goes to
 // the network as usual.
-const CACHE = "stratum-v1";
+const CACHE = "stratum-v2"; // v2: the night-sky redesign (10 Nov 2026); older caches are dropped on activate
 const SHELL = "/index.html";
 
 self.addEventListener("install", (e) => {

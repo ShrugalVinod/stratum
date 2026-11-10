@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { loadDashboard, loadWeightedSummary } from "../data/load";
 import { Bars, Hours, pc, type Row } from "../components/WarmingCharts";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { ATF_KG_PER_L, type Decisions, perAlert, rupees, year } from "../lib/business";
 
 /** /airlines — the business case: the EU now makes airlines monitor and report their contrails'
@@ -44,7 +44,7 @@ export function Airlines() {
   const p = useMemo(() => (dec ? perAlert(dec) : null), [dec]);
   const share = who === "all" ? 1 : (airlines.find((a) => a.key === who)?.share ?? 0);
   const y = p ? year(p, { alertsPerDay: p.perDay * share, atfRsPerL: atf, eurPerT: eur, inrPerEur: fx }) : null;
-  const rs = (v: number) => tx(rupees(v), rupees(v).replace("crore", "करोड़").replace("lakh", "लाख"));
+  const rs = (v: number) => rupees(v);
 
   return (
     <div class="page airlines">
@@ -73,7 +73,7 @@ export function Airlines() {
               </span>
             </li>
             <li>
-              <b class="mono">{tx("1 Jan 2025", "1 जनवरी 2025")}</b>
+              <b class="mono">{"1 Jan 2025"}</b>
               <span>{T("Monitoring starts for flights between airports in the European Economic Area (and from there to Switzerland and the UK), reported once a year.")}</span>
             </li>
             <li>
@@ -81,15 +81,15 @@ export function Airlines() {
               <span>{T("Flights to and from the rest of the world, India included, may report voluntarily.")}</span>
             </li>
             <li class="al-key">
-              <b class="mono">{tx("1 Jan 2027", "1 जनवरी 2027")}</b>
+              <b class="mono">{"1 Jan 2027"}</b>
               <span>{T("Mandatory for all flights into and out of the European Economic Area: every flight between India and Europe.")}</span>
             </li>
             <li>
-              <b class="mono">{tx("End 2027", "2027 के अंत तक")}</b>
+              <b class="mono">{"End 2027"}</b>
               <span>{T("The European Commission reports on the results and, if appropriate, proposes a law to address aviation's non-CO₂ effects.")}</span>
             </li>
             <li>
-              <b class="mono">{tx("India, 2027", "भारत, 2027")}</b>
+              <b class="mono">{"India, 2027"}</b>
               <span>
                 {T("Indian airlines enter the mandatory phase of ICAO's CORSIA. It covers CO₂ only: contrails are not in it yet.")}{" "}
                 <a href={SOURCES.corsia} target="_blank" rel="noopener">
@@ -174,39 +174,32 @@ export function Airlines() {
               <div class="rt-tiles al-tiles">
                 <div>
                   <b>{Math.round(y.alerts).toLocaleString()}</b>
-                  <span>{tx(`altitude changes a year (${(p.perDay * share).toFixed(1)} a day)`, `ऊँचाई बदलाव प्रति वर्ष (${(p.perDay * share).toFixed(1)} प्रति दिन)`)}</span>
+                  <span>{`altitude changes a year (${(p.perDay * share).toFixed(1)} a day)`}</span>
                 </div>
                 <div>
                   <b>{rs(y.fuelCostRs)}</b>
-                  <span>{tx(`extra fuel (${Math.round(y.fuelT).toLocaleString()} t a year)`, `अतिरिक्त ईंधन (${Math.round(y.fuelT).toLocaleString()} t प्रति वर्ष)`)}</span>
+                  <span>{`extra fuel (${Math.round(y.fuelT).toLocaleString()} t a year)`}</span>
                 </div>
                 <div class="al-good">
                   <b>{Math.round(y.avoidedT).toLocaleString()} t</b>
-                  <span>{tx(`CO₂e of warming avoided (100 years, median; cautious: ${Math.round(y.cautiousT).toLocaleString()} t)`, `CO₂e गर्मी टली (100 वर्ष, माध्यिका; सतर्क: ${Math.round(y.cautiousT).toLocaleString()} t)`)}</span>
+                  <span>{`CO₂e of warming avoided (100 years, median; cautious: ${Math.round(y.cautiousT).toLocaleString()} t)`}</span>
                 </div>
                 <div class="al-good">
                   <b>{rs(y.rsPerTonne)}</b>
-                  <span>{tx(`per tonne avoided, against a carbon price of ${rupees(y.carbonRsPerT)} a tonne`, `प्रति टन टली गर्मी, जबकि कार्बन की कीमत ${rupees(y.carbonRsPerT)} प्रति टन`)}</span>
+                  <span>{`per tonne avoided, against a carbon price of ${rupees(y.carbonRsPerT)} a tonne`}</span>
                 </div>
               </div>
 
               <p class="lede al-line rv">
-                {tx(
-                  <>
+                {<>
                     Avoiding contrails would cost about <b>{rs(y.rsPerTonne)}</b> of fuel per tonne of CO₂-equivalent warming avoided:{" "}
                     <b>{y.carbonRsPerT > 0 ? Math.round(y.carbonRsPerT / y.rsPerTonne) : "—"}×</b> cheaper than the EU's carbon price. At that price the avoided warming
                     is worth <b>{rs(y.valueRs)}</b> a year.
-                  </>,
-                  <>
-                    कंट्रेल से बचने में हर टन CO₂ के बराबर टली गर्मी पर लगभग <b>{rs(y.rsPerTonne)}</b> का ईंधन लगेगा: EU की कार्बन कीमत से{" "}
-                    <b>{y.carbonRsPerT > 0 ? Math.round(y.carbonRsPerT / y.rsPerTonne) : "—"}×</b> सस्ता। उस कीमत पर टली गर्मी का मूल्य हर साल <b>{rs(y.valueRs)}</b> है।
-                  </>,
-                )}
+                  </>}
               </p>
 
               <p class="small muted">
-                {tx(
-                  <>
+                {<>
                     How: our decision layer redone with STRATUM's probabilities (second analysis D-006) flagged {dec!.alerts} altitude changes on{" "}
                     {dec!.days} days over India; each used {Math.round(p.fuelKg)} kg of extra fuel and avoided about {(p.avoidedKg / 1000).toFixed(1)} t CO₂e of warming
                     (100-year median; 20 years: {(p.avoided20Kg / 1000).toFixed(1)} t). An airline's share of the alerts is its share of STRATUM-weighted contrail warming
@@ -214,17 +207,7 @@ export function Airlines() {
                     {ATF_KG_PER_L} kg per litre; the extra fuel's own CO₂ is already subtracted from the warming avoided. Contrail warming is converted to CO₂e with
                     efficacy 0.42 and GWP-100, as pre-registered; other metrics give other numbers. Not modelled: air traffic control, schedules, and whether a
                     level is free. Defaults (24 Oct 2026): ATF in Delhi from 1 Oct, EU carbon allowance mid-October, reference rate of 19 Oct; change them above.
-                  </>,
-                  <>
-                    कैसे: STRATUM की संभावनाओं से दोबारा चलाई गई हमारी निर्णय परत (दूसरा विश्लेषण D-006) ने भारत के ऊपर {dec!.days} दिनों में {dec!.alerts} ऊँचाई बदलाव
-                    चिह्नित किए; हर एक में {Math.round(p.fuelKg)} kg अतिरिक्त ईंधन लगा और लगभग {(p.avoidedKg / 1000).toFixed(1)} t CO₂e गर्मी टली (100 वर्ष माध्यिका; 20 वर्ष:{" "}
-                    {(p.avoided20Kg / 1000).toFixed(1)} t)। किसी एयरलाइन का हिस्सा STRATUM-भारित कंट्रेल गर्मी में उसका हिस्सा है (रूट और एयरलाइन)। हर दिन केवल 60 सबसे प्रबल
-                    हिस्से जाँचे गए, इसलिए उपयोगी बदलावों की असली संख्या ज़्यादा है। ईंधन {ATF_KG_PER_L} kg प्रति लीटर; अतिरिक्त ईंधन का अपना CO₂ टली गर्मी से पहले ही घटाया गया
-                    है। कंट्रेल गर्मी को पहले से दर्ज तरीके से CO₂e में बदला गया है (प्रभावकारिता 0.42, GWP-100); दूसरे माप दूसरे अंक देते हैं। मॉडल नहीं किया गया: हवाई यातायात
-                    नियंत्रण, समय-सारणी, और लेवल खाली है या नहीं। डिफ़ॉल्ट (24 अक्टूबर 2026): दिल्ली में 1 अक्टूबर से ATF, अक्टूबर मध्य का EU कार्बन मूल्य, 19 अक्टूबर की
-                    संदर्भ दर; इन्हें ऊपर बदलें।
-                  </>,
-                )}
+                  </>}
               </p>
             </>
           )}
@@ -236,7 +219,7 @@ export function Airlines() {
               <p class="label red" id="where">
                 {T("§4 · Where the warming comes from")}
               </p>
-              <span class="mono-s">{tx(`${dash.totals.flights.toLocaleString()} commercial flights · 12 days`, `${dash.totals.flights.toLocaleString()} व्यावसायिक उड़ानें · 12 दिन`)}</span>
+              <span class="mono-s">{`${dash.totals.flights.toLocaleString()} commercial flights · 12 days`}</span>
             </div>
             <div class="rt-tiles rv">
               <div>
@@ -253,7 +236,7 @@ export function Airlines() {
               </div>
               <div>
                 <b>{pc(night(dash.by_hour_ist, "share_warm_w"), 0)}</b>
-                <span>{tx(`of the warming at night (18:00–06:00 IST), for ${pc(night(dash.by_hour_ist, "share_km"), 0)} of the distance`, `गर्मी रात में (18:00–06:00 IST), जबकि दूरी केवल ${pc(night(dash.by_hour_ist, "share_km"), 0)}`)}</span>
+                <span>{`of the warming at night (18:00–06:00 IST), for ${pc(night(dash.by_hour_ist, "share_km"), 0)} of the distance`}</span>
               </div>
             </div>
             <p class="rt-key mono-s rv">

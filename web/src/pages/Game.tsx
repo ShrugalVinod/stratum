@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { GameIndex, GameRound } from "../data/contract";
 import { gameImg, loadGame } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import "../styles/map.css";
 
 /** /game — "Beat STRATUM", for the booth: ten held-out flights, the weather at each aircraft,
@@ -87,7 +87,7 @@ export function Game() {
     <div class="page game">
       <PageHead
         label="Game · for the booth"
-        note={g ? tx(`${g.rounds.length} held-out flights · Meteosat-9`, `${g.rounds.length} अलग रखी गई उड़ानें · Meteosat-9`) : g === null ? "Rounds not published yet" : "Loading…"}
+        note={g ? `${g.rounds.length} held-out flights · Meteosat-9` : g === null ? "Rounds not published yet" : "Loading…"}
         lines={["Beat STRATUM."]}
         lede="You get the weather at a real aircraft, at the moment it flew. Did the satellite see it leave a lasting contrail? STRATUM and the physics answer too. Ten flights."
       />
@@ -111,7 +111,7 @@ export function Game() {
           <div class="gm-round">
             <div class="gm-top mono-s">
               <span>
-                {tx(`Flight ${i + 1} of ${hand.length}`, `उड़ान ${i + 1} / ${hand.length}`)}
+                {`Flight ${i + 1} of ${hand.length}`}
               </span>
               <span>
                 {T("You")} {you} · STRATUM {st} · {T("Physics")} {ph}
@@ -209,8 +209,8 @@ function Weather({ r }: { r: GameRound }) {
             {w.sac_margin_k == null
               ? "—"
               : w.sac_margin_k <= 0
-                ? tx(`Yes, ${Math.abs(w.sac_margin_k).toFixed(0)} °C below the limit`, `हाँ, सीमा से ${Math.abs(w.sac_margin_k).toFixed(0)} °C नीचे`)
-                : tx(`No, ${w.sac_margin_k.toFixed(0)} °C too warm`, `नहीं, ${w.sac_margin_k.toFixed(0)} °C ज़्यादा गर्म`)}
+                ? `Yes, ${Math.abs(w.sac_margin_k).toFixed(0)} °C below the limit`
+                : `No, ${w.sac_margin_k.toFixed(0)} °C too warm`}
           </dd>
         </div>
         <div>
@@ -234,18 +234,13 @@ function Reveal({ r, you, credit, onNext, last }: { r: GameRound; you: boolean; 
     <div class="gm-reveal">
       <p class={`gm-verdict ${right ? "ok" : "miss"}`}>{T(right ? "Right!" : "Not this time.")}</p>
       <p>
-        {tx(
-          <>
+        {<>
             The satellite <b>{r.seen ? "did see" : "did not see"}</b> a lasting contrail.
-          </>,
-          <>
-            उपग्रह ने टिकाऊ कंट्रेल <b>{r.seen ? "देखी" : "नहीं देखी"}</b>।
-          </>,
-        )}
+          </>}
       </p>
       <figure class="gm-sat">
         <div class="proof-img" style={{ aspectRatio: `${s.w} / ${s.h}` }}>
-          <img src={gameImg(s.img)} width={s.w} height={s.h} alt={tx(`Meteosat-9 at ${s.t.slice(11, 16)} UTC around the flight`, `${s.t.slice(11, 16)} UTC पर उड़ान के आसपास Meteosat-9`)} />
+          <img src={gameImg(s.img)} width={s.w} height={s.h} alt={`Meteosat-9 at ${s.t.slice(11, 16)} UTC around the flight`} />
           <svg viewBox={`0 0 ${s.w} ${s.h}`} aria-hidden="true" preserveAspectRatio="none">
             {s.track.map((l) => (
               <polyline class="pr-track" points={pts(l)} />

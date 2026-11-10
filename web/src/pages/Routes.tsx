@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { loadDashboard } from "../data/load";
 import { Bars, Hours, type Metric, pc, type Row } from "../components/WarmingCharts";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import "../styles/map.css";
 
 /** /routes — where India's contrail warming comes from: by airline, route, hour, flight level,
@@ -18,7 +18,6 @@ const MK = MW / (BOX.e - BOX.w);
 const MH = (BOX.n - BOX.s) * MK;
 const mp = (lon: number, lat: number) => [(lon - BOX.w) * MK, (BOX.n - lat) * MK] as const;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const MONTHS_HI = ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सितं", "अक्टू", "नवं", "दिसं"];
 /** "North-west → East", "Overflight (beyond → beyond)": each word through the dictionary. */
 const corridor = (k: string) => k.replace(/[A-Za-z][A-Za-z-]*/g, (w) => T(w));
 
@@ -54,10 +53,7 @@ export function Routes() {
         label="Routes & airlines · descriptive"
         note={
           t
-            ? tx(
-                `${t.flights.toLocaleString()} commercial flights · 12 days · ${Math.round(t.km / 1000).toLocaleString()} thousand km`,
-                `${t.flights.toLocaleString()} व्यावसायिक उड़ानें · 12 दिन · ${Math.round(t.km / 1000).toLocaleString()} हज़ार किमी`,
-              )
+            ? `${t.flights.toLocaleString()} commercial flights · 12 days · ${Math.round(t.km / 1000).toLocaleString()} thousand km`
             : d === null
               ? "Not published yet"
               : "Loading…"
@@ -84,7 +80,7 @@ export function Routes() {
               </div>
               <div>
                 <b>{pc(nightShare(d.by_hour_ist, metric), 0)}</b>
-                <span>{tx(`of the warming at night (18:00–06:00 IST), for ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance`, `गर्मी रात में (18:00–06:00 IST), जबकि दूरी केवल ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)}`)}</span>
+                <span>{`of the warming at night (18:00–06:00 IST), for ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance`}</span>
               </div>
             </div>
 
@@ -137,7 +133,7 @@ export function Routes() {
               </section>
               <section class="rt-sec">
                 <p class="label red">{T("By month (one day each)")}</p>
-                <Bars rows={d.by_month} metric={metric} label={(r) => `${tx(MONTHS, MONTHS_HI)[Number(r.key.slice(5, 7)) - 1]} ${r.key.slice(0, 4)}`} />
+                <Bars rows={d.by_month} metric={metric} label={(r) => `${MONTHS[Number(r.key.slice(5, 7)) - 1]} ${r.key.slice(0, 4)}`} />
               </section>
               <section class="rt-sec">
                 <p class="label red">{T("Where (STRATUM-weighted)")}</p>
@@ -151,7 +147,7 @@ export function Routes() {
                       const [x, y] = mp(lo - 0.5, la + 0.5);
                       return (
                         <rect class="rt-cell" x={x} y={y} width={MK} height={MK} style={{ opacity: 0.12 + 0.88 * Math.sqrt(w / heatMax) }}>
-                          <title>{tx(`${la.toFixed(1)}°N ${lo.toFixed(1)}°E: ${pc(w, 2)} of the warming, ${pc(km, 2)} of the distance`, `${la.toFixed(1)}°N ${lo.toFixed(1)}°E: गर्मी का ${pc(w, 2)}, दूरी का ${pc(km, 2)}`)}</title>
+                          <title>{`${la.toFixed(1)}°N ${lo.toFixed(1)}°E: ${pc(w, 2)} of the warming, ${pc(km, 2)} of the distance`}</title>
                         </rect>
                       );
                     })}

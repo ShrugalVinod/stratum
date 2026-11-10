@@ -5,7 +5,7 @@ import { RAMP } from "../data/ramp";
 import { clock, colourise, colouriseObs, joules, tonnes, type MapState, type ModelKey, pad2, parseState, stateQuery, type ViewKey } from "../data/format";
 import { gridUrl, layerUrl, type Lists, loadContrailDay, loadContrailIndex, loadCorridor, loadDay, loadExplain, loadGridBytes, loadManifest, loadWeighted, loadWeightedSummary, spriteHour } from "../data/load";
 import { WhyPanel } from "../components/WhyPanel";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { ContrailProof } from "../components/ContrailProof";
 import type { ContrailMap as ContrailMapT, Layers } from "../map/ContrailMap";
 import "../styles/map.css";
@@ -132,8 +132,7 @@ const DIR_LABEL = { "DEL-BOM": "Southbound", "BOM-DEL": "Northbound", other: "Cr
 const DIR_SHORT = { "DEL-BOM": "South", "BOM-DEL": "North", other: "Crossing" } as const; // fits the 380 px side panel
 
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-const MON_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
-const dayLabel = (iso: string) => `${Number(iso.slice(8, 10))} ${tx(MON, MON_HI)[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const dayLabel = (iso: string) => `${Number(iso.slice(8, 10))} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 /** 3.2 → "3 h 12 min" */
 const hm = (h: number) => {
   const m = Math.round(h * 60);
@@ -506,7 +505,7 @@ export function MapPage() {
         <span class="mono-s mp-extra">
           {T("ADS-B coverage")}:{" "}
           {man?.coverage.adsb_coverage_pct != null
-            ? tx(`${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights`, `गलियारे की निर्धारित उड़ानों का ${man.coverage.adsb_coverage_pct.toFixed(0)} %`)
+            ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights`
             : T("audit pending (Nov 2026)")}
         </span>
         <span class="mp-tools">
@@ -549,7 +548,7 @@ export function MapPage() {
                 const n = alertsByDay[d] ?? 0;
                 const mx = Math.max(1, ...Object.values(alertsByDay));
                 return (
-                  <button class={d === st.date ? "on" : ""} style={{ "--v": n ? 0.18 + 0.82 * Math.sqrt(n / mx) : 0 }} title={tx(`${dayLabel(d)}: ${n} alert${n === 1 ? "" : "s"}`, `${dayLabel(d)}: ${n} चेतावनी`)} aria-label={tx(`${dayLabel(d)}, ${n} alerts`, `${dayLabel(d)}, ${n} चेतावनी`)} onClick={() => setSt({ ...st, date: d, seg: null })}>
+                  <button class={d === st.date ? "on" : ""} style={{ "--v": n ? 0.18 + 0.82 * Math.sqrt(n / mx) : 0 }} title={`${dayLabel(d)}: ${n} alert${n === 1 ? "" : "s"}`} aria-label={`${dayLabel(d)}, ${n} alerts`} onClick={() => setSt({ ...st, date: d, seg: null })}>
                     <span class="mono">{MON[Number(d.slice(5, 7)) - 1].slice(0, 1)}</span>
                   </button>
                 );
@@ -707,19 +706,10 @@ export function MapPage() {
               {hourly && (
                 <div class="legend-stat mono">
                   {layer === "STRATUM" || layer === "STRATUM_spread"
-                    ? tx(
-                        `FL${st.fl} ${pad2(st.hour)}:00 UTC: mean ${(hourly.domain[st.hour] * 100).toFixed(2)} % over the domain · ${(hourly.corridor[st.hour] * 100).toFixed(2)} % in the corridor`,
-                        `FL${st.fl} ${pad2(st.hour)}:00 UTC: पूरे क्षेत्र में औसत ${(hourly.domain[st.hour] * 100).toFixed(2)} % · गलियारे में ${(hourly.corridor[st.hour] * 100).toFixed(2)} %`,
-                      )
+                    ? `FL${st.fl} ${pad2(st.hour)}:00 UTC: mean ${(hourly.domain[st.hour] * 100).toFixed(2)} % over the domain · ${(hourly.corridor[st.hour] * 100).toFixed(2)} % in the corridor`
                     : layer === "observable"
-                      ? tx(
-                          `${pad2(st.hour)}:00 UTC: the satellite could see ${(hourly.domain[st.hour] * 100).toFixed(0)} % of the domain`,
-                          `${pad2(st.hour)}:00 UTC: उपग्रह क्षेत्र का ${(hourly.domain[st.hour] * 100).toFixed(0)} % देख सका`,
-                        )
-                      : tx(
-                          `FL${st.fl} ${pad2(st.hour)}:00 UTC: ${(hourly.domain[st.hour] * 100).toFixed(1)} % of the domain · ${(hourly.corridor[st.hour] * 100).toFixed(1)} % of the corridor`,
-                          `FL${st.fl} ${pad2(st.hour)}:00 UTC: क्षेत्र का ${(hourly.domain[st.hour] * 100).toFixed(1)} % · गलियारे का ${(hourly.corridor[st.hour] * 100).toFixed(1)} %`,
-                        )}
+                      ? `${pad2(st.hour)}:00 UTC: the satellite could see ${(hourly.domain[st.hour] * 100).toFixed(0)} % of the domain`
+                      : `FL${st.fl} ${pad2(st.hour)}:00 UTC: ${(hourly.domain[st.hour] * 100).toFixed(1)} % of the domain · ${(hourly.corridor[st.hour] * 100).toFixed(1)} % of the corridor`}
                 </div>
               )}
               </div>
@@ -740,10 +730,10 @@ export function MapPage() {
                 onChoose={(fl, h) => setSt({ ...st, fl, hour: h })}
               />
             )}
-            {!dayData && <div class="map-loading mono-s">{tx(`Loading ${st.date}…`, `${st.date} लोड हो रहा है…`)}</div>}
+            {!dayData && <div class="map-loading mono-s">{`Loading ${st.date}…`}</div>}
             {intro.active && (
               <div class="intro-chip" role="status" aria-live="off">
-                <span class="mono-s">{tx(`Replaying ${st.date ? dayLabel(st.date) : ""}`, `${st.date ? dayLabel(st.date) : ""} दोबारा चल रहा है`)}</span>
+                <span class="mono-s">{`Replaying ${st.date ? dayLabel(st.date) : ""}`}</span>
                 <b class="mono">
                   {pad2(Math.floor(intro.t / 60) % 24)}:{pad2(Math.floor(intro.t % 60))} UTC
                 </b>
@@ -772,27 +762,21 @@ export function MapPage() {
               <div class="empty">
                 <p>{T("Forecast: no flights yet.")}</p>
                 <p class="muted">
-                  {tx(
-                    <>
+                  {<>
                       This is tomorrow's sky from the ECMWF open-data forecast, run through our physics. For the aircraft flying right now, and which of them
                       should change level, open <a href="/now">Live advice</a>.
-                    </>,
-                    <>
-                      यह ECMWF के खुले पूर्वानुमान से कल का आसमान है, हमारी भौतिकी से गुज़ारा हुआ। अभी उड़ रहे विमानों, और किसे लेवल बदलना चाहिए, के लिए{" "}
-                      <a href="/now">लाइव सलाह</a> खोलिए।
-                    </>,
-                  )}
+                    </>}
                 </p>
               </div>
             )}
 
             {dayData && !dayData.day.has_flights && build !== "outlook" && (
               <div class="empty">
-                <p>{tx(`No flight data for ${st.date ? dayLabel(st.date) : ""}.`, `${st.date ? dayLabel(st.date) : ""} का उड़ान डेटा नहीं है।`)}</p>
+                <p>{`No flight data for ${st.date ? dayLabel(st.date) : ""}.`}</p>
                 <p class="muted">{T("Free flight data exist for the 1st of each month. The contrail conditions on the map are still real for every January day.")}</p>
                 {nearestFlightDay && (
                   <button class="tool" onClick={() => setSt({ ...st, date: nearestFlightDay, seg: null })}>
-                    {tx(`Show ${dayLabel(nearestFlightDay)} ✈`, `${dayLabel(nearestFlightDay)} दिखाएँ ✈`)}
+                    {`Show ${dayLabel(nearestFlightDay)} ✈`}
                   </button>
                 )}
               </div>
@@ -849,7 +833,7 @@ export function MapPage() {
                   )}
                   <div class="filter-row">
                     <span class="mono-s muted">
-                      {tx(`${shown.length} of ${segments.length} shown`, `${segments.length} में से ${shown.length} दिखाए`)}
+                      {`${shown.length} of ${segments.length} shown`}
                       {isS ? ` · ${segments.filter((x) => x.alert).length} ${T("alerts")}` : ""}
                     </span>
                     <button class="tool" onClick={downloadCsv} disabled={!shown.length} title={T("Commercial flights only, hashed ids")}>
@@ -890,7 +874,7 @@ export function MapPage() {
                             <span class="strip-r mono">
                               <b>FL{s.fl}</b>
                               <span>{joules(s.ef_J)}</span>
-                              <span>{s.contrail_age_h != null ? tx(`lasts ${s.contrail_age_h.toFixed(1)} h`, `${s.contrail_age_h.toFixed(1)} h टिकी`) : ""}</span>
+                              <span>{s.contrail_age_h != null ? `lasts ${s.contrail_age_h.toFixed(1)} h` : ""}</span>
                             </span>
                           )}
                         </button>
@@ -923,7 +907,7 @@ export function MapPage() {
               <i
                 class={h === st.hour && !intro.active ? "on" : ""}
                 style={{ "--v": hourly ? Math.max(0.03, hourly.corridor[h] / Math.max(0.02, ...hourly.corridor)) : 0.03 }}
-                title={hourly ? tx(`${pad2(h)} UTC: ${(hourly.corridor[h] * 100).toFixed(1)} % of the corridor`, `${pad2(h)} UTC: गलियारे का ${(hourly.corridor[h] * 100).toFixed(1)} %`) : ""}
+                title={hourly ? `${pad2(h)} UTC: ${(hourly.corridor[h] * 100).toFixed(1)} % of the corridor` : ""}
               />
             ))}
           </div>
@@ -966,7 +950,7 @@ export function MapPage() {
           : layer === "observable"
             ? T("share of the domain the satellite could see")
             : `${T("share of the Delhi–Mumbai corridor with persistent-contrail conditions")} (${T(MODEL_BADGE[model === "STRATUM" ? "B1" : model])})`}{" "}
-        {tx(`at FL${st.fl}, each hour.`, `FL${st.fl} पर, हर घंटे।`)} {T("Drag along the bars or use the arrow keys to change the hour.")}
+        {`at FL${st.fl}, each hour.`} {T("Drag along the bars or use the arrow keys to change the hour.")}
       </p>
 
       {dayData && (
@@ -1050,7 +1034,7 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
   const isS = p.model === "STRATUM";
   const rng = (r: number[] | null | undefined) => (r && r.length === 3 ? `${tonnes(r[0])} … ${tonnes(r[2])} (${T("median")} ${tonnes(r[1])})` : "—");
   return (
-    <section class="deck" aria-label={tx(`Details for ${callsign}`, `${callsign} का विवरण`)} aria-live="polite">
+    <section class="deck" aria-label={`Details for ${callsign}`} aria-live="polite">
       <div class="dk dk-flight">
         <p class="label">{T("Flight")}</p>
         <b class="display">{callsign}</b>
@@ -1079,15 +1063,9 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
               <b class="mono life-num">{s.alert && s.best_alternative_fl ? `FL${s.best_alternative_fl}` : `FL${s.fl}`}</b>
               <span class="small">
                 {s.alert
-                  ? tx(
-                      `Fly FL${s.best_alternative_fl} instead of FL${s.fl} here: the cautious estimate of warming avoided is positive at both 20 and 100 years.`,
-                      `यहाँ FL${s.fl} की जगह FL${s.best_alternative_fl} पर उड़िए: टाली गई गर्मी का सतर्क अनुमान 20 और 100 दोनों वर्षों पर सकारात्मक है।`,
-                    )
+                  ? `Fly FL${s.best_alternative_fl} instead of FL${s.fl} here: the cautious estimate of warming avoided is positive at both 20 and 100 years.`
                   : s.best_alternative_fl
-                    ? tx(
-                        `Best option FL${s.best_alternative_fl}, but its cautious estimate is not positive at both horizons: keep FL${s.fl}.`,
-                        `सबसे अच्छा विकल्प FL${s.best_alternative_fl}, पर उसका सतर्क अनुमान दोनों अवधियों पर सकारात्मक नहीं: FL${s.fl} ही रखिए।`,
-                      )
+                    ? `Best option FL${s.best_alternative_fl}, but its cautious estimate is not positive at both horizons: keep FL${s.fl}.`
                     : T("No feasible alternative level.")}
               </span>
               {s.alert && !s.alert_without_fuel_credit && <span class="small muted">{T("This alert relies on a fuel saving at the new level (OpenAP).")}</span>}
@@ -1117,7 +1095,7 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
           ) : (
             <>
               <b class="mono life-num">0 h</b>
-              <span class="small">{tx(`No persistent contrail predicted for this flight (${p.model} physics).`, `इस उड़ान के लिए कोई टिकाऊ कंट्रेल अनुमानित नहीं (${p.model} भौतिकी)।`)}</span>
+              <span class="small">{`No persistent contrail predicted for this flight (${p.model} physics).`}</span>
             </>
           )}
         </div>
@@ -1165,8 +1143,8 @@ function DetailDeck(p: { model: ModelKey; flight: FlightFeature | null; seg: Fla
                   {s.extra_fuel_kg == null
                     ? "—"
                     : s.extra_fuel_kg < 0
-                      ? tx(`saves ${Math.round(-s.extra_fuel_kg)} kg fuel / ${tonnes(-(s.extra_co2_kg ?? 0))} CO₂`, `${Math.round(-s.extra_fuel_kg)} kg ईंधन / ${tonnes(-(s.extra_co2_kg ?? 0))} CO₂ की बचत`)
-                      : tx(`+${Math.round(s.extra_fuel_kg)} kg fuel / ${tonnes(s.extra_co2_kg)} CO₂`, `+${Math.round(s.extra_fuel_kg)} kg ईंधन / ${tonnes(s.extra_co2_kg)} CO₂`)}
+                      ? `saves ${Math.round(-s.extra_fuel_kg)} kg fuel / ${tonnes(-(s.extra_co2_kg ?? 0))} CO₂`
+                      : `+${Math.round(s.extra_fuel_kg)} kg fuel / ${tonnes(s.extra_co2_kg)} CO₂`}
                 </dd>
               </div>
               <div>
@@ -1243,13 +1221,13 @@ function AltTable({ s }: { s: FlaggedSegment }) {
               </th>
               {a.feasible ? (
                 <>
-                  <td>{a.extra_fuel_kg != null ? (a.extra_fuel_kg < 0 ? tx(`saves ${Math.round(-a.extra_fuel_kg)} kg`, `${Math.round(-a.extra_fuel_kg)} kg बचत`) : `+${Math.round(a.extra_fuel_kg)} kg`) : "—"}</td>
+                  <td>{a.extra_fuel_kg != null ? (a.extra_fuel_kg < 0 ? `saves ${Math.round(-a.extra_fuel_kg)} kg` : `+${Math.round(a.extra_fuel_kg)} kg`) : "—"}</td>
                   <td>{t(a.net_20y)}</td>
                   <td>{t(a.net_100y)}</td>
                 </>
               ) : (
                 <td colSpan={3}>
-                  {T("not possible")}: {tx(a.reason, a.reason.replace("above OpenAP ceiling", "OpenAP सीमा से ऊपर"))}
+                  {T("not possible")}: {a.reason}
                 </td>
               )}
             </tr>
@@ -1352,7 +1330,7 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
                         class={fl === p.fl && h === p.hour ? "cur" : ""}
                         onClick={() => p.onChoose(fl, h)}
                       >
-                        <title>{p.dmax < 1 ? `FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(1)} %` : tx(`FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(0)} % of the hour`, `FL${fl} ${pad2(h)} UTC: घंटे का ${(v * 100).toFixed(0)} %`)}</title>
+                        <title>{p.dmax < 1 ? `FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(1)} %` : `FL${fl} ${pad2(h)} UTC: ${(v * 100).toFixed(0)} % of the hour`}</title>
                       </rect>
                     );
                   })}
@@ -1371,7 +1349,7 @@ function SkyColumn(p: { at: [number, number]; data: number[][] | null; fls: numb
           <p class="small muted" style="margin:6px 0 0">
             {any && best
               ? `${T(p.what === "STRATUM" ? "Highest contrail chance" : p.what === "observable" ? "Best satellite view" : "Strongest persistent-contrail conditions")}: FL${(best as { fl: number }).fl}, ${pad2((best as { h: number }).h)} UTC. ${T("Click a cell to show it on the map.")}`
-              : tx(`Nothing above this point today (${p.what}).`, `आज इस बिंदु के ऊपर कुछ नहीं (${p.what})।`)}
+              : `Nothing above this point today (${p.what}).`}
           </p>
         </>
       )}

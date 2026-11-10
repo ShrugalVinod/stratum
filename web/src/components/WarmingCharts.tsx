@@ -1,4 +1,4 @@
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 /** Contrail warming broken down by group (airline, hour, level…): each bar is the group's share of
  *  the modelled warming, the tick its share of the distance flown. Used by /routes and /airlines.
@@ -14,7 +14,7 @@ export function Bars({ rows, metric, label, short }: { rows: Row[]; metric: Metr
   return (
     <ul class="rt-bars">
       {rows.map((r) => (
-        <li title={tx(`${label(r)}: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance · ${r.flights.toLocaleString()} flights`, `${label(r)}: गर्मी का ${pc(r[metric])}, दूरी का ${pc(r.share_km)} · ${r.flights.toLocaleString()} उड़ानें`)}>
+        <li title={`${label(r)}: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance · ${r.flights.toLocaleString()} flights`}>
           <span class="rt-l">
             <span class={short ? "rt-full" : ""}>{label(r)}</span>
             {short && <span class="rt-short">{short(r)}</span>}
@@ -24,7 +24,7 @@ export function Bars({ rows, metric, label, short }: { rows: Row[]; metric: Metr
             <em class="rt-tick" style={{ left: `${(r.share_km / max) * 100}%` }} />
           </span>
           <span class="rt-v mono-s">
-            <b>{pc(r[metric])}</b> · {pc(r.share_km)} {tx("km", "किमी")}
+            <b>{pc(r[metric])}</b> · {pc(r.share_km)} {"km"}
           </span>
         </li>
       ))}
@@ -49,7 +49,7 @@ export function Hours({ rows, metric }: { rows: Row[]; metric: Metric }) {
         const th = H - (r.share_km / max) * (H - 8);
         return (
           <g>
-            <title>{tx(`${String(h).padStart(2, "0")}:00 IST: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance`, `${String(h).padStart(2, "0")}:00 IST: गर्मी का ${pc(r[metric])}, दूरी का ${pc(r.share_km)}`)}</title>
+            <title>{`${String(h).padStart(2, "0")}:00 IST: ${pc(r[metric])} of the warming, ${pc(r.share_km)} of the distance`}</title>
             <rect class="rt-bar" x={h * bw + 3} y={H - bh} width={bw - 6} height={Math.max(bh, 0.5)} rx={2} />
             <line class="rt-tick-l" x1={h * bw + 1} x2={(h + 1) * bw - 1} y1={th} y2={th} />
             <rect x={h * bw} y={0} width={bw} height={H} fill="transparent" />

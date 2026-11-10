@@ -119,32 +119,3 @@ export function startMotion(): () => void {
     removeEventListener("scroll", onScroll);
   };
 }
-
-// ── theme ────────────────────────────────────────────────────────────────
-export type Theme = "light" | "dark";
-export const currentTheme = (): Theme => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
-
-export function setTheme(next: Theme) {
-  const root = document.documentElement;
-  const apply = () => {
-    root.dataset.theme = next;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "dark" ? "#05080E" : "#F1ECE1");
-    try {
-      localStorage.setItem("stratum-theme", next);
-    } catch {
-      /* private mode: not remembered */
-    }
-    window.dispatchEvent(new CustomEvent("stratum-theme", { detail: next }));
-  };
-  const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
-  if (reduced()) return apply();
-  if (doc.startViewTransition) {
-    root.classList.add(next === "dark" ? "vt-dusk" : "vt-dawn");
-    const t = doc.startViewTransition(apply);
-    t.finished.finally(() => root.classList.remove("vt-dusk", "vt-dawn"));
-    return;
-  }
-  root.classList.add("theming");
-  apply();
-  setTimeout(() => root.classList.remove("theming"), 700);
-}

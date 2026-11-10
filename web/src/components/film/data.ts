@@ -22,13 +22,19 @@ export function loadLand(): Promise<Land> {
   return land;
 }
 
-let world: Promise<number[][]> | null = null;
-/** World land outline (Natural Earth 1:110m, coastlines only, no borders), flat lon/lat rings. */
-export function loadWorldLand(): Promise<number[][]> {
-  world ??= fetch("/geo/land110.json")
-    .then((r) => r.json())
-    .then((j: { rings: number[][] }) => j.rings);
-  return world;
+const picture = (url: string) =>
+  new Promise<HTMLImageElement>((res, rej) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error(`${url} did not load`));
+    img.src = url;
+  });
+/** The Earth itself: Natural Earth II relief by day, NASA's Black Marble 2016 by night (smaller files on phones). */
+export async function loadEarth(small: boolean) {
+  const s = small ? "-s" : "";
+  const [dayWorld, nightWorld, day, night] = await Promise.all([picture("/geo/earth-day-world.jpg"), picture("/geo/earth-night-world.jpg"), picture(`/geo/earth-day${s}.jpg`), picture(`/geo/earth-night${s}.jpg`)]);
+  return { dayWorld, nightWorld, day, night };
 }
 let states: Promise<[number, number][][]> | null = null;
 /** India's state lines (the same file the map uses). */
@@ -45,19 +51,6 @@ export function loadStates(): Promise<[number, number][][]> {
     );
   return states;
 }
-let cities: Promise<{ lon: number; lat: number; pop: number }[]> | null = null;
-export function loadCities() {
-  cities ??= fetch("/geo/cities.geojson")
-    .then((r) => r.json())
-    .then((g: GeoJSON.FeatureCollection) =>
-      g.features.map((f) => {
-        const [lon, lat] = (f.geometry as GeoJSON.Point).coordinates;
-        return { lon, lat, pop: Number((f.properties as any)?.pop ?? 1e6) };
-      }),
-    );
-  return cities;
-}
-
 export type Flight = { id: string; cs: string; lon: Float32Array; lat: Float32Array; m: Float32Array; flagged: boolean; alert: boolean };
 export type StoryDay = { date: string; flights: Flight[]; b1: Seg[]; stratum: Seg[]; alerts: number };
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ContrailEvent } from "../data/contract";
 import { contrailImg } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hhmm = (iso: string) => iso.slice(11, 16);
@@ -51,10 +51,7 @@ export function ContrailProof({ ev, day, detector, credit, onClose }: {
             </h2>
             <p class="mono-s muted">
               {ev.fl ? `FL${ev.fl} · ` : ""}
-              {tx(
-                `flew ${hhmm(ev.t_start)}–${hhmm(ev.t_end)} UTC · ${ev.segments} min of contrail seen`,
-                `उड़ान ${hhmm(ev.t_start)}–${hhmm(ev.t_end)} UTC · ${ev.segments} मिनट की कंट्रेल दिखी`,
-              )}
+              {`flew ${hhmm(ev.t_start)}–${hhmm(ev.t_end)} UTC · ${ev.segments} min of contrail seen`}
             </p>
           </div>
           <button class="tool" onClick={onClose} aria-label={T("Close the satellite proof")}>
@@ -65,7 +62,7 @@ export function ContrailProof({ ev, day, detector, credit, onClose }: {
         <div class="proof-body">
           <figure class="proof-fig">
             <div class="proof-img" style={{ aspectRatio: `${s.w} / ${s.h}` }}>
-              <img src={contrailImg(day, s.img)} width={s.w} height={s.h} alt={tx(`Meteosat-9 at ${hhmm(s.t)} UTC around the contrail`, `${hhmm(s.t)} UTC पर कंट्रेल के आसपास Meteosat-9`)} />
+              <img src={contrailImg(day, s.img)} width={s.w} height={s.h} alt={`Meteosat-9 at ${hhmm(s.t)} UTC around the contrail`} />
               <svg viewBox={`0 0 ${s.w} ${s.h}`} aria-hidden="true" preserveAspectRatio="none">
                 {s.track.map((l) => (
                   <polyline class="pr-track" points={pts(l)} />
@@ -79,9 +76,9 @@ export function ContrailProof({ ev, day, detector, credit, onClose }: {
               </svg>
             </div>
             <figcaption class="mono-s">
-              {hhmm(s.t)} UTC · {tx(`contrail ≈ ${Math.round(s.age_min)} min old`, `कंट्रेल ≈ ${Math.round(s.age_min)} मिनट पुरानी`)}
-              {s.match_px != null ? tx(` · predicted vs detected: ${s.match_px.toFixed(1)} px apart`, ` · अनुमानित बनाम खोजी गई: ${s.match_px.toFixed(1)} px दूर`) : ""}
-              {s.vza_deg != null ? tx(` · viewing angle ${Math.round(s.vza_deg)}°`, ` · देखने का कोण ${Math.round(s.vza_deg)}°`) : ""}
+              {hhmm(s.t)} UTC · {`contrail ≈ ${Math.round(s.age_min)} min old`}
+              {s.match_px != null ? ` · predicted vs detected: ${s.match_px.toFixed(1)} px apart` : ""}
+              {s.vza_deg != null ? ` · viewing angle ${Math.round(s.vza_deg)}°` : ""}
             </figcaption>
           </figure>
 

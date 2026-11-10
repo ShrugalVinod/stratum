@@ -1,8 +1,7 @@
 import { useLocation } from "preact-iso";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { site } from "../content/site";
-import { setLang, T, tx, useLang } from "../i18n";
-import { currentTheme, setTheme, type Theme } from "./motion";
+import { T } from "../i18n";
 
 // Things to do first, then things to learn, then the research behind it and who we are
 const NAV = [
@@ -51,7 +50,6 @@ export function Mark() {
 export function Header() {
   const { path, route } = useLocation();
   const [open, setOpen] = useState(false);
-  const [theme, setT] = useState<Theme>("dark");
   const [q, setQ] = useState("");
   const [now, setNow] = useState(() => new Date());
   const btn = useRef<HTMLButtonElement>(null);
@@ -59,9 +57,7 @@ export function Header() {
   const search = useRef<HTMLInputElement>(null);
   const viaKey = useRef(false);
   const here = NAV.find(([href]) => isOn(path, href));
-  const lang = useLang();
 
-  useEffect(() => setT(currentTheme()), []);
   useEffect(() => setOpen(false), [path]);
 
   // "/" or Ctrl/⌘ K: open the directory with the filter box ready
@@ -113,10 +109,9 @@ export function Header() {
     };
   }, [open]);
 
-  const toggle = () => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setT(next);
-    setTheme(next);
+  const find = () => {
+    viaKey.current = true;
+    setOpen(true);
   };
 
   const needle = q.trim().toLowerCase();
@@ -152,14 +147,15 @@ export function Header() {
             </span>
           )}
           <div class="header-tools">
-            <button class="lang-btn" onClick={() => setLang(lang === "hi" ? "en" : "hi")} lang={lang === "hi" ? "en" : "hi"} aria-label={lang === "hi" ? "Switch to English" : "हिंदी में देखें (switch to Hindi)"}>
-              {lang === "hi" ? "English" : "हिंदी"}
-            </button>
-            <button class="theme-btn" onClick={toggle} aria-label={`${theme === "dark" ? "Night" : "Chart"} mode — switch to ${theme === "dark" ? "chart (light)" : "night (dark)"}`}>
-              <span class="sq" aria-hidden="true" />
-              <span class="word" key={theme}>
-                {theme === "dark" ? T("Night") : T("Chart")}
-              </span>
+            <button class="find-btn" onClick={find} aria-label="Search pages">
+              <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square">
+                <circle cx="8.5" cy="8.5" r="5.5" />
+                <path d="m13 13 5 5" />
+              </svg>
+              <span>{T("Search")}</span>
+              <kbd class="mono-s" aria-hidden="true">
+                /
+              </kbd>
             </button>
             <button ref={btn} class="menu-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="side-nav">
               <span class="menu-word">{open ? T("Close") : T("Menu")}</span>
@@ -179,12 +175,12 @@ export function Header() {
             <div class="nav-aside">
               <p class="label red side-nav-label">{T("Navigate")}</p>
               <label class="nav-search">
-                <span class="sr-only">{tx("Search pages", "पृष्ठ खोजें")}</span>
+                <span class="sr-only">{"Search pages"}</span>
                 <input
                   ref={search}
                   type="search"
                   value={q}
-                  placeholder={tx("Search pages", "पृष्ठ खोजें")}
+                  placeholder={"Search pages"}
                   autocomplete="off"
                   spellcheck={false}
                   onInput={(e) => setQ((e.target as HTMLInputElement).value)}
@@ -232,7 +228,7 @@ export function Header() {
                   </ul>
                 </section>
               ))}
-              {firstHit < 0 && <p class="nav-none muted">{tx("No page matches. Try “map”, “results” or “team”.", "कोई पृष्ठ नहीं मिला। “map”, “results” या “team” आज़माएँ।")}</p>}
+              {firstHit < 0 && <p class="nav-none muted">{"No page matches. Try “map”, “results” or “team”."}</p>}
             </div>
           </div>
         </nav>

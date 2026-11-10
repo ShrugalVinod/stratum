@@ -4,7 +4,7 @@ import { PageHead } from "../components/PageHead";
 import type { Manifest, OutlookInfo, Schedule } from "../data/contract";
 import { colourise } from "../data/format";
 import { loadLive, loadOutlook, loadOutlookB1, loadSchedule } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { type Advice, contrailsUntil, LIFE_H, type Live, routePosition, type Sample, sampler, type Stop, type Timing, totals, track, type Tracked, upcoming, type Upcoming, usualLevel } from "../lib/advice";
 import { AIRPORTS, FLS, type Point } from "../lib/footprint";
 import { deg, dirName, distBearing, move, R_EARTH } from "../lib/geo";
@@ -39,7 +39,7 @@ const ist = (t: number) => utc(t + 330 * 60_000);
 const t1 = (kg: number) => `${(kg / 1000).toFixed(kg >= 99_500 ? 0 : 1)} t`;
 const kg = (v: number) => `${v >= 0 ? "+" : "−"}${Math.round(Math.abs(v)).toLocaleString()} kg`;
 const flName = (fl: number) => `FL${String(fl).padStart(3, "0")}`;
-const feet = (d: number) => `${d > 0 ? tx("climb", "चढ़ें") : tx("descend", "उतरें")} ${Math.abs(d * 100).toLocaleString()} ft`;
+const feet = (d: number) => `${d > 0 ? "climb" : "descend"} ${Math.abs(d * 100).toLocaleString()} ft`;
 
 type Row = { id: string; cs: string; type: string | null; route: string; fl: number; advice: Advice | null; path: Point[]; when?: string; flNote?: string };
 
@@ -274,8 +274,8 @@ export function Now() {
     const until = contrailsUntil(a, r?.path ?? t?.path ?? []);
     const lines = [
       t ? `${flName(t.fl)} · ${T(STATUS[t.status])}` : u ? `${T("departs")} ${utc(u.dep)} UTC · ${flName(u.fl)}` : "",
-      tm ? tx(`lands about ${utc(tm.arr)} UTC · ${dur(tm.total)} trip`, `लगभग ${utc(tm.arr)} UTC उतरेगा · ${dur(tm.total)} की यात्रा`) : "",
-      until ? tx(`lasting contrails until about ${utc(until[0])}–${utc(until[1])} UTC`, `टिकाऊ कंट्रेल लगभग ${utc(until[0])}–${utc(until[1])} UTC तक`) : "",
+      tm ? `lands about ${utc(tm.arr)} UTC · ${dur(tm.total)} trip` : "",
+      until ? `lasting contrails until about ${utc(until[0])}–${utc(until[1])} UTC` : "",
     ].filter(Boolean);
     return `<b>${esc(id)}</b><span>${esc([r?.type ?? t?.type ?? u?.type, route].filter(Boolean).join(" · "))}</span>${lines.map((l) => `<em>${esc(l)}</em>`).join("")}${a?.alert ? `<strong>${esc(adviceShort(a))}</strong>` : ""}<em>${esc(T("Click for the details"))}</em>`;
   };
@@ -306,7 +306,7 @@ export function Now() {
     <div class="page now">
       <PageHead
         label="Live advice · today's forecast"
-        note={ol?.info.run ? tx(`Forecast: ECMWF run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 13)} UTC`, `पूर्वानुमान: ECMWF रन ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 13)} UTC`) : "Loading…"}
+        note={ol?.info.run ? `Forecast: ECMWF run ${ol.info.run.slice(0, 10)} ${ol.info.run.slice(11, 13)} UTC` : "Loading…"}
         lines={["Which planes", "should move", "right now?"]}
         lede="Every airliner over India right now, and the flights expected in the next 12 hours, checked against today's weather forecast. Where a plane is about to fly through air in which its contrail would last, and a level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming, STRATUM says which level, and for how long."
       />
@@ -335,7 +335,7 @@ export function Now() {
             <select value={String(shade)} onChange={(e) => setShade((e.target as HTMLSelectElement).value === "any" ? "any" : Number((e.target as HTMLSelectElement).value))}>
               <option value="any">{T("lasting-contrail air, any level FL300–FL400")}</option>
               {SHADE_FLS.map((f) => (
-                <option value={f}>{tx(`lasting-contrail air at ${flName(f)}`, `${flName(f)} पर टिकाऊ कंट्रेल वाली हवा`)}</option>
+                <option value={f}>{`lasting-contrail air at ${flName(f)}`}</option>
               ))}
             </select>
           </label>
@@ -345,28 +345,19 @@ export function Now() {
         {ol === null && <p class="now-warn mono-s">{T("The forecast cannot be loaded right now. Try again in a minute.")}</p>}
         {ol && !covered && (
           <p class="now-warn mono-s">
-            {tx(
-              `Today's forecast is not published yet (the latest covers ${ol.manifest.days.join(" and ")}). It is fetched by itself; try again in a few minutes.`,
-              `आज का पूर्वानुमान अभी प्रकाशित नहीं हुआ (नवीनतम ${ol.manifest.days.join(" और ")} का है)। यह अपने आप आता है; कुछ मिनट बाद फिर देखिए।`,
-            )}
+            {`Today's forecast is not published yet (the latest covers ${ol.manifest.days.join(" and ")}). It is fetched by itself; try again in a few minutes.`}
           </p>
         )}
         {live?.fb && (
           <p class="now-warn now-recorded">
             <b>{live.fb.reason === "asked" ? T("Demo mode: a recorded sky.") : T("The live feed is down.")}</b>{" "}
-            {tx(
-              `${live.fb.reason === "thin" ? `The OpenSky Network shows only ${live.fb.live_count} airliners over India right now, so this ` : "This "}is the real sky recorded at ${utc(live.fb.recorded_t)} UTC on ${new Date(live.fb.recorded_t).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}: ${live.ac.length} airliners with their positions, levels and routes as recorded, shown as if it were now and checked against today's forecast.`,
-              `${live.fb.reason === "thin" ? `OpenSky Network अभी भारत के ऊपर केवल ${live.fb.live_count} यात्री विमान दिखा रहा है, इसलिए यह ` : "यह "}${new Date(live.fb.recorded_t).toLocaleDateString("hi-IN", { day: "numeric", month: "short", timeZone: "UTC" })} को ${utc(live.fb.recorded_t)} UTC पर रिकॉर्ड किया गया असली आसमान है: ${live.ac.length} यात्री विमान, उनकी स्थिति, लेवल और रूट जैसे रिकॉर्ड हुए, ऐसे दिखाए गए जैसे अभी हों, और आज के पूर्वानुमान से जाँचे गए।`,
-            )}{" "}
+            {`${live.fb.reason === "thin" ? `The OpenSky Network shows only ${live.fb.live_count} airliners over India right now, so this ` : "This "}is the real sky recorded at ${utc(live.fb.recorded_t)} UTC on ${new Date(live.fb.recorded_t).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}: ${live.ac.length} airliners with their positions, levels and routes as recorded, shown as if it were now and checked against today's forecast.`}{" "}
             {live.fb.reason === "asked" && <a href="/now">{T("Back to the live sky")}</a>}
           </p>
         )}
         {live && !live.fb && live.ac.length < 80 && (
           <p class="now-warn mono-s">
-            {tx(
-              `The live aircraft feed has only ${live.ac.length} airliners over India right now (usually 200–260): the OpenSky Network's coverage is down. The advice below covers only these.`,
-              `लाइव विमान फ़ीड में अभी भारत के ऊपर केवल ${live.ac.length} यात्री विमान हैं (आमतौर पर 200–260): OpenSky Network की कवरेज बंद है। नीचे की सलाह केवल इन्हीं के लिए है।`,
-            )}
+            {`The live aircraft feed has only ${live.ac.length} airliners over India right now (usually 200–260): the OpenSky Network's coverage is down. The advice below covers only these.`}
           </p>
         )}
         {live === null && <p class="now-warn mono-s">{T("The live aircraft feed cannot be reached right now. Try again in a minute.")}</p>}
@@ -378,18 +369,18 @@ export function Now() {
             <span>
               {mode === "now"
                 ? near
-                  ? tx(`airliners within ${NEAR_KM} km of ${near.name} now`, `अभी ${near.name} के ${NEAR_KM} किमी के भीतर यात्री विमान`)
+                  ? `airliners within ${NEAR_KM} km of ${near.name} now`
                   : live?.fb
                     ? T("airliners in the recorded sky (above FL200)")
                     : T("airliners over India now (above FL200)")
                 : near
-                  ? tx(`expected flights near ${near.name} in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में ${near.name} के पास अपेक्षित उड़ानें`)
-                  : tx(`expected departures in the next ${HOURS} hours`, `अगले ${HOURS} घंटों में अपेक्षित उड़ानें`)}
+                  ? `expected flights near ${near.name} in the next ${HOURS} hours`
+                  : `expected departures in the next ${HOURS} hours`}
             </span>
           </div>
           <div>
             <b>{rows.length ? inAir : "…"}</b>
-            <span>{mode === "now" ? tx(`of ${rows.length} cruising will cross lasting-contrail air`, `क्रूज़ कर रहे ${rows.length} में से टिकाऊ कंट्रेल वाली हवा से गुज़रेंगे`) : T("will cross lasting-contrail air at their planned level")}</span>
+            <span>{mode === "now" ? `of ${rows.length} cruising will cross lasting-contrail air` : T("will cross lasting-contrail air at their planned level")}</span>
           </div>
           <div class="now-alerts">
             <b>{rows.length ? sum.n : "…"}</b>
@@ -397,7 +388,7 @@ export function Now() {
           </div>
           <div class="rp-good">
             <b>{rows.length ? t1(sum.p50) : "…"}</b>
-            <span>{tx(`CO₂e of warming avoided if all are followed (cautious ${t1(sum.low)}), for ${kg(sum.fuel)} of fuel`, `सब मानी जाएँ तो टली गर्मी, CO₂e (सतर्क ${t1(sum.low)}), ${kg(sum.fuel)} ईंधन के बदले`)}</span>
+            <span>{`CO₂e of warming avoided if all are followed (cautious ${t1(sum.low)}), for ${kg(sum.fuel)} of fuel`}</span>
           </div>
         </div>
 
@@ -421,7 +412,7 @@ export function Now() {
           <div class="legend now-legend">
             <div class="legend-row">
               <span class="sw ramp" />
-              <span>{tx(`Lasting-contrail air, ${mode === "now" ? "this hour" : utc(shownT).slice(0, 2) + ":00 UTC"}`, `टिकाऊ कंट्रेल वाली हवा, ${mode === "now" ? "इस घंटे" : utc(shownT).slice(0, 2) + ":00 UTC"}`)}</span>
+              <span>{`Lasting-contrail air, ${mode === "now" ? "this hour" : utc(shownT).slice(0, 2) + ":00 UTC"}`}</span>
             </div>
             <div class="legend-row">
               <span class="sw pred" />
@@ -481,7 +472,7 @@ export function Now() {
               {mode === "now" ? T("Advice for the planes in the air") : T("Advice for the flights expected next")}
             </h2>
             <button class="tool" onClick={() => setAll(!all)}>
-              {all ? T("Only those crossing lasting-contrail air") : tx(`Show all ${rows.length}`, `सभी ${rows.length} दिखाएँ`)}
+              {all ? T("Only those crossing lasting-contrail air") : `Show all ${rows.length}`}
             </button>
           </div>
           {!ready || !rows.length ? (
@@ -551,10 +542,7 @@ export function Now() {
             )}
           </p>
           <p>
-            {tx(
-              `Expected flights: the ${sched?.flights.length ?? "…"} airline flights to, from and within India that OpenSky's receivers placed on ${sched?.day ?? "…"} (about one in five of India's flights: India has few receivers), assumed to fly again today at the same time (flight numbers repeat daily; each time ± its uncertainty). Their route is flown along the great circle at a typical cruise speed.`,
-              `अपेक्षित उड़ानें: भारत से, भारत को और भारत के भीतर की वे ${sched?.flights.length ?? "…"} एयरलाइन उड़ानें जिन्हें OpenSky के रिसीवरों ने ${sched?.day ?? "…"} को पहचाना (भारत की लगभग हर पाँचवीं उड़ान: भारत में रिसीवर कम हैं), यह मानकर कि वे आज उसी समय फिर उड़ेंगी (फ़्लाइट नंबर रोज़ दोहराए जाते हैं; हर समय ± उसकी अनिश्चितता के साथ)। उनका रास्ता ग्रेट सर्कल पर सामान्य क्रूज़ गति से माना गया है।`,
-            )}
+            {`Expected flights: the ${sched?.flights.length ?? "…"} airline flights to, from and within India that OpenSky's receivers placed on ${sched?.day ?? "…"} (about one in five of India's flights: India has few receivers), assumed to fly again today at the same time (flight numbers repeat daily; each time ± its uncertainty). Their route is flown along the great circle at a typical cruise speed.`}
           </p>
           <p>
             {T(
@@ -565,10 +553,7 @@ export function Now() {
             <b>{T("A research demonstration: no advice is sent to any pilot, airline or air traffic controller, and none should be acted on.")}</b>
           </p>
           <p class="mono-s muted">
-            {tx(
-              `Positions ${live?.fb ? `recorded at ${utc(live.fb.recorded_t)} UTC` : live?.age != null ? `${live.age} min old` : "…"} · refreshed every minute · Live aircraft: The OpenSky Network · Routes: adsb.lol (ODbL) · Types: Mictronics · Airports: OurAirports · Forecast: ECMWF open data (CC BY 4.0)`,
-              `स्थितियाँ ${live?.fb ? `${utc(live.fb.recorded_t)} UTC पर रिकॉर्ड` : live?.age != null ? `${live.age} मिनट पुरानी` : "…"} · हर मिनट ताज़ा · लाइव विमान: The OpenSky Network · रूट: adsb.lol (ODbL) · प्रकार: Mictronics · हवाई अड्डे: OurAirports · पूर्वानुमान: ECMWF open data (CC BY 4.0)`,
-            )}
+            {`Positions ${live?.fb ? `recorded at ${utc(live.fb.recorded_t)} UTC` : live?.age != null ? `${live.age} min old` : "…"} · refreshed every minute · Live aircraft: The OpenSky Network · Routes: adsb.lol (ODbL) · Types: Mictronics · Airports: OurAirports · Forecast: ECMWF open data (CC BY 4.0)`}
           </p>
         </div>
       </div>
@@ -588,13 +573,13 @@ const STATUS: Record<Tracked["status"], string> = {
 const spanText = (path: Point[], [i, j]: [number, number]) => `${utc(path[i].t)}–${utc(path[j - 1].t)}`;
 
 function routeText(t: Tracked) {
-  return t.from && t.to ? `${t.from[0]} → ${t.to[0]}` : tx(`heading ${dirName(t.trk)}`, `${dirName(t.trk)} की ओर`);
+  return t.from && t.to ? `${t.from[0]} → ${t.to[0]}` : `heading ${dirName(t.trk)}`;
 }
 
 function adviceShort(a: Advice) {
   const min = a.spans.reduce((n, [i, j]) => n + j - i, 0);
-  if (a.alert) return tx(`Advice: ${flName(a.alt!)} for ${min} min`, `सलाह: ${min} मिनट ${flName(a.alt!)}`);
-  if (a.nLasting) return tx(`${a.nLasting} min in lasting-contrail air; no level nearby helps`, `${a.nLasting} मिनट टिकाऊ कंट्रेल वाली हवा में; पास का कोई लेवल मदद नहीं करता`);
+  if (a.alert) return `Advice: ${flName(a.alt!)} for ${min} min`;
+  if (a.nLasting) return `${a.nLasting} min in lasting-contrail air; no level nearby helps`;
   return T("Clear of lasting-contrail air");
 }
 
@@ -604,7 +589,7 @@ function lookUp(t: Tracked | null, near: Place | null): [string, ComponentChildr
   const [d, az] = distBearing(near.lat, near.lon, t.lat, t.lon);
   const el = deg(Math.atan2((t.fl * 100 * 0.3048) / 1000 - (d * d) / (2 * R_EARTH), d));
   if (el < 3) return [];
-  return [[tx(`From ${near.name}`, `${near.name} से`), tx(`${Math.round(d)} km away: look ${Math.round(el)}° above the horizon, towards the ${dirName(az)}`, `${Math.round(d)} किमी दूर: क्षितिज से ${Math.round(el)}° ऊपर, ${dirName(az)} की ओर देखिए`)]];
+  return [[`From ${near.name}`, `${Math.round(d)} km away: look ${Math.round(el)}° above the horizon, towards the ${dirName(az)}`]];
 }
 
 /** "Delhi (DEL)" from a route stop; the city as the route database or airport list names it. */
@@ -631,24 +616,21 @@ function Detail({ row, t, up, near, onClose }: { row: Row | null; t: Tracked | n
   const now = Date.now();
   const fl = row?.fl ?? t?.fl ?? up?.fl ?? 0;
   const facts: [string, ComponentChildren][] = [
-    [T("Route"), from && to ? `${place(from)} → ${place(to)}` : tx(`Unknown: not in the route database, or not on its listed route (heading ${t ? dirName(t.trk) : "?"}), so its departure and landing times are not known either`, `अज्ञात: रूट डेटाबेस में नहीं, या अपने दर्ज रूट पर नहीं (${t ? dirName(t.trk) : "?"} की ओर), इसलिए इसके रवाना होने और उतरने का समय भी पता नहीं`)],
-    [up ? T("Departs") : T("Departed"), up ? `${both(up.dep)} ±${up.acc} min` : tm ? tx(`about ${both(tm.dep)}`, `लगभग ${both(tm.dep)}`) : "–"],
-    [T("Lands"), tm ? tx(`about ${both(tm.arr)}`, `लगभग ${both(tm.arr)}`) : "–"],
-    [T("Travel time"), tm ? (up ? tx(`about ${dur(tm.total)}`, `लगभग ${dur(tm.total)}`) : tx(`about ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} left`, `लगभग ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} बाकी`)) : "–"],
+    [T("Route"), from && to ? `${place(from)} → ${place(to)}` : `Unknown: not in the route database, or not on its listed route (heading ${t ? dirName(t.trk) : "?"}), so its departure and landing times are not known either`],
+    [up ? T("Departs") : T("Departed"), up ? `${both(up.dep)} ±${up.acc} min` : tm ? `about ${both(tm.dep)}` : "–"],
+    [T("Lands"), tm ? `about ${both(tm.arr)}` : "–"],
+    [T("Travel time"), tm ? (up ? `about ${dur(tm.total)}` : `about ${dur(tm.total)} · ${dur((tm.arr - now) / 60_000)} left`) : "–"],
     ...lookUp(t, near),
-    [T("Level"), up ? tx(`about ${flName(fl)} (${row?.flNote ?? ""})`, `लगभग ${flName(fl)} (${row?.flNote ?? ""})`) : t ? `${flName(t.fl)} · ${Math.round(t.kmh)} km/h · ${T(STATUS[t.status])}` : flName(fl)],
+    [T("Level"), up ? `about ${flName(fl)} (${row?.flNote ?? ""})` : t ? `${flName(t.fl)} · ${Math.round(t.kmh)} km/h · ${T(STATUS[t.status])}` : flName(fl)],
     [
       T("Contrails"),
       t && t.status !== "cruise"
-        ? tx(`Not checked: the aircraft is ${STATUS[t.status]}.`, `जाँचा नहीं गया: विमान ${T(STATUS[t.status])} है।`)
+        ? `Not checked: the aircraft is ${STATUS[t.status]}.`
         : !a
           ? "–"
           : until
-            ? tx(
-                `It would leave lasting contrails for ${a.nLasting} min of ${up ? `its ${a.minutes} min of cruise` : `the next ${a.minutes}`} (${utc(path[a.lasting.indexOf(true)].t)}–${utc(path[a.lasting.lastIndexOf(true)].t)} UTC). Contrails like these stayed in the sky for about ${LIFE_H.p25.toFixed(1)}–${LIFE_H.p75.toFixed(1)} h (median ${LIFE_H.p50.toFixed(1)} h) in our CoCiP runs over India, so these could last until about ${utc(until[0])}–${utc(until[1])} UTC.`,
-                `यह ${up ? `अपने ${a.minutes} मिनट के क्रूज़` : `अगले ${a.minutes}`} में से ${a.nLasting} मिनट टिकाऊ कंट्रेल छोड़ेगा (${utc(path[a.lasting.indexOf(true)].t)}–${utc(path[a.lasting.lastIndexOf(true)].t)} UTC)। भारत पर हमारे CoCiP रन में ऐसी कंट्रेल लगभग ${LIFE_H.p25.toFixed(1)}–${LIFE_H.p75.toFixed(1)} घंटे (माध्यिका ${LIFE_H.p50.toFixed(1)} घंटे) आसमान में रहीं, इसलिए ये लगभग ${utc(until[0])}–${utc(until[1])} UTC तक रह सकती हैं।`,
-              )
-            : tx(`None that last: the next ${a.minutes} min of its cruise stay out of air where contrails persist, so any contrail it draws fades within minutes.`, `कोई टिकाऊ नहीं: इसके क्रूज़ के अगले ${a.minutes} मिनट ऐसी हवा से बाहर रहते हैं जहाँ कंट्रेल टिकती है, इसलिए इसकी कोई भी कंट्रेल कुछ ही मिनटों में मिट जाएगी।`),
+            ? `It would leave lasting contrails for ${a.nLasting} min of ${up ? `its ${a.minutes} min of cruise` : `the next ${a.minutes}`} (${utc(path[a.lasting.indexOf(true)].t)}–${utc(path[a.lasting.lastIndexOf(true)].t)} UTC). Contrails like these stayed in the sky for about ${LIFE_H.p25.toFixed(1)}–${LIFE_H.p75.toFixed(1)} h (median ${LIFE_H.p50.toFixed(1)} h) in our CoCiP runs over India, so these could last until about ${utc(until[0])}–${utc(until[1])} UTC.`
+            : `None that last: the next ${a.minutes} min of its cruise stay out of air where contrails persist, so any contrail it draws fades within minutes.`,
     ],
   ];
   return (
@@ -670,22 +652,13 @@ function Detail({ row, t, up, near, onClose }: { row: Row | null; t: Tracked | n
       </dl>
       {a?.alert && row ? (
         <p class="now-advice">
-          {tx(
-            <>
+          {<>
               <b>
                 Advice: {feet(a.alt! - a.fl)} to {flName(a.alt!)} for {a.spans.map((x) => spanText(row.path, x)).join(" and ")} UTC
               </b>
               {a.spans.length > 1 ? `, back to ${flName(a.fl)} in between and after.` : `, then back to ${flName(a.fl)}.`} {a.altLasting ? `${a.altLasting} lasting minutes would remain. ` : "No lasting contrail would remain. "}
               Extra fuel {kg(a.extraFuelKg)}; contrail warming avoided about <b>{t1(a.avoided.p50)} CO₂e</b> (cautious {t1(a.avoided.low)}), already net of that fuel.
-            </>,
-            <>
-              <b>
-                सलाह: {a.spans.map((x) => spanText(row.path, x)).join(" और ")} UTC के दौरान {flName(a.alt!)} पर ({feet(a.alt! - a.fl)})
-              </b>
-              , बाकी समय {flName(a.fl)} पर। {a.altLasting ? `${a.altLasting} टिकाऊ मिनट बचेंगे। ` : "कोई टिकाऊ कंट्रेल नहीं बचेगी। "}
-              अतिरिक्त ईंधन {kg(a.extraFuelKg)}; टली कंट्रेल गर्मी लगभग <b>{t1(a.avoided.p50)} CO₂e</b> (सतर्क {t1(a.avoided.low)}), उस ईंधन को घटाकर।
-            </>,
-          )}
+            </>}
         </p>
       ) : a?.nLasting ? (
         <p class="muted">{T("No level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (or the aircraft cannot fly there), so there is no advice.")}</p>

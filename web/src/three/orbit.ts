@@ -10,11 +10,12 @@ import * as T from "three";
 export type OrbitFlight = { lon: Float32Array; lat: Float32Array; m: Float32Array };
 /** A lasting-contrail stretch: flight index, start and end minute, modelled life (min), rank. */
 export type OrbitStretch = { f: number; a: number; b: number; life: number; top: boolean };
+/** Real imagery of the Earth, already loaded: the whole world coarse, the region around India fine. */
+export type OrbitImages = { dayWorld: TexImageSource; nightWorld: TexImageSource; day: TexImageSource; night: TexImageSource };
 export type OrbitInput = {
-  land: number[][]; // world land rings (flat lon, lat): Natural Earth 1:110m, coastlines only
-  region: { iso: string; rings: [number, number][][] }[]; // the countries around India, as the map draws them
+  images: OrbitImages; // day: Natural Earth II relief; night: NASA Black Marble 2016 (the real city lights)
+  region: { iso: string; rings: [number, number][][] }[]; // the countries around India, as the map draws them (line work only)
   states: [number, number][][]; // India's state lines
-  cities: { lon: number; lat: number; pop: number }[];
   flights: OrbitFlight[];
   stretches: OrbitStretch[];
   date: string;
@@ -40,6 +41,8 @@ export type OrbitState = {
   sat: number; // 0–1 Meteosat-9 and its line of sight
   aim: [number, number]; // where the satellite is looking (lon, lat)
   dim: number; // 0–1 darken the world
+  dawn: number; // 0–1 the last scene's two flights: one in the humid layer, one 2,000 ft above
+  dawnT: number; // 0–1 how far along they are
   time: number; // seconds (twinkle only)
 };
 export type OrbitHandle = {
@@ -47,13 +50,16 @@ export type OrbitHandle = {
   /** screen position (px) of a point on the globe with the last rendered camera */
   project(lon: number, lat: number, alt?: number): { x: number; y: number; front: boolean };
   projectSat(): { x: number; y: number; front: boolean };
+  /** the two dawn aircraft (0: as planned, 1: 2,000 ft higher) */
+  projectDawn(i: 0 | 1): { x: number; y: number; front: boolean };
   resize(): void;
   dispose(): void;
 };
 
 const RAD = Math.PI / 180;
 const LON0 = 78; // the meridian facing +z
-const REG = { w: 50, e: 114, s: -4, n: 48 }; // the detailed texture's box (the map's data covers 55–112°E, 2°S–46°N)
+const REG = { w: 50, e: 114, s: -4, n: 48 }; // the line work's box (the map's data covers 55–112°E, 2°S–46°N)
+export const IMG = { w: 30, e: 130, s: -15, n: 55 }; // the box of the fine day and night images
 const GEO_R = 6.61; // geostationary orbit, Earth radii from the centre
 const SAT_LON = 45.5; // Meteosat-9 (IODC)
 const BASE = 0.0016; // cruise altitude above the surface, drawn about five times too high so trails clear the ground
@@ -107,15 +113,34 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
   const sun = new T.Vector3(1, 0, 0);
 
   // ── the Earth ──────────────────────────────────────────────────────────────
-  const [world, region, lights] = textures(input, renderer.capabilities.getMaxAnisotropy());
+  const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const photo = (img: TexImageSource, fine: boolean) => {
+    const t = new T.Texture(img as HTMLImageElement);
+    t.wrapS = fine ? T.ClampToEdgeWrapping : T.RepeatWrapping;
+    t.anisotropy = fine ? aniso : 1;
+    t.generateMipmaps = fine;
+    t.minFilter = fine ? T.LinearMipmapLinearFilter : T.LinearFilter;
+    t.needsUpdate = true;
+    return t;
+  };
+  const tex = {
+    dayW: photo(input.images.dayWorld, false),
+    nightW: photo(input.images.nightWorld, false),
+    day: photo(input.images.day, true),
+    night: photo(input.images.night, true),
+    lines: lineWork(input, aniso),
+  };
   const earthMat = new T.ShaderMaterial({
     uniforms: {
-      uWorld: { value: world },
-      uRegion: { value: region },
-      uLights: { value: lights },
+      uDayW: { value: tex.dayW },
+      uNightW: { value: tex.nightW },
+      uDay: { value: tex.day },
+      uNight: { value: tex.night },
+      uLines: { value: tex.lines },
       uSun: { value: sun },
       uDim: { value: 0 },
       uBox: { value: new T.Vector4(REG.w, REG.s, REG.e, REG.n) },
+      uImg: { value: new T.Vector4(IMG.w, IMG.s, IMG.e, IMG.n) },
     },
     vertexShader: /* glsl */ `
       varying vec3 vN;
@@ -126,51 +151,61 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
         gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0);
       }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D uWorld;
-      uniform sampler2D uRegion;
-      uniform sampler2D uLights;
+      uniform sampler2D uDayW;
+      uniform sampler2D uNightW;
+      uniform sampler2D uDay;
+      uniform sampler2D uNight;
+      uniform sampler2D uLines;
       uniform vec3 uSun;
       uniform float uDim;
       uniform vec4 uBox;
+      uniform vec4 uImg;
       varying vec3 vN;
       varying vec3 vW;
       float gridLine(float v, float stepDeg) {
         float g = abs(fract(v / stepDeg - 0.5) - 0.5) / max(fwidth(v / stepDeg), 1e-6);
         return 1.0 - min(g, 1.0);
       }
+      float edge(vec2 uv, float w) {
+        return smoothstep(0.0, w, uv.x) * smoothstep(1.0, 1.0 - w, uv.x) * smoothstep(0.0, w, uv.y) * smoothstep(1.0, 1.0 - w, uv.y);
+      }
       void main() {
         vec3 n = normalize(vN);
         float lon = degrees(atan(n.x, n.z)) + ${LON0.toFixed(1)};
         float lat = degrees(asin(clamp(n.y, -1.0, 1.0)));
-        float landW = texture2D(uWorld, vec2(fract((lon + 180.0) / 360.0), (lat + 90.0) / 180.0)).r;
-        vec2 uv = vec2((lon - uBox.x) / (uBox.z - uBox.x), (lat - uBox.y) / (uBox.w - uBox.y));
-        float inside = smoothstep(0.0, 0.07, uv.x) * smoothstep(1.0, 0.93, uv.x) * smoothstep(0.0, 0.07, uv.y) * smoothstep(1.0, 0.93, uv.y);
-        vec4 reg = texture2D(uRegion, clamp(uv, 0.0, 1.0));
-        float land = mix(smoothstep(0.35, 0.65, landW), reg.r, inside);
-        float india = reg.g * inside;
-        float line = reg.b * inside;
-        float city = texture2D(uLights, clamp(uv, 0.0, 1.0)).r * inside;
-        // a soft coast for the far world, where there is no line work
-        float coast = (1.0 - inside) * smoothstep(0.25, 0.5, landW) * (1.0 - smoothstep(0.5, 0.75, landW));
+        vec2 uvW = vec2(fract((lon + 180.0) / 360.0), (lat + 90.0) / 180.0);
+        vec2 uvI = vec2((lon - uImg.x) / (uImg.z - uImg.x), (lat - uImg.y) / (uImg.w - uImg.y));
+        float fine = edge(uvI, 0.05);
+        vec3 dayTex = mix(texture2D(uDayW, uvW).rgb, texture2D(uDay, clamp(uvI, 0.0, 1.0)).rgb, fine);
+        vec3 nightTex = mix(texture2D(uNightW, uvW).rgb, texture2D(uNight, clamp(uvI, 0.0, 1.0)).rgb, fine);
+        vec2 uvL = vec2((lon - uBox.x) / (uBox.z - uBox.x), (lat - uBox.y) / (uBox.w - uBox.y));
+        float line = texture2D(uLines, clamp(uvL, 0.0, 1.0)).b * edge(uvL, 0.07);
 
         float mu = dot(n, uSun);
-        float day = smoothstep(-0.14, 0.3, mu);
-        vec3 night = mix(mix(vec3(0.012, 0.022, 0.044), vec3(0.042, 0.064, 0.106), land), vec3(0.07, 0.112, 0.184), india);
-        vec3 lit = mix(mix(vec3(0.045, 0.14, 0.27), vec3(0.14, 0.215, 0.24), land), vec3(0.215, 0.31, 0.3), india);
-        vec3 col = mix(night, lit * (0.55 + 0.45 * max(mu, 0.0)), day);
+        float day = smoothstep(-0.12, 0.28, mu);
+        // water is where the relief map is blue: deepen it, and let only it catch the sun
+        float water = smoothstep(0.02, 0.14, dayTex.b - max(dayTex.r, dayTex.g) * 0.94);
+        // the day side, as it looks from orbit: deep water, muted land, never white
+        vec3 land = pow(dayTex, vec3(2.1)) * vec3(0.8, 0.82, 0.78);
+        land = mix(vec3(dot(land, vec3(0.3, 0.6, 0.1))), land, 0.82);
+        vec3 sea = mix(vec3(0.012, 0.055, 0.14), vec3(0.03, 0.13, 0.27), pow(dayTex.b, 2.0));
+        vec3 lit = mix(land, sea, water) * (0.42 + 0.78 * max(mu, 0.0));
+        // the night side: the real lights, over land you can just make out
+        float glow = max(nightTex.r, max(nightTex.g, nightTex.b));
+        vec3 lights = vec3(1.0, 0.8, 0.52) * (1.0 - exp(-pow(max(glow - 0.07, 0.0), 1.35) * 4.2)) * 1.15;
+        lights += vec3(1.0, 0.95, 0.85) * smoothstep(0.75, 1.0, glow) * 0.35; // the cores of the big cities run hot
+        vec3 dark = nightTex * vec3(0.5, 0.62, 0.95) * 0.5 + mix(land, sea, water) * vec3(0.02, 0.03, 0.055);
+        vec3 col = mix(dark + lights, lit, day);
         // dusk and dawn: a warm band along the terminator
         float tw = smoothstep(-0.22, 0.02, mu) * (1.0 - smoothstep(0.02, 0.34, mu));
-        col += vec3(0.95, 0.4, 0.16) * tw * 0.085;
-        // hairlines: coasts, borders, state lines; a graticule every ten degrees
-        col += vec3(0.72, 0.8, 0.95) * line * mix(0.42, 0.26, day);
-        col += vec3(0.5, 0.62, 0.85) * coast * 0.1;
-        col += vec3(0.45, 0.6, 0.9) * (gridLine(lon, 10.0) + gridLine(lat, 10.0)) * 0.045 * smoothstep(84.0, 72.0, abs(lat));
-        // city lights come on at night
-        col += vec3(1.0, 0.76, 0.46) * city * (1.0 - day) * 1.25;
+        col += vec3(0.95, 0.42, 0.18) * tw * 0.07;
+        // an instrument's hairlines over the photograph: India's outline and states, a graticule
+        col += vec3(0.75, 0.83, 0.98) * line * mix(0.3, 0.2, day);
+        col += vec3(0.45, 0.6, 0.9) * (gridLine(lon, 10.0) + gridLine(lat, 10.0)) * 0.03 * smoothstep(84.0, 72.0, abs(lat));
         // the sun on the sea
         vec3 v = normalize(cameraPosition - vW);
-        float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 240.0);
-        col += vec3(1.0, 0.86, 0.7) * spec * (1.0 - land) * 0.32 * day;
+        float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 180.0);
+        col += vec3(1.0, 0.88, 0.72) * spec * water * 0.4 * day;
         // air: the limb brightens
         float fres = pow(1.0 - max(dot(n, v), 0.0), 3.2);
         col += mix(vec3(0.07, 0.16, 0.4), vec3(0.3, 0.55, 1.0), day) * fres * (0.4 + 0.6 * day);
@@ -468,6 +503,74 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
   const making: [number, number][][] = input.flights.map(() => []);
   for (const st of input.stretches) making[st.f]?.push([st.a, st.b]);
 
+  // ── the last scene, at dawn over the Arabian Sea: two flights on the same route. One is in the
+  //    humid layer and its contrail spreads and stays, catching the first sun; the other is
+  //    2,000 ft higher and its trail is gone within seconds. (An illustration: neither flew.) ──
+  const DAWN = [
+    { a: [70.4, 15.1], b: [74.7, 11.0], tail: 9, grow: 1, half: 2.6, color: [1.0, 0.8, 0.62] },
+    { a: [69.5, 14.3], b: [73.8, 10.2], tail: 0.07, grow: 0, half: 1.4, color: [0.86, 0.92, 1.0] },
+  ] as const;
+  const dawnAt = (i: number, u: number): [number, number] => [DAWN[i].a[0] + (DAWN[i].b[0] - DAWN[i].a[0]) * u, DAWN[i].a[1] + (DAWN[i].b[1] - DAWN[i].a[1]) * u];
+  const dawnMats = DAWN.map((d, i) => {
+    const N = 64;
+    const geo = stripGeometry(N, (k, put) => {
+      const p0 = dawnAt(i, k / N), p1 = dawnAt(i, (k + 1) / N);
+      put(p0[0], p0[1], 0.0006, k / N, p1[0], p1[1], 0.0006, (k + 1) / N, 0, 0);
+    });
+    const mat = new T.ShaderMaterial({
+      uniforms: { uRes: { value: res }, uExag: { value: 1 }, uHead: { value: 0 }, uTail: { value: d.tail }, uGrow: { value: d.grow }, uOpacity: { value: 0 }, uHalf: { value: d.half * dpr }, uColor: { value: new T.Vector3(...d.color) } },
+      transparent: true,
+      depthWrite: false,
+      side: T.DoubleSide,
+      blending: T.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        ${RIBBON}
+        attribute vec3 aT;
+        uniform float uHalf;
+        uniform float uHead;
+        uniform float uGrow;
+        varying float vSide;
+        varying float vU;
+        void main() {
+          float age = max(uHead - aT.x, 0.0);
+          gl_Position = ribbon(uHalf * (0.7 + uGrow * 3.4 * smoothstep(0.0, 0.75, age)));
+          vSide = aS.x;
+          vU = aT.x;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform float uHead;
+        uniform float uTail;
+        uniform float uOpacity;
+        uniform vec3 uColor;
+        varying float vSide;
+        varying float vU;
+        void main() {
+          if (vU > uHead) discard;
+          float age = uHead - vU;
+          float keep = 1.0 - smoothstep(uTail * 0.4, uTail, age);
+          float edge = pow(1.0 - abs(vSide), 1.6);
+          float puff = 0.78 + 0.22 * sin(vU * 407.0 + sin(vU * 61.0) * 3.0); // a contrail is never an even line
+          float fresh = 0.75 + 0.5 * exp(-age * 9.0);
+          gl_FragColor = vec4(uColor * edge * keep * puff * fresh * uOpacity, 1.0);
+        }`,
+    });
+    const mesh = new T.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 4;
+    scene.add(mesh);
+    return mat;
+  });
+  const dPos = new Float32Array(6);
+  const dawnGeo = new T.BufferGeometry();
+  dawnGeo.setAttribute("position", new T.BufferAttribute(dPos, 3).setUsage(T.DynamicDrawUsage));
+  dawnGeo.setAttribute("aKind", new T.BufferAttribute(new Float32Array(2), 1));
+  const dawnHeadMat = headMat.clone();
+  const dawnHeads = new T.Points(dawnGeo, dawnHeadMat);
+  dawnHeads.frustumCulled = false;
+  dawnHeads.renderOrder = 5;
+  scene.add(dawnHeads);
+  let dawnU = 0;
+
   // ── Meteosat-9: a spinning drum of solar cells, far too big so it can be seen ─
   const satPos = dirOf(SAT_LON, 0).multiplyScalar(GEO_R);
   const sat = satellite();
@@ -564,6 +667,24 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
     headMat.uniforms.uScale.value = Math.min(1, Math.max(0.42, 0.9 / Math.sqrt(Math.max(0.2, s.dist))));
     heads.visible = k > 0;
 
+    dawnU = s.dawnT;
+    dawnMats.forEach((m) => {
+      m.uniforms.uHead.value = s.dawnT;
+      m.uniforms.uOpacity.value = s.dawn;
+    });
+    dawnHeads.visible = s.dawn > 0.002;
+    if (dawnHeads.visible) {
+      for (let i = 0; i < 2; i++) {
+        const q = dawnAt(i, s.dawnT);
+        dirOf(q[0], q[1], tmp).multiplyScalar(1 + BASE + 0.0006);
+        dPos.set([tmp.x, tmp.y, tmp.z], i * 3);
+      }
+      dawnGeo.attributes.position.needsUpdate = true;
+      dawnHeadMat.uniforms.uOpacity.value = s.dawn;
+      dawnHeadMat.uniforms.uScale.value = 1.15;
+      dawnHeadMat.uniforms.uPx.value = dpr;
+    }
+
     sat.visible = s.sat > 0.002;
     beam.visible = s.sat > 0.002;
     if (sat.visible) {
@@ -594,6 +715,10 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
     render,
     project: (lon, lat, alt = 0) => toScreen(dirOf(lon, lat, new T.Vector3()).multiplyScalar(1 + alt)),
     projectSat: () => toScreen(satPos.clone()),
+    projectDawn: (i) => {
+      const q = dawnAt(i, dawnU);
+      return toScreen(dirOf(q[0], q[1], new T.Vector3()).multiplyScalar(1 + BASE + 0.0006));
+    },
     resize,
     dispose() {
       renderer.dispose();
@@ -604,9 +729,7 @@ export function createOrbit(canvas: HTMLCanvasElement, input: OrbitInput): Orbit
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
         else mat?.dispose();
       });
-      world.dispose();
-      region.dispose();
-      lights.dispose();
+      Object.values(tex).forEach((t) => t.dispose());
     },
   };
 }
@@ -646,33 +769,9 @@ function stripGeometry(count: number, fill: (i: number, put: (lon0: number, lat0
   return g;
 }
 
-/** World land (coarse), the region around India in detail (R land, G India, B line work), and
- *  the night lights of its cities. */
-function textures(input: OrbitInput, aniso: number): [T.CanvasTexture, T.CanvasTexture, T.CanvasTexture] {
-  // world: equirectangular land mask
-  const wc = document.createElement("canvas");
-  wc.width = 2048;
-  wc.height = 1024;
-  const wg = wc.getContext("2d")!;
-  wg.fillStyle = "#000";
-  wg.fillRect(0, 0, 2048, 1024);
-  wg.fillStyle = "#fff";
-  for (const r of input.land) {
-    wg.beginPath();
-    for (let i = 0; i < r.length; i += 2) {
-      const x = ((r[i] + 180) / 360) * 2048, y = ((90 - r[i + 1]) / 180) * 1024;
-      if (i) wg.lineTo(x, y);
-      else wg.moveTo(x, y);
-    }
-    wg.closePath();
-    wg.fill();
-  }
-  const world = new T.CanvasTexture(wc);
-  world.generateMipmaps = false;
-  world.minFilter = T.LinearFilter;
-  world.wrapS = T.RepeatWrapping;
-
-  // region: R = land, G = India, B = lines
+/** India's outline and state lines, and its neighbours' borders, as the map draws them
+ *  (blue channel; the Earth itself is a photograph). */
+function lineWork(input: OrbitInput, aniso: number): T.CanvasTexture {
   const RW = input.small ? 2048 : 4096;
   const RH = Math.round((RW * (REG.n - REG.s)) / (REG.e - REG.w));
   const px = (lon: number, lat: number): [number, number] => [((lon - REG.w) / (REG.e - REG.w)) * RW, ((REG.n - lat) / (REG.n - REG.s)) * RH];
@@ -682,75 +781,30 @@ function textures(input: OrbitInput, aniso: number): [T.CanvasTexture, T.CanvasT
   const g = rc.getContext("2d")!;
   g.fillStyle = "#000";
   g.fillRect(0, 0, RW, RH);
-  const trace = (c: CanvasRenderingContext2D, rings: [number, number][][], close = true) => {
+  const trace = (rings: [number, number][][], close = true) => {
     for (const ring of rings) {
-      ring.forEach(([lo, la], i) => (i ? c.lineTo(...px(lo, la)) : c.moveTo(...px(lo, la))));
-      if (close) c.closePath();
+      ring.forEach(([lo, la], i) => (i ? g.lineTo(...px(lo, la)) : g.moveTo(...px(lo, la))));
+      if (close) g.closePath();
     }
   };
-  for (const c of input.region) {
-    g.beginPath();
-    trace(g, c.rings);
-    g.fillStyle = c.iso === "IND" ? "rgb(255,255,0)" : "rgb(255,0,0)";
-    g.fill("evenodd");
-  }
   g.globalCompositeOperation = "lighter";
   g.lineJoin = "round";
   const k = RW / 4096;
   g.lineWidth = 1.1 * k + 0.3;
-  g.strokeStyle = "rgba(0,0,255,0.42)";
+  g.strokeStyle = "rgba(0,0,255,0.36)";
   g.beginPath();
-  trace(g, input.states, false);
+  trace(input.states, false);
   g.stroke();
   for (const c of input.region) {
-    g.lineWidth = (c.iso === "IND" ? 3 : 1.8) * k + 0.4;
-    g.strokeStyle = c.iso === "IND" ? "rgba(0,0,255,1)" : "rgba(0,0,255,0.7)";
+    g.lineWidth = (c.iso === "IND" ? 2.6 : 1.4) * k + 0.4;
+    g.strokeStyle = c.iso === "IND" ? "rgba(0,0,255,1)" : "rgba(0,0,255,0.4)";
     g.beginPath();
-    trace(g, c.rings);
+    trace(c.rings);
     g.stroke();
   }
-  const region = new T.CanvasTexture(rc);
-  region.anisotropy = Math.min(8, aniso);
-
-  // night lights: the cities by population, and a scatter of towns across South Asia
-  const LW = input.small ? 1024 : 2048;
-  const LH = Math.round((LW * (REG.n - REG.s)) / (REG.e - REG.w));
-  const lc = document.createElement("canvas");
-  lc.width = LW;
-  lc.height = LH;
-  const l = lc.getContext("2d")!;
-  const lp = (lon: number, lat: number): [number, number] => [((lon - REG.w) / (REG.e - REG.w)) * LW, ((REG.n - lat) / (REG.n - REG.s)) * LH];
-  l.fillStyle = "#000";
-  l.fillRect(0, 0, LW, LH);
-  let s = 7;
-  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  l.save();
-  l.beginPath();
-  for (const c of input.region.filter((x) => ["IND", "BGD", "PAK", "LKA", "NPL"].includes(x.iso)))
-    for (const ring of c.rings) {
-      ring.forEach(([lo, la], i) => (i ? l.lineTo(...lp(lo, la)) : l.moveTo(...lp(lo, la))));
-      l.closePath();
-    }
-  l.clip("evenodd");
-  for (let i = 0; i < (input.small ? 5000 : 12000); i++) {
-    l.fillStyle = `rgba(255,255,255,${0.1 + rnd() * 0.22})`;
-    l.fillRect(rnd() * LW, rnd() * LH, 1 + rnd() * 1.4, 1 + rnd() * 1.4);
-  }
-  l.restore();
-  for (const c of input.cities) {
-    const [x, y] = lp(c.lon, c.lat);
-    const r = (3 + Math.sqrt(c.pop) / 170) * (LW / 2048);
-    const grd = l.createRadialGradient(x, y, 0, x, y, r);
-    grd.addColorStop(0, "rgba(255,255,255,1)");
-    grd.addColorStop(0.3, "rgba(255,255,255,0.55)");
-    grd.addColorStop(1, "rgba(255,255,255,0)");
-    l.fillStyle = grd;
-    l.beginPath();
-    l.arc(x, y, r, 0, Math.PI * 2);
-    l.fill();
-  }
-  const lights = new T.CanvasTexture(lc);
-  return [world, region, lights];
+  const t = new T.CanvasTexture(rc);
+  t.anisotropy = aniso;
+  return t;
 }
 
 /** Meteosat-9 is a Meteosat Second Generation satellite: a spinning drum covered in solar cells. */

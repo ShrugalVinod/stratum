@@ -192,7 +192,7 @@ export function NowMap(p: Props) {
     const ms = reducedMotion() ? 0 : FADE_MS;
     let raf = 0;
     const step = (now: number) => {
-      const k = ms ? Math.min(1, (now - t0) / ms) : 1;
+      const k = ms ? Math.min(1, Math.max(0, (now - t0) / ms)) : 1; // a frame's timestamp can be a hair before t0
       m.setPaintProperty(back, "raster-opacity", RISK_OPACITY * k);
       m.setPaintProperty(was, "raster-opacity", RISK_OPACITY * (1 - k));
       if (k < 1) raf = requestAnimationFrame(step);

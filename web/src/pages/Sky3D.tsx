@@ -5,7 +5,7 @@ import { type Live, sampler, upcoming, usualLevel } from "../lib/advice";
 import { AIRPORTS, airport, PLAN_TYPES } from "../lib/footprint";
 import { buildLiveSky, buildMyFlight, fromUpcoming, type MyFlight, type MyTrip } from "../lib/liveSky";
 import { loadSchedule } from "../data/load";
-import { T, tx, useLang } from "../i18n";
+import { T, useLang } from "../i18n";
 import { applyMoves, type GamePlane, gamePlanes, type Move, score } from "../lib/controller";
 import type { SkyContrail, SkyFlight, SkyHandle, SkyMove, SkyPick, SkyProof, SkyView } from "../three/sky";
 import "../styles/map.css";
@@ -481,7 +481,7 @@ export function Sky3D() {
       [80000, () => {
         stopRide();
         setSpeed("tour");
-        setCaption(tx(`In this one day: ${al.length} altitude changes avoid about ${tonnes(total)} t CO₂e of contrail warming, for ${tonnes(fuel)} t of extra fuel.`, `केवल इस एक दिन में: ${al.length} ऊँचाई बदलाव लगभग ${tonnes(total)} t CO₂e कंट्रेल गर्मी टालते हैं, ${tonnes(fuel)} t अतिरिक्त ईंधन के बदले।`));
+        setCaption(`In this one day: ${al.length} altitude changes avoid about ${tonnes(total)} t CO₂e of contrail warming, for ${tonnes(fuel)} t of extra fuel.`);
       }],
       [90000, () => setCaption(T("STRATUM. Move the plane. Lose the cloud."))],
       [98000, () => {
@@ -573,11 +573,11 @@ export function Sky3D() {
     if (!tour || !caption || !voice) return speechSynthesis.cancel();
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(caption);
-    const code = lang === "hi" ? "hi" : "en";
+    const code = "en";
     const voices = speechSynthesis.getVoices();
     const v = voices.find((x) => x.lang.replace("_", "-").startsWith(`${code}-IN`)) ?? voices.find((x) => x.lang.startsWith(code));
     if (v) u.voice = v;
-    u.lang = code === "hi" ? "hi-IN" : "en-IN";
+    u.lang = "en-IN";
     u.rate = 0.98;
     speechSynthesis.speak(u);
   }, [caption, tour, voice, lang]);
@@ -592,11 +592,11 @@ export function Sky3D() {
     if (!mine || !following) return null;
     const up = mine.alt > mine.fl;
     const ft = `${(Math.abs(mine.alt - mine.fl) * 100).toLocaleString()} ft`;
-    if (clock < mine.t0 - 5) return tx(`STRATUM advice ahead: ${up ? "climb" : "descend"} ${ft} to FL${mine.alt} at ${hhmm(mine.t0)} UTC, before a stretch of air where its contrail would last.`, `आगे STRATUM की सलाह: ${hhmm(mine.t0)} UTC पर ${ft} ${up ? "ऊपर" : "नीचे"} FL${mine.alt} पर, उस हवा से पहले जहाँ इसकी कंट्रेल टिकती।`);
-    if (clock < mine.t0) return tx(`${up ? "Climbing" : "Descending"} to FL${mine.alt} to clear the humid layer…`, `नम परत से बचने के लिए FL${mine.alt} की ओर ${up ? "चढ़ रहा" : "उतर रहा"} है…`);
-    if (clock <= mine.t1) return tx(`At FL${mine.alt}, ${up ? "above" : "below"} the humid layer: no lasting contrail.`, `FL${mine.alt} पर, नम परत के ${up ? "ऊपर" : "नीचे"}: कोई टिकाऊ कंट्रेल नहीं।`);
-    if (clock <= mine.t1 + 5) return tx(`Clear of it. Back to FL${mine.fl}.`, `परत पार। FL${mine.fl} पर वापस।`);
-    return tx(`Done: about ${tonnes(mine.p50)} t CO₂e of warming avoided (cautious ${tonnes(mine.low)} t), for ${Math.round(mine.fuelKg)} kg of extra fuel.`, `पूरा: लगभग ${tonnes(mine.p50)} t CO₂e गर्मी टली (सतर्क ${tonnes(mine.low)} t), ${Math.round(mine.fuelKg)} kg अतिरिक्त ईंधन के बदले।`);
+    if (clock < mine.t0 - 5) return `STRATUM advice ahead: ${up ? "climb" : "descend"} ${ft} to FL${mine.alt} at ${hhmm(mine.t0)} UTC, before a stretch of air where its contrail would last.`;
+    if (clock < mine.t0) return `${up ? "Climbing" : "Descending"} to FL${mine.alt} to clear the humid layer…`;
+    if (clock <= mine.t1) return `At FL${mine.alt}, ${up ? "above" : "below"} the humid layer: no lasting contrail.`;
+    if (clock <= mine.t1 + 5) return `Clear of it. Back to FL${mine.fl}.`;
+    return `Done: about ${tonnes(mine.p50)} t CO₂e of warming avoided (cautious ${tonnes(mine.low)} t), for ${Math.round(mine.fuelKg)} kg of extra fuel.`;
   })();
 
   // the satellite: how many of the day's confirmed contrails it has seen so far, and the ridden one
@@ -606,8 +606,8 @@ export function Sky3D() {
     if (!seenTimes?.length || listened) return null;
     const next = seenTimes.find((t) => t > clock);
     const last = [...seenTimes].reverse().find((t) => t <= clock);
-    if (last != null && clock - last <= 30) return tx(`✓ Confirmed by Meteosat-9 at ${hhmm(last)} UTC: our detector found this contrail in the real satellite image.`, `✓ ${hhmm(last)} UTC पर Meteosat-9 ने पुष्टि की: हमारे डिटेक्टर ने यह कंट्रेल असली सैटेलाइट तस्वीर में पाई।`);
-    if (next != null && last == null) return tx(`Meteosat-9 will image this stretch at ${hhmm(next)} UTC. Watch for cyan.`, `Meteosat-9 इस हिस्से की तस्वीर ${hhmm(next)} UTC पर लेगा। नीले रंग पर नज़र रखिए।`);
+    if (last != null && clock - last <= 30) return `✓ Confirmed by Meteosat-9 at ${hhmm(last)} UTC: our detector found this contrail in the real satellite image.`;
+    if (next != null && last == null) return `Meteosat-9 will image this stretch at ${hhmm(next)} UTC. Watch for cyan.`;
     return null;
   })();
 
@@ -618,15 +618,15 @@ export function Sky3D() {
     const a = myFlight.advice!;
     const [c0, c1] = [f.mins[1], f.mins[f.mins.length - 2]];
     const [from, to] = [trip.from.city, trip.to.city];
-    if (clock < f.mins[0]) return tx(`Ready for take-off from ${from}.`, `${from} से उड़ान के लिए तैयार।`);
-    if (clock < c0) return tx(`Taking off from ${from}, climbing to FL${f.fl}.`, `${from} से उड़ान, FL${f.fl} की ओर चढ़ते हुए।`);
-    if (clock > c1) return tx(`Descending into ${to}.`, `${to} की ओर उतरते हुए।`);
+    if (clock < f.mins[0]) return `Ready for take-off from ${from}.`;
+    if (clock < c0) return `Taking off from ${from}, climbing to FL${f.fl}.`;
+    if (clock > c1) return `Descending into ${to}.`;
     if (listened && rideText) return rideText;
     const i = Math.max(0, Math.round(clock - c0));
-    if (a.lasting[i]) return tx("In air where contrails last: yours will stay behind you for hours.", "उस हवा में जहाँ कंट्रेल टिकती है: आपकी कंट्रेल घंटों पीछे रहेगी।");
+    if (a.lasting[i]) return "In air where contrails last: yours will stay behind you for hours.";
     const j = a.lasting.findIndex((x, k) => x && k > i);
-    if (j > 0 && j - i <= 30) return tx(`Air where contrails last, ${j - i} min ahead.`, `${j - i} मिनट आगे वह हवा जहाँ कंट्रेल टिकती है।`);
-    return tx(`Cruising at FL${f.fl}, in air where a contrail fades within minutes.`, `FL${f.fl} पर क्रूज़, ऐसी हवा में जहाँ कंट्रेल मिनटों में मिट जाती है।`);
+    if (j > 0 && j - i <= 30) return `Air where contrails last, ${j - i} min ahead.`;
+    return `Cruising at FL${f.fl}, in air where a contrail fades within minutes.`;
   })();
 
   const ist = (clock + 330) % 1440;
@@ -657,10 +657,10 @@ export function Sky3D() {
               <p class="s3-live mono-s">
                 <b>● {T("Live")}</b>{" "}
                 {liveInfo.fb
-                  ? tx(`The live feed is down: the real sky recorded at ${hhmm((liveInfo.fb.recorded_t % 86_400_000) / 60_000)} UTC, shown as if now.`, `लाइव फ़ीड बंद है: ${hhmm((liveInfo.fb.recorded_t % 86_400_000) / 60_000)} UTC पर रिकॉर्ड किया गया असली आसमान, ऐसे दिखाया गया जैसे अभी हो।`)
-                  : tx(`${liveInfo.n} airliners over India right now (OpenSky) on their paths ahead`, `अभी भारत के ऊपर ${liveInfo.n} यात्री विमान (OpenSky), अपने आगे के रास्तों पर`)}
+                  ? `The live feed is down: the real sky recorded at ${hhmm((liveInfo.fb.recorded_t % 86_400_000) / 60_000)} UTC, shown as if now.`
+                  : `${liveInfo.n} airliners over India right now (OpenSky) on their paths ahead`}
                 {" · "}
-                {tx(`today's ECMWF forecast (run ${liveInfo.run.slice(0, 10)}), physics only`, `आज का ECMWF पूर्वानुमान (रन ${liveInfo.run.slice(0, 10)}), केवल भौतिकी`)}
+                {`today's ECMWF forecast (run ${liveInfo.run.slice(0, 10)}), physics only`}
                 {!liveInfo.covered && ` · ${T("today's forecast is not published yet")}`}
               </p>
             )}
@@ -703,7 +703,7 @@ export function Sky3D() {
                   )}
                   <option value={LIVE}>● {T("Live now")}</option>
                   {(man.days_with_flights.length ? man.days_with_flights : man.days).map((d) => (
-                    <option value={d}>{new Date(`${d}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</option>
+                    <option value={d}>{new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</option>
                   ))}
                 </select>
               )}
@@ -721,7 +721,7 @@ export function Sky3D() {
               <div class="s3-saved s3-seen" aria-live="polite">
                 <p class="label">{T("What the satellite saw")}</p>
                 <b class="display">{seenSoFar}</b>
-                <span>{tx(`contrails confirmed by Meteosat-9 so far today, of ${seenRef.current.length}`, `आज अब तक Meteosat-9 द्वारा पुष्ट कंट्रेल, ${seenRef.current.length} में से`)}</span>
+                <span>{`contrails confirmed by Meteosat-9 so far today, of ${seenRef.current.length}`}</span>
                 <span class="mono-s">{T("Over our 12 days, physics flags about 6× more lasting contrails than the satellite sees (H1): most are too thin to detect.")}</span>
               </div>
             )}
@@ -729,11 +729,11 @@ export function Sky3D() {
               <div class="s3-saved" aria-live="polite">
                 <p class="label">{T("If they had listened")}</p>
                 <b class="display">{tonnes(saved.p50)} t</b>
-                <span>{tx(`CO₂e of contrail warming avoided so far (cautious ${tonnes(saved.low)} t)`, `अब तक टली कंट्रेल गर्मी, CO₂e (सतर्क ${tonnes(saved.low)} t)`)}</span>
+                <span>{`CO₂e of contrail warming avoided so far (cautious ${tonnes(saved.low)} t)`}</span>
                 <span class="mono-s">
                   {date === LIVE
-                    ? tx(`${saved.n} of ${alerts.length} planes advised now have moved · +${tonnes(saved.fuel)} t fuel · all advice now ${tonnes(dayTotal)} t`, `अभी सलाह पाए ${alerts.length} में से ${saved.n} विमान हटे · +${tonnes(saved.fuel)} t ईंधन · अभी की सारी सलाह ${tonnes(dayTotal)} t`)
-                    : tx(`${saved.n} of ${alerts.length} planes moved · +${tonnes(saved.fuel)} t fuel · whole day ${tonnes(dayTotal)} t`, `${alerts.length} में से ${saved.n} विमान हटे · +${tonnes(saved.fuel)} t ईंधन · पूरा दिन ${tonnes(dayTotal)} t`)}
+                    ? `${saved.n} of ${alerts.length} planes advised now have moved · +${tonnes(saved.fuel)} t fuel · all advice now ${tonnes(dayTotal)} t`
+                    : `${saved.n} of ${alerts.length} planes moved · +${tonnes(saved.fuel)} t fuel · whole day ${tonnes(dayTotal)} t`}
                 </span>
               </div>
             )}
@@ -786,7 +786,7 @@ export function Sky3D() {
           ready &&
           date !== YOU && (
             <div class="s3-ride-btn-wrap">
-              {ended && <p class="s3-ended mono-s">{tx(`${ended} has left the area.`, `${ended} क्षेत्र से बाहर चला गया।`)}</p>}
+              {ended && <p class="s3-ended mono-s">{`${ended} has left the area.`}</p>}
               <button class="s3-btn s3-ride-btn" onClick={() => ride()}>
                 ✈ {listened ? T("Ride along as a plane dodges the layer") : view === "satellite" ? T("Ride along until the satellite sees it") : T("Ride along with a contrail-maker")}
               </button>
@@ -899,7 +899,7 @@ function Planner({ onClose, onFly, start }: { onClose: () => void; onFly: (t: My
   const b = airport(to);
   const ok = a && b && a.code !== b.code && dep > 0;
   const label = (t: number) =>
-    `${new Date(t + 330 * 60_000).toLocaleDateString(tx("en-GB", "hi-IN"), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} · ${istOf((t % 86_400_000) / 60_000)} IST`;
+    `${new Date(t + 330 * 60_000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} · ${istOf((t % 86_400_000) / 60_000)} IST`;
   return (
     <div class="s3-planner" role="dialog" aria-label={T("Fly your own flight")}>
       <p class="label">{T("Fly your own flight")}</p>
@@ -968,7 +968,7 @@ function Postcard({ trip, me, again, plan }: { trip: MyTrip; me: MyFlight; again
   const [copied, setCopied] = useState(false);
   const m0 = (trip.dep % 86_400_000) / 60_000;
   const span = (i: number, j: number) => `${istOf((me.path[i].t % 86_400_000) / 60_000)}–${istOf((me.path[j - 1].t % 86_400_000) / 60_000)} IST`;
-  const day = new Date(trip.dep + 330 * 60_000).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", timeZone: "UTC" });
+  const day = new Date(trip.dep + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
   return (
     <div class="s3-postcard" role="dialog" aria-label={T("Your flight")}>
       <p class="label">{T("Your flight · landed")}</p>
@@ -980,21 +980,15 @@ function Postcard({ trip, me, again, plan }: { trip: MyTrip; me: MyFlight; again
       </span>
       {a.nLasting ? (
         <>
-          <p>{tx(`On the forecast, your cruise crossed ${a.nLasting} min of air where a contrail lasts for hours.`, `पूर्वानुमान पर, आपका क्रूज़ ${a.nLasting} मिनट ऐसी हवा से गुज़रा जहाँ कंट्रेल घंटों टिकती है।`)}</p>
+          <p>{`On the forecast, your cruise crossed ${a.nLasting} min of air where a contrail lasts for hours.`}</p>
           {a.alert ? (
             <>
               <p class="s3-pc-adv">
-                {tx(
-                  `STRATUM's advice: ${a.alt! > a.fl ? "climb" : "descend"} ${(Math.abs(a.alt! - a.fl) * 100).toLocaleString()} ft to FL${a.alt} for ${a.spans.map(([i, j]) => span(i, j)).join(" and ")}.`,
-                  `STRATUM की सलाह: ${a.spans.map(([i, j]) => span(i, j)).join(" और ")} के दौरान FL${a.alt} पर।`,
-                )}
+                {`STRATUM's advice: ${a.alt! > a.fl ? "climb" : "descend"} ${(Math.abs(a.alt! - a.fl) * 100).toLocaleString()} ft to FL${a.alt} for ${a.spans.map(([i, j]) => span(i, j)).join(" and ")}.`}
               </p>
               <b class="s3-pc-big">{(a.avoided.p50 / 1000).toFixed(1)} t</b>
               <span>
-                {tx(
-                  `CO₂e of contrail warming avoided (cautious ${(a.avoided.low / 1000).toFixed(1)} t), for ${Math.round(a.extraFuelKg)} kg of extra fuel: about the CO₂ of driving a petrol car ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} km.`,
-                  `CO₂e कंट्रेल गर्मी टली (सतर्क ${(a.avoided.low / 1000).toFixed(1)} t), ${Math.round(a.extraFuelKg)} kg अतिरिक्त ईंधन के बदले: लगभग एक पेट्रोल कार के ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} किमी चलने का CO₂।`,
-                )}
+                {`CO₂e of contrail warming avoided (cautious ${(a.avoided.low / 1000).toFixed(1)} t), for ${Math.round(a.extraFuelKg)} kg of extra fuel: about the CO₂ of driving a petrol car ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} km.`}
               </span>
             </>
           ) : (
@@ -1058,7 +1052,7 @@ function GamePanel(p: {
                 <li>
                   <span class="mono">{x.f.cs}</span>
                   <span class="mono-s muted">
-                    {x.f.type ?? ""} · FL{x.f.fl} · {tx(`${x.n} min in lasting air`, `${x.n} मिनट टिकाऊ हवा में`)}
+                    {x.f.type ?? ""} · FL{x.f.fl} · {`${x.n} min in lasting air`}
                   </span>
                   <span class="s3-game-moves" role="radiogroup" aria-label={x.f.cs}>
                     <button role="radio" aria-checked={c === "up"} class={c === "up" ? "on" : ""} disabled={!x.up} onClick={() => p.onChoose(x.f.id, "up")} title={T("Climb 2,000 ft")}>
@@ -1096,12 +1090,12 @@ function GamePanel(p: {
             <div>
               <span class="label">{T("You")}</span>
               <b class="display">{t(you.net)}</b>
-              <span class="mono-s">{tx(`CO₂e avoided · ${Math.round(you.fuel)} kg fuel · ${you.moved} moved`, `CO₂e टली · ${Math.round(you.fuel)} kg ईंधन · ${you.moved} हटे`)}</span>
+              <span class="mono-s">{`CO₂e avoided · ${Math.round(you.fuel)} kg fuel · ${you.moved} moved`}</span>
             </div>
             <div class="stratum">
               <span class="label">STRATUM</span>
               <b class="display">{t(best.net)}</b>
-              <span class="mono-s">{tx(`CO₂e avoided · ${Math.round(best.fuel)} kg fuel · ${best.moved} moved`, `CO₂e टली · ${Math.round(best.fuel)} kg ईंधन · ${best.moved} हटे`)}</span>
+              <span class="mono-s">{`CO₂e avoided · ${Math.round(best.fuel)} kg fuel · ${best.moved} moved`}</span>
             </div>
           </div>
           <p>
@@ -1109,7 +1103,7 @@ function GamePanel(p: {
               ? T("That was STRATUM's hour: it knew which humid air really lasts, and when a move costs more fuel than it saves.")
               : you.net >= best.net - 1
                 ? T("You matched STRATUM. Air-traffic control is hiring.")
-                : tx(`You got ${Math.max(0, Math.round((you.net / Math.max(1, best.net)) * 100))} % of what STRATUM avoided.`, `आपने STRATUM की टाली गर्मी का ${Math.max(0, Math.round((you.net / Math.max(1, best.net)) * 100))} % पाया।`)}
+                : `You got ${Math.max(0, Math.round((you.net / Math.max(1, best.net)) * 100))} % of what STRATUM avoided.`}
           </p>
           <p class="mono-s muted">{T("Scored with the same physics and fuel numbers as Live advice (warming net of the extra fuel's CO₂, central estimate); STRATUM picks from the same three moves. Real flights and weather of that evening; no real flight was changed.")}</p>
           <div class="s3-form-go">

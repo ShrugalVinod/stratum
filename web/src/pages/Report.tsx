@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { ReportDay, ReportIndex } from "../data/contract";
 import { loadReportDay, loadReportIndex } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import "../styles/map.css";
 
 /** /report — the daily report card: every morning the `report` Action checks yesterday's contrail
@@ -18,7 +18,7 @@ const mp = (lon: number, lat: number) => [(lon - BOX.w) * MK, (BOX.n - lat) * MK
 const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)} %`);
 const times = (v: number | null | undefined) => (v == null ? "—" : `×${v.toFixed(1)}`);
 const dayName = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
 export function Report() {
   const [idx, setIdx] = useState<ReportIndex | null | undefined>(undefined);
@@ -56,7 +56,7 @@ export function Report() {
     <div class="page report">
       <PageHead
         label="Report card · every morning"
-        note={idx ? tx(`${idx.totals.days} days scored · last ${idx.updated}`, `${idx.totals.days} दिन जाँचे · अंतिम ${idx.updated}`) : idx === null ? "Not published yet" : "Loading…"}
+        note={idx ? `${idx.totals.days} days scored · last ${idx.updated}` : idx === null ? "Not published yet" : "Loading…"}
         lines={["Was yesterday's", "forecast right?"]}
         lede="Every morning STRATUM checks yesterday's contrail forecast against the contrails the satellite actually saw, and keeps the score here, in public, good days and bad."
       />
@@ -80,7 +80,7 @@ export function Report() {
               <section class="section rc-record rv">
                 <div class="sec-head">
                   <p class="label red">{T("The running record")}</p>
-                  <span class="mono-s">{tx(`${t.days} days · ${t.contrails_seen.toLocaleString()} contrails`, `${t.days} दिन · ${t.contrails_seen.toLocaleString()} कंट्रेल`)}</span>
+                  <span class="mono-s">{`${t.days} days · ${t.contrails_seen.toLocaleString()} contrails`}</span>
                 </div>
                 <div class="rt-tiles rc-tiles">
                   <div>
@@ -139,15 +139,15 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
         {c.lift == null
           ? T("Too cloudy to check: no contrail was seen in clear, well-viewed sky.")
           : c.lift >= 1.5
-            ? tx(<>A good day for the forecast.</>, <>पूर्वानुमान के लिए अच्छा दिन।</>)
+            ? <>A good day for the forecast.</>
             : c.lift > 1
-              ? tx(<>Better than chance, but not by much.</>, <>संयोग से बेहतर, पर ज़्यादा नहीं।</>)
-              : tx(<>A bad day: no better than chance.</>, <>बुरा दिन: संयोग से बेहतर नहीं।</>)}
+              ? <>Better than chance, but not by much.</>
+              : <>A bad day: no better than chance.</>}
       </h2>
       <div class="rt-tiles rc-tiles">
         <div>
           <b>{pc(c.hit_rate)}</b>
-          <span>{tx(`of the ${c.contrails_seen} contrails seen were in forecast air`, `देखी गई ${c.contrails_seen} कंट्रेल में से इतनी पूर्वानुमान की हवा में थीं`)}</span>
+          <span>{`of the ${c.contrails_seen} contrails seen were in forecast air`}</span>
         </div>
         <div>
           <b>{pc(c.chance)}</b>
@@ -162,10 +162,7 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
             {c.notices_confirmed}/{c.notices_checked}
           </b>
           <span>
-            {tx(
-              "notices confirmed by the satellite (of those it could check)",
-              "सूचनाएँ उपग्रह से पुष्ट (जो जाँची जा सकीं उनमें से)",
-            )}
+            {"notices confirmed by the satellite (of those it could check)"}
           </span>
         </div>
       </div>
@@ -183,7 +180,7 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
             })}
             {c.lines.map((l) => (
               <polyline class={l.hit ? "rc-line hit" : "rc-line"} points={l.lat.map((la, i) => mp(l.lon[i], la).map((v) => v.toFixed(1)).join(",")).join(" ")}>
-                <title>{tx(`${String(l.h).padStart(2, "0")}:00 UTC · ${l.hit ? "in forecast air" : "outside forecast air"}`, `${String(l.h).padStart(2, "0")}:00 UTC · ${l.hit ? "पूर्वानुमान की हवा में" : "पूर्वानुमान की हवा से बाहर"}`)}</title>
+                <title>{`${String(l.h).padStart(2, "0")}:00 UTC · ${l.hit ? "in forecast air" : "outside forecast air"}`}</title>
               </polyline>
             ))}
           </svg>
@@ -200,7 +197,7 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
               const hit = (h.hits / maxH) * H;
               return (
                 <g>
-                  <title>{tx(`${String(h.h).padStart(2, "0")}:00 UTC: ${h.hits} of ${h.lines} in forecast air · chance ${pc(h.chance)}`, `${String(h.h).padStart(2, "0")}:00 UTC: ${h.lines} में से ${h.hits} पूर्वानुमान की हवा में · संयोग ${pc(h.chance)}`)}</title>
+                  <title>{`${String(h.h).padStart(2, "0")}:00 UTC: ${h.hits} of ${h.lines} in forecast air · chance ${pc(h.chance)}`}</title>
                   <rect class="rc-bar" x={h.h * 20} y={H - all} width={16} height={Math.max(all, 0.5)} />
                   <rect class="rc-bar hit" x={h.h * 20} y={H - hit} width={16} height={hit} />
                   <rect x={h.h * 20} y={0} width={20} height={H} fill="transparent" />
@@ -221,13 +218,13 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
                 {c.notice_results.filter((n) => n.status !== "not checkable").map((n) => (
                   <li class={`rc-n ${n.status.replace(/ /g, "-")}`}>
                     <span>{n.id}</span>
-                    <span>{n.status === "confirmed" ? tx(`confirmed · ${n.contrails}`, `पुष्ट · ${n.contrails}`) : T(n.status)}</span>
+                    <span>{n.status === "confirmed" ? `confirmed · ${n.contrails}` : T(n.status)}</span>
                   </li>
                 ))}
               </ul>
               {notChecked > 0 && (
                 <p class="mono-s muted">
-                  {tx(`${notChecked} more could not be checked (cloud or out of view in their time window).`, `${notChecked} और जाँची नहीं जा सकीं (अपनी अवधि में बादल या दृश्य से बाहर)।`)}
+                  {`${notChecked} more could not be checked (cloud or out of view in their time window).`}
                 </p>
               )}
               <a class="mono-s" href="/now?mode=next">
@@ -236,10 +233,7 @@ function Day({ c, shapes }: { c: ReportDay; shapes: { india: boolean; d: string 
             </>
           )}
           <p class="mono-s muted">
-            {tx(
-              `Forecast run ${c.forecast_run?.slice(0, 10) ?? "—"} · ${c.images ?? 24} satellite images · detector: ${c.detector ?? "—"} · ${pc(c.checkable_share ?? null)} of the area clear and in view at some hour`,
-              `पूर्वानुमान रन ${c.forecast_run?.slice(0, 10) ?? "—"} · ${c.images ?? 24} उपग्रह तस्वीरें · डिटेक्टर: ${c.detector ?? "—"} · क्षेत्र का ${pc(c.checkable_share ?? null)} किसी घंटे साफ़ और दृश्य में`,
-            )}
+            {`Forecast run ${c.forecast_run?.slice(0, 10) ?? "—"} · ${c.images ?? 24} satellite images · detector: ${c.detector ?? "—"} · ${pc(c.checkable_share ?? null)} of the area clear and in view at some hour`}
           </p>
         </div>
       </div>
@@ -269,7 +263,7 @@ function Record({ idx, onPick }: { idx: ReportIndex; onPick: (d: string) => void
         const x = L + step * (i + 0.5);
         return (
           <g class="rc-day-mark" onClick={() => onPick(d.date)}>
-            <title>{tx(`${d.date}: ${pc(d.hit_rate)} in forecast air, chance ${pc(d.chance)}`, `${d.date}: ${pc(d.hit_rate)} पूर्वानुमान की हवा में, संयोग ${pc(d.chance)}`)}</title>
+            <title>{`${d.date}: ${pc(d.hit_rate)} in forecast air, chance ${pc(d.chance)}`}</title>
             {d.chance != null && <line class="rc-chance" x1={x - Math.min(8, step / 2.5)} x2={x + Math.min(8, step / 2.5)} y1={y(d.chance)} y2={y(d.chance)} />}
             {d.hit_rate != null && <circle class="rc-dot" cx={x} cy={y(d.hit_rate)} r={4} />}
             <rect x={x - step / 2} y={0} width={step} height={H} fill="transparent" />

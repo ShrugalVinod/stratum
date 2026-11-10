@@ -3,7 +3,7 @@ import { Split } from "../components/Split";
 import { useEffect, useState } from "preact/hooks";
 import { deviations, didntWork, hypotheses, methods, modelCard, modelFeatures, site, threats } from "../content/site";
 import { loadManifest, loadResults } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 /** Mean |SHAP| per input over the outer folds (from results.json; training rows only). */
 function useShap(): [string, number][] | null {
@@ -60,7 +60,7 @@ export function Methods() {
             <p class="label red" id="hyp">
               {T("§2 · Hypotheses · NOTAM")}
             </p>
-            <span class="mono-s">{tx(`${hypotheses.length} notices in force`, `${hypotheses.length} सूचनाएँ लागू`)}</span>
+            <span class="mono-s">{`${hypotheses.length} notices in force`}</span>
           </div>
           <div class="notams">
             {hypotheses.map((h, i) => (
@@ -87,7 +87,7 @@ export function Methods() {
                 </div>
                 <footer class="mono-s">
                   {h.result
-                    ? tx(`Pre-registered · tested ${h.result.date} · ${h.result.verdict.toLowerCase()}`, `पहले से दर्ज · परखा ${h.result.date} · ${T(h.result.verdict)}`)
+                    ? `Pre-registered · tested ${h.result.date} · ${h.result.verdict.toLowerCase()}`
                     : T("Pre-registered · not yet tested")}
                 </footer>
               </article>
@@ -225,7 +225,7 @@ export function Methods() {
             <p class="label red" id="devs">
               {T("§7 · Changes to the plan")}
             </p>
-            <span class="mono-s">{tx(`${deviations.length} deviations · each with the team's OK before results`, `${deviations.length} विचलन · हर एक पर नतीजों से पहले टीम की मंज़ूरी`)}</span>
+            <span class="mono-s">{`${deviations.length} deviations · each with the team's OK before results`}</span>
           </div>
           <ol class="mrows">
             {deviations.map((d) => (
@@ -267,7 +267,7 @@ export function Methods() {
           <span class="display d-l">
             <Split text={T("Download the research protocol (PDF)")} />
           </span>
-          <span class="mono-s">{tx("PDF · 19 pp ↓", "PDF · 19 पृष्ठ (अंग्रेज़ी) ↓")}</span>
+          <span class="mono-s">{"PDF · 19 pp ↓"}</span>
         </span>
       </a>
     </div>

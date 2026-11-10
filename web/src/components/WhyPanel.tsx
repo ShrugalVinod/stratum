@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import type { ExplainItem } from "../data/contract";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 /** "Why this prediction?" for one map card: the exact TreeSHAP contributions of the STRATUM model
  *  (the fold that holds the day out) for the card's most likely segment. Bars push the model's
@@ -26,7 +26,6 @@ const FEATS: Record<string, Feat> = {
   longitude: { label: "Longitude", fmt: (x) => `${x.toFixed(1)}°E` },
 };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const MONTHS_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 const TOP = 6;
 const sigmoid = (z: number) => 1 / (1 + Math.exp(-z));
 
@@ -42,7 +41,7 @@ export function bars(features: string[], it: ExplainItem): Bar[] {
     const x = it.x[i];
     out.push({ label: FEATS[f] ? T(FEATS[f].label) : f, value: x == null ? "—" : (FEATS[f]?.fmt ?? String)(x), phi: it.phi[i] ?? 0 });
   }
-  if (features.includes("month_sin")) out.push({ label: T("Season"), value: tx(MONTHS, MONTHS_HI)[Number(it.t.slice(5, 7)) - 1] ?? "—", phi: ph("month_sin") + ph("month_cos") });
+  if (features.includes("month_sin")) out.push({ label: T("Season"), value: MONTHS[Number(it.t.slice(5, 7)) - 1] ?? "—", phi: ph("month_sin") + ph("month_cos") });
   if (features.includes("local_solar_time_sin")) {
     const s = v("local_solar_time_sin");
     const c = v("local_solar_time_cos");
@@ -67,16 +66,10 @@ export function WhyPanel({ it, features, base }: { it: ExplainItem; features: st
       {open && (
         <>
           <p class="small muted">
-            {tx(
-              <>
+            {<>
                 What moved STRATUM's score for the most likely minute of this stretch ({it.t.slice(11, 16)} UTC, FL{it.fl}): from the average
                 {base != null ? ` (${(sigmoid(base) * 100).toFixed(1)} %)` : ""} to this segment{it.p != null ? ` (${(it.p * 100).toFixed(1)} % after calibration)` : ""}.
-              </>,
-              <>
-                इस हिस्से के सबसे संभावित मिनट ({it.t.slice(11, 16)} UTC, FL{it.fl}) पर STRATUM के स्कोर को किसने बदला: औसत
-                {base != null ? ` (${(sigmoid(base) * 100).toFixed(1)} %)` : ""} से इस हिस्से तक{it.p != null ? ` (कैलिब्रेशन के बाद ${(it.p * 100).toFixed(1)} %)` : ""}।
-              </>,
-            )}
+              </>}
           </p>
           <ul class="why-bars">
             {top.map((b) => (
@@ -85,7 +78,7 @@ export function WhyPanel({ it, features, base }: { it: ExplainItem; features: st
                   {b.label}
                   <em class="mono-s">{b.value}</em>
                 </span>
-                <span class="why-track" aria-label={tx(`${b.phi >= 0 ? "raises" : "lowers"} the score by ${Math.abs(b.phi).toFixed(2)}`, `स्कोर को ${Math.abs(b.phi).toFixed(2)} ${b.phi >= 0 ? "बढ़ाता" : "घटाता"} है`)}>
+                <span class="why-track" aria-label={`${b.phi >= 0 ? "raises" : "lowers"} the score by ${Math.abs(b.phi).toFixed(2)}`}>
                   <i class={b.phi >= 0 ? "up" : "down"} style={{ width: `${(Math.abs(b.phi) / max) * 50}%` }} />
                 </span>
               </li>

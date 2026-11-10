@@ -1,13 +1,12 @@
 import { useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { progress } from "../content/site";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-const MON_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 const day = (iso: string) => {
   const [y, m, d] = iso.split("-");
-  return `${d} ${tx(MON, MON_HI)[Number(m) - 1]} ${y}`;
+  return `${d} ${MON[Number(m) - 1]} ${y}`;
 };
 
 export function Progress() {
@@ -18,7 +17,7 @@ export function Progress() {
     <div class="page">
       <PageHead
         label="Logbook"
-        note={tx(`${progress.length} entries · newest first`, `${progress.length} प्रविष्टियाँ · नई पहले`)}
+        note={`${progress.length} entries · newest first`}
         lines={["Progress."]}
         lede="Entries are added when something is finished, not when it is promised."
       />

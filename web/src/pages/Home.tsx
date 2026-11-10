@@ -8,6 +8,79 @@ import { T } from "../i18n";
 
 const STATUS = { done: "Done", current: "Active", upcoming: "Scheduled" } as const;
 
+/** the light under the pointer on the tool tiles (two CSS variables per tile) */
+function spot(e: PointerEvent) {
+  const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(".try-tile");
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
+/** One small instrument drawing per tool; each comes alive when its tile is hovered. */
+function Glyph({ k }: { k: string }) {
+  const body =
+    k === "/3d" ? (
+      <>
+        <circle cx="24" cy="24" r="15" />
+        <ellipse cx="24" cy="24" rx="15" ry="5.5" />
+        <ellipse cx="24" cy="24" rx="6" ry="15" />
+        <circle class="g-dot g-orbit" cx="39" cy="24" r="2.4" />
+      </>
+    ) : k === "/now" ? (
+      <>
+        <circle cx="24" cy="24" r="15" />
+        <circle cx="24" cy="24" r="8" />
+        <path class="g-sweep" d="M24 24 36 15" />
+        <circle class="g-dot g-blink" cx="31" cy="30" r="2.2" />
+      </>
+    ) : k === "/replay" ? (
+      <>
+        <path d="M6 16h36M6 32h36" />
+        <path class="g-thick" d="M10 16h20" />
+        <path class="g-dot" d="M32 13.5 37 16l-5 2.5Z" />
+        <path class="g-climb" d="M10 32h8l5-6h14" />
+      </>
+    ) : k === "/flight" ? (
+      <>
+        <path class="g-arc" d="M7 36C14 12 34 12 41 36" />
+        <circle cx="7" cy="36" r="2.2" />
+        <circle cx="41" cy="36" r="2.2" />
+        <circle class="g-dot g-along" cx="24" cy="18" r="2.6" />
+      </>
+    ) : k === "/spot" ? (
+      <>
+        <path d="M8 16V9h7M33 9h7v7M40 32v7h-7M15 39H8v-7" />
+        <path class="g-thick g-draw" d="M13 33 35 15" />
+      </>
+    ) : k === "/sandbox" ? (
+      <>
+        <path d="M8 14h32M8 24h32M8 34h32" />
+        <circle class="g-knob k1" cx="18" cy="14" r="3.2" />
+        <circle class="g-knob k2" cx="30" cy="24" r="3.2" />
+        <circle class="g-knob k3" cx="22" cy="34" r="3.2" />
+      </>
+    ) : k === "/report" ? (
+      <>
+        <rect x="10" y="7" width="28" height="34" />
+        <path d="M16 15h16M16 21h10" />
+        <path class="g-thick g-draw" d="m16 31 5 5 11-12" />
+      </>
+    ) : (
+      <>
+        <path d="M8 40h32" />
+        <path class="g-bar b1" d="M14 40V28" />
+        <path class="g-bar b2" d="M24 40V18" />
+        <path class="g-bar b3" d="M34 40V10" />
+      </>
+    );
+  return (
+    <svg class="glyph" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
+      {body}
+    </svg>
+  );
+}
+
 export function Home() {
   return (
     <div class="page home">
@@ -232,7 +305,7 @@ export function Home() {
           <h2 id="try-title" class="display d-m">
             <Split text={T("Look up, then look it up.")} />
           </h2>
-          <div class="try-grid rv stagger">
+          <div class="try-grid rv stagger" onPointerMove={spot}>
             {(
               [
                 ["/3d", "The sky in 3D", "One real day over India: watch lasting contrails being born behind the planes, then switch on STRATUM's advice and watch the planes dodge the humid air. With a one-minute story."],
@@ -246,9 +319,12 @@ export function Home() {
               ] as const
             ).map(([href, t, b], i) => (
               <a class={i < 2 ? "try-tile try-featured" : "try-tile"} href={href} style={{ "--i": i }}>
-                <span class="mono-s">{i < 2 ? T("New") : `0${i - 1}`}</span>
+                <span class="try-top">
+                  <span class="mono-s">{i < 2 ? T("New") : `0${i - 1}`}</span>
+                  <Glyph k={href} />
+                </span>
                 <b class="display">{T(t)}</b>
-                <span>{T(b)}</span>
+                <span class="try-body">{T(b)}</span>
                 <span class="try-go" aria-hidden="true">
                   <Arrow />
                 </span>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { Manifest, OutlookInfo } from "../data/contract";
 import { loadLive, loadOutlook, outlookValue } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { readExif } from "../lib/exif";
 import { dirName } from "../lib/geo";
 import { type Candidate, candidates, type Look } from "../lib/spot";
@@ -63,7 +63,7 @@ export function Spot() {
     if (info.taken) {
       const m = Math.round((Date.now() - info.taken.getTime()) / 60_000);
       setAgo(Math.max(0, m));
-      notes.push(tx(`taken ${hm(info.taken.getTime())} IST`, `ली गई ${hm(info.taken.getTime())} IST`));
+      notes.push(`taken ${hm(info.taken.getTime())} IST`);
     } else notes.push(T("no time saved in the photo: set it below"));
     if (info.lat != null && info.lon != null) {
       setLat(Math.round(info.lat * 100) / 100);
@@ -87,7 +87,7 @@ export function Spot() {
 
   const find = async () => {
     if (lat == null || lon == null) return setErr(T("Pick where you were first."));
-    if (ago > MAX_AGE_MIN) return setErr(tx(`This photo is ${ago} minutes old. We only keep the live sky, so this works for photos from the last two hours.`, `यह फ़ोटो ${ago} मिनट पुरानी है। हम केवल लाइव आसमान रखते हैं, इसलिए यह पिछले दो घंटों की फ़ोटो के लिए ही काम करता है।`));
+    if (ago > MAX_AGE_MIN) return setErr(`This photo is ${ago} minutes old. We only keep the live sky, so this works for photos from the last two hours.`);
     setBusy(true);
     setErr(null);
     try {
@@ -161,13 +161,13 @@ export function Spot() {
                 ◎ {T("My location")}
               </button>
             </div>
-            {lat != null && placeName && <p class="mono-s muted">{tx(`Using ${placeName}`, `${T(placeName)} का इस्तेमाल`)}</p>}
+            {lat != null && placeName && <p class="mono-s muted">{`Using ${placeName}`}</p>}
           </fieldset>
 
           <fieldset>
             <legend class="label">{T("When?")}</legend>
             <input type="range" min={0} max={MAX_AGE_MIN} step={1} value={ago} aria-label={T("Minutes ago")} onInput={(e) => setAgo(Number((e.target as HTMLInputElement).value))} />
-            <p class="mono-s">{ago === 0 ? T("just now") : tx(`${ago} min ago (${hm(Date.now() - ago * 60_000)} IST)`, `${ago} मिनट पहले (${hm(Date.now() - ago * 60_000)} IST)`)}</p>
+            <p class="mono-s">{ago === 0 ? T("just now") : `${ago} min ago (${hm(Date.now() - ago * 60_000)} IST)`}</p>
           </fieldset>
 
           <fieldset>
@@ -207,16 +207,10 @@ export function Spot() {
             <div class="live-card">
               <p class="live-cs">{T("No match")}</p>
               <p>
-                {tx(
-                  <>
+                {<>
                     No airliner we can see crossed that part of your sky in the hour before {hm(res.photoT)} IST. The contrail may be older than an hour, may have
                     drifted far with the wind, or the plane may already have left our live data (landed, or flown out of the region).
-                  </>,
-                  <>
-                    {hm(res.photoT)} IST से पहले के घंटे में हमें दिखने वाला कोई यात्री विमान आपके आसमान के उस हिस्से से नहीं गुज़रा। हो सकता है कंट्रेल एक घंटे से
-                    पुरानी हो, हवा के साथ दूर बह गई हो, या विमान हमारे लाइव डेटा से निकल चुका हो (उतर गया, या क्षेत्र से बाहर उड़ गया)।
-                  </>,
-                )}
+                  </>}
               </p>
             </div>
           )}
@@ -229,17 +223,11 @@ export function Spot() {
                   {top.type ?? T("Airliner")} · FL{String(Math.round(top.alt / 100)).padStart(3, "0")}
                 </p>
                 <p>
-                  {tx(
-                    <>
+                  {<>
                       It crossed your sky <b>{Math.round(top.ageMin)} min</b> before the photo, about <b>{Math.round(top.distKm)} km</b> to the{" "}
                       <b>{dirName(top.bearing)}</b>
                       {top.distKm < 8 ? " (nearly overhead)" : ""}, and {KIND_TEXT[res.kinds[top.cs] ?? "unknown"]}.
-                    </>,
-                    <>
-                      यह फ़ोटो से <b>{Math.round(top.ageMin)} मिनट</b> पहले आपके आसमान से गुज़रा, लगभग <b>{Math.round(top.distKm)} किमी</b>{" "}
-                      <b>{dirName(top.bearing)}</b> में{top.distKm < 8 ? " (लगभग सिर के ऊपर)" : ""}, और {T(KIND_TEXT[res.kinds[top.cs] ?? "unknown"])}।
-                    </>,
-                  )}
+                    </>}
                 </p>
                 {res.kinds[top.cs] === "none" && (
                   <p class="small">
@@ -259,7 +247,7 @@ export function Spot() {
                           <i />
                           <span class="mono">{c.cs}</span>
                           <span class="mono-s muted">
-                            {tx(`${Math.round(c.ageMin)} min before`, `${Math.round(c.ageMin)} मिनट पहले`)} · {Math.round(c.distKm)} {tx("km", "किमी")} {dirName(c.bearing)} · FL{String(Math.round(c.alt / 100)).padStart(3, "0")}
+                            {`${Math.round(c.ageMin)} min before`} · {Math.round(c.distKm)} {"km"} {dirName(c.bearing)} · FL{String(Math.round(c.alt / 100)).padStart(3, "0")}
                           </span>
                         </span>
                       </li>

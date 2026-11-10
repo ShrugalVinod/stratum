@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import type { LiveAircraft, Manifest, OutlookInfo } from "../data/contract";
 import { loadLive, loadOutlook, outlookValue } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import {
   AIRPORTS,
   aheadPath,
@@ -39,7 +39,7 @@ const HOUR = 3_600_000;
 
 const tonnes = (kg: number) => `${kg >= 9_950 ? Math.round(kg / 1000).toLocaleString() : (kg / 1000).toFixed(1)} t`;
 const slotLabel = (ms: number) =>
-  `${new Date(ms).toLocaleString(tx("en-GB", "hi-IN"), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" })} IST`;
+  `${new Date(ms).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" })} IST`;
 const place = (code: string) => {
   const a = airport(code);
   return a ? `${T(a.city)} (${a.code})` : code;
@@ -167,8 +167,8 @@ export function Flight() {
       const list = (await loadLive(20.5, 78.9)).ac;
       setLive(list);
       const a = list.find((x) => x.cs.toUpperCase() === want);
-      if (!a) return setErr(tx(`${want} is not in the live picture of India right now (only cruising airline flights above FL200 are).`, `${want} अभी भारत की लाइव तस्वीर में नहीं है (केवल FL200 से ऊपर क्रूज़ करती एयरलाइन उड़ानें होती हैं)।`));
-      if (a.alt < 27_000) return setErr(tx(`${a.cs} is at FL${Math.round(a.alt / 100)}, still climbing or descending. Try again once it cruises above FL280.`, `${a.cs} अभी FL${Math.round(a.alt / 100)} पर है, चढ़ रहा या उतर रहा है। FL280 से ऊपर क्रूज़ करने पर फिर देखिए।`));
+      if (!a) return setErr(`${want} is not in the live picture of India right now (only cruising airline flights above FL200 are).`);
+      if (a.alt < 27_000) return setErr(`${a.cs} is at FL${Math.round(a.alt / 100)}, still climbing or descending. Try again once it cruises above FL280.`);
       const now = Date.now();
       const kmh = (a.gs ?? 450) * 1.852;
       const [lat, lon] = a.trk == null ? [a.lat, a.lon] : move(a.lat, a.lon, a.trk, (kmh * (now - a.t)) / HOUR);
@@ -176,8 +176,8 @@ export function Flight() {
       const path = aheadPath({ lat, lon, trk: a.trk ?? 0, t: now }, b, kmh);
       const fl = nearestFl(a.alt);
       const fp = await footprint(path, fl, a.type ?? "", lookup(ol.manifest));
-      const where = b ? tx(`to ${place(b.code)}`, `${place(b.code)} तक`) : T("the next hour, on its current heading");
-      setRes({ fp, path, title: a.cs, label: `${a.cs} · ${a.type ?? tx("type unknown (A320neo assumed)", "प्रकार अज्ञात (A320neo माना गया)")} · FL${fl} · ${where}` });
+      const where = b ? `to ${place(b.code)}` : T("the next hour, on its current heading");
+      setRes({ fp, path, title: a.cs, label: `${a.cs} · ${a.type ?? "type unknown (A320neo assumed)"} · FL${fl} · ${where}` });
       share({ cs: a.cs, ...(b ? { dest: b.code } : {}) });
     } catch {
       setErr(T("The live aircraft feed cannot be reached right now. Try again in a minute."));
@@ -208,7 +208,7 @@ export function Flight() {
     <div class="page flight">
       <PageHead
         label="Your flight · experimental"
-        note={ol ? tx(`Forecast run ${ol.info.run.slice(0, 10)} · physics only`, `पूर्वानुमान रन ${ol.info.run.slice(0, 10)} · केवल भौतिकी`) : ol === null ? "Forecast not published yet" : "Loading forecast…"}
+        note={ol ? `Forecast run ${ol.info.run.slice(0, 10)} · physics only` : ol === null ? "Forecast not published yet" : "Loading forecast…"}
         lines={["Your flight's", "hidden footprint."]}
         lede="Every flight burns fuel. Some also leave a contrail that warms the planet more than that fuel's CO₂, but only where the air is cold and humid enough. Pick a trip, or an airliner flying now, and STRATUM checks the forecast along its whole cruise."
       />
@@ -227,10 +227,7 @@ export function Flight() {
 
             {stale && (
               <p class="mono-s live-err">
-                {tx(
-                  `The latest forecast (run ${ol.info.run.slice(0, 10)}) has no hours left ahead; showing its own hours. A new one is built every morning.`,
-                  `नवीनतम पूर्वानुमान (रन ${ol.info.run.slice(0, 10)}) में आगे के घंटे नहीं बचे; उसी के घंटे दिखाए जा रहे हैं। नया पूर्वानुमान हर सुबह बनता है।`,
-                )}
+                {`The latest forecast (run ${ol.info.run.slice(0, 10)}) has no hours left ahead; showing its own hours. A new one is built every morning.`}
               </p>
             )}
             {mode === "plan" ? (
@@ -286,7 +283,7 @@ export function Flight() {
                 </button>
                 <div class="fp-scan">
                   <button type="button" class="tool" onClick={scan} disabled={hot === "busy"}>
-                    {hot === "busy" ? T("Scanning every route…") : tx(`Find the most contrail-prone trips in this forecast (FL${plan.fl})`, `इस पूर्वानुमान की सबसे ज़्यादा कंट्रेल वाली यात्राएँ खोजें (FL${plan.fl})`)}
+                    {hot === "busy" ? T("Scanning every route…") : `Find the most contrail-prone trips in this forecast (FL${plan.fl})`}
                   </button>
                   {Array.isArray(hot) &&
                     (hot.length ? (
@@ -305,13 +302,13 @@ export function Flight() {
                                 {h.from} → {h.to}
                               </b>
                               <span class="mono-s muted">{slotLabel(h.dep)}</span>
-                              <span class="mono-s">{tx(`${h.lasting} of ${h.minutes} min in lasting air`, `${h.minutes} में से ${h.lasting} मिनट टिकाऊ हवा में`)}</span>
+                              <span class="mono-s">{`${h.lasting} of ${h.minutes} min in lasting air`}</span>
                             </button>
                           </li>
                         ))}
                       </ol>
                     ) : (
-                      <p class="small muted">{tx(`No trip between the ${SCAN_AIRPORTS.length} busiest airports crosses lasting-contrail air at FL${plan.fl} in this forecast. Try another level.`, `इस पूर्वानुमान में ${SCAN_AIRPORTS.length} सबसे व्यस्त हवाई अड्डों के बीच कोई यात्रा FL${plan.fl} पर टिकाऊ-कंट्रेल वाली हवा से नहीं गुज़रती। कोई दूसरा लेवल आज़माइए।`)}</p>
+                      <p class="small muted">{`No trip between the ${SCAN_AIRPORTS.length} busiest airports crosses lasting-contrail air at FL${plan.fl} in this forecast. Try another level.`}</p>
                     ))}
                 </div>
               </form>
@@ -375,21 +372,16 @@ function Result({ r, shapes, onCopy, copied, fly }: { r: Done; shapes: { india: 
       <p class="mono-s muted">{r.label}</p>
       <h2 class="display d-m fp-head">
         {p.lasting > 0
-          ? tx(
-              <>
+          ? <>
                 <b>{p.lasting}</b> of {fp.minutes} cruise minutes in air where contrails last.
-              </>,
-              <>
-                क्रूज़ के {fp.minutes} में से <b>{p.lasting}</b> मिनट ऐसी हवा में जहाँ कंट्रेल टिकती हैं।
-              </>,
-            )
-          : tx(<>No lasting-contrail air on this cruise.</>, <>इस क्रूज़ पर कंट्रेल टिकने वाली हवा नहीं।</>)}
+              </>
+          : <>No lasting-contrail air on this cruise.</>}
       </h2>
 
       <div class="rt-tiles fp-tiles">
         <div>
           <b>{tonnes(co2)}</b>
-          <span>{tx(`CO₂ from the fuel, ${fp.minutes} min of cruise (OpenAP, ${fp.type})`, `ईंधन से CO₂, ${fp.minutes} मिनट क्रूज़ (OpenAP, ${fp.type})`)}</span>
+          <span>{`CO₂ from the fuel, ${fp.minutes} min of cruise (OpenAP, ${fp.type})`}</span>
         </div>
         <div class={p.lasting ? "fp-hot" : ""}>
           <b>{p.lasting ? `${tonnes(fp.warm.p25)} – ${tonnes(fp.warm.p75)}` : "0 t"}</b>
@@ -430,18 +422,11 @@ function Result({ r, shapes, onCopy, copied, fly }: { r: Done; shapes: { india: 
           <p class="label red">{T("Other levels")}</p>
           {fp.best ? (
             <p>
-              {tx(
-                <>
+              {<>
                   Flying <b>FL{fp.best.fl}</b> instead: <b>{fp.best.lasting}</b> minutes in lasting-contrail air instead of {p.lasting}, for{" "}
                   {fuel(fp.best.co2! - co2)} of fuel CO₂. About <b>{tonnes(fp.warm.p50 - fp.best.netP50)}</b> CO₂e less
                   warming (central estimate).
-                </>,
-                <>
-                  इसकी जगह <b>FL{fp.best.fl}</b> पर उड़ें: टिकाऊ-कंट्रेल वाली हवा में {p.lasting} की जगह <b>{fp.best.lasting}</b> मिनट, ईंधन CO₂ में{" "}
-                  {fuel(fp.best.co2! - co2)}। लगभग <b>{tonnes(fp.warm.p50 - fp.best.netP50)}</b> CO₂e कम
-                  गर्मी (केंद्रीय अनुमान)।
-                </>,
-              )}
+                </>}
             </p>
           ) : (
             <p>{p.lasting ? T("No level within 4,000 ft does clearly better on this route at this time.") : T("Nothing to avoid: the planned level is already clear.")}</p>
@@ -481,8 +466,7 @@ function Result({ r, shapes, onCopy, copied, fly }: { r: Done; shapes: { india: 
       </div>
 
       <p class="small muted fp-note">
-        {tx(
-          <>
+        {<>
             How sure is this? It is a physics-only forecast (ECMWF open data through the same Schmidt–Appleman and ice-supersaturation test as our B1
             baseline), and our own test H1 found that physics flags about six times more lasting contrails than the satellite sees, mostly thin ones. The
             warming range is the middle half of the warming contrails in our CoCiP runs over India ({(co2eKg(EF_PER_MIN_J.p25) | 0).toLocaleString()}–
@@ -490,16 +474,7 @@ function Result({ r, shapes, onCopy, copied, fly }: { r: Done; shapes: { india: 
             contrail can also cool by reflecting sunlight; at night it only warms. Fuel: OpenAP at 80 % of maximum take-off weight. Air traffic control and
             airline limits are not modelled.
             {unknown ? ` ${fp.minutes - p.known} minutes fall outside the forecast and count as clear.` : ""}
-          </>,
-          <>
-            यह कितना पक्का है? यह केवल भौतिकी का पूर्वानुमान है (ECMWF open data, हमारे B1 बेसलाइन वाले श्मिट–ऐपलमैन और बर्फ़-अतिसंतृप्ति परीक्षण से), और हमारे अपने
-            परीक्षण H1 ने पाया कि भौतिकी उपग्रह को दिखने वाली टिकाऊ कंट्रेल से लगभग छह गुना ज़्यादा चिह्नित करती है, ज़्यादातर पतली। गर्मी का दायरा भारत के ऊपर हमारे
-            CoCiP रनों की गर्म करने वाली कंट्रेल का बीच का आधा हिस्सा है ({(co2eKg(EF_PER_MIN_J.p25) | 0).toLocaleString()}–
-            {(co2eKg(EF_PER_MIN_J.p75) | 0).toLocaleString()} kg CO₂e प्रति मिनट, 100 वर्ष; 20 वर्ष पर लगभग 3.7 गुना)। दिन में कंट्रेल सूरज की रोशनी लौटाकर ठंडक भी दे सकती
-            है; रात में वह केवल गर्म करती है। ईंधन: अधिकतम टेक-ऑफ़ भार के 80 % पर OpenAP। हवाई यातायात नियंत्रण और एयरलाइन की सीमाएँ मॉडल नहीं की गईं।
-            {unknown ? ` ${fp.minutes - p.known} मिनट पूर्वानुमान से बाहर हैं और साफ़ गिने गए।` : ""}
-          </>,
-        )}
+          </>}
       </p>
     </section>
   );
@@ -526,7 +501,7 @@ function SideView({ fp, from, to }: { fp: Footprint; from: string; to: string })
           </text>
           {r.cells.map((v, i) => (
             <rect x={L + i * cw} y={ri * rowH + 1} width={cw + 0.4} height={rowH - 2} class={v == null ? "fp-none" : "fp-cell"} style={v == null ? undefined : { opacity: Math.min(1, v * 1.1) }}>
-              <title>{v == null ? `FL${r.fl}: ${T("no forecast")}` : tx(`FL${r.fl}, minute ${i + 1}: lasting-contrail air ${Math.round(v * 100)} % of the hour`, `FL${r.fl}, मिनट ${i + 1}: घंटे के ${Math.round(v * 100)} % टिकाऊ-कंट्रेल वाली हवा`)}</title>
+              <title>{v == null ? `FL${r.fl}: ${T("no forecast")}` : `FL${r.fl}, minute ${i + 1}: lasting-contrail air ${Math.round(v * 100)} % of the hour`}</title>
             </rect>
           ))}
         </g>
@@ -537,7 +512,7 @@ function SideView({ fp, from, to }: { fp: Footprint; from: string; to: string })
         {from}
       </text>
       <text x={(L + W) / 2} y={H + 16} text-anchor="middle" class="ax">
-        {tx(`${fp.minutes} min of cruise`, `${fp.minutes} मिनट क्रूज़`)}
+        {`${fp.minutes} min of cruise`}
       </text>
       <text x={W - 8} y={H + 16} text-anchor="end" class="ax">
         {to}

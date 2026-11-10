@@ -3,7 +3,7 @@ import { ResultsFilm } from "../components/film/ResultsFilm";
 import { PageHead } from "../components/PageHead";
 import type { Results as ResultsT } from "../data/contract";
 import { loadManifest, loadResults, loadWeightedSummary } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { detectorCheck as DC, hypotheses as HYP, literature as LIT, secondAnalysis as SA } from "../content/site";
 
 type Est = { value?: number; lo?: number; hi?: number } | null | undefined;
@@ -11,7 +11,7 @@ type Curve = { distance_share: number[]; ef_share: number[] } | null | undefined
 
 const f2 = (v?: number) => (v == null || !Number.isFinite(v) ? "—" : v.toFixed(2));
 const pct = (v?: number, d = 2) => (v == null || !Number.isFinite(v) ? "—" : `${(v * 100).toPrecision(d)} %`);
-const ci = (e: Est, f: (v?: number) => string = f2) => (e ? `${f(e.value)} (95 % CI ${f(e.lo)} ${tx("to", "से")} ${f(e.hi)})` : "—");
+const ci = (e: Est, f: (v?: number) => string = f2) => (e ? `${f(e.value)} (95 % CI ${f(e.lo)} ${"to"} ${f(e.hi)})` : "—");
 
 /** /results — H1–H4 as pre-registered, with their figures, the baseline comparison, reliability
  *  and the final-runs log. Every number comes from results.json (copied from the logged runs). */
@@ -43,7 +43,7 @@ export function Results() {
       />
       {r && <ResultsFilm r={r} skipTo="results-detail" />}
       <div class="wrap" id="results-detail">
-        {r && <p class="label red film-after">{tx("Every number, table and interval", "हर संख्या, तालिका और दायरा")}</p>}
+        {r && <p class="label red film-after">{"Every number, table and interval"}</p>}
         {err && <p class="muted mono">{T(err)}</p>}
         {!r && !err && <p class="muted mono">{T("Loading results…")}</p>}
         {r && (
@@ -53,7 +53,7 @@ export function Results() {
                 <p class="label red" id="h-cards">
                   {T("§1 · Hypotheses")}
                 </p>
-                <span class="mono-s">{tx(`${r.hypotheses.length} tested`, `${r.hypotheses.length} परखी गईं`)}</span>
+                <span class="mono-s">{`${r.hypotheses.length} tested`}</span>
               </div>
               <div class="res-cards">
                 {r.hypotheses.map((x) => {
@@ -163,19 +163,11 @@ export function Results() {
                 <span class="mono-s">D-005 · {T("added after the logged runs · descriptive")}</span>
               </div>
               <p class="lede rv">
-                {tx(
-                  <>
+                {<>
                     Our pre-registered detector was the weakest link, so after the logged runs we trained a neural network on Google's OpenContrails
                     scenes and the expert-labelled Meteosat scenes, and checked it on {DC.scenes} expert scenes it never saw ({DC.expertLines} contrails).
                     A single expert matches the experts' consensus at a pixel Dice of about {DC.expertPixelDiceMax} at most.
-                  </>,
-                  <>
-                    हमारा पहले से दर्ज डिटेक्टर सबसे कमज़ोर कड़ी था, इसलिए दर्ज रनों के बाद हमने Google के OpenContrails दृश्यों और विशेषज्ञ-लेबल वाले
-                    Meteosat दृश्यों पर एक न्यूरल नेटवर्क प्रशिक्षित किया, और उसे {DC.scenes} ऐसे विशेषज्ञ दृश्यों पर जाँचा जो उसने कभी नहीं देखे
-                    ({DC.expertLines} कंट्रेल)। एक अकेला विशेषज्ञ विशेषज्ञों की सहमति से ज़्यादा से ज़्यादा लगभग {DC.expertPixelDiceMax} के पिक्सेल Dice पर
-                    मेल खाता है।
-                  </>,
-                )}
+                  </>}
               </p>
               <div class="table-wrap rv rv-fade">
                 <table class="src-table res-table">
@@ -244,19 +236,12 @@ export function Results() {
                 <span class="mono-s">{T("abstracts checked 22 Oct 2026")}</span>
               </div>
               <p class="lede rv">
-                {tx(
-                  <>
+                {<>
                     Our numbers point the same way as studies of Japan, the North Atlantic and the whole world: a small share of flying makes most of
                     the contrail warming, and night flights matter most. One difference to keep in mind: those studies count <em>flights</em>, while
                     our pre-registered H3 counts <em>cruise distance</em>. Only the humid stretch of a flight warms, so a share of distance comes out
                     smaller than a share of flights.
-                  </>,
-                  <>
-                    हमारे आँकड़े जापान, उत्तरी अटलांटिक और पूरी दुनिया के अध्ययनों की ही दिशा में हैं: उड़ान का छोटा हिस्सा ही कंट्रेल की ज़्यादातर गर्मी
-                    पैदा करता है, और रात की उड़ानें सबसे ज़्यादा मायने रखती हैं। एक अंतर याद रखें: वे अध्ययन <em>उड़ानें</em> गिनते हैं, जबकि हमारी पहले
-                    से दर्ज H3 <em>क्रूज़ दूरी</em> गिनती है। उड़ान का केवल नम हिस्सा गर्म करता है, इसलिए दूरी का हिस्सा उड़ानों के हिस्से से छोटा निकलता है।
-                  </>,
-                )}
+                  </>}
               </p>
               <div class="table-wrap rv rv-fade">
                 <table class="src-table res-table lit-table">
@@ -361,7 +346,7 @@ function RatioBar({ e }: { e: Est }) {
   if (!e?.value) return null;
   const W = 300, x = (v: number) => 10 + ((Math.log10(v) + 0.5) / 2) * (W - 20);
   return (
-    <svg viewBox={`0 0 ${W} 46`} class="res-fig" role="img" aria-label={tx(`Ratio ${f2(e.value)}, interval ${f2(e.lo)} to ${f2(e.hi)}; 1 means physics matches the satellite`, `अनुपात ${f2(e.value)}, दायरा ${f2(e.lo)} से ${f2(e.hi)}; 1 का मतलब भौतिकी उपग्रह से मेल खाती है`)}>
+    <svg viewBox={`0 0 ${W} 46`} class="res-fig" role="img" aria-label={`Ratio ${f2(e.value)}, interval ${f2(e.lo)} to ${f2(e.hi)}; 1 means physics matches the satellite`}>
       <line x1={x(1)} x2={x(1)} y1="4" y2="30" class="ref" />
       <text x={x(1)} y="42" text-anchor="middle" class="ax">
         1
@@ -526,18 +511,11 @@ function WeightedSection({ ws, h3, h4 }: { ws: Record<string, any>; h3: Est; h4:
         <span class="mono-s">D-006 · {T("added after the logged runs · descriptive")}</span>
       </div>
       <p class="lede rv">
-        {tx(
-          <>
+        {<>
             The pre-registered way of feeding the satellite lesson back into the physics turned out far too dry. Here the physics stays standard (raw
             ERA5), and STRATUM decides how much each predicted contrail counts: its probability that a lasting contrail really forms. The{" "}
             {d.days ?? "12"} held-out days are run again, flight by flight, through the same alternatives, fuel model and cautious alert rule.
-          </>,
-          <>
-            उपग्रह की सीख को भौतिकी में वापस डालने का पहले से दर्ज तरीका बहुत ज़्यादा सूखा निकला। यहाँ भौतिकी सामान्य (कच्चा ERA5) रहती है, और STRATUM
-            तय करता है कि हर अनुमानित कंट्रेल कितनी गिनी जाए: उसकी यह संभावना कि टिकाऊ कंट्रेल सचमुच बनती है। अलग रखे {d.days ?? "12"} दिन फिर से,
-            उड़ान-दर-उड़ान, उन्हीं विकल्पों, ईंधन मॉडल और सतर्क चेतावनी नियम से चलाए जाते हैं।
-          </>,
-        )}
+          </>}
       </p>
       <div class="table-wrap rv rv-fade">
         <table class="src-table res-table rowhead-s">
@@ -592,20 +570,12 @@ function WeightedSection({ ws, h3, h4 }: { ws: Record<string, any>; h3: Est; h4:
         </table>
       </div>
       <p class="small muted rv">
-        {tx(
-          <>
+        {<>
             The weight is STRATUM's held-out probability that the satellite sees a lasting contrail, divided by the share of lasting contrails a
             satellite can detect (capped at 1); where raw physics forms a warming contrail the weight averaged{" "}
             {c.mean_w_where_b1_warms != null ? c.mean_w_where_b1_warms.toFixed(2) : "—"}. Only the strongest stretches per day are flown through the
             alternatives. The logged H3/H4 tests and alerts are unchanged.
-          </>,
-          <>
-            भार STRATUM की (अलग रखे डेटा पर) यह संभावना है कि उपग्रह टिकाऊ कंट्रेल देखे, उपग्रह से पकड़ी जा सकने वाली टिकाऊ कंट्रेल के हिस्से से भाग
-            देकर (अधिकतम 1); जहाँ कच्ची भौतिकी गर्म करने वाली कंट्रेल बनाती है वहाँ भार का औसत{" "}
-            {c.mean_w_where_b1_warms != null ? c.mean_w_where_b1_warms.toFixed(2) : "—"} रहा। हर दिन केवल सबसे प्रबल हिस्से विकल्पों से गुज़ारे जाते
-            हैं। दर्ज H3/H4 परीक्षण और चेतावनियाँ नहीं बदलीं।
-          </>,
-        )}
+          </>}
       </p>
     </section>
   );

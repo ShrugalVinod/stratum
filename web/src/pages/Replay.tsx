@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { PageHead } from "../components/PageHead";
 import { loadReplayDay, loadWeighted, loadWeightedSummary } from "../data/load";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 import { contrailAt, position, type Stretch, stretches, tally, type Track, tracks } from "../lib/replay";
 import "../styles/map.css";
 
@@ -19,7 +19,7 @@ const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
 const clock = (m: number) => `${pad(((m / 60) % 24 + 24) % 24)}:${pad(((m % 60) + 60) % 60)}`;
 const tonnes = (kg: number) => `${kg >= 9_950 ? Math.round(kg / 1000).toLocaleString() : (kg / 1000).toFixed(1)} t`;
 const dayLabel = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString(tx("en-GB", "hi-IN"), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 type Shapes = { india: boolean; rings: [number, number][][] }[];
 type Colours = { sea: string; land: string; india: string; edge: string; track: string; plane: string; contrail: string; moved: string };
@@ -127,14 +127,14 @@ export function Replay() {
               <figure class="rp-panel">
                 <figcaption>
                   <b>{T("As flown")}</b>
-                  <span class="mono-s">{tx(`${t.lasting} lasting contrails in the sky`, `आसमान में ${t.lasting} टिकाऊ कंट्रेल`)}</span>
+                  <span class="mono-s">{`${t.lasting} lasting contrails in the sky`}</span>
                 </figcaption>
                 <Sky list={data.list} tracks={data.tracks} shapes={shapes} m={m} listened={false} />
               </figure>
               <figure class="rp-panel">
                 <figcaption>
                   <b>{T("If they had listened")}</b>
-                  <span class="mono-s">{tx(`${t.lastingIfListened} lasting contrails in the sky`, `आसमान में ${t.lastingIfListened} टिकाऊ कंट्रेल`)}</span>
+                  <span class="mono-s">{`${t.lastingIfListened} lasting contrails in the sky`}</span>
                 </figcaption>
                 <Sky list={data.list} tracks={data.tracks} shapes={shapes} m={m} listened />
               </figure>
@@ -161,7 +161,7 @@ export function Replay() {
             <div class="rt-tiles rp-tiles">
               <div class="rp-good">
                 <b>{tonnes(t.avoided[1])}</b>
-                <span>{tx(`CO₂e of contrail warming avoided so far (100 years; cautious: ${tonnes(t.avoided[0])})`, `अब तक टली कंट्रेल गर्मी, CO₂e (100 वर्ष; सतर्क: ${tonnes(t.avoided[0])})`)}</span>
+                <span>{`CO₂e of contrail warming avoided so far (100 years; cautious: ${tonnes(t.avoided[0])})`}</span>
               </div>
               <div>
                 <b>{t.fuelKg >= 0 ? "+" : "−"}{tonnes(Math.abs(t.fuelKg))}</b>
@@ -169,23 +169,16 @@ export function Replay() {
               </div>
               <div>
                 <b>{t.alerts}</b>
-                <span>{tx(`altitude changes advised so far, of ${total.alerts} that day`, `अब तक सुझाए ऊँचाई बदलाव, उस दिन के ${total.alerts} में से`)}</span>
+                <span>{`altitude changes advised so far, of ${total.alerts} that day`}</span>
               </div>
             </div>
 
             <p class="lede rp-sum">
-              {tx(
-                <>
+              {<>
                   If pilots had followed STRATUM on {dayLabel(day!)}, {total.alerts} climbs or descents would have avoided about <b>{tonnes(total.avoided[1])}</b> of
                   CO₂-equivalent warming (cautious estimate {tonnes(total.avoided[0])}),{" "}
                   {total.fuelKg >= 0 ? `for ${tonnes(total.fuelKg)} of extra fuel.` : `while saving ${tonnes(-total.fuelKg)} of fuel.`}
-                </>,
-                <>
-                  अगर {dayLabel(day!)} को पायलट STRATUM की सलाह मानते, तो {total.alerts} बार ऊपर या नीचे जाने से लगभग <b>{tonnes(total.avoided[1])}</b> CO₂ के बराबर गर्मी
-                  टलती (सतर्क अनुमान {tonnes(total.avoided[0])}),{" "}
-                  {total.fuelKg >= 0 ? `${tonnes(total.fuelKg)} अतिरिक्त ईंधन के बदले।` : `और ${tonnes(-total.fuelKg)} ईंधन भी बचता।`}
-                </>,
-              )}
+                </>}
             </p>
             <p class="mono-s rp-key">
               <span>

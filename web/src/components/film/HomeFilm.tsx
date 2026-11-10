@@ -5,13 +5,13 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { site } from "../../content/site";
 import type { ContrailEvent } from "../../data/contract";
 import { contrailImg } from "../../data/load";
-import { T, tx, useLang } from "../../i18n";
+import { T, useLang } from "../../i18n";
 import type { OrbitInput } from "../../three/orbit";
 import { Arrow } from "../Footer";
 import { reduced } from "../motion";
 import { Split } from "../Split";
 import { Canvas, clamp, easeIo, easeOut, Film, type Frame, lerp, nf, Num, type Scene, seg, Stamp } from "./kit";
-import { at, type Flight, h1Totals, type Land, loadCities, loadLand, loadProof, loadRes, loadStates, loadStoryDay, loadWorldLand, minuteOf, PROOF_DAY, type StoryDay } from "./data";
+import { at, type Flight, h1Totals, type Land, loadEarth, loadLand, loadProof, loadRes, loadStates, loadStoryDay, minuteOf, PROOF_DAY, type StoryDay } from "./data";
 import { Stage3D } from "./HomeOrbit";
 
 export type Box = { x: number; y: number; w: number; h: number };
@@ -71,7 +71,7 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
   // the orbital stage (WebGL) is fetched after the page is up; without it, or with reduced
   // motion, the same story is drawn on a flat chart
   const [orbit, setOrbit] = useState<OrbitModule | null>(null);
-  const [extra3d, setExtra3d] = useState<{ land: number[][]; states: [number, number][][]; cities: { lon: number; lat: number; pop: number }[] } | null>(null);
+  const [extra3d, setExtra3d] = useState<{ images: OrbitInput["images"]; states: [number, number][][] } | null>(null);
   const [flat, setFlat] = useState(false);
   useEffect(() => {
     loadStoryDay().then(setDay).catch(() => {});
@@ -79,9 +79,9 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
     loadProof().then(setEv).catch(() => {});
     loadRes().then(setRes).catch(() => {});
     if (reduced() || !webgl()) return setFlat(true);
-    Promise.all([import("../../three/orbit"), loadWorldLand(), loadStates(), loadCities()])
-      .then(([m, w, s, c]) => {
-        setExtra3d({ land: w, states: s, cities: c });
+    Promise.all([import("../../three/orbit"), loadEarth(innerWidth < 760), loadStates()])
+      .then(([m, images, s]) => {
+        setExtra3d({ images, states: s });
         setOrbit(m);
       })
       .catch(() => setFlat(true));
@@ -116,86 +116,62 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
 
   const scenes: Scene[] = [
     {
-      k: ["1 January 2026 · 00:00 → 24:00 UTC", "1 जनवरी 2026 · 00:00 → 24:00 UTC"],
-      t: [`One day. ${N} airliners over India.`, `एक दिन। भारत के ऊपर ${N} यात्री विमान।`],
-      b: [
-        "Every line is a real commercial flight, replayed from its own ADS-B position reports. Scroll, and the clock runs.",
-        "हर रेखा एक असली व्यावसायिक उड़ान है, जो उसकी अपनी ADS-B स्थिति-रिपोर्टों से दोबारा चलाई गई है। स्क्रॉल कीजिए, और घड़ी चलेगी।",
-      ],
+      k: "1 January 2026 · 00:00 → 24:00 UTC",
+      t: `One day. ${N} airliners over India.`,
+      b: "Every line is a real commercial flight, replayed from its own ADS-B position reports. Scroll, and the clock runs.",
     },
     {
-      k: ["Contrail physics · raw ERA5 weather", "कंट्रेल भौतिकी · कच्चा ERA5 मौसम"],
-      t: [`${F} of them left a contrail that lasts.`, `इनमें से ${F} ने ऐसी कंट्रेल छोड़ी जो टिकी रहती है।`],
-      b: [
-        "Most contrails vanish in seconds. In thin, cold, ice-supersaturated air they spread into cloud that traps heat for hours. Orange: where the physics says that happened.",
-        "ज़्यादातर कंट्रेल कुछ ही सेकंड में मिट जाती हैं। पतली, ठंडी, बर्फ़-अतिसंतृप्त हवा में वे फैलकर ऐसा बादल बनती हैं जो घंटों तक गर्मी रोकता है। नारंगी: जहाँ भौतिकी के अनुसार ऐसा हुआ।",
-      ],
+      k: "Contrail physics · raw ERA5 weather",
+      t: `${F} of them left a contrail that lasts.`,
+      b: "Most contrails vanish in seconds. In thin, cold, ice-supersaturated air they spread into cloud that traps heat for hours. Orange: where the physics says that happened.",
     },
     {
-      k: ["Energy forcing, largest first", "ऊर्जा बल, सबसे बड़ा पहले"],
-      t: [`${K} flights made 80 % of the day's contrail warming.`, `${K} उड़ानों ने दिन की 80 % कंट्रेल-गर्मी पैदा की।`],
-      b: [
-        `That is ${KP} of the day's flights. Over all 12 study days, under 1 % of cruise distance carries 80 % of the warming (0.48 %). Move those few, and most of the problem goes.`,
-        `यह दिन की उड़ानों का ${KP} है। अध्ययन के सभी 12 दिनों में, क्रूज़ दूरी का 1 % से भी कम हिस्सा 80 % गर्मी ढोता है (0.48 %)। उन कुछ उड़ानों को हटाइए, और समस्या का बड़ा हिस्सा चला जाता है।`,
-      ],
+      k: "Energy forcing, largest first",
+      t: `${K} flights made 80 % of the day's contrail warming.`,
+      b: `That is ${KP} of the day's flights. Over all 12 study days, under 1 % of cruise distance carries 80 % of the warming (0.48 %). Move those few, and most of the problem goes.`,
     },
     {
-      k: ["Meteosat-9 · 36,000 km up · every 15 minutes", "Meteosat-9 · 36,000 किमी ऊपर · हर 15 मिनट"],
-      t: ["But is the physics right? A satellite can check.", "पर क्या भौतिकी सही है? उपग्रह जाँच सकता है।"],
-      b: [
-        "Zooming in over Kerala, 1 November 2025, 00:45 UTC, in infrared. Contrails show up as thin dark lines.",
-        "केरल के ऊपर ज़ूम, 1 नवंबर 2025, 00:45 UTC, इन्फ्रारेड में। कंट्रेल पतली गहरी रेखाओं जैसी दिखती हैं।",
-      ],
+      k: "Meteosat-9 · 36,000 km up · every 15 minutes",
+      t: "But is the physics right? A satellite can check.",
+      b: "Zooming in over Kerala, 1 November 2025, 00:45 UTC, in infrared. Contrails show up as thin dark lines.",
     },
     {
-      k: [`ADS-B · ${ev?.airline ?? "SriLankan Airlines"} ${ev?.callsign ?? "ALK266"} · ${ev?.aircraft_type ?? ""} · FL${ev?.fl ?? 390}`, `ADS-B · ${ev?.airline ?? "SriLankan Airlines"} ${ev?.callsign ?? "ALK266"} · ${ev?.aircraft_type ?? ""} · FL${ev?.fl ?? 390}`],
-      t: [`A real flight crossed here ${age0} minutes earlier.`, `${age0} मिनट पहले एक असली उड़ान यहाँ से गुज़री थी।`],
-      b: ["White: where the aircraft flew, from its own position reports.", "सफ़ेद: विमान कहाँ से उड़ा, उसकी अपनी स्थिति-रिपोर्टों के अनुसार।"],
+      k: `ADS-B · ${ev?.airline ?? "SriLankan Airlines"} ${ev?.callsign ?? "ALK266"} · ${ev?.aircraft_type ?? ""} · FL${ev?.fl ?? 390}`,
+      t: `A real flight crossed here ${age0} minutes earlier.`,
+      b: "White: where the aircraft flew, from its own position reports.",
     },
     {
-      k: ["Wind drift + parallax", "हवा का बहाव + पैरलैक्स"],
-      t: ["Its contrail did not stay put.", "उसकी कंट्रेल अपनी जगह नहीं टिकी।"],
-      b: [
-        `We move the track with the ERA5 wind for the contrail's age and correct for the satellite's slanted view (${Math.round(slots[0]?.vza_deg ?? 37)}° here). Orange: where the contrail should be now.`,
-        `हम ट्रैक को कंट्रेल की उम्र भर ERA5 हवा के साथ खिसकाते हैं और उपग्रह के तिरछे नज़रिए (यहाँ ${Math.round(slots[0]?.vza_deg ?? 37)}°) को ठीक करते हैं। नारंगी: कंट्रेल अभी कहाँ होनी चाहिए।`,
-      ],
+      k: "Wind drift + parallax",
+      t: "Its contrail did not stay put.",
+      b: `We move the track with the ERA5 wind for the contrail's age and correct for the satellite's slanted view (${Math.round(slots[0]?.vza_deg ?? 37)}° here). Orange: where the contrail should be now.`,
     },
     {
-      k: ["Learned detector v3 · second analysis (D-005)", "सीखा हुआ डिटेक्टर v3 · दूसरा विश्लेषण (D-005)"],
-      t: ["And there it is.", "और वह रही।"],
-      b: [
-        `Cyan: the line our neural network found, ${slots[0]?.match_px?.toFixed(2) ?? "–"} px from the prediction. A match counts only if it shows in at least two images; this one shows in ${seenIn} frames over ${spanMin} minutes.`,
-        `सियान: हमारे न्यूरल नेटवर्क की खोजी रेखा, अनुमान से ${slots[0]?.match_px?.toFixed(2) ?? "–"} px दूर। मिलान तभी गिना जाता है जब वह कम से कम दो तस्वीरों में दिखे; यह ${spanMin} मिनट में ${seenIn} फ़्रेमों में दिखती है।`,
-      ],
+      k: "Learned detector v3 · second analysis (D-005)",
+      t: "And there it is.",
+      b: `Cyan: the line our neural network found, ${slots[0]?.match_px?.toFixed(2) ?? "–"} px from the prediction. A match counts only if it shows in at least two images; this one shows in ${seenIn} frames over ${spanMin} minutes.`,
     },
     {
-      k: [`H1 · 12 flight days · ${h1 ? nf(h1.segments) : "334,211"} segments`, `H1 · 12 उड़ान-दिन · ${h1 ? nf(h1.segments) : "334,211"} खंड`],
-      t: [`Physics predicted ${R}× more lasting contrails than the satellite saw.`, `भौतिकी ने उपग्रह से ${R} गुना ज़्यादा टिकाऊ कंट्रेल का अनुमान लगाया।`],
-      b: [
-        "We expected the opposite, and we report it as found. Most predicted contrails are too thin for Meteosat to see; so STRATUM learns from the satellite where the physics goes wrong.",
-        "हमें उलटे की उम्मीद थी, और हम इसे जैसा पाया वैसा ही बताते हैं। ज़्यादातर अनुमानित कंट्रेल Meteosat के देखने के लिए बहुत पतली हैं; इसलिए STRATUM उपग्रह से सीखता है कि भौतिकी कहाँ चूकती है।",
-      ],
+      k: `H1 · 12 flight days · ${h1 ? nf(h1.segments) : "334,211"} segments`,
+      t: `Physics predicted ${R}× more lasting contrails than the satellite saw.`,
+      b: "We expected the opposite, and we report it as found. Most predicted contrails are too thin for Meteosat to see; so STRATUM learns from the satellite where the physics goes wrong.",
     },
     {
-      k: ["The decision", "निर्णय"],
-      t: ["The fix can be 2,000 ft.", "हल सिर्फ़ 2,000 फ़ुट का हो सकता है।"],
-      b: [
-        `STRATUM tries 2,000 and 4,000 ft higher and lower, adds the extra fuel, and alerts only when even the cautious estimate says the climate gains. On 1 Jan 2026 that was ${day ? nf(day.alerts) : "…"} flights.`,
-        `STRATUM 2,000 और 4,000 फ़ुट ऊपर और नीचे आज़माता है, अतिरिक्त ईंधन जोड़ता है, और चेतावनी तभी देता है जब सतर्क अनुमान भी कहे कि जलवायु को फ़ायदा है। 1 जनवरी 2026 को ऐसी ${day ? nf(day.alerts) : "…"} उड़ानें थीं।`,
-      ],
+      k: "The decision",
+      t: "The fix can be 2,000 ft.",
+      b: `STRATUM tries 2,000 and 4,000 ft higher and lower, adds the extra fuel, and alerts only when even the cautious estimate says the climate gains. On 1 Jan 2026 that was ${day ? nf(day.alerts) : "…"} flights.`,
     },
   ];
 
   const extra = (
     <div class="film-cta">
       <a class="btn primary" href="/map">
-        {tx("Open the live map", "लाइव मानचित्र खोलें")} →
+        {"Open the live map"} →
       </a>
       <a class="btn" href="/now">
-        {tx("Which planes should move now?", "अभी कौन-से विमान हटें?")}
+        {"Which planes should move now?"}
       </a>
       <a class="btn" href="/how-it-works">
-        {tx("How it works", "यह कैसे काम करता है")}
+        {"How it works"}
       </a>
     </div>
   );
@@ -204,10 +180,9 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
     if (!day || !st || !land || !extra3d) return null;
     const index = new Map(day.flights.map((f, i) => [f.id, i]));
     return {
-      land: extra3d.land,
+      images: extra3d.images,
       region: land,
       states: extra3d.states,
-      cities: extra3d.cities,
       flights: day.flights,
       stretches: st.ranked.flatMap((x: any) => {
         const f = index.get(x.flight_id);
@@ -247,13 +222,13 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
       </div>
       <p class="h-scroll mono-s" aria-hidden="true">
         <span class="h-scroll-line" />
-        {tx(`Scroll · the story in ${scenes.length} scenes`, `स्क्रॉल करें · ${scenes.length} दृश्यों में कहानी`)}
+        {`Scroll · the story in ${scenes.length} scenes`}
       </p>
     </div>
   );
 
   return (
-    <Film id="story" label={["The problem in one scroll", "एक स्क्रॉल में समस्या"]} scenes={scenes} vh={125} skipTo={skipTo} extra={extra} lead={0.85} hero={hero}>
+    <Film id="story" label={"The problem in one scroll"} scenes={scenes} vh={125} skipTo={skipTo} extra={extra} lead={0.85} hero={hero}>
       {(f) =>
         f.still || flat ? (
           <HomeStage f={f} day={day} land={land} st={st} ev={ev} h1={h1} ratio={ratio} />
@@ -434,13 +409,13 @@ function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: Frame; day: StoryDa
       const narrow = box.w < 560;
       ctx.fillText(
         narrow
-          ? tx(`${st.ranked.length} stretches · largest first`, `${st.ranked.length} हिस्से · सबसे बड़ा पहले`)
-          : tx(`${st.ranked.length} lasting-contrail stretches · energy forcing, largest first`, `${st.ranked.length} टिकाऊ-कंट्रेल हिस्से · ऊर्जा बल, सबसे बड़ा पहले`),
+          ? `${st.ranked.length} stretches · largest first`
+          : `${st.ranked.length} lasting-contrail stretches · energy forcing, largest first`,
         bx,
         by - 10,
       );
       ctx.fillStyle = "#ff8a92";
-      ctx.fillText(tx(`red: ${st.k80} flights = 80 % of the warming`, `लाल: ${st.k80} उड़ानें = 80 % गर्मी`), bx, by + bh + 16);
+      ctx.fillText(`red: ${st.k80} flights = 80 % of the warming`, bx, by + bh + 16);
       ctx.restore();
     }
   };
@@ -454,13 +429,13 @@ function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: Frame; day: StoryDa
   const px = geo ? X(geo.lon) - half : 0, py = geo ? Y(geo.lat) - half : 0;
   return (
     <div ref={ref} class="hf">
-      <Canvas class="hf-canvas" draw={draw} label={tx("Animated map of India's flights on 1 January 2026", "1 जनवरी 2026 की भारत की उड़ानों का चलता मानचित्र")} />
+      <Canvas class="hf-canvas" draw={draw} label={"Animated map of India's flights on 1 January 2026"} />
       <div class="hf-hud mono-s" style={{ left: `${box.x + 18}px`, top: `${box.y + 18}px`, opacity: fadeFlights * (1 - S(2, 0.7, 1)) }}>
-        <b>{clock}</b> UTC · {nf(airborne)} {tx("flights", "उड़ानें")}
+        <b>{clock}</b> UTC · {nf(airborne)} {"flights"}
         {flagT > 0 && st && (
           <span class="hf-hud-o">
             {" "}
-            · <Num to={st.flaggedFlights} t={flagT} /> {tx("with a lasting contrail", "टिकाऊ कंट्रेल के साथ")}
+            · <Num to={st.flaggedFlights} t={flagT} /> {"with a lasting contrail"}
           </span>
         )}
       </div>
@@ -487,7 +462,7 @@ export function SatPanel({ ev, f, rect, opacity }: { ev: ContrailEvent; f: Frame
       {ev.slots.map((s, i) => (
         <img src={contrailImg(PROOF_DAY, s.img)} alt="" class="hf-img" style={{ opacity: i === slotI ? 1 : 0 }} />
       ))}
-      <svg viewBox="0 0 96 96" preserveAspectRatio="none" aria-label={tx("Meteosat-9 image with the flight track, its wind-drifted contrail and the detected line", "Meteosat-9 तस्वीर: उड़ान का ट्रैक, हवा से खिसकी कंट्रेल और पाई गई रेखा")} role="img">
+      <svg viewBox="0 0 96 96" preserveAspectRatio="none" aria-label={"Meteosat-9 image with the flight track, its wind-drifted contrail and the detected line"} role="img">
         <Segs segs={slot.track} t={trackT} cls="hf-track" />
         <Morph from={slot.track} to={slot.drift} t={driftT} cls="hf-drift" />
         {slot.detected.map((d) => (
@@ -500,7 +475,7 @@ export function SatPanel({ ev, f, rect, opacity }: { ev: ContrailEvent; f: Frame
       <i class="hf-corner br" />
       <div class="hf-sat-cap mono-s">
         <span>
-          {slot.t.slice(11, 16)} UTC · {tx("age", "उम्र")} {Math.round(slot.age_min)} min
+          {slot.t.slice(11, 16)} UTC · {"age"} {Math.round(slot.age_min)} min
         </span>
         <span>© EUMETSAT 2026</span>
       </div>
@@ -517,15 +492,15 @@ export function SatPanel({ ev, f, rect, opacity }: { ev: ContrailEvent; f: Frame
         </Stamp>
       </div>
       <div class="hf-legend mono-s" style={{ opacity: S(4, 0, 0.2) }}>
-        <span class="lt">{tx("flight track", "उड़ान ट्रैक")}</span>
+        <span class="lt">{"flight track"}</span>
         {S(5) > 0 && (
           <span class="ld" style={{ opacity: S(5, 0, 0.2) }}>
-            {tx("predicted contrail (wind + parallax)", "अनुमानित कंट्रेल (हवा + पैरलैक्स)")}
+            {"predicted contrail (wind + parallax)"}
           </span>
         )}
         {S(6) > 0 && (
           <span class="lc" style={{ opacity: S(6, 0, 0.2) }}>
-            {tx("detected by the satellite", "उपग्रह ने पकड़ी")}
+            {"detected by the satellite"}
           </span>
         )}
       </div>
@@ -550,14 +525,14 @@ export function H1Panel({ h1, ratio, f, box }: { h1: H1; ratio?: number; f: Fram
       </p>
       <div class="hf-bars">
         <div>
-          <span class="mono-s">{tx("lasting contrails predicted by physics (B1)", "भौतिकी (B1) से अनुमानित टिकाऊ कंट्रेल")}</span>
+          <span class="mono-s">{"lasting contrails predicted by physics (B1)"}</span>
           <i class="o" style={{ transform: `scaleX(${easeOut(S(7, 0.08, 0.5))})` }} />
           <b class="mono">
             <Num to={h1.predicted} t={S(7, 0.08, 0.5)} />
           </b>
         </div>
         <div>
-          <span class="mono-s">{tx("seen by Meteosat-9", "Meteosat-9 ने देखीं")}</span>
+          <span class="mono-s">{"seen by Meteosat-9"}</span>
           <i class="c" style={{ transform: `scaleX(${(h1.observed / h1.predicted) * easeOut(S(7, 0.2, 0.62))})` }} />
           <b class="mono">
             <Num to={h1.observed} t={S(7, 0.2, 0.62)} />
@@ -566,7 +541,7 @@ export function H1Panel({ h1, ratio, f, box }: { h1: H1; ratio?: number; f: Fram
       </div>
       <div class="hf-stamp">
         <Stamp t={S(7, 0.55, 0.8)} kind="no">
-          {tx("H1 not supported", "H1 समर्थित नहीं")}
+          {"H1 not supported"}
         </Stamp>
       </div>
     </div>
@@ -630,7 +605,7 @@ export function SideView({ t, box }: { t: number; box: Box }) {
   const lab = seg(t, 0.45, 0.7);
   return (
     <div class="hf-side" style={{ left: `${box.x + box.w * 0.05}px`, top: `${box.y + box.h * 0.02}px`, width: `${Math.min(box.w * 0.9, box.h * 1.9)}px`, opacity: seg(t, 0, 0.18) }}>
-      <svg viewBox="0 0 640 290" role="img" aria-label={tx("Schematic: a contrail lasts inside a humid layer and not 2,000 ft above it", "रेखाचित्र: नम परत के भीतर कंट्रेल टिकती है, 2,000 फ़ुट ऊपर नहीं")}>
+      <svg viewBox="0 0 640 290" role="img" aria-label={"Schematic: a contrail lasts inside a humid layer and not 2,000 ft above it"}>
         <defs>
           <linearGradient id="hf-band" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stop-color="#5fd2dc" stop-opacity="0.05" />
@@ -654,7 +629,7 @@ export function SideView({ t, box }: { t: number; box: Box }) {
         <line x1="10" x2="630" y1={yLow - 28} y2={yLow - 28} class="hf-sv-edge" />
         <line x1="10" x2="630" y1={yLow + 28} y2={yLow + 28} class="hf-sv-edge" />
         <text x="626" y={yLow + 46} class="hf-sv-l t" text-anchor="end">
-          {tx("ICE-SUPERSATURATED LAYER · RHi ≥ 100 %", "बर्फ़-अतिसंतृप्त परत · RHi ≥ 100 %")}
+          {"ICE-SUPERSATURATED LAYER · RHi ≥ 100 %"}
         </text>
         <text x="14" y={yHigh - 5} class="hf-sv-fl">
           FL380
@@ -682,14 +657,14 @@ export function SideView({ t, box }: { t: number; box: Box }) {
             +2,000 FT
           </text>
           <text x="14" y="64" class="hf-sv-h b">
-            {tx("2,000 ft higher: the trail is gone in seconds", "2,000 फ़ुट ऊपर: लकीर कुछ सेकंड में मिट जाती है")}
+            {"2,000 ft higher: the trail is gone in seconds"}
           </text>
           <text x="14" y="252" class="hf-sv-h o">
-            {tx("As planned: the contrail spreads and lasts for hours", "योजना के अनुसार: कंट्रेल फैलती है और घंटों टिकती है")}
+            {"As planned: the contrail spreads and lasts for hours"}
           </text>
         </g>
         <text x="626" y="282" class="hf-sv-tag" text-anchor="end">
-          {tx("SCHEMATIC · NOT TO SCALE", "रेखाचित्र · पैमाने पर नहीं")}
+          {"SCHEMATIC · NOT TO SCALE"}
         </text>
       </svg>
     </div>

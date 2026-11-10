@@ -1,70 +1,8 @@
 /* STRATUM design tokens — "the night sky, seen through an instrument".
-   Night is the default (data-theme="dark" on <html>, set in index.html); Chart (paper) is the
-   header toggle. Every page reads these names, so both themes stay in step.
-   Contrast checked: body text ≥ 4.5:1 on paper, card and paper-2 in both themes. */
+   One theme: night. Every page reads these names.
+   Contrast checked: body text ≥ 4.5:1 on paper, card and paper-2. */
 
 :root {
-  /* ── Chart (light): the aeronautical chart on paper ── */
-  --paper: #f1ece1;
-  --paper-2: #e8e1d2;
-  --card: #f7f3eb;
-  --ink: #13202f;
-  --ink-2: #2f3c4b;
-  --muted: #5f656c;
-  --faint: #9a968c;
-  --rule: #d6ccb8;
-  --rule-2: #e3dbcc;
-  --edge: #13202f; /* strong frame lines */
-  --grid: rgb(19 32 47 / 0.055);
-  --glass: rgb(247 243 235 / 0.82); /* translucent panel over the page */
-  --veil: rgb(241 236 225 / 0.86); /* header once the page has scrolled */
-
-  --red: #c8102e; /* fills, outlines */
-  --red-text: #c8102e;
-  --on-red: #ffffff;
-  --block: #e3283c;
-  --teal: #1d6670; /* ice-supersaturated layers */
-  --teal-soft: rgb(29 102 112 / 0.1);
-  --orange: #d6541c; /* persistent contrails (data colour) */
-  --orange-text: #a8431a;
-  --green: #2f6b3a;
-  --cyan: #0b7592; /* what the satellite saw */
-  --tile: #13202f;
-  --tile-ink: #f1ece1;
-  --glow: rgb(200 16 46 / 0); /* glows are a night thing */
-  --shadow: 0 30px 80px -40px rgb(19 32 47 / 0.45);
-
-  /* map */
-  --map-ocean: #d4e2e5;
-  --map-land: #f6f1e7;
-  --map-border: #a99f8c;
-  --map-state: #ddd3c1;
-  --map-grat: #c3d3d7;
-  --map-track: #13202f;
-  --map-plane: #13202f;
-  --map-head: #c8102e;
-  --map-corr: #c8102e;
-  --map-pred: #d6541c;
-  --map-sel: #13202f;
-
-  /* Devanagari falls through to Teko (display) and Hind (text, mono), loaded only for Hindi */
-  --font-display: "Archivo Variable", "Teko", "Archivo Narrow", "Arial Narrow", sans-serif;
-  --font-sans: "Public Sans Variable", "Hind", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Martian Mono Variable", "Hind", "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;
-
-  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* long, soft landing */
-  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-fly: cubic-bezier(0.37, 0.08, 0.63, 0.92); /* near-constant cruise */
-
-  --maxw: 1360px;
-  --gutter: clamp(16px, 4.2vw, 64px);
-  --header-h: 68px;
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  /* ── Night (default): above the weather, under the stars ── */
   --paper: #05080e;
   --paper-2: #0a101b;
   --card: #0c1320;
@@ -105,5 +43,17 @@
   --map-corr: #ff6474;
   --map-pred: #ff8f43;
   --map-sel: #ffffff;
+  --font-display: "Archivo Variable", "Archivo Narrow", "Arial Narrow", sans-serif;
+  --font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Martian Mono Variable", "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* long, soft landing */
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-fly: cubic-bezier(0.37, 0.08, 0.63, 0.92); /* near-constant cruise */
+
+  --maxw: 1360px;
+  --gutter: clamp(16px, 4.2vw, 64px);
+  --header-h: 68px;
   color-scheme: dark;
 }

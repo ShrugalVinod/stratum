@@ -4,10 +4,10 @@
 // function of p. With reduced motion the film becomes a storyboard (each scene at its end state).
 import type { ComponentChildren } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
-import { tx, useLang } from "../../i18n";
+import { useLang } from "../../i18n";
 import { reduced } from "../motion";
 
-export type Pair = [string, string]; // [English, Hindi]
+export type Pair = string;
 export type Scene = { k: Pair; t: Pair; b: Pair };
 /** ``intro``: 0–1 through the opening shot (1 when a film has none, or once it has passed) */
 export type Frame = { p: number; i: number; lp: number; n: number; still: boolean; intro: number };
@@ -18,7 +18,7 @@ export const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a))
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const easeOut = (t: number) => 1 - (1 - t) ** 3;
 export const easeIo = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
-export const L = (pair: Pair) => tx(pair[0], pair[1]);
+export const L = (text: Pair) => text;
 
 /** Indian-style digit grouping, as the rest of the site does. */
 export const nf = (v: number, d = 0) => v.toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -167,13 +167,13 @@ export function Film({
         )}
         <div class="film-hud" style={{ opacity: on, visibility: on < 0.01 ? "hidden" : "visible" }}>
           <span class="film-label mono-s">{L(label)}</span>
-          <div class="film-ticks" role="group" aria-label={tx("Scenes", "दृश्य")}>
+          <div class="film-ticks" role="group" aria-label={"Scenes"}>
             {scenes.map((s, k) => (
               <button
                 type="button"
                 class={k === i ? "on" : k < i ? "done" : ""}
                 onClick={() => jump(k)}
-                aria-label={`${tx("Scene", "दृश्य")} ${k + 1}: ${L(s.t)}`}
+                aria-label={`${"Scene"} ${k + 1}: ${L(s.t)}`}
                 aria-current={k === i ? "step" : undefined}
               >
                 <i style={{ transform: `scaleX(${k < i ? 1 : k === i ? lp : 0})` }} />
@@ -185,7 +185,7 @@ export function Film({
           </span>
           {skipTo && (
             <button type="button" class="film-skip mono-s" onClick={skip}>
-              {tx("Skip", "आगे बढ़ें")} ↓
+              {"Skip"} ↓
             </button>
           )}
         </div>
@@ -205,7 +205,7 @@ export function Film({
         </div>
         {!lead && (
           <div class="film-hint mono-s" style={{ opacity: 1 - seg(p, 0, 0.02) }} aria-hidden="true">
-            {tx("Scroll to play", "चलाने के लिए स्क्रॉल करें")}
+            {"Scroll to play"}
             <span class="film-hint-line" />
           </div>
         )}

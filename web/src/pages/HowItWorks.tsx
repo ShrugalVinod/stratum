@@ -3,7 +3,7 @@ import { SideView } from "../components/Figures";
 import { PipelineFilm } from "../components/film/PipelineFilm";
 import { PageHead } from "../components/PageHead";
 import { pipeline } from "../content/site";
-import { T, tx } from "../i18n";
+import { T } from "../i18n";
 
 export function HowItWorks() {
   const [open, setOpen] = useState<Set<number>>(new Set());
@@ -42,7 +42,7 @@ export function HowItWorks() {
   return (
     <div class="page">
       <PageHead
-        label={tx(`Flight plan · ${pipeline.length} waypoints`, `उड़ान योजना · ${pipeline.length} पड़ाव`)}
+        label={`Flight plan · ${pipeline.length} waypoints`}
         note={
           <>
             ROUTE: {pipeline.map((s) => s.code).join(" DCT ")}
@@ -53,7 +53,7 @@ export function HowItWorks() {
       />
       <PipelineFilm skipTo="waypoints" />
       <div class="wrap" id="waypoints">
-        <p class="label red film-after">{tx("Every waypoint in detail", "हर पड़ाव विस्तार से")}</p>
+        <p class="label red film-after">{"Every waypoint in detail"}</p>
         <ol class="wpts" ref={list}>
           <span class="wpts-fill" aria-hidden="true" />
           {pipeline.map((s, i) => (

@@ -4,51 +4,6 @@
   --time-h: 104px;
   animation: page-in 0.8s var(--ease) backwards;
 }
-.small {
-  font-size: 13.5px;
-}
-
-/* tool buttons */
-.tool {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--rule);
-  background: var(--card);
-  color: var(--ink);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition:
-    border-color 0.3s,
-    background-color 0.3s,
-    color 0.3s,
-    transform 0.3s var(--ease);
-}
-.tool:hover {
-  border-color: var(--ink);
-}
-.tool:active {
-  transform: scale(0.97);
-}
-.tool:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.tool.strong {
-  height: 44px;
-  border: 1.5px solid var(--edge);
-  font-weight: 800;
-  font-size: 13px;
-  padding: 0 18px;
-}
-.tool.strong:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--paper);
-}
-
 /* info strip */
 .mp-bar {
   min-height: var(--bar-h);
@@ -309,7 +264,7 @@
 .maplibregl-ctrl-group button + button {
   border-top: 1px solid var(--rule) !important;
 }
-:root[data-theme="dark"] .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
   filter: invert(0.88);
 }
 .maplibregl-ctrl-scale {

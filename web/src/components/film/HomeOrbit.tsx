@@ -5,10 +5,10 @@
 // flights, lasting contrails, the satellite's position and the sun are all real.
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { ContrailEvent } from "../../data/contract";
-import { tx } from "../../i18n";
+
 import type { OrbitHandle, OrbitInput, OrbitState } from "../../three/orbit";
 import { type Flight, PROOF_DAY, type StoryDay } from "./data";
-import { type Box, cropGeo, type H1, H1Panel, layout, SatPanel, SideView, slotAt, type Stats, useSize } from "./HomeFilm";
+import { type Box, cropGeo, type H1, H1Panel, layout, SatPanel, slotAt, type Stats, useSize } from "./HomeFilm";
 import { clamp, easeIo, easeOut, type Frame, lerp, nf, Num, seg } from "./kit";
 
 type OrbitModule = typeof import("../../three/orbit");
@@ -49,8 +49,8 @@ function flightPlan(env: Env): [number, Cam][] {
     [6.92, C(g.lon, g.lat, dCrop, 0, 0, false)], // 5–7 · the crop
     [7.32, C(79.5, 20, 1.5, 30, 6)], // 8 · the finding
     [7.96, C(79.5, 20, 1.42, 34, 2)],
-    [8.4, C(73.4, 12.2, 0.15, 79, 62, false)], // 9 · a slice of sky at dawn
-    [9, C(73.4, 12.2, 0.135, 80, 56, false)],
+    [8.4, C(73.6, 12.4, 0.2, 74, 58, false)], // 9 · dawn over the Arabian Sea
+    [9, C(73.9, 12.2, 0.17, 76, 50, false)],
   ];
 }
 
@@ -110,7 +110,7 @@ function stateOf(f: Frame, time: number, env: Env, sunDir: OrbitModule["sunDir"]
   return {
     ...cam,
     ox: lerp(hx, bx, k),
-    oy: lerp(hy, by, k) + (u > 8 ? env.h * 0.17 * seg(u, 8, 8.5) : 0),
+    oy: lerp(hy, by, k) + (u > 8 ? env.h * 0.1 * seg(u, 8, 8.5) : 0),
     clock: inHero ? hero.clock : u < 1 ? dayClock : 1440,
     sun,
     trails: inHero ? hero.fade * (1 - seg(intro, 0.8, 0.96)) : u < 1 ? seg(S(0), 0, 0.07) : u < 3 ? lerp(1, 0.5, seg(u, 1, 1.4)) : u < 7 ? 0.5 * out3 : u < 8 ? 0.3 * S(7, 0.1, 0.4) : 0.3 * (1 - S(8, 0, 0.25)),
@@ -123,6 +123,8 @@ function stateOf(f: Frame, time: number, env: Env, sunDir: OrbitModule["sunDir"]
     sat: S(3, 0.16, 0.3) * (1 - S(3, 0.6, 0.76)),
     aim: [env.geo.lon, env.geo.lat],
     dim: u < 3.9 ? 0 : u < 7 ? 0.32 * seg(u, 3.9, 4.1) : u < 8 ? lerp(0.32, 0.8, S(7, 0, 0.3)) : lerp(0.8, 0.08, S(8, 0, 0.35)),
+    dawn: u < 8 ? 0 : S(8, 0.04, 0.22),
+    dawnT: easeIo(S(8, 0.08, 0.86)),
     time,
   };
 }
@@ -215,7 +217,7 @@ export function Stage3D({
       handle.current.render(s);
       if (readout.current && day && now - wrote > 300) {
         wrote = now;
-        readout.current.textContent = `${hhmm(s.clock)} UTC · ${tx(`${nf(inAir(day.flights, s.clock))} airliners in the air`, `${nf(inAir(day.flights, s.clock))} विमान हवा में`)}`;
+        readout.current.textContent = `${hhmm(s.clock)} UTC · ${`${nf(inAir(day.flights, s.clock))} airliners in the air`}`;
       }
     };
     raf = requestAnimationFrame(tick);
@@ -245,24 +247,24 @@ export function Stage3D({
   return (
     <div ref={wrap} class={`hf hf-3d ${ready ? "ready" : ""}`}>
       <div class="hf-poster" aria-hidden="true" />
-      <canvas ref={canvas} class="hf-gl" role="img" aria-label={tx("The Earth from orbit with the real flights of 1 January 2026 over India", "कक्षा से पृथ्वी, 1 जनवरी 2026 की भारत के ऊपर की असली उड़ानों के साथ")} />
+      <canvas ref={canvas} class="hf-gl" role="img" aria-label={"The Earth from orbit with the real flights of 1 January 2026 over India"} />
       <div class="hf-grain" aria-hidden="true" />
 
       {intro < 1 && (
         <div class="hf-live mono-s" style={{ opacity: (ready ? 1 : 0) * (1 - seg(intro, 0.25, 0.6)) }}>
           <i class="dot" aria-hidden="true" />
-          <b>{tx("Replay · 1 Jan 2026", "रीप्ले · 1 जनवरी 2026")}</b>
+          <b>{"Replay · 1 Jan 2026"}</b>
           <span ref={readout} />
-          <em>{tx("real ADS-B tracks", "असली ADS-B ट्रैक")}</em>
+          <em>{"real ADS-B tracks"}</em>
         </div>
       )}
 
       <div class="hf-hud mono-s" style={{ left: `${box.x + 18}px`, top: `${box.y + 18}px`, opacity: (intro < 1 ? 0 : S(0, 0, 0.08)) * (1 - S(2, 0.7, 1)) }}>
-        <b>{clock}</b> UTC · {nf(airborne)} {tx("flights", "उड़ानें")}
+        <b>{clock}</b> UTC · {nf(airborne)} {"flights"}
         {flagT > 0 && st && (
           <span class="hf-hud-o">
             {" "}
-            · <Num to={st.flaggedFlights} t={flagT} /> {tx("with a lasting contrail", "टिकाऊ कंट्रेल के साथ")}
+            · <Num to={st.flaggedFlights} t={flagT} /> {"with a lasting contrail"}
           </span>
         )}
       </div>
@@ -272,8 +274,8 @@ export function Stage3D({
       {satXY && satXY.front && state && (
         <div class="hf-satlabel mono-s" style={{ left: `${satXY.x}px`, top: `${satXY.y}px`, opacity: state.sat }}>
           <b>METEOSAT-9</b>
-          <span>45.5°E · {tx("36,000 km up", "36,000 किमी ऊपर")}</span>
-          <em>{tx("drawn far too big to be seen", "दिखने के लिए बहुत बड़ा बनाया गया")}</em>
+          <span>45.5°E · {"36,000 km up"}</span>
+          <em>{"drawn far too big to be seen"}</em>
         </div>
       )}
 
@@ -290,11 +292,27 @@ export function Stage3D({
       {ev && rect && panelO > 0.001 && <SatPanel ev={ev} f={f} rect={rect} opacity={panelO} />}
       {ev && rect && panelO > 0.5 && S(6, 0.42, 1) > 0 && S(7) <= 0 && (
         <div class="hf-dawn mono-s" style={{ left: `${rect.x}px`, top: `${rect.y + rect.size + 12}px`, width: `${rect.size}px` }}>
-          {tx(`Frame ${slotAt(ev, f) + 1} of ${ev.slots.length} · the sun is rising over Kerala`, `फ़्रेम ${slotAt(ev, f) + 1} / ${ev.slots.length} · केरल पर सूरज उग रहा है`)}
+          {`Frame ${slotAt(ev, f) + 1} of ${ev.slots.length} · the sun is rising over Kerala`}
         </div>
       )}
       {h1 && S(7) > 0 && <H1Panel h1={h1} ratio={ratio} f={f} box={box} />}
-      {S(8) > 0 && <SideView t={S(8)} box={box} />}
+      {eng && state && state.dawn > 0.01 && (
+        <>
+          {([0, 1] as const).map((i) => {
+            const at = eng.projectDawn(i);
+            if (!at.front) return null;
+            return (
+              <div class={`hf-dawnlab ${i ? "b" : "a"}`} style={{ left: `${at.x}px`, top: `${at.y}px`, opacity: state.dawn * S(8, 0.2, 0.4) }}>
+                <b>{i ? "2,000 ft higher · FL380" : "As planned · FL360, in the humid layer"}</b>
+                <span>{i ? "the trail is gone in seconds" : "the contrail spreads and lasts for hours"}</span>
+              </div>
+            );
+          })}
+          <p class="hf-illus mono-s" style={{ left: `${box.x + 18}px`, top: `${box.y + box.h - 14}px`, opacity: state.dawn }}>
+            Illustration · two flights on one route at dawn · neither flew
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -309,17 +327,17 @@ function FewBars({ st, t, box, stageH, opacity }: { st: Stats; t: number; box: B
     <div class="hf-few" style={{ left: `${box.x + box.w * 0.06}px`, width: `${box.w * 0.88}px`, top: `${Math.min(stageH - 196, box.y + box.h - 176)}px`, opacity }}>
       <p class="mono-s">
         {narrow
-          ? tx(`${m} stretches · largest first`, `${m} हिस्से · सबसे बड़ा पहले`)
-          : tx(`${m} lasting-contrail stretches · energy forcing, largest first`, `${m} टिकाऊ-कंट्रेल हिस्से · ऊर्जा बल, सबसे बड़ा पहले`)}
+          ? `${m} stretches · largest first`
+          : `${m} lasting-contrail stretches · energy forcing, largest first`}
       </p>
-      <svg viewBox={`0 0 ${Wv} ${Hv}`} preserveAspectRatio="none" role="img" aria-label={tx(`${st.k80} of ${m} flights make 80 % of the day's contrail warming`, `${m} में से ${st.k80} उड़ानें दिन की 80 % कंट्रेल-गर्मी बनाती हैं`)}>
+      <svg viewBox={`0 0 ${Wv} ${Hv}`} preserveAspectRatio="none" role="img" aria-label={`${st.k80} of ${m} flights make 80 % of the day's contrail warming`}>
         {st.ranked.map((s, i) => {
           const g = easeOut(clamp(t * 1.6 - (i / m) * 0.6));
           const hh = Math.max(0.6, ((s.ef_J ?? 0) / max) * Hv * g);
           return <rect x={(i * Wv) / m} y={Hv - hh} width={Math.max(0.6, (Wv / m) * 0.74)} height={hh} class={i < st.k80 ? "top" : ""} />;
         })}
       </svg>
-      <p class="mono-s red">{tx(`red: ${st.k80} flights = 80 % of the warming`, `लाल: ${st.k80} उड़ानें = 80 % गर्मी`)}</p>
+      <p class="mono-s red">{`red: ${st.k80} flights = 80 % of the warming`}</p>
     </div>
   );
 }

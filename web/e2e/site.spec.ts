@@ -86,7 +86,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
   await expect(page.locator(".sky-col")).toBeVisible();
   await page.locator(".dk-end .tool").click();
 
-  // controls: flight level, hour by keyboard, layers, gallery lightbox, theme, empty day
+  // controls: flight level, hour by keyboard, layers, gallery lightbox, empty day
   await page.locator(".tape button").nth(2).click();
   await expect.poll(() => page.url()).toContain("fl=");
   await page.locator(".tl-input").focus();
@@ -99,17 +99,6 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
   await expect(page.locator(".lightbox")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".lightbox")).toHaveCount(0);
-  // Night is the default theme: the first click goes to the paper chart, the second comes back
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
-  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
-  // the map restyles for the chart; with software WebGL (CI) that keeps the page busy, so wait
-  // until the new style has loaded before toggling back
-  await expect
-    .poll(() => page.evaluate(() => (window as any).__map?.isStyleLoaded?.() ?? true), { timeout: 120_000 })
-    .toBe(true);
-  await mapStill(page);
-  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
   // a January day without flights offers the nearest flight day
   await page.locator(".date-pick select").first().selectOption("2026-01-20");
   await expect(page.locator(".empty")).toBeVisible();
@@ -232,28 +221,18 @@ test("Spot a contrail: a photo stays in the browser and an answer appears", asyn
   expect(posts, "the photo must never be sent anywhere").toHaveLength(0);
 });
 
-test("the site switches to Hindi, remembers it, and switches back to English", async ({ page }) => {
+test("the directory opens from the keyboard, filters pages and opens the first match", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/");
-  await page.getByRole("button", { name: /switch to Hindi/ }).click();
-  await expect(page.locator("html")).toHaveAttribute("lang", "hi");
-  await expect(page.locator("h1").first()).toContainText("विमान हटाइए");
-  await page.reload();
-  await expect(page.locator("h1").first()).toContainText("विमान हटाइए"); // remembered
-  await page.getByRole("button", { name: "Switch to English" }).click();
-  await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("h1").first()).toContainText("Move the plane");
-  expect(errors, errors.join("\n")).toHaveLength(0);
-});
-
-test("Hindi reaches the results, the map controls and the AI-translation note", async ({ page }) => {
-  const errors = collectErrors(page);
-  await page.goto("/results?lang=hi");
-  await expect(page.locator(".res-card").first()).toContainText("समर्थित नहीं"); // H1 verdict
-  await page.goto("/map?date=2026-02-01&lang=hi");
-  await expect(page.getByRole("button", { name: "लिंक कॉपी करें" })).toBeVisible();
-  await page.goto("/about-data?lang=hi");
-  await expect(page.locator("#ai-use")).toContainText("हिंदी अनुवाद AI से बनाया गया");
+  await page.keyboard.press("/");
+  const box = page.getByRole("searchbox", { name: "Search pages" });
+  await expect(box).toBeFocused();
+  await box.fill("sandbox");
+  await expect(page.locator("#side-nav li:not([hidden]) a")).toHaveCount(1);
+  await box.press("Enter");
+  await expect(page).toHaveURL(/\/sandbox$/);
+  await expect(page.locator("h1").first()).toContainText("Make a");
   expect(errors, errors.join("\n")).toHaveLength(0);
 });
 
