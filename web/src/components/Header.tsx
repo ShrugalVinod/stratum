@@ -1,6 +1,7 @@
 import { useLocation } from "preact-iso";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { setLang, T, useLang } from "../i18n";
+import { site } from "../content/site";
+import { setLang, T, tx, useLang } from "../i18n";
 import { currentTheme, setTheme, type Theme } from "./motion";
 
 // Things to do first, then things to learn, then the research behind it and who we are
@@ -21,28 +22,76 @@ const NAV = [
   ["/about-data", "Data & code", "Sources, licences, how to reproduce"],
   ["/team", "Team", "Who we are, and how to reach us"],
 ] as const;
-// headings in the menu, before these pages (pages left out of the menu still open by link)
-const GROUPS: Record<string, string> = { "/": "Things you can do", "/how-it-works": "Things to learn", "/results": "Research and the rest" };
+// the menu's three columns (pages left out of the menu still open by link)
+const GROUPS: [string, number, number][] = [
+  ["Things you can do", 0, 9],
+  ["Things to learn", 9, 11],
+  ["Research and the rest", 11, 15],
+];
+// the few links that live in the bar itself on wide screens
+const QUICK = ["/map", "/now", "/3d", "/how-it-works", "/results"];
 
 const isOn = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+const two = (n: number) => String(n).padStart(2, "0");
 
-/** Site header: wordmark, the current page, theme switch and a menu button that slides the
- *  navigation in from the side (all screen sizes). Esc, a click outside or a link closes it. */
+/** The mark: a plane (red) and its short trail above the humid layer (teal). */
+export function Mark() {
+  return (
+    <svg class="mark" viewBox="0 0 30 20" width="30" height="20" aria-hidden="true">
+      <path class="mk-trail" d="M9 4h14" />
+      <circle class="mk-plane" cx="26" cy="4" r="2.1" />
+      <path class="mk-layer" d="M2 10.5h26" />
+      <path class="mk-low" d="M2 16.5h17" />
+    </svg>
+  );
+}
+
+/** Site header: an instrument bar (mark, shortcuts, language, theme, menu) and a full-screen
+ *  directory of every page with a filter box. "/" or Ctrl/⌘ K opens it; Esc closes it. */
 export function Header() {
-  const { path } = useLocation();
+  const { path, route } = useLocation();
   const [open, setOpen] = useState(false);
-  const [theme, setT] = useState<Theme>("light");
+  const [theme, setT] = useState<Theme>("dark");
+  const [q, setQ] = useState("");
+  const [now, setNow] = useState(() => new Date());
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const search = useRef<HTMLInputElement>(null);
+  const viaKey = useRef(false);
   const here = NAV.find(([href]) => isOn(path, href));
   const lang = useLang();
 
   useEffect(() => setT(currentTheme()), []);
   useEffect(() => setOpen(false), [path]);
+
+  // "/" or Ctrl/⌘ K: open the directory with the filter box ready
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)) {
+        e.preventDefault();
+        viaKey.current = true;
+        setOpen(true);
+      }
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    if (!open) return;
-    panel.current?.querySelector<HTMLElement>("a")?.focus({ preventScroll: true });
+    document.documentElement.classList.toggle("menu-open", open);
+    if (!open) {
+      setQ("");
+      return;
+    }
+    // a key press goes to the filter box; a tap goes to the first link (no phone keyboard pops up)
+    if (viaKey.current) search.current?.focus({ preventScroll: true });
+    else panel.current?.querySelector<HTMLElement>("a")?.focus({ preventScroll: true });
+    viaKey.current = false;
+    setNow(new Date());
+    const clock = setInterval(() => setNow(new Date()), 1000);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
@@ -50,7 +99,7 @@ export function Header() {
       }
       if (e.key === "Tab" && panel.current) {
         // keep keyboard focus inside the open panel
-        const f = [...panel.current.querySelectorAll<HTMLElement>("a, button")];
+        const f = [...panel.current.querySelectorAll<HTMLElement>("a, button, input")].filter((x) => x.offsetParent !== null);
         const first = f[0];
         const last = f[f.length - 1];
         if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus());
@@ -58,7 +107,10 @@ export function Header() {
       }
     };
     addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
+    return () => {
+      clearInterval(clock);
+      removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const toggle = () => {
@@ -67,17 +119,33 @@ export function Header() {
     setTheme(next);
   };
 
-  // the panel lives next to the header, not inside it: the header's backdrop blur would make it
-  // the containing block of a fixed element and clip the panel to the header's height
+  const needle = q.trim().toLowerCase();
+  const hit = (i: number) => !needle || [NAV[i][1], NAV[i][2], T(NAV[i][1]), T(NAV[i][2]), NAV[i][0]].some((s) => s.toLowerCase().includes(needle));
+  const firstHit = NAV.findIndex((_, i) => hit(i));
+  const utc = `${two(now.getUTCHours())}:${two(now.getUTCMinutes())}:${two(now.getUTCSeconds())}`;
+  const ist = new Date(now.getTime() + 5.5 * 3_600_000);
+
+  // the header stays above the open directory, so the same button closes it
   return (
     <>
-      <header class="site-header">
+      <header class={`site-header ${open ? "over-menu" : ""}`}>
         <span class="route-bar" key={path} aria-hidden="true" />
         <div class="wrap header-row">
           <a href="/" class="wordmark" aria-label="STRATUM home">
+            <Mark />
             <b>STRATUM</b>
-            <span class="mono-s">FL360–FL380 · ISSR</span>
           </a>
+          <nav class="quick" aria-label="Shortcuts">
+            {QUICK.map((href) => {
+              const n = NAV.find((x) => x[0] === href)!;
+              const on = isOn(path, href);
+              return (
+                <a href={href} class={on ? "on" : ""} aria-current={on ? "page" : undefined}>
+                  {T(n[1])}
+                </a>
+              );
+            })}
+          </nav>
           {here && here[0] !== "/" && (
             <span class="here mono-s" key={path}>
               § {T(here[1])}
@@ -104,33 +172,69 @@ export function Header() {
         </div>
         <span class="scroll-meter" aria-hidden="true" />
       </header>
-      {/* a fixed, clipping layer: the closed panel waits off-screen without widening the page */}
+      {/* a fixed, clipping layer under the header: the closed directory never widens the page */}
       <div class="nav-layer">
-        <div class={`nav-backdrop ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
         <nav ref={panel} id="side-nav" class={`side-nav ${open ? "open" : ""}`} aria-label="Main" aria-hidden={!open} inert={!open}>
-          <p class="label red side-nav-label">{T("Navigate")}</p>
-          <ul>
-            {NAV.map(([href, label, sub], i) => {
-              const on = isOn(path, href);
-              return (
-                <>
-                  {GROUPS[href] && (
-                    <li class="nav-group mono-s" style={{ "--i": i }} aria-hidden="true">
-                      {T(GROUPS[href])}
-                    </li>
-                  )}
-                  <li style={{ "--i": i }}>
-                    <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
-                      <span class="nav-n mono-s">{String(i + 1).padStart(2, "0")}</span>
-                      <span class="nav-t">{T(label)}</span>
-                      <span class="nav-sub">{T(sub)}</span>
-                    </a>
-                  </li>
-                </>
-              );
-            })}
-          </ul>
-          <p class="mono-s muted side-nav-foot">{T("Conrad Challenge 2026–27 · Indus International School, Bengaluru")}</p>
+          <div class="wrap nav-grid">
+            <div class="nav-aside">
+              <p class="label red side-nav-label">{T("Navigate")}</p>
+              <label class="nav-search">
+                <span class="sr-only">{tx("Search pages", "पृष्ठ खोजें")}</span>
+                <input
+                  ref={search}
+                  type="search"
+                  value={q}
+                  placeholder={tx("Search pages", "पृष्ठ खोजें")}
+                  autocomplete="off"
+                  spellcheck={false}
+                  onInput={(e) => setQ((e.target as HTMLInputElement).value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && firstHit >= 0) {
+                      e.preventDefault();
+                      setOpen(false);
+                      route(NAV[firstHit][0]);
+                    }
+                  }}
+                />
+                <kbd class="mono-s" aria-hidden="true">
+                  /
+                </kbd>
+              </label>
+              <div class="nav-clock mono" aria-hidden="true">
+                <b>{utc}</b> UTC
+                <span>
+                  {two(ist.getUTCHours())}:{two(ist.getUTCMinutes())} IST · 12.97°N 77.59°E
+                </span>
+              </div>
+              <p class="nav-tag">{T(site.tagline)}</p>
+              <p class="mono-s muted side-nav-foot">{T("Conrad Challenge 2026–27 · Indus International School, Bengaluru")}</p>
+            </div>
+            <div class="nav-groups">
+              {GROUPS.map(([title, a, b], g) => (
+                <section class={`nav-col nav-col-${g}`} hidden={!NAV.slice(a, b).some((_, k) => hit(a + k))}>
+                  <p class="nav-group mono-s" aria-hidden="true">
+                    {T(title)}
+                  </p>
+                  <ul>
+                    {NAV.slice(a, b).map(([href, label, sub], k) => {
+                      const i = a + k;
+                      const on = isOn(path, href);
+                      return (
+                        <li style={{ "--i": i }} hidden={!hit(i)}>
+                          <a href={href} class={on ? "active" : ""} aria-current={on ? "page" : undefined} onClick={() => setOpen(false)}>
+                            <span class="nav-n mono-s">{two(i + 1)}</span>
+                            <span class="nav-t">{T(label)}</span>
+                            <span class="nav-sub">{T(sub)}</span>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+              {firstHit < 0 && <p class="nav-none muted">{tx("No page matches. Try “map”, “results” or “team”.", "कोई पृष्ठ नहीं मिला। “map”, “results” या “team” आज़माएँ।")}</p>}
+            </div>
+          </div>
         </nav>
       </div>
     </>

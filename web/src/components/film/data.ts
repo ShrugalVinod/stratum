@@ -22,6 +22,42 @@ export function loadLand(): Promise<Land> {
   return land;
 }
 
+let world: Promise<number[][]> | null = null;
+/** World land outline (Natural Earth 1:110m, coastlines only, no borders), flat lon/lat rings. */
+export function loadWorldLand(): Promise<number[][]> {
+  world ??= fetch("/geo/land110.json")
+    .then((r) => r.json())
+    .then((j: { rings: number[][] }) => j.rings);
+  return world;
+}
+let states: Promise<[number, number][][]> | null = null;
+/** India's state lines (the same file the map uses). */
+export function loadStates(): Promise<[number, number][][]> {
+  states ??= fetch("/geo/india_states.geojson")
+    .then((r) => r.json())
+    .then((g: GeoJSON.FeatureCollection) =>
+      g.features.flatMap((f) => {
+        const geom = f.geometry as GeoJSON.LineString | GeoJSON.MultiLineString | GeoJSON.Polygon | GeoJSON.MultiPolygon;
+        if (geom.type === "LineString") return [geom.coordinates as [number, number][]];
+        if (geom.type === "MultiLineString" || geom.type === "Polygon") return geom.coordinates as [number, number][][];
+        return (geom.coordinates as [number, number][][][]).flat();
+      }),
+    );
+  return states;
+}
+let cities: Promise<{ lon: number; lat: number; pop: number }[]> | null = null;
+export function loadCities() {
+  cities ??= fetch("/geo/cities.geojson")
+    .then((r) => r.json())
+    .then((g: GeoJSON.FeatureCollection) =>
+      g.features.map((f) => {
+        const [lon, lat] = (f.geometry as GeoJSON.Point).coordinates;
+        return { lon, lat, pop: Number((f.properties as any)?.pop ?? 1e6) };
+      }),
+    );
+  return cities;
+}
+
 export type Flight = { id: string; cs: string; lon: Float32Array; lat: Float32Array; m: Float32Array; flagged: boolean; alert: boolean };
 export type StoryDay = { date: string; flights: Flight[]; b1: Seg[]; stratum: Seg[]; alerts: number };
 

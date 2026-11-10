@@ -1,8 +1,10 @@
-/* STRATUM design tokens — "the aeronautical chart".
-   Chart (paper) is the default; Night is set by the header toggle (data-theme on <html>).
+/* STRATUM design tokens — "the night sky, seen through an instrument".
+   Night is the default (data-theme="dark" on <html>, set in index.html); Chart (paper) is the
+   header toggle. Every page reads these names, so both themes stay in step.
    Contrast checked: body text ≥ 4.5:1 on paper, card and paper-2 in both themes. */
 
 :root {
+  /* ── Chart (light): the aeronautical chart on paper ── */
   --paper: #f1ece1;
   --paper-2: #e8e1d2;
   --card: #f7f3eb;
@@ -12,19 +14,25 @@
   --faint: #9a968c;
   --rule: #d6ccb8;
   --rule-2: #e3dbcc;
+  --edge: #13202f; /* strong frame lines */
   --grid: rgb(19 32 47 / 0.055);
+  --glass: rgb(247 243 235 / 0.82); /* translucent panel over the page */
+  --veil: rgb(241 236 225 / 0.86); /* header once the page has scrolled */
 
   --red: #c8102e; /* fills, outlines */
   --red-text: #c8102e;
   --on-red: #ffffff;
-  --block: #e3283c; /* hero "lose the cloud" block, ink text ≥ 3:1 (large) */
+  --block: #e3283c;
   --teal: #1d6670; /* ice-supersaturated layers */
   --teal-soft: rgb(29 102 112 / 0.1);
   --orange: #d6541c; /* persistent contrails (data colour) */
   --orange-text: #a8431a;
   --green: #2f6b3a;
-  --tile: #13202f; /* departures-board tiles */
+  --cyan: #0b7592; /* what the satellite saw */
+  --tile: #13202f;
   --tile-ink: #f1ece1;
+  --glow: rgb(200 16 46 / 0); /* glows are a night thing */
+  --shadow: 0 30px 80px -40px rgb(19 32 47 / 0.45);
 
   /* map */
   --map-ocean: #d4e2e5;
@@ -49,46 +57,53 @@
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-fly: cubic-bezier(0.37, 0.08, 0.63, 0.92); /* near-constant cruise */
 
-  --maxw: 1320px;
+  --maxw: 1360px;
   --gutter: clamp(16px, 4.2vw, 64px);
   --header-h: 68px;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --paper: #0d1623;
-  --paper-2: #152234;
-  --card: #111c2a;
-  --ink: #ece6d8;
-  --ink-2: #c8c3b7;
-  --muted: #8f98a5;
-  --faint: #5a6575;
-  --rule: #24334a;
-  --rule-2: #1b2839;
-  --grid: rgb(236 230 216 / 0.045);
+  /* ── Night (default): above the weather, under the stars ── */
+  --paper: #05080e;
+  --paper-2: #0a101b;
+  --card: #0c1320;
+  --ink: #f2ede3;
+  --ink-2: #cdc9bf;
+  --muted: #8a93a3;
+  --faint: #55607a;
+  --rule: #1a2334;
+  --rule-2: #111826;
+  --edge: rgb(242 237 227 / 0.26);
+  --grid: rgb(236 230 216 / 0.04);
+  --glass: rgb(12 19 32 / 0.66);
+  --veil: rgb(5 8 14 / 0.72);
 
-  --red: #e8323f;
-  --red-text: #ff6b74;
-  --on-red: #0d1623;
-  --block: #e8323f;
-  --teal: #5cbcc6;
-  --teal-soft: rgb(92 188 198 / 0.1);
-  --orange: #ea7a3c;
-  --orange-text: #f08a4b;
-  --green: #7cc48a;
-  --tile: #ece6d8;
-  --tile-ink: #0d1623;
+  --red: #f2384c;
+  --red-text: #ff6474;
+  --on-red: #05080e;
+  --block: #f2384c;
+  --teal: #5fd2dc;
+  --teal-soft: rgb(95 210 220 / 0.1);
+  --orange: #ff8f43;
+  --orange-text: #ffa25c;
+  --green: #7fdf9f;
+  --cyan: #46dcff;
+  --tile: #f2ede3;
+  --tile-ink: #05080e;
+  --glow: rgb(242 56 76 / 0.55);
+  --shadow: 0 40px 120px -40px rgb(0 0 0 / 0.9);
 
-  --map-ocean: #08101c;
-  --map-land: #132034;
-  --map-border: #3b4b63;
-  --map-state: #1f2d42;
-  --map-grat: #142133;
+  --map-ocean: #060b14;
+  --map-land: #101a2a;
+  --map-border: #3a4a63;
+  --map-state: #1b2738;
+  --map-grat: #101b2b;
   --map-track: #dfe6f2;
-  --map-plane: #ece6d8;
+  --map-plane: #f2ede3;
   --map-head: #ffffff;
-  --map-corr: #ff6b74;
-  --map-pred: #ff8c3a;
+  --map-corr: #ff6474;
+  --map-pred: #ff8f43;
   --map-sel: #ffffff;
   color-scheme: dark;
 }

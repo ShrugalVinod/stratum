@@ -128,7 +128,7 @@ export function setTheme(next: Theme) {
   const root = document.documentElement;
   const apply = () => {
     root.dataset.theme = next;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "dark" ? "#0D1623" : "#F1ECE1");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "dark" ? "#05080E" : "#F1ECE1");
     try {
       localStorage.setItem("stratum-theme", next);
     } catch {

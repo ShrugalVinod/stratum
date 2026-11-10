@@ -198,7 +198,7 @@
 }
 
 .fig2-frame {
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   background: var(--card);
   padding: clamp(14px, 3vw, 40px) clamp(10px, 2.4vw, 32px);
 }
@@ -429,7 +429,7 @@
   margin: 28px 0 28px;
 }
 .board {
-  border: 6px solid var(--ink);
+  border: 6px solid var(--edge);
   background: var(--card);
   padding: 4px 20px 6px;
   font-family: var(--font-mono);
@@ -557,7 +557,7 @@
 }
 .sat-frame {
   position: relative;
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   overflow: hidden;
   background: #1a1d22;
 }
@@ -944,7 +944,7 @@
   border-color: var(--ink);
 }
 .logbook {
-  border: 2px solid var(--ink);
+  border: 2px solid var(--edge);
 }
 .lb-row {
   display: grid;
@@ -961,7 +961,7 @@
 }
 .lb-head {
   background: var(--paper-2);
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 2px solid var(--edge);
   min-height: 0;
   font-weight: 700;
   font-size: 12px;
@@ -1045,7 +1045,7 @@
   gap: 22px;
 }
 .notam {
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   background: var(--card);
   display: flex;
   flex-direction: column;
@@ -1136,8 +1136,8 @@
 }
 .dl-bar {
   display: block;
-  border-top: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
+  border-top: 2px solid var(--edge);
+  border-bottom: 2px solid var(--edge);
   margin-bottom: clamp(64px, 8vw, 120px);
   position: relative;
   overflow: hidden;
@@ -1182,7 +1182,7 @@
 .pass {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(130px, 14vw, 200px);
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   background: var(--card);
   transition:
     transform 0.6s var(--ease),
@@ -1226,7 +1226,7 @@
   font-size: 22px;
 }
 .pass-stub {
-  border-left: 1.5px dashed var(--ink);
+  border-left: 1.5px dashed var(--edge);
   background: var(--paper-2);
   padding: 16px;
   display: flex;
@@ -1246,7 +1246,7 @@
   height: 16px;
   border-radius: 50%;
   background: var(--paper);
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
 }
 .pass-stub::before {
   top: -9px;
@@ -1291,7 +1291,7 @@
   }
   .pass-stub {
     border-left: 0;
-    border-top: 1.5px dashed var(--ink);
+    border-top: 1.5px dashed var(--edge);
     flex-direction: row;
   }
   .pass-stub::before,
@@ -1309,7 +1309,7 @@
 /* ── data ─────────────────────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--edge);
 }
 .src-table {
   width: 100%;
@@ -1330,7 +1330,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--edge);
   padding-top: 16px;
   padding-bottom: 14px;
 }
@@ -1413,7 +1413,7 @@ a.contact-big:hover {
   gap: 20px;
 }
 .res-card {
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   background: var(--card);
   padding: 18px 20px;
   display: flex;
@@ -1430,7 +1430,7 @@ a.contact-big:hover {
 }
 /* verdicts are styled neutrally: a refuted hypothesis is a result, not a failure */
 .verdict {
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--edge);
   padding: 2px 8px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1770,7 +1770,7 @@ a.contact-big:hover {
   justify-self: end;
 }
 .live-card {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--card);
   padding: 16px 18px;
   margin-bottom: 18px;
@@ -1887,7 +1887,7 @@ a.contact-big:hover {
   list-style: none;
   padding: 0;
   margin: 0;
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid var(--edge);
 }
 .adv-list ol button {
   width: 100%;
@@ -1914,7 +1914,7 @@ a.contact-big:hover {
   white-space: nowrap;
 }
 .notam {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--tile);
   color: var(--tile-ink);
   padding: 18px 20px;
@@ -1963,7 +1963,7 @@ a.contact-big:hover {
 .gm-big {
   min-height: 56px;
   padding: 0 28px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--ink);
   color: var(--paper);
   font: 700 17px var(--font-sans);
@@ -2000,7 +2000,7 @@ a.contact-big:hover {
 .gm-top {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--edge);
   padding-bottom: 8px;
   margin-bottom: 18px;
 }
@@ -2011,7 +2011,7 @@ a.contact-big:hover {
   align-items: start;
 }
 .gm-card {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--card);
   padding: 20px 22px;
 }
@@ -2198,7 +2198,7 @@ a.contact-big:hover {
   position: static;
 }
 .live-pick {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--card);
   padding: 10px 12px;
 }
@@ -2221,7 +2221,7 @@ a.contact-big:hover {
   gap: 10px;
   min-height: 210px;
   padding: 20px 20px 52px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--edge);
   background: var(--card);
   color: var(--ink);
   text-decoration: none;
@@ -2286,7 +2286,7 @@ a.contact-big:hover {
   margin: 8px 0 24px;
 }
 .rt-tiles > div {
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--edge);
   padding-top: 10px;
 }
 .rt-tiles b {
@@ -2462,7 +2462,7 @@ a.contact-big:hover {
   display: grid;
   place-items: center;
   min-height: 220px;
-  border: 1.5px dashed var(--ink);
+  border: 1.5px dashed var(--edge);
   background: var(--card);
   cursor: pointer;
   overflow: hidden;
@@ -2775,7 +2775,7 @@ a.contact-big:hover {
   width: 10px;
   height: 10px;
   background: var(--paper);
-  border: 2px solid var(--ink);
+  border: 2px solid var(--edge);
 }
 .al-time li.al-key::before {
   background: var(--red);
@@ -2791,7 +2791,7 @@ a.contact-big:hover {
   margin: 8px 0 14px;
 }
 .al-cols > div {
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--edge);
   padding-top: 10px;
 }
 .al-form {
@@ -2988,7 +2988,7 @@ a.contact-big:hover {
   width: 22px;
   height: 0;
   vertical-align: middle;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--edge);
   margin-right: 4px;
 }
 .sb-k.ice {
@@ -3193,7 +3193,7 @@ a.contact-big:hover {
 }
 .now-detail {
   border: 1px solid var(--rule);
-  border-left: 3px solid var(--ink);
+  border-left: 3px solid var(--edge);
   background: var(--card);
   padding: 14px 18px;
 }
@@ -3236,7 +3236,7 @@ a.contact-big:hover {
 }
 .now-table-wrap {
   overflow-x: auto;
-  border-top: 1.5px solid var(--ink);
+  border-top: 1.5px solid var(--edge);
 }
 .now-table {
   font-size: 14px;

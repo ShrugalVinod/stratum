@@ -1,6 +1,5 @@
 import { site } from "../content/site";
 import { T } from "../i18n";
-import { Split } from "./Split";
 
 export function Footer() {
   return (
@@ -8,12 +7,7 @@ export function Footer() {
       <div class="wrap">
         <div class="footer-grid">
           <div>
-            <p class="footer-mark">
-              <Split text="STRATUM" />
-            </p>
-            <p class="footer-tag rv rv-fade" style={{ "--d": 250 }}>
-              {T(site.tagline)}
-            </p>
+            <p class="footer-tag rv rv-fade">{T(site.tagline)}</p>
             <p class="footer-warn">{T("Computational research prototype — no real flight was changed.")}</p>
           </div>
           <div>
@@ -55,6 +49,9 @@ export function Footer() {
           <span>{T("No cookies · no analytics · no trackers")}</span>
         </div>
       </div>
+      <p class="footer-mark" aria-hidden="true">
+        STRATUM
+      </p>
     </footer>
   );
 }

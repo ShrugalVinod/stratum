@@ -99,9 +99,11 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
   await expect(page.locator(".lightbox")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".lightbox")).toHaveCount(0);
-  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
+  // Night is the default theme: the first click goes to the paper chart, the second comes back
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
-  // the map restyles for night mode; with software WebGL (CI) that keeps the page busy, so wait
+  await page.locator(".theme-btn").click({ force: true }); // its icon animates: on slow CI it never counts as "stable"
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
+  // the map restyles for the chart; with software WebGL (CI) that keeps the page busy, so wait
   // until the new style has loaded before toggling back
   await expect
     .poll(() => page.evaluate(() => (window as any).__map?.isStyleLoaded?.() ?? true), { timeout: 120_000 })

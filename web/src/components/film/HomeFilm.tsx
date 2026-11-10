@@ -2,16 +2,25 @@
 // their physics-flagged stretches (the map's own files), one satellite-confirmed contrail
 // (ALK266, 1 Nov 2025, the proof viewer's Meteosat crops and overlays) and the logged H1 totals.
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { site } from "../../content/site";
 import type { ContrailEvent } from "../../data/contract";
 import { contrailImg } from "../../data/load";
-import { tx, useLang } from "../../i18n";
-import { Canvas, clamp, easeIo, easeOut, Film, lerp, nf, Num, type Scene, seg, Stamp } from "./kit";
-import { at, type Flight, h1Totals, type Land, loadLand, loadProof, loadRes, loadStoryDay, minuteOf, PROOF_DAY, type StoryDay } from "./data";
+import { T, tx, useLang } from "../../i18n";
+import type { OrbitInput } from "../../three/orbit";
+import { Arrow } from "../Footer";
+import { reduced } from "../motion";
+import { Split } from "../Split";
+import { Canvas, clamp, easeIo, easeOut, Film, type Frame, lerp, nf, Num, type Scene, seg, Stamp } from "./kit";
+import { at, type Flight, h1Totals, type Land, loadCities, loadLand, loadProof, loadRes, loadStates, loadStoryDay, loadWorldLand, minuteOf, PROOF_DAY, type StoryDay } from "./data";
+import { Stage3D } from "./HomeOrbit";
 
-type Box = { x: number; y: number; w: number; h: number };
+export type Box = { x: number; y: number; w: number; h: number };
 type XY = [number, number][];
+export type Stats = { byId: Map<string, Flight>; ranked: any[]; total: number; k80: number; flaggedFlights: number; n: number; top: Set<string> };
+export type H1 = ReturnType<typeof h1Totals>;
+type OrbitModule = typeof import("../../three/orbit");
 
-function useSize(ref: { current: HTMLElement | null }) {
+export function useSize(ref: { current: HTMLElement | null }) {
   const [s, set] = useState<[number, number]>([0, 0]);
   useEffect(() => {
     const el = ref.current;
@@ -23,11 +32,15 @@ function useSize(ref: { current: HTMLElement | null }) {
   return s;
 }
 
-/** Where the picture lives inside the stage: right of the captions on wide screens, above them on phones. */
-const layout = (w: number, h: number): Box => (w >= 900 ? { x: w * 0.36, y: 66, w: w * 0.64, h: h - 66 - 30 } : { x: 0, y: 84, w, h: h * 0.58 - 84 });
+/** Where the picture lives inside the stage: right of the captions on wide screens, above them
+ *  on phones; below the site's bar and the film's own read-outs (a storyboard panel has neither). */
+export const layout = (w: number, h: number, still = false): Box => {
+  const top = still ? 16 : w >= 900 ? 132 : 122;
+  return w >= 900 ? { x: w * 0.36, y: top, w: w * 0.64, h: h - top - 34 } : { x: 0, y: top, w, h: h * 0.58 - top };
+};
 
 /** Geographic placement of a 96 px crop, fitted from its own detected lines' pixel and lat/lon pairs. */
-function cropGeo(ev: ContrailEvent) {
+export function cropGeo(ev: ContrailEvent) {
   const xs: number[] = [], ys: number[] = [], lo: number[] = [], la: number[] = [];
   for (const s of ev.slots.slice(0, 1))
     for (const d of s.detected)
@@ -55,11 +68,23 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
   const [land, setLand] = useState<Land | null>(null);
   const [ev, setEv] = useState<ContrailEvent | null>(null);
   const [res, setRes] = useState<Record<string, any> | null>(null);
+  // the orbital stage (WebGL) is fetched after the page is up; without it, or with reduced
+  // motion, the same story is drawn on a flat chart
+  const [orbit, setOrbit] = useState<OrbitModule | null>(null);
+  const [extra3d, setExtra3d] = useState<{ land: number[][]; states: [number, number][][]; cities: { lon: number; lat: number; pop: number }[] } | null>(null);
+  const [flat, setFlat] = useState(false);
   useEffect(() => {
     loadStoryDay().then(setDay).catch(() => {});
     loadLand().then(setLand).catch(() => {});
     loadProof().then(setEv).catch(() => {});
     loadRes().then(setRes).catch(() => {});
+    if (reduced() || !webgl()) return setFlat(true);
+    Promise.all([import("../../three/orbit"), loadWorldLand(), loadStates(), loadCities()])
+      .then(([m, w, s, c]) => {
+        setExtra3d({ land: w, states: s, cities: c });
+        setOrbit(m);
+      })
+      .catch(() => setFlat(true));
   }, []);
 
   // derived, real numbers
@@ -175,19 +200,87 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
     </div>
   );
 
+  const input = useMemo<OrbitInput | null>(() => {
+    if (!day || !st || !land || !extra3d) return null;
+    const index = new Map(day.flights.map((f, i) => [f.id, i]));
+    return {
+      land: extra3d.land,
+      region: land,
+      states: extra3d.states,
+      cities: extra3d.cities,
+      flights: day.flights,
+      stretches: st.ranked.flatMap((x: any) => {
+        const f = index.get(x.flight_id);
+        if (f == null) return [];
+        const a = minuteOf(x.time_utc);
+        const b = x.time_end_utc ? minuteOf(x.time_end_utc) : a + 1;
+        return [{ f, a, b: b > a ? b : a + 1, life: Math.max(30, (x.contrail_age_h ?? 2) * 60), top: st.top.has(x.segment_id) }];
+      }),
+      date: day.date,
+      small: typeof innerWidth !== "undefined" && innerWidth < 760,
+    };
+  }, [day, st, land, extra3d]);
+
+  const hero = (
+    <div class="wrap hero-copy">
+      <p class="h-coords mono">
+        {T("INDUS INTERNATIONAL SCHOOL · BENGALURU")} · 12.97°N 77.59°E · {T(site.competition).toUpperCase()}
+      </p>
+      <h1 id="hero-title" class="display h-title">
+        <span class="h-l1">
+          <Split text={T(site.heroTitle[0])} base={250} />
+        </span>
+        <span class="h-l2">
+          <Split text={T(site.heroTitle[1])} base={520} />
+        </span>
+      </h1>
+      <div class="h-foot">
+        <p class="h-lede">{T(site.heroLede)}</p>
+        <div class="h-actions">
+          <a class="btn primary" href="/map">
+            {T("Open the contrail map")} <Arrow />
+          </a>
+          <a class="btn" href="/how-it-works">
+            {T("How it works")}
+          </a>
+        </div>
+      </div>
+      <p class="h-scroll mono-s" aria-hidden="true">
+        <span class="h-scroll-line" />
+        {tx(`Scroll · the story in ${scenes.length} scenes`, `स्क्रॉल करें · ${scenes.length} दृश्यों में कहानी`)}
+      </p>
+    </div>
+  );
+
   return (
-    <Film id="story" label={["The problem in one scroll", "एक स्क्रॉल में समस्या"]} scenes={scenes} vh={125} skipTo={skipTo} extra={extra}>
-      {(f) => <HomeStage f={f} day={day} land={land} st={st} ev={ev} h1={h1} ratio={ratio} />}
+    <Film id="story" label={["The problem in one scroll", "एक स्क्रॉल में समस्या"]} scenes={scenes} vh={125} skipTo={skipTo} extra={extra} lead={0.85} hero={hero}>
+      {(f) =>
+        f.still || flat ? (
+          <HomeStage f={f} day={day} land={land} st={st} ev={ev} h1={h1} ratio={ratio} />
+        ) : (
+          <Stage3D f={f} orbit={orbit} input={input} day={day} st={st} ev={ev} h1={h1} ratio={ratio} onFail={() => setFlat(true)} />
+        )
+      }
     </Film>
   );
 }
 
-function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: { p: number; n: number; still: boolean }; day: StoryDay | null; land: Land | null; st: any; ev: ContrailEvent | null; h1: ReturnType<typeof h1Totals> | null; ratio?: number }) {
+function webgl(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
+/** The flat chart: the same story on a 2D canvas (reduced motion, or no WebGL). */
+function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: Frame; day: StoryDay | null; land: Land | null; st: Stats | null; ev: ContrailEvent | null; h1: H1 | null; ratio?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [W, H] = useSize(ref);
   const { p, n } = f;
   const S = (k: number, a = 0, b = 1) => seg(p, (k + a) / n, (k + b) / n); // progress within scene k
-  const box = layout(W || 1200, H || 700);
+  const box = layout(W || 1200, H || 700, f.still);
   const geo = useMemo(() => (ev ? cropGeo(ev) : null), [ev]);
 
   // camera: India → the crop over Kerala
@@ -359,13 +452,6 @@ function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: { p: number; n: num
   // satellite panel geometry (anchored to the map so the zoom flows into it)
   const half = geo ? (geo.span * k) / 2 : 0;
   const px = geo ? X(geo.lon) - half : 0, py = geo ? Y(geo.lat) - half : 0;
-  const frameT = S(6, 0.42, 0.95);
-  const slotI = f.p >= (6 + 0.42) / n ? Math.min((ev?.slots.length ?? 1) - 1, Math.floor(frameT * (ev?.slots.length ?? 1) * 0.999)) : 0;
-  const slot = ev?.slots[slotI];
-  const trackT = slotI > 0 ? 1 : S(4, 0.05, 0.75);
-  const driftT = slotI > 0 ? 1 : easeIo(S(5, 0.05, 0.75));
-  const detT = slotI > 0 ? 1 : S(6, 0.02, 0.3);
-
   return (
     <div ref={ref} class="hf">
       <Canvas class="hf-canvas" draw={draw} label={tx("Animated map of India's flights on 1 January 2026", "1 जनवरी 2026 की भारत की उड़ानों का चलता मानचित्र")} />
@@ -379,82 +465,110 @@ function HomeStage({ f, day, land, st, ev, h1, ratio }: { f: { p: number; n: num
         )}
       </div>
 
-      {ev && slot && panelO > 0.001 && (
-        <div class="hf-sat" style={{ left: `${px}px`, top: `${py}px`, width: `${half * 2}px`, height: `${half * 2}px`, opacity: panelO }}>
-          {ev.slots.map((s, i) => (
-            <img src={contrailImg(PROOF_DAY, s.img)} alt="" class="hf-img" style={{ opacity: i === slotI ? 1 : 0 }} />
-          ))}
-          <svg viewBox="0 0 96 96" preserveAspectRatio="none" aria-label={tx("Meteosat-9 image with the flight track, its wind-drifted contrail and the detected line", "Meteosat-9 तस्वीर: उड़ान का ट्रैक, हवा से खिसकी कंट्रेल और पाई गई रेखा")} role="img">
-            <Segs segs={slot.track} t={trackT} cls="hf-track" />
-            <Morph from={slot.track} to={slot.drift} t={driftT} cls="hf-drift" />
-            {slot.detected.map((d) => (
-              <Line pts={d.pts} t={detT} cls={d.matched ? "hf-det" : "hf-det off"} />
-            ))}
-          </svg>
-          <div class="hf-sat-cap mono-s">
-            <span>
-              {slot.t.slice(11, 16)} UTC · {tx("age", "उम्र")} {Math.round(slot.age_min)} min
-            </span>
-            <span>© EUMETSAT 2026</span>
-          </div>
-          <div class="hf-frames mono-s" style={{ opacity: S(6, 0.35, 0.5) }}>
-            {ev.slots.map((s, i) => (
-              <span class={`${i <= slotI ? "on" : ""} ${s.detected.some((d) => d.matched) ? "ok" : ""}`}>
-                {s.t.slice(11, 16)} {s.detected.some((d) => d.matched) && i <= slotI ? "✓" : ""}
-              </span>
-            ))}
-          </div>
-          <div class="hf-match">
-            <Stamp t={S(6, 0.26, 0.5)} kind="info">
-              MATCH · {slot.match_px?.toFixed(2)} px
-            </Stamp>
-          </div>
-          <div class="hf-legend mono-s" style={{ opacity: S(4, 0, 0.2) }}>
-            <span class="lt">{tx("flight track", "उड़ान ट्रैक")}</span>
-            {S(5) > 0 && (
-              <span class="ld" style={{ opacity: S(5, 0, 0.2) }}>
-                {tx("predicted contrail (wind + parallax)", "अनुमानित कंट्रेल (हवा + पैरलैक्स)")}
-              </span>
-            )}
-            {S(6) > 0 && (
-              <span class="lc" style={{ opacity: S(6, 0, 0.2) }}>
-                {tx("detected by the satellite", "उपग्रह ने पकड़ी")}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {h1 && S(7) > 0 && (
-        <div class="hf-h1" style={{ left: `${box.x + box.w * 0.08}px`, top: `${box.y + box.h * 0.16}px`, width: `${box.w * 0.84}px`, opacity: S(7, 0, 0.2) * (1 - S(8, 0, 0.25)) }}>
-          <p class="hf-big">
-            <Num to={ratio ?? h1.predicted / h1.observed} t={S(7, 0.1, 0.6)} d={2} />×
-          </p>
-          <div class="hf-bars">
-            <div>
-              <span class="mono-s">{tx("lasting contrails predicted by physics (B1)", "भौतिकी (B1) से अनुमानित टिकाऊ कंट्रेल")}</span>
-              <i class="o" style={{ transform: `scaleX(${easeOut(S(7, 0.08, 0.5))})` }} />
-              <b class="mono">
-                <Num to={h1.predicted} t={S(7, 0.08, 0.5)} />
-              </b>
-            </div>
-            <div>
-              <span class="mono-s">{tx("seen by Meteosat-9", "Meteosat-9 ने देखीं")}</span>
-              <i class="c" style={{ transform: `scaleX(${(h1.observed / h1.predicted) * easeOut(S(7, 0.2, 0.62))})` }} />
-              <b class="mono">
-                <Num to={h1.observed} t={S(7, 0.2, 0.62)} />
-              </b>
-            </div>
-          </div>
-          <div class="hf-stamp">
-            <Stamp t={S(7, 0.55, 0.8)} kind="no">
-              {tx("H1 not supported", "H1 समर्थित नहीं")}
-            </Stamp>
-          </div>
-        </div>
-      )}
-
+      {ev && panelO > 0.001 && <SatPanel ev={ev} f={f} rect={{ x: px, y: py, size: half * 2 }} opacity={panelO} />}
+      {h1 && S(7) > 0 && <H1Panel h1={h1} ratio={ratio} f={f} box={box} />}
       {S(8) > 0 && <SideView t={S(8)} box={box} />}
+    </div>
+  );
+}
+
+/** The Meteosat-9 crop with the three overlays, frame by frame (shared by both stages). */
+export function SatPanel({ ev, f, rect, opacity }: { ev: ContrailEvent; f: Frame; rect: { x: number; y: number; size: number }; opacity: number }) {
+  const { p, n } = f;
+  const S = (k: number, a = 0, b = 1) => seg(p, (k + a) / n, (k + b) / n);
+  const frameT = S(6, 0.42, 0.95);
+  const slotI = p >= (6 + 0.42) / n ? Math.min(ev.slots.length - 1, Math.floor(frameT * ev.slots.length * 0.999)) : 0;
+  const slot = ev.slots[slotI];
+  const trackT = slotI > 0 ? 1 : S(4, 0.05, 0.75);
+  const driftT = slotI > 0 ? 1 : easeIo(S(5, 0.05, 0.75));
+  const detT = slotI > 0 ? 1 : S(6, 0.02, 0.3);
+  return (
+    <div class="hf-sat" style={{ left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.size}px`, height: `${rect.size}px`, opacity }}>
+      {ev.slots.map((s, i) => (
+        <img src={contrailImg(PROOF_DAY, s.img)} alt="" class="hf-img" style={{ opacity: i === slotI ? 1 : 0 }} />
+      ))}
+      <svg viewBox="0 0 96 96" preserveAspectRatio="none" aria-label={tx("Meteosat-9 image with the flight track, its wind-drifted contrail and the detected line", "Meteosat-9 तस्वीर: उड़ान का ट्रैक, हवा से खिसकी कंट्रेल और पाई गई रेखा")} role="img">
+        <Segs segs={slot.track} t={trackT} cls="hf-track" />
+        <Morph from={slot.track} to={slot.drift} t={driftT} cls="hf-drift" />
+        {slot.detected.map((d) => (
+          <Line pts={d.pts} t={detT} cls={d.matched ? "hf-det" : "hf-det off"} />
+        ))}
+      </svg>
+      <i class="hf-corner tl" />
+      <i class="hf-corner tr" />
+      <i class="hf-corner bl" />
+      <i class="hf-corner br" />
+      <div class="hf-sat-cap mono-s">
+        <span>
+          {slot.t.slice(11, 16)} UTC · {tx("age", "उम्र")} {Math.round(slot.age_min)} min
+        </span>
+        <span>© EUMETSAT 2026</span>
+      </div>
+      <div class="hf-frames mono-s" style={{ opacity: S(6, 0.35, 0.5) }}>
+        {ev.slots.map((s, i) => (
+          <span class={`${i <= slotI ? "on" : ""} ${s.detected.some((d) => d.matched) ? "ok" : ""}`}>
+            {s.t.slice(11, 16)} {s.detected.some((d) => d.matched) && i <= slotI ? "✓" : ""}
+          </span>
+        ))}
+      </div>
+      <div class="hf-match">
+        <Stamp t={S(6, 0.26, 0.5)} kind="info">
+          MATCH · {slot.match_px?.toFixed(2)} px
+        </Stamp>
+      </div>
+      <div class="hf-legend mono-s" style={{ opacity: S(4, 0, 0.2) }}>
+        <span class="lt">{tx("flight track", "उड़ान ट्रैक")}</span>
+        {S(5) > 0 && (
+          <span class="ld" style={{ opacity: S(5, 0, 0.2) }}>
+            {tx("predicted contrail (wind + parallax)", "अनुमानित कंट्रेल (हवा + पैरलैक्स)")}
+          </span>
+        )}
+        {S(6) > 0 && (
+          <span class="lc" style={{ opacity: S(6, 0, 0.2) }}>
+            {tx("detected by the satellite", "उपग्रह ने पकड़ी")}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Which satellite frame the story is on (0 before the frame-by-frame part). */
+export function slotAt(ev: ContrailEvent, f: Frame): number {
+  const t = seg(f.p, (6 + 0.42) / f.n, (6 + 0.95) / f.n);
+  return f.p >= (6 + 0.42) / f.n ? Math.min(ev.slots.length - 1, Math.floor(t * ev.slots.length * 0.999)) : 0;
+}
+
+/** The logged H1 totals: what physics predicted against what the satellite saw. */
+export function H1Panel({ h1, ratio, f, box }: { h1: H1; ratio?: number; f: Frame; box: Box }) {
+  const { p, n } = f;
+  const S = (k: number, a = 0, b = 1) => seg(p, (k + a) / n, (k + b) / n);
+  return (
+    <div class="hf-h1" style={{ left: `${box.x + box.w * 0.08}px`, top: `${box.y + box.h * 0.16}px`, width: `${box.w * 0.84}px`, opacity: S(7, 0, 0.2) * (1 - S(8, 0, 0.25)) }}>
+      <p class="hf-big">
+        <Num to={ratio ?? h1.predicted / h1.observed} t={S(7, 0.1, 0.6)} d={2} />×
+      </p>
+      <div class="hf-bars">
+        <div>
+          <span class="mono-s">{tx("lasting contrails predicted by physics (B1)", "भौतिकी (B1) से अनुमानित टिकाऊ कंट्रेल")}</span>
+          <i class="o" style={{ transform: `scaleX(${easeOut(S(7, 0.08, 0.5))})` }} />
+          <b class="mono">
+            <Num to={h1.predicted} t={S(7, 0.08, 0.5)} />
+          </b>
+        </div>
+        <div>
+          <span class="mono-s">{tx("seen by Meteosat-9", "Meteosat-9 ने देखीं")}</span>
+          <i class="c" style={{ transform: `scaleX(${(h1.observed / h1.predicted) * easeOut(S(7, 0.2, 0.62))})` }} />
+          <b class="mono">
+            <Num to={h1.observed} t={S(7, 0.2, 0.62)} />
+          </b>
+        </div>
+      </div>
+      <div class="hf-stamp">
+        <Stamp t={S(7, 0.55, 0.8)} kind="no">
+          {tx("H1 not supported", "H1 समर्थित नहीं")}
+        </Stamp>
+      </div>
     </div>
   );
 }
@@ -502,50 +616,93 @@ export function Line({ pts, t, cls }: { pts: [number, number][]; t: number; cls:
 }
 
 /** Schematic side view: one aircraft through a humid layer, one 2,000 ft above it. */
-function SideView({ t, box }: { t: number; box: Box }) {
-  const a = easeIo(seg(t, 0.05, 0.7));
-  const climb = (x: number) => (x < 210 ? 196 : x > 300 ? 150 : 196 - ((x - 210) / 90) * 46);
-  const xs = Array.from({ length: 41 }, (_, i) => 40 + (i / 40) * 520);
-  const xa = 40 + a * 520;
-  const pathB = xs.filter((x) => x <= xa).map((x, i) => `${i ? "L" : "M"}${x.toFixed(1)},${climb(x).toFixed(1)}`).join("");
+export function SideView({ t, box }: { t: number; box: Box }) {
+  const a = easeIo(seg(t, 0.06, 0.72));
+  const x0 = 34, x1 = 606, yLow = 176, yHigh = 104;
+  const xa = lerp(x0, x1, a);
+  const climb = (x: number) => (x < 190 ? yLow : x > 290 ? yHigh : yLow - easeIo((x - 190) / 100) * (yLow - yHigh));
+  const xs = Array.from({ length: 61 }, (_, i) => x0 + (i / 60) * (x1 - x0)).filter((x) => x <= xa);
+  const tail = xs.filter((x) => x >= xa - 84);
+  const short = tail.map((x, i) => `${i ? "L" : "M"}${x.toFixed(1)},${climb(x).toFixed(1)}`).join("");
+  // the lasting contrail: thin at the aircraft, wider and softer the older it is
+  const spread = (x: number) => 2 + Math.min(1, (xa - x) / 260) * 15;
+  const wedge = xs.length > 1 ? `M${xs.map((x) => `${x.toFixed(1)},${(yLow - spread(x)).toFixed(1)}`).join("L")}L${[...xs].reverse().map((x) => `${x.toFixed(1)},${(yLow + spread(x)).toFixed(1)}`).join("L")}Z` : "";
+  const lab = seg(t, 0.45, 0.7);
   return (
-    <div class="hf-side" style={{ left: `${box.x + box.w * 0.04}px`, top: `${box.y + box.h * 0.1}px`, width: `${box.w * 0.92}px`, opacity: seg(t, 0, 0.18) }}>
-      <svg viewBox="0 0 600 340" role="img" aria-label={tx("Schematic: a contrail lasts inside a humid layer and not 2,000 ft above it", "रेखाचित्र: नम परत के भीतर कंट्रेल टिकती है, 2,000 फ़ुट ऊपर नहीं")}>
+    <div class="hf-side" style={{ left: `${box.x + box.w * 0.05}px`, top: `${box.y + box.h * 0.02}px`, width: `${Math.min(box.w * 0.9, box.h * 1.9)}px`, opacity: seg(t, 0, 0.18) }}>
+      <svg viewBox="0 0 640 290" role="img" aria-label={tx("Schematic: a contrail lasts inside a humid layer and not 2,000 ft above it", "रेखाचित्र: नम परत के भीतर कंट्रेल टिकती है, 2,000 फ़ुट ऊपर नहीं")}>
         <defs>
           <linearGradient id="hf-band" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stop-color="#5cbcc6" stop-opacity="0" />
-            <stop offset="0.5" stop-color="#5cbcc6" stop-opacity="0.32" />
-            <stop offset="1" stop-color="#5cbcc6" stop-opacity="0" />
+            <stop offset="0" stop-color="#5fd2dc" stop-opacity="0.05" />
+            <stop offset="0.5" stop-color="#5fd2dc" stop-opacity="0.3" />
+            <stop offset="1" stop-color="#5fd2dc" stop-opacity="0.05" />
           </linearGradient>
-          <filter id="hf-blur">
-            <feGaussianBlur stdDeviation="3" />
+          <linearGradient id="hf-con" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#ffd9b0" stop-opacity="0.5" />
+            <stop offset="1" stop-color="#ff8f43" stop-opacity="1" />
+          </linearGradient>
+          <pattern id="hf-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+            <line x1="0" y1="0" x2="0" y2="9" stroke="#5fd2dc" stroke-opacity="0.3" stroke-width="1" />
+          </pattern>
+          <filter id="hf-blur" x="-5%" y="-80%" width="110%" height="260%">
+            <feGaussianBlur stdDeviation="3.2" />
           </filter>
         </defs>
-        <rect x="20" y="170" width="560" height="56" fill="url(#hf-band)" />
-        <text x="572" y="244" class="hf-sv-l t" text-anchor="end">
-          {tx("ice-supersaturated layer", "बर्फ़-अतिसंतृप्त परत")}
+        {/* the layer */}
+        <rect x="10" y={yLow - 28} width="620" height="56" fill="url(#hf-band)" />
+        <rect x="10" y={yLow - 28} width="620" height="56" fill="url(#hf-hatch)" />
+        <line x1="10" x2="630" y1={yLow - 28} y2={yLow - 28} class="hf-sv-edge" />
+        <line x1="10" x2="630" y1={yLow + 28} y2={yLow + 28} class="hf-sv-edge" />
+        <text x="626" y={yLow + 46} class="hf-sv-l t" text-anchor="end">
+          {tx("ICE-SUPERSATURATED LAYER · RHi ≥ 100 %", "बर्फ़-अतिसंतृप्त परत · RHi ≥ 100 %")}
         </text>
-        {/* aircraft A: stays in the layer, contrail spreads */}
-        <path d={`M40,${198} L${xa},198`} class="hf-sv-con" filter="url(#hf-blur)" style={{ strokeWidth: 10 }} />
-        <path d={`M40,${198} L${xa},198`} class="hf-sv-con" />
-        <circle cx={xa} cy={198} r="4.5" class="hf-sv-plane" />
-        <text x="40" y="272" class="hf-sv-l">
-          {tx("as planned: a contrail that lasts for hours", "योजना के अनुसार: घंटों टिकने वाली कंट्रेल")}
+        <text x="14" y={yHigh - 5} class="hf-sv-fl">
+          FL380
         </text>
-        {/* aircraft B: 2,000 ft higher, short-lived trail */}
-        <path d={pathB} class="hf-sv-short" style={{ opacity: 0.9 }} />
-        <circle cx={xa} cy={climb(xa)} r="4.5" class="hf-sv-plane b" />
-        <text x="40" y="128" class="hf-sv-l b">
-          {tx("+2,000 ft: the trail fades in seconds", "+2,000 फ़ुट: लकीर कुछ सेकंड में मिट जाती है")}
+        <line x1="10" x2="630" y1={yHigh} y2={yHigh} class="hf-sv-lvl" />
+        <text x="14" y={yLow - 34} class="hf-sv-fl">
+          FL360
         </text>
-        <line x1="330" x2="330" y1="150" y2="196" class="hf-sv-dim" />
-        <text x="338" y="178" class="hf-sv-l">
-          2,000 ft
-        </text>
-        <text x="20" y="326" class="hf-sv-tag">
-          {tx("SCHEMATIC", "रेखाचित्र")}
+        {/* as planned: the contrail spreads */}
+        {wedge && <path d={wedge} fill="url(#hf-con)" filter="url(#hf-blur)" opacity="0.85" />}
+        {xs.length > 1 && <path d={`M${x0},${yLow}L${xa.toFixed(1)},${yLow}`} class="hf-sv-con" />}
+        <g transform={`translate(${(xa - 26).toFixed(1)} ${yLow - 6.5})`} class="hf-sv-plane">
+          <PlaneShape />
+        </g>
+        {/* 2,000 ft higher: gone in seconds */}
+        {short && <path d={short} class="hf-sv-short" />}
+        <g transform={`translate(${(xa - 26).toFixed(1)} ${(climb(xa) - 6.5).toFixed(1)})`} class="hf-sv-plane b">
+          <PlaneShape />
+        </g>
+        <g style={{ opacity: lab }}>
+          <line x1="330" x2="330" y1={yHigh + 4} y2={yLow - 4} class="hf-sv-dim" />
+          <line x1="324" x2="336" y1={yHigh + 4} y2={yHigh + 4} class="hf-sv-dim s" />
+          <line x1="324" x2="336" y1={yLow - 4} y2={yLow - 4} class="hf-sv-dim s" />
+          <text x="340" y={(yHigh + yLow) / 2 + 4} class="hf-sv-l r">
+            +2,000 FT
+          </text>
+          <text x="14" y="64" class="hf-sv-h b">
+            {tx("2,000 ft higher: the trail is gone in seconds", "2,000 फ़ुट ऊपर: लकीर कुछ सेकंड में मिट जाती है")}
+          </text>
+          <text x="14" y="252" class="hf-sv-h o">
+            {tx("As planned: the contrail spreads and lasts for hours", "योजना के अनुसार: कंट्रेल फैलती है और घंटों टिकती है")}
+          </text>
+        </g>
+        <text x="626" y="282" class="hf-sv-tag" text-anchor="end">
+          {tx("SCHEMATIC · NOT TO SCALE", "रेखाचित्र · पैमाने पर नहीं")}
         </text>
       </svg>
     </div>
+  );
+}
+
+/** A small airliner in side view, nose to the right (52 × 13 units). */
+function PlaneShape() {
+  return (
+    <g transform="scale(0.82 0.65)">
+      <path d="M3 10.6c0-1.6 2-2.6 5.4-2.6h43.2c4.3 0 8.4 1.1 11.4 2.9-3 1.6-7 2.4-11.4 2.4H8.4C5 13.3 3 12.3 3 10.6Z" />
+      <path d="M4.2 8.2 1.6 1.2h4.1l7.6 7Z" />
+      <path d="M24.5 11.6h12.6l-8.4 6.6h-4.4Z" />
+    </g>
   );
 }

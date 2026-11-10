@@ -1,26 +1,32 @@
-/* Scroll films (Home, How it works, Results). The stage is always night-sky dark, in both themes:
-   it is a screen inside the page, like a cinema. */
+/* Scroll films (Home, How it works, Results). The stage is always night-sky dark, in both
+   themes: a screen inside the page, like a cinema. It fills the window; the site's bar floats
+   over its top edge. */
 
 .film {
-  --f-bg: #050a13;
-  --f-ink: #ece6d8;
-  --f-ink-2: rgb(236 230 216 / 0.78);
-  --f-muted: rgb(236 230 216 / 0.52);
-  --f-rule: rgb(236 230 216 / 0.16);
-  --f-red: #ff5a66;
-  --f-orange: #ff8c3a;
-  --f-cyan: #3fe0ff;
-  --f-teal: #5cbcc6;
-  --f-green: #7cc48a;
+  --f-bg: #03050a;
+  --f-ink: #f2ede3;
+  --f-ink-2: rgb(242 237 227 / 0.8);
+  --f-muted: rgb(242 237 227 / 0.54);
+  --f-rule: rgb(242 237 227 / 0.16);
+  --f-red: #ff5a68;
+  --f-orange: #ff8f43;
+  --f-cyan: #46dcff;
+  --f-teal: #5fd2dc;
+  --f-green: #7fdf9f;
   position: relative;
   background: var(--f-bg);
   color: var(--f-ink);
   isolation: isolate;
 }
+/* the film that opens a page starts under the site's bar */
+.film-lead {
+  margin-top: calc(-1 * var(--header-h));
+}
 .film-stage {
   position: sticky;
-  top: var(--header-h);
-  height: calc(100svh - var(--header-h));
+  top: 0;
+  height: 100vh;
+  height: 100svh;
   overflow: hidden;
   background: var(--f-bg);
 }
@@ -34,18 +40,19 @@
   pointer-events: none;
   z-index: 2;
   background:
-    linear-gradient(90deg, rgb(5 10 19 / 0.94) 0%, rgb(5 10 19 / 0.78) 26%, rgb(5 10 19 / 0) 44%),
-    linear-gradient(0deg, rgb(5 10 19 / 0.5), rgb(5 10 19 / 0) 18%);
+    linear-gradient(90deg, rgb(3 5 10 / 0.92) 0%, rgb(3 5 10 / 0.72) 24%, rgb(3 5 10 / 0) 44%),
+    linear-gradient(0deg, rgb(3 5 10 / 0.55), rgb(3 5 10 / 0) 20%),
+    linear-gradient(180deg, rgb(3 5 10 / 0.6), rgb(3 5 10 / 0) 16%);
 }
 .film-right .film-shade {
-  background: linear-gradient(270deg, rgb(5 10 19 / 0.94) 0%, rgb(5 10 19 / 0.78) 26%, rgb(5 10 19 / 0) 44%);
+  background: linear-gradient(270deg, rgb(3 5 10 / 0.92) 0%, rgb(3 5 10 / 0.72) 24%, rgb(3 5 10 / 0) 44%);
 }
 
 /* HUD: label, scene ticks, counter, skip */
 .film-hud {
   position: absolute;
   z-index: 4;
-  top: 16px;
+  top: calc(var(--header-h) + 14px);
   left: var(--gutter);
   right: var(--gutter);
   display: flex;
@@ -81,7 +88,6 @@
   right: 0;
   top: 8px;
   height: 2px;
-  border-radius: 2px;
 }
 .film-ticks button::before {
   background: var(--f-rule);
@@ -89,10 +95,10 @@
 .film-ticks button i {
   background: var(--f-red);
   transform-origin: left;
-  box-shadow: 0 0 10px rgb(255 90 102 / 0.6);
+  box-shadow: 0 0 10px rgb(255 90 104 / 0.6);
 }
 .film-ticks button:hover::before {
-  background: rgb(236 230 216 / 0.4);
+  background: rgb(242 237 227 / 0.4);
 }
 .film-ticks button:focus-visible {
   outline: 2px solid var(--f-ink);
@@ -104,18 +110,20 @@
 }
 .film-skip {
   margin-left: auto;
-  padding: 7px 14px;
-  border: 1px solid rgb(236 230 216 / 0.25);
-  border-radius: 999px;
-  background: rgb(236 230 216 / 0.06);
+  padding: 8px 14px;
+  border: 1px solid rgb(242 237 227 / 0.28);
+  background: rgb(3 5 10 / 0.45);
   color: var(--f-ink);
   cursor: pointer;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: background 0.3s var(--ease);
+  transition:
+    background 0.3s var(--ease),
+    border-color 0.3s;
 }
 .film-skip:hover {
-  background: rgb(236 230 216 / 0.16);
+  background: rgb(242 237 227 / 0.14);
+  border-color: var(--f-ink);
 }
 
 /* captions */
@@ -125,7 +133,7 @@
   left: var(--gutter);
   top: 0;
   bottom: 0;
-  width: min(31vw, 460px);
+  width: min(31vw, 470px);
   pointer-events: none;
 }
 .film-right .film-copy {
@@ -136,7 +144,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 24%;
+  top: 27%;
   will-change: opacity, transform, filter;
 }
 .film-k {
@@ -148,10 +156,11 @@
 .film-t {
   font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 85%;
-  font-size: clamp(30px, 3.5vw, 60px);
-  line-height: 0.98;
-  letter-spacing: -0.015em;
+  font-stretch: 72%;
+  font-size: clamp(32px, 3.9vw, 68px);
+  line-height: 0.95;
+  letter-spacing: -0.012em;
+  text-transform: uppercase;
   margin: 0 0 18px;
   color: var(--f-ink);
   text-wrap: balance;
@@ -176,7 +185,7 @@
 }
 .film .btn {
   height: 50px;
-  border-color: rgb(236 230 216 / 0.6);
+  border-color: rgb(242 237 227 / 0.5);
   color: var(--f-ink);
 }
 .film .btn::before {
@@ -184,11 +193,13 @@
 }
 .film .btn:hover {
   color: var(--f-bg);
+  border-color: var(--f-ink);
 }
 .film .btn.primary {
-  --bg: #e8323f;
-  border-color: #e8323f;
-  color: #fff;
+  --bg: #f2384c;
+  border-color: #f2384c;
+  color: #05080e;
+  box-shadow: 0 14px 44px -18px rgb(242 56 76 / 0.7);
 }
 
 .film-hint {
@@ -234,7 +245,7 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background: rgb(236 230 216 / 0.06);
+  background: rgb(242 237 227 / 0.06);
 }
 .film-bar i {
   position: absolute;
@@ -252,9 +263,9 @@
   font-size: 13px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  background: rgb(5 10 19 / 0.72);
+  background: rgb(3 5 10 / 0.72);
   white-space: nowrap;
-  box-shadow: 0 0 0 4px rgb(5 10 19 / 0.4);
+  box-shadow: 0 0 0 4px rgb(3 5 10 / 0.4);
 }
 .film-stamp.yes {
   color: var(--f-green);
@@ -266,11 +277,124 @@
   color: var(--f-cyan);
 }
 
+/* ── the opening shot: the page's title over the Earth ─────── */
+.film-hero {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  padding: calc(var(--header-h) + 24px) 0 clamp(26px, 5.2vh, 60px);
+  will-change: opacity, transform;
+  background:
+    linear-gradient(0deg, rgb(3 5 10 / 0.86) 0%, rgb(3 5 10 / 0.5) 26%, rgb(3 5 10 / 0) 56%),
+    linear-gradient(90deg, rgb(3 5 10 / 0.5), rgb(3 5 10 / 0) 55%);
+}
+.hero-copy {
+  position: relative;
+}
+.h-coords {
+  margin: 0 0 clamp(14px, 2.2vh, 26px);
+  font-size: clamp(10.5px, 0.95vw, 13px);
+  letter-spacing: 0.1em;
+  color: var(--f-muted);
+}
+.js .film-hero .h-coords,
+.js .film-hero .h-foot,
+.js .film-hero .h-scroll {
+  animation: hero-in 1.2s var(--ease) 0.9s both;
+}
+.js .film-hero .h-foot {
+  animation-delay: 1.15s;
+}
+.js .film-hero .h-scroll {
+  animation-delay: 1.6s;
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+.h-title {
+  font-size: clamp(54px, 9.6vw, 176px);
+  font-weight: 900;
+  font-stretch: 64%;
+  line-height: 0.84;
+  letter-spacing: -0.012em;
+  color: var(--f-ink);
+  margin: 0;
+}
+.h-l1,
+.h-l2 {
+  display: block;
+  white-space: nowrap;
+}
+.h-l2 {
+  color: #f2384c;
+  filter: drop-shadow(0 0 46px rgb(242 56 76 / 0.38));
+}
+.h-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(20px, 4vw, 64px);
+  margin-top: clamp(18px, 3.2vh, 36px);
+}
+.h-lede {
+  margin: 0;
+  max-width: 35em;
+  font-size: clamp(15.5px, 1.32vw, 20px);
+  line-height: 1.5;
+  color: var(--f-ink-2);
+}
+.h-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: none;
+}
+.h-scroll {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: clamp(16px, 3vh, 30px) 0 0;
+  color: var(--f-muted);
+  letter-spacing: 0.16em;
+}
+.h-scroll-line {
+  width: 64px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--f-red), transparent);
+  transform-origin: left;
+  animation: h-scroll 2.2s var(--ease-io) infinite;
+}
+@keyframes h-scroll {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  70% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+html:lang(hi) .h-title {
+  font-size: clamp(50px, 8.6vw, 156px);
+  line-height: 1 !important;
+}
+
 /* phones: picture on top, captions below */
 @media (max-width: 899px) {
   .film-shade,
   .film-right .film-shade {
-    background: linear-gradient(0deg, rgb(5 10 19 / 0.97) 0%, rgb(5 10 19 / 0.9) 36%, rgb(5 10 19 / 0) 50%);
+    background:
+      linear-gradient(0deg, rgb(3 5 10 / 0.97) 0%, rgb(3 5 10 / 0.9) 36%, rgb(3 5 10 / 0) 50%),
+      linear-gradient(180deg, rgb(3 5 10 / 0.6), rgb(3 5 10 / 0) 16%);
   }
   .film-copy,
   .film-right .film-copy {
@@ -286,7 +410,7 @@
     margin-bottom: 8px;
   }
   .film-t {
-    font-size: clamp(24px, 6.6vw, 34px);
+    font-size: clamp(25px, 7vw, 36px);
     margin-bottom: 10px;
   }
   .film-b {
@@ -298,7 +422,7 @@
     bottom: 4%;
   }
   .film .btn {
-    height: 42px;
+    height: 44px;
     padding: 0 14px;
     font-size: 12px;
   }
@@ -310,14 +434,55 @@
     right: 16px;
     gap: 10px;
   }
+  .film-hero {
+    background: linear-gradient(0deg, rgb(3 5 10 / 0.95) 0%, rgb(3 5 10 / 0.72) 34%, rgb(3 5 10 / 0) 62%);
+  }
+  .h-title {
+    font-size: clamp(46px, 14.6vw, 96px);
+  }
+  .h-l1,
+  .h-l2 {
+    white-space: normal;
+  }
+  .h-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .h-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .h-coords {
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+  }
+  html:lang(hi) .h-title {
+    font-size: clamp(42px, 12.6vw, 84px);
+  }
 }
 
 /* reduced motion: a storyboard */
 .film-still {
-  padding: 56px var(--gutter);
+  padding: 0 0 56px;
+}
+.film-still > .film-label,
+.film-still > .film-board,
+.film-still > .film-board-extra {
+  margin-left: var(--gutter);
+  margin-right: var(--gutter);
 }
 .film-still > .film-label {
-  margin: 0 0 28px;
+  margin-top: 48px;
+  margin-bottom: 28px;
+}
+.film-hero-still {
+  position: relative;
+  min-height: min(100svh, 860px);
+  background:
+    radial-gradient(140% 90% at 72% 118%, #17335e 0%, #0a1528 38%, rgb(3 5 10 / 0) 62%),
+    radial-gradient(60% 40% at 80% 10%, rgb(52 104 190 / 0.25), transparent 70%),
+    #03050a;
 }
 .film-board {
   display: grid;
@@ -334,7 +499,6 @@
   position: relative;
   height: min(70vh, 520px);
   overflow: hidden;
-  border-radius: 4px;
 }
 .film-board-extra {
   padding-top: 24px;
@@ -357,11 +521,204 @@
   height: 100%;
   display: block;
 }
-.hf-hud {
+/* the orbital stage (WebGL): a poster holds the frame until the Earth is ready */
+.hf-poster {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(140% 90% at 72% 118%, #17335e 0%, #0a1528 38%, rgb(3 5 10 / 0) 62%),
+    radial-gradient(60% 40% at 80% 10%, rgb(52 104 190 / 0.25), transparent 70%),
+    #03050a;
+}
+.hf-gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.6s var(--ease-io);
+}
+.hf-3d.ready .hf-gl {
+  opacity: 1;
+}
+/* film grain: the picture is a photograph of data, not a diagram */
+.hf-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.11;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.hf-live {
+  position: absolute;
+  z-index: 4;
+  right: var(--gutter);
+  top: calc(var(--header-h) + 18px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--f-rule);
+  background: rgb(3 5 10 / 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--f-ink-2);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.8s var(--ease);
+}
+.hf-live b {
+  color: var(--f-ink);
+  font-weight: 500;
+}
+.hf-live em {
+  font-style: normal;
+  color: var(--f-muted);
+}
+.hf-live span:empty {
+  display: none;
+}
+.hf-live .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--f-red);
+  box-shadow: 0 0 0 0 rgb(255 90 104 / 0.6);
+  animation: live-dot 2s ease-out infinite;
+}
+@keyframes live-dot {
+  to {
+    box-shadow: 0 0 0 9px rgb(255 90 104 / 0);
+  }
+}
+.hf-few {
+  position: absolute;
+  z-index: 1;
+  padding: 12px 14px 10px;
+  background: rgb(3 5 10 / 0.62);
+  border: 1px solid var(--f-rule);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.hf-few p {
+  margin: 0;
+  color: var(--f-ink-2);
+}
+.hf-few p.red {
+  color: var(--f-red);
+}
+.hf-few svg {
+  width: 100%;
+  height: clamp(64px, 12vh, 118px);
+  margin: 10px 0 8px;
+  overflow: visible;
+}
+.hf-few rect {
+  fill: rgb(255 143 67 / 0.72);
+}
+.hf-few rect.top {
+  fill: var(--f-red);
+}
+.hf-satlabel {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  gap: 3px;
+  margin: -14px 0 0 56px;
+  padding-left: 12px;
+  border-left: 2px solid var(--f-cyan);
+  color: var(--f-ink-2);
+  white-space: nowrap;
+}
+.hf-satlabel b {
+  font: 800 20px var(--font-display);
+  font-stretch: 72%;
+  letter-spacing: 0.04em;
+  color: var(--f-ink);
+}
+.hf-satlabel em {
+  font-style: normal;
+  color: var(--f-muted);
+  font-size: 10.5px;
+}
+.hf-reticle {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+.hf-reticle span {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  white-space: nowrap;
+  color: var(--f-ink);
+}
+.hf-corner {
+  position: absolute;
+  width: clamp(8px, 18%, 22px);
+  height: clamp(8px, 18%, 22px);
+  border: 0 solid #fff;
+  pointer-events: none;
+  z-index: 2;
+}
+.hf-corner.tl {
+  left: -1px;
+  top: -1px;
+  border-width: 2px 0 0 2px;
+}
+.hf-corner.tr {
+  right: -1px;
+  top: -1px;
+  border-width: 2px 2px 0 0;
+}
+.hf-corner.bl {
+  left: -1px;
+  bottom: -1px;
+  border-width: 0 0 2px 2px;
+}
+.hf-corner.br {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 2px 2px 0;
+}
+.hf-dawn {
   position: absolute;
   z-index: 1;
   color: var(--f-muted);
+  text-align: right;
+}
+@media (max-width: 899px) {
+  .hf-live {
+    left: 16px;
+    right: 16px;
+    top: calc(var(--header-h) + 10px);
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+  .hf-live em {
+    display: none;
+  }
+  .hf-satlabel {
+    margin-left: 34px;
+  }
+  .hf-satlabel b {
+    font-size: 16px;
+  }
+  .hf-dawn {
+    display: none;
+  }
+}
+
+.hf-hud {
+  position: absolute;
+  z-index: 1;
+  color: var(--f-ink-2);
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px #03050a, 0 0 4px #03050a;
+  transition: opacity 0.3s;
 }
 .hf-hud b {
   color: var(--f-ink);
@@ -376,10 +733,8 @@
 .hf-sat {
   position: absolute;
   z-index: 1;
-  outline: 1px solid rgb(255 255 255 / 0.4);
-  box-shadow:
-    0 40px 120px rgb(0 0 0 / 0.7),
-    0 0 0 9999px rgb(5 10 19 / 0);
+  outline: 1px solid rgb(255 255 255 / 0.28);
+  box-shadow: 0 40px 120px rgb(0 0 0 / 0.7);
 }
 .hf-sat::after {
   content: "";
@@ -510,6 +865,11 @@
 .hf-h1 {
   position: absolute;
   z-index: 2;
+  padding: clamp(18px, 2.6vw, 38px);
+  background: rgb(3 5 10 / 0.5);
+  border: 1px solid var(--f-rule);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 .hf-big {
   font-family: var(--font-display);
@@ -563,45 +923,77 @@
   width: 100%;
   height: auto;
   display: block;
+  overflow: visible;
+}
+.hf-sv-edge {
+  stroke: rgb(95 210 220 / 0.6);
+  stroke-dasharray: 2 5;
+}
+.hf-sv-lvl {
+  stroke: rgb(242 237 227 / 0.22);
+  stroke-dasharray: 2 7;
 }
 .hf-sv-con {
   fill: none;
-  stroke: rgb(255 140 58 / 0.85);
-  stroke-width: 4;
+  stroke: #ffb37a;
+  stroke-width: 2.2;
   stroke-linecap: round;
 }
 .hf-sv-short {
   fill: none;
-  stroke: rgb(255 255 255 / 0.7);
-  stroke-width: 1.5;
-  stroke-dasharray: 2 7;
+  stroke: rgb(255 255 255 / 0.75);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 6;
   stroke-linecap: round;
 }
 .hf-sv-plane {
   fill: #fff;
-  filter: drop-shadow(0 0 6px #fff);
+  filter: drop-shadow(0 0 5px rgb(255 255 255 / 0.8));
 }
 .hf-sv-plane.b {
-  fill: #9fe7ff;
+  fill: #a8ecff;
 }
 .hf-sv-l {
   fill: var(--f-ink-2);
-  font: 500 12px var(--font-mono);
-}
-.hf-sv-l.b {
-  fill: #9fe7ff;
-}
-.hf-sv-dim {
-  stroke: rgb(236 230 216 / 0.5);
-  stroke-dasharray: 3 3;
-}
-.hf-sv-tag {
-  fill: var(--f-muted);
-  font: 500 10px var(--font-mono);
-  letter-spacing: 0.2em;
+  font: 500 10.5px var(--font-mono);
+  letter-spacing: 0.06em;
 }
 .hf-sv-l.t {
   fill: var(--f-teal);
+}
+.hf-sv-l.r {
+  fill: var(--f-red);
+  font-weight: 700;
+  font-size: 12px;
+}
+.hf-sv-fl {
+  fill: var(--f-muted);
+  font: 500 10px var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.hf-sv-h {
+  font: 800 17px var(--font-display);
+  font-stretch: 78%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.hf-sv-h.b {
+  fill: #a8ecff;
+}
+.hf-sv-h.o {
+  fill: #ffb37a;
+}
+.hf-sv-dim {
+  stroke: var(--f-red);
+  stroke-width: 1.4;
+}
+.hf-sv-tag {
+  fill: var(--f-muted);
+  font: 500 9.5px var(--font-mono);
+  letter-spacing: 0.2em;
+}
+html:lang(hi) .hf-sv-h {
+  font-size: 15px;
 }
 
 /* ── Pipeline film (How it works) ─────────────────────────── */
@@ -1171,5 +1563,36 @@
   }
   .pf-chance i {
     height: 6px;
+  }
+}
+@media (max-width: 899px) {
+  .hf-live b {
+    display: none;
+  }
+  .hf-hud {
+    right: 16px;
+    line-height: 1.5;
+  }
+  .hf-hud b {
+    font-size: 22px;
+  }
+  .hf-hud-o {
+    display: block;
+  }
+  .hf-sv-h {
+    font-size: 27px;
+  }
+  .hf-sv-l {
+    font-size: 17px;
+  }
+  .hf-sv-l.r {
+    font-size: 20px;
+  }
+  .hf-sv-fl,
+  .hf-sv-tag {
+    font-size: 15px;
+  }
+  html:lang(hi) .hf-sv-h {
+    font-size: 23px;
   }
 }

@@ -9,7 +9,8 @@ import { reduced } from "../motion";
 
 export type Pair = [string, string]; // [English, Hindi]
 export type Scene = { k: Pair; t: Pair; b: Pair };
-export type Frame = { p: number; i: number; lp: number; n: number; still: boolean };
+/** ``intro``: 0–1 through the opening shot (1 when a film has none, or once it has passed) */
+export type Frame = { p: number; i: number; lp: number; n: number; still: boolean; intro: number };
 
 export const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 /** Progress of p through [a, b], clamped to 0–1. */
@@ -90,6 +91,8 @@ export function Film({
   skipTo,
   extra,
   aside = "left",
+  lead = 0,
+  hero,
   children,
 }: {
   id: string;
@@ -99,23 +102,30 @@ export function Film({
   skipTo?: string;
   extra?: ComponentChildren;
   aside?: "left" | "right";
+  /** an opening shot before scene 1, this many scenes long, with ``hero`` laid over it */
+  lead?: number;
+  hero?: ComponentChildren;
   children: (f: Frame) => ComponentChildren;
 }) {
   useLang();
   const ref = useRef<HTMLElement>(null);
   const [still, setStill] = useState(false);
   useLayoutEffect(() => setStill(reduced()), []);
-  const p = useScrollProgress(ref, still);
+  const raw = useScrollProgress(ref, still);
   const n = scenes.length;
+  const total = lead + n;
+  const intro = lead ? clamp((raw * total) / lead) : 1;
+  const p = clamp((raw * total - lead) / n);
   const i = Math.min(n - 1, Math.floor(p * n));
   const lp = clamp(p * n - i);
+  const on = lead ? seg(intro, 0.72, 0.98) : 1; // the story's own chrome waits for the opening shot to pass
 
   const jump = (k: number) => {
     const el = ref.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top + scrollY;
     const stageH = (el.firstElementChild as HTMLElement).offsetHeight;
-    scrollTo({ top: top + ((k + 0.42) / n) * (el.offsetHeight - stageH), behavior: "smooth" });
+    scrollTo({ top: top + ((lead + k + 0.42) / total) * (el.offsetHeight - stageH), behavior: "smooth" });
   };
   const skip = () => {
     const t = skipTo && document.getElementById(skipTo);
@@ -124,7 +134,8 @@ export function Film({
 
   if (still)
     return (
-      <section class="film film-still" id={id} aria-label={L(label)}>
+      <section class={`film film-still ${lead ? "film-lead" : ""}`} id={id} aria-label={L(label)}>
+        {hero && <div class="film-hero film-hero-still">{hero}</div>}
         <p class="film-label mono-s">{L(label)}</p>
         {scenes.map((s, k) => (
           <div class="film-board">
@@ -133,7 +144,7 @@ export function Film({
               <h3 class="film-t">{L(s.t)}</h3>
               <p class="film-b">{L(s.b)}</p>
             </div>
-            <div class="film-board-vis">{children({ p: (k + 0.93) / n, i: k, lp: 0.93, n, still: true })}</div>
+            <div class="film-board-vis">{children({ p: (k + 0.93) / n, i: k, lp: 0.93, n, still: true, intro: 1 })}</div>
           </div>
         ))}
         {extra && <div class="film-board-extra">{extra}</div>}
@@ -141,11 +152,20 @@ export function Film({
     );
 
   return (
-    <section ref={ref} class={`film film-${aside}`} id={id} aria-label={L(label)} style={{ height: `${n * vh}vh` }}>
+    <section ref={ref} class={`film film-${aside} ${lead ? "film-lead" : ""}`} id={id} aria-label={L(label)} style={{ height: `${total * vh}vh` }}>
       <div class="film-stage">
-        <div class="film-vis">{children({ p, i, lp, n, still: false })}</div>
-        <div class="film-shade" aria-hidden="true" />
-        <div class="film-hud">
+        <div class="film-vis">{children({ p, i, lp, n, still: false, intro })}</div>
+        <div class="film-shade" aria-hidden="true" style={{ opacity: on }} />
+        {hero && (
+          <div
+            class="film-hero"
+            style={{ opacity: 1 - seg(intro, 0.3, 0.72), transform: `translate3d(0, ${(-intro * 70).toFixed(1)}px, 0)`, visibility: intro > 0.74 ? "hidden" : "visible" }}
+            inert={intro > 0.6}
+          >
+            {hero}
+          </div>
+        )}
+        <div class="film-hud" style={{ opacity: on, visibility: on < 0.01 ? "hidden" : "visible" }}>
           <span class="film-label mono-s">{L(label)}</span>
           <div class="film-ticks" role="group" aria-label={tx("Scenes", "दृश्य")}>
             {scenes.map((s, k) => (
@@ -169,7 +189,7 @@ export function Film({
             </button>
           )}
         </div>
-        <div class="film-copy" aria-live="polite">
+        <div class="film-copy" aria-live="polite" style={{ opacity: on, visibility: on < 0.01 ? "hidden" : "visible" }}>
           {scenes.map((s, k) => (
             <div class="film-cap" style={capStyle(p, k, n)} aria-hidden={k !== i ? "true" : undefined}>
               <p class="film-k mono-s">{L(s.k)}</p>
@@ -183,12 +203,14 @@ export function Film({
             </div>
           )}
         </div>
-        <div class="film-hint mono-s" style={{ opacity: 1 - seg(p, 0, 0.02) }} aria-hidden="true">
-          {tx("Scroll to play", "चलाने के लिए स्क्रॉल करें")}
-          <span class="film-hint-line" />
-        </div>
+        {!lead && (
+          <div class="film-hint mono-s" style={{ opacity: 1 - seg(p, 0, 0.02) }} aria-hidden="true">
+            {tx("Scroll to play", "चलाने के लिए स्क्रॉल करें")}
+            <span class="film-hint-line" />
+          </div>
+        )}
         <div class="film-bar" aria-hidden="true">
-          <i style={{ transform: `scaleX(${p})` }} />
+          <i style={{ transform: `scaleX(${raw})` }} />
         </div>
       </div>
     </section>
