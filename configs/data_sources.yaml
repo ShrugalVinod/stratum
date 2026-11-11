@@ -3,9 +3,9 @@
 # (preregistered.yaml: coverage_rule; paper §3.3). Do not edit by hand.
 
 adsb:
-  chosen_source: pending          # opensky | adsbx — set by `stratum audit-coverage` (Phase 1)
-  decided_on: null
-  audit_report: null
+  chosen_source: adsbx          # opensky | adsbx — set by `stratum audit-coverage` (Phase 1)
+  decided_on: "2026-11-11"
+  audit_report: reports/coverage_audit/coverage_audit.md
 
 era5:
   route: cds                      # CDS crops server-side (~3.2 GB/month); ARCO is whole-globe chunks (~0.5 TB read/month) → equivalence check only

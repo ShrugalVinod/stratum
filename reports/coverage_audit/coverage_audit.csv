@@ -7,3 +7,7 @@ date,source,direction,scheduled,observed,continuous,fraction_continuous,end_to_e
 2026-11-07,adsblol,BOM-DEL,62,6,5,0.0806,0,5,1
 2026-11-08,adsblol,DEL-BOM,48,8,8,0.1667,0,8,1
 2026-11-08,adsblol,BOM-DEL,48,1,1,0.0208,0,1,0
+2026-11-10,adsblol,DEL-BOM,65,14,14,0.2154,0,13,11
+2026-11-10,adsblol,BOM-DEL,63,20,18,0.2857,0,20,15
+2026-11-10,opensky,DEL-BOM,65,63,60,0.9231,52,43,135
+2026-11-10,opensky,BOM-DEL,63,17,13,0.2063,0,17,6

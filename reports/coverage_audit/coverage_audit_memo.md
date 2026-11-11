@@ -8,7 +8,7 @@ Does a free flight-tracking source capture enough of the Delhi ↔ Mumbai traffi
 STRATUM on it? (Paper §3.3.)
 
 ## Method
-* Audit days: 2026-11-05, 2026-11-06, 2026-11-07, 2026-11-08 (4 days).
+* Audit days: 2026-11-05, 2026-11-06, 2026-11-07, 2026-11-08, 2026-11-10 (5 days).
 * Scheduled flights per day and direction come from public timetables
   (`data/reference/scheduled_flights.csv`: each row has a source link and who checked
   it).
@@ -24,7 +24,8 @@ STRATUM on it? (Paper §3.3.)
 ## Numbers
 | source | scheduled | observed | continuous | end to end | fraction end to end |
 |---|---|---|---|---|---|
-| adsblol | 468 | 118 | 115 | 0 | 0.00 |
+| adsblol | 596 | 152 | 147 | 0 | 0.00 |
+| opensky | 128 | 80 | 73 | 52 | 0.41 |
 
 Per-day detail: `reports/coverage_audit/coverage_audit.csv`; maps and gap histogram in
 the same folder.
@@ -32,7 +33,7 @@ the same folder.
 ## Decision (applied mechanically, pre-registered)
 Rule: opensky if the end-to-end fraction ≥ 0.5 (cruise track crosses the corridor, max gap 10 min) else adsbx.
 
-**Chosen source: adsbx** — OpenSky not audited (no historical access) → treated as 0.
+**Chosen source: adsbx** — OpenSky pooled end-to-end fraction 0.406 < 0.5.
 
 ## Implications
 * The research's logged runs (H1–H4, on the 12 free ADS-B Exchange days, 1st of each
