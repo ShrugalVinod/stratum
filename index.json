@@ -1,16 +1,30 @@
 {
- "updated": "2026-11-10",
+ "updated": "2026-11-11",
  "totals": {
-  "days": 17,
-  "contrails_seen": 484,
+  "days": 18,
+  "contrails_seen": 524,
   "contrails_in_forecast_air": 226,
-  "hit_rate": 0.4669,
-  "chance": 0.1831,
-  "lift": 2.551,
-  "notices_checked": 117,
+  "hit_rate": 0.4313,
+  "chance": 0.1742,
+  "lift": 2.476,
+  "notices_checked": 118,
   "notices_confirmed": 26
  },
  "days": [
+  {
+   "date": "2026-11-11",
+   "contrails_seen": 40,
+   "contrails_in_forecast_air": 0,
+   "hit_rate": 0.0,
+   "chance": 0.0664,
+   "lift": 0.0,
+   "notices": 20,
+   "notices_checked": 1,
+   "notices_confirmed": 0,
+   "checkable_share": 0.7433,
+   "forecast_run": "2026-11-11T00:00Z",
+   "detector": "learned v3 (D-005)"
+  },
   {
    "date": "2026-11-10",
    "contrails_seen": 33,
