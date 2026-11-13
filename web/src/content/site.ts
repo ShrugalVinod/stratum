@@ -9,9 +9,11 @@ export const site = {
   tagline: "Move the plane. Lose the cloud.", // team tagline (16 Oct 2026)
   heroTitle: ["Move the plane.", "Lose the cloud."],
   heroLede:
-    "Some contrails spread into long-lived cloud that traps heat. They only last in thin, cold, ice-supersaturated layers of air. STRATUM checks where those layers are over India — so that one day a plane could fly 2,000 ft above or below them.",
+    "Some of the white lines planes leave in the sky spread into cloud that lasts for hours and warms the planet. STRATUM predicts which flights over India will make them, checks those forecasts against satellite images, and suggests flying 2,000 ft higher or lower only where that would help.",
   email: "aerospaceonyx@gmail.com" as string | null, // team email (17 Oct 2026) → shown on Contact
   paperPdf: "/STRATUM_Research_Protocol_v1.2.pdf",
+  // the Innovation Video (YouTube embed URL, e.g. https://www.youtube-nocookie.com/embed/<id>); shown on Home once set
+  videoUrl: null as string | null,
 };
 
 export const whyCards = [
@@ -20,8 +22,8 @@ export const whyCards = [
     body: "Most contrails vanish in seconds. A few spread into thin cloud that lasts for hours and traps heat — a large part of aviation's climate effect.¹ Studies elsewhere found that a small share of flights makes most of it.²",
   },
   {
-    title: "The India gap",
-    body: "Contrail forecasts are tuned and checked over Europe and North America, not over Indian skies, where humidity at cruise height is poorly measured.",
+    title: "Few checks over India",
+    body: "We have not found a published study that checks contrail forecasts over India against what a satellite sees. The forecasts in use were built and tested mostly over Europe and North America, and humidity at cruise height is poorly measured here.",
   },
   {
     title: "Our approach",
@@ -51,12 +53,12 @@ export const facts = [
   "Meteosat-9 checks every 15 minutes",
   "Analysis plan locked 13 Oct 2026",
   "H1 not supported — physics predicts ~6× more persistent contrails than the satellite sees",
-  "Under 1 % of flying carries 80 % of contrail warming over India (H3)",
+  "In our model runs, 0.48 % of the distance flown carried 80 % of contrail warming over India (H3)",
 ];
 
 // Phase status: update as phases are accepted (source: docs/phase_reports).
 export type PhaseState = "done" | "current" | "upcoming";
-export const statusUpdated = "23 Oct 2026";
+export const statusUpdated = "13 Nov 2026";
 // logged = date of the progress-log entry that finished the phase (docs/progress.md)
 export const phases: { n: number; name: string; state: PhaseState; logged?: string }[] = [
   { n: 0, name: "Setup & pre-registration", state: "done", logged: "13 OCT" },
@@ -143,7 +145,7 @@ export const hypotheses: { id: string; plain: string; test: string; result?: { v
   },
   {
     id: "H2",
-    plain: "STRATUM's corrected forecast is clearly more skilful than the best existing correction (B3).",
+    plain: "STRATUM's corrected forecast is clearly more skilful than the pycontrails latitude correction (B3), the published correction we compared against.",
     test: "Mean held-out-season Brier skill score vs B3 ≥ 0.10 with lower 95 % CI > 0. Primary endpoint.",
     result: {
       verdict: "Supported",
@@ -158,12 +160,12 @@ export const hypotheses: { id: string; plain: string; test: string; result?: { v
     result: {
       verdict: "Supported",
       date: "19 Oct 2026",
-      body: "Under 1 % of flying carries 80 % of contrail warming: 0.48 % of cruise distance with raw ERA5 physics and 0.54 % with the published correction (descriptive). The logged test used our humidity correction, which turned out far too dry, and gave 0.0044 %.",
+      body: "Under 1 % of flying carries 80 % of contrail warming: 0.48 % of cruise distance with raw ERA5 physics and 0.54 % with the pycontrails latitude correction (descriptive). The logged test used our humidity correction, which turned out far too dry, and gave 0.0044 %.",
     },
   },
   {
     id: "H4",
-    plain: "Night flights cause a larger share of contrail warming than their share of distance.",
+    plain: "Night flights (18:00–06:00 local solar time) cause a larger share of contrail warming than their share of distance.",
     test: "Night EF share minus night distance share (18:00–06:00 local solar time); lower 95 % CI > 0.",
     result: {
       verdict: "Not supported",
@@ -205,7 +207,7 @@ export const modelFeatures: { name: string; unit: string; why: string; mono?: "+
 // Paper Table 7 (threats to validity) with how each one turned out (source: docs/decisions.md,
 // gate reports). Shown on the Methods page.
 export const threats: { risk: string; effect: string; mitigation: string; outcome: string }[] = [
-  { risk: "Patchy ADS-B coverage", effect: "Missing flights; biased sample of routes", mitigation: "Coverage audit and decision rule; coverage reported with every result", outcome: "12 free sample days only; the coverage audit runs on 2 and 5 Nov 2026." },
+  { risk: "Patchy ADS-B coverage", effect: "Missing flights; biased sample of routes", mitigation: "Coverage audit and decision rule; coverage reported with every result", outcome: "12 free sample days only. The coverage audit (finished 11 Nov 2026) found OpenSky saw 41 % of scheduled Delhi–Mumbai flights end to end (rule: 50 %) and adsb.lol none, so the 12 ADS-B Exchange days stay (D-007)." },
   { risk: "Limited satellite observability", effect: "Labels favour thick, long-lived contrails; monsoon under-represented", mitigation: "Observability mask; unobservable = missing; results by season and viewing angle", outcome: "Real and large: 1 contrail seen in 9,803 monsoon segments; only ~16 % of predicted contrails are detectable at all (H1)." },
   { risk: "Wind advection error", effect: "True contrails fail to match, or false matches occur", mitigation: "Age window, distance and angle tolerances, each with a sensitivity analysis", outcome: "H1 verdict unchanged under all 8 variants; a wrong-day test showed a third of matches are chance, so a match now needs two images (D-004)." },
   { risk: "Labeller subjectivity", effect: "Noisy ground truth", mitigation: "Written guide, double labelling, Cohen's κ", outcome: "Changed: the detector is tuned on expert-labelled scenes (D-002); India labels were drafted by AI and reviewed by the team (D-003), so κ does not apply." },
@@ -233,6 +235,8 @@ export const deviations: { id: string; date: string; title: string; why: string 
   { id: "D-003", date: "17 Oct 2026", title: "India labels drafted by AI, reviewed by the team", why: "The team could not find contrails reliably by eye; used only as a secondary, exploratory check." },
   { id: "D-004", date: "18 Oct 2026", title: "A contrail counts as seen only in two satellite images", why: "A wrong-day test showed most single-image matches are chance; two images cut the chance share from 60 % to 33 %." },
   { id: "D-005", date: "21 Oct 2026", title: "A learned contrail detector, as a second analysis", why: "Added after the logged results: a neural network trained on OpenContrails and the expert scenes. The logged H1–H4 results keep the original detector; the new labels are reported next to them, clearly marked." },
+  { id: "D-006", date: "22 Oct 2026", title: "Probability-weighted decisions, as a second analysis", why: "The pre-registered humidity feedback made the physics far too dry, so a second, descriptive decision run weights each raw-physics contrail by STRATUM's probability. The logged alerts stay as they are." },
+  { id: "D-007", date: "9 Nov 2026", title: "Coverage audit counts only flights seen end to end", why: "A flight seen on half the route used to count as covered; now its track must cross the corridor with no gap over 10 minutes." },
 ];
 
 // What did not work (the paper promises this list). Source: gate reports and docs/decisions.md.
@@ -251,6 +255,8 @@ export const didntWork: string[] = [
 
 // Dated lab diary (source: docs/progress.md). Newest first.
 export const progress = [
+  { date: "2026-11-13", phase: 8, title: "For the judges: story, plans and plain words", body: "New pages: What's new (with a comparison against tools that already exist and what can be protected), What's next (a dated roadmap, why we use Meteosat-9, and what STRATUM can't do yet), a Business plan (customers, price, costs, funding), a Glossary and References. Home now starts with a path for judges and the four results in one sentence each; the Team page tells our story." },
+  { date: "2026-11-11", phase: 8, title: "Coverage audit: the free flight data are not enough", body: "We checked whether free trackers see Delhi–Mumbai flights from end to end. On 10 Nov OpenSky saw 52 of 128 scheduled flights end to end (41 %, our rule needed 50 %); the free adsb.lol archive saw none on 5–8 and 10 Nov. So the research keeps its 12 ADS-B Exchange days, and a daily service would need a paid or partner feed (D-007)." },
   { date: "2026-11-10", phase: 8, title: "A new look: the night sky", body: "The whole site was redesigned around the night sky. Home now opens on the Earth seen from orbit and one scroll flies through the whole story with real data: the day's 1,909 flights, the lasting contrails, Meteosat-9 where it really sits, the satellite images and the finding. The stars behind every page are the real ones, and every page ends on a runway. To keep one version well, the paper theme and the Hindi edition (added 23 Oct) were retired; both remain in the repository's history." },
   { date: "2026-10-27", phase: 8, title: "Live advice: which planes should move, right now", body: "A new page, /now, right under the map in the menu: every airliner over India now, and the flights expected in the next 12 hours, checked minute by minute against today's ECMWF forecast. Where a plane is heading into air in which its contrail would last, and a level 2,000 or 4,000 ft away avoids it for less CO₂ than the contrail's warming (even on the cautious estimate), it gives the level and the times, with the extra fuel and the warming avoided. Aircraft types and routes are now added to the live feed; expected flights come from yesterday's OpenSky flight records. Physics only, and a demonstration: no advice goes to any pilot." },
   { date: "2026-10-27", phase: 8, title: "What if we'd listened? One real day, replayed both ways", body: "A new page, /replay: one real day of flights over India played twice, side by side. On the left the day as flown, with its strongest lasting contrails forming and spreading; on the right the same day if every STRATUM alert had been followed, with running totals of the warming avoided and the extra fuel. Built from the second analysis D-006 (descriptive); its totals match the published ones exactly." },
@@ -264,9 +270,9 @@ export const progress = [
   { date: "2026-10-21", phase: 8, title: "A learned contrail detector doubles detection quality", body: "Our simple line-finding detector was the weakest part of the project. We trained a small neural network on 6,067 human-labelled contrail scenes from Google's OpenContrails dataset, then fine-tuned it on the 51 expert-labelled Meteosat scenes. Checked once on the 89 expert scenes it never saw: 64 % of its detections are real contrails (the old detector: 22 %) and it finds 38 % of the contrails (old: 23 %), F1 0.48 against 0.22. This was added after the logged results, so it is a disclosed second analysis (D-005): the H1–H4 results stay as logged, and the new labels are reported next to them." },
   { date: "2026-10-20", phase: 8, title: "Open release with a DOI", body: "Version 1.0.0 is public: the code, a derived-data release (every labelled commercial flight segment with its satellite label, baselines and held-out forecasts) and a one-click notebook that recomputes our results, archived on Zenodo (doi:10.5281/zenodo.23480202). A teammate who did not write the code reproduced every results figure from scratch." },
   { date: "2026-10-19", phase: 7, title: "Phase 7 accepted: H2–H4 tested", body: "A machine-learning correction trained on the satellite labels ranks contrail-prone flight segments far better than any yes/no physics rule, and it passes H2 against the published correction. But a constant guess of the average contrail rate passes too, so we report that the model's probabilities barely beat the base rate. Feeding the correction back into the physics as one humidity factor turned out too blunt: it dried the air so much that almost no contrails formed. With standard physics, under 1 % of flying carries 80 % of contrail warming over India (H3, supported), and night flights carry about three quarters of it against half the distance (H4 not supported in the logged test, clear in the context runs). The avoidance layer flagged 402 stretches of flight on 12 days and would alert on 333 of them, mostly on one humid day in February." },
-  { date: "2026-10-18", phase: 6, title: "Phase 6 accepted: H1 is not supported", body: "The one logged test of H1: over 334,211 flight segments on 12 days, raw ERA5 physics predicted 10,076 persistent contrails and Meteosat-9 saw 1,564 — a ratio of 6.44 (95 % range 4.92–12.12). We expected physics to predict too few; it predicts about six times too many. Most predicted contrails are too thin or narrow for the satellite: only 16 % pass the detectability thresholds, and allowing for that the two agree (1.05). The answer is the same under every alternative label rule and matching tolerance. Limits: only 2–4 days per season, no monsoon contrails seen, and about a third of the satellite labels are chance matches. A refuted hypothesis is a result, and we report it as one." },
+  { date: "2026-10-18", phase: 6, title: "Phase 6 accepted: H1 is not supported", body: "The one logged test of H1: over 334,211 flight segments on 12 days (the ones, out of the 680,387 checked in Phase 5, that the satellite could see clearly in at least two images; the rest are labelled unknown), raw ERA5 physics predicted 10,076 persistent-contrail segments and Meteosat-9 saw 1,564 (the same 421 contrails, counted minute by minute) — a ratio of 6.44 (95 % range 4.92–12.12). We expected physics to predict too few; it predicts about six times too many. Most predicted contrails are too thin or narrow for the satellite: only 16 % pass the detectability thresholds, and allowing for that the two agree (1.05). The answer is the same under every alternative label rule and matching tolerance. Limits: only 2–4 days per season, no monsoon contrails seen, and about a third of the satellite labels are chance matches. A refuted hypothesis is a result, and we report it as one." },
   { date: "2026-10-18", phase: 6, title: "Evaluation harness built", body: "One harness that every model goes through the same way: four baselines (climatology, raw ERA5, constant humidity scaling, latitude-dependent correction), seasons held out one at a time, no flight or satellite image on both sides of a split, and 1,000 day-resamples for every uncertainty range. The H1 test runs once, logged, before the results are seen." },
-  { date: "2026-10-18", phase: 5, title: "Phase 5 accepted: satellite labels for the whole year", body: "680,387 contrail-forming flight segments over India checked against Meteosat-9: 421 contrails observed from 369 flights (the pre-registered minimum is 300). A wrong-day check shows about a third of these matches would happen by chance, so the labels are noisy. Almost all observations are from winter and spring: monsoon cloud hides contrails from June to October. Over India the detector finds about 1 in 3 labelled contrails, but only about 1 in 20 of its lines is a contrail." },
+  { date: "2026-10-18", phase: 5, title: "Phase 5 accepted: satellite labels for the whole year", body: "680,387 contrail-forming one-minute flight segments over India checked against Meteosat-9. The satellite saw 421 separate contrails from 369 flights (the pre-registered minimum is 300); together they cover 1,564 one-minute segments, because one contrail usually spans several minutes of flight. A wrong-day check shows about a third of these matches would happen by chance, so the labels are noisy. Almost all observations are from winter and spring: monsoon cloud hides contrails from June to October. Over India the detector finds about 1 in 3 labelled contrails, but only about 1 in 20 of its lines is a contrail." },
   { date: "2026-10-18", phase: 5, title: "India labels drafted by AI, reviewed by the team", body: "The team could not find contrails reliably in the India scenes, so Claude drafted the lines and Aditya, Ishaan and Abeer each reviewed and corrected a third of the 100 scenes: 15 draft lines, 0 deleted, 5 moved, 21 added. This is logged as a deviation from the plan and used only as a secondary check." },
   { date: "2026-10-17", phase: 5, title: "Detector tuned on expert labels; matching built", body: "The satellite detector was tuned on 51 Meteosat scenes labelled by three contrail experts (DLR dataset) and checked on 89 others: precision 0.22, recall 0.23, up from 0.14 / 0.26. It still misses many short, faint contrails. The full-year matching that turns satellite images into labels for every flight segment is built and tested." },
   { date: "2026-10-17", phase: 5, title: "Labelling scenes drawn", body: "220 Meteosat scenes drawn once with a fixed seed, stratified by month, time of day and predicted contrail density. A separate labelling app keeps the satellite data private." },
@@ -285,17 +291,20 @@ export const team = [
   { initials: "AS", name: "Abeer Shah", role: "Product & communication · label review" },
 ];
 export const supervisor = { initials: "VP", name: "Dr. Varsha Pant", role: "Supervisor" };
+// The team photo (Team page). Set src once the photo is in public/img/; until then the page shows
+// the team's 18 Oct contrail photo.
+export const teamPhoto: { src: string; alt: string; caption: string } | null = null;
 
 export const dataSources = [
   { source: "ERA5 / Copernicus", what: "Hourly weather reanalysis, 0.25°", use: "Temperature and humidity at flight level", credit: "Contains modified Copernicus Climate Change Service information 2026", limits: "Reanalysis humidity at cruise height can be wrong — the reason this project exists." },
   { source: "Meteosat-9 / EUMETSAT", what: "Indian Ocean geostationary satellite, every 15 min", use: "Detect real contrails; check predictions", credit: "Meteosat-9 imagery © EUMETSAT 2026", limits: "Thin or cloud-covered contrails can be missed; steep viewing angles near the edges." },
-  { source: "ADS-B Exchange", what: "Aircraft position reports", use: "Flight tracks (free first-of-month samples)", credit: "Flight data: ADS-B Exchange", limits: "12 days in the year; coverage over India is being audited (Nov 2026)." },
+  { source: "ADS-B Exchange", what: "Aircraft position reports", use: "Flight tracks (free first-of-month samples)", credit: "Flight data: ADS-B Exchange", limits: "12 days in the year. Our coverage audit (Nov 2026) found no free source that sees Delhi–Mumbai flights end to end often enough to replace it." },
   { source: "OpenSky Network", what: "Aircraft database", use: "Aircraft type → performance and engine efficiency", credit: "Aircraft metadata: OpenSky Network", limits: "Some types missing; fallbacks are logged." },
   { source: "OpenContrails (Google Research)", what: "GOES-16 scenes with human contrail masks", use: "Pre-training the learned detector (D-005)", credit: "OpenContrails, Ng et al. 2024, CC BY 4.0", limits: "American satellite and skies; fine-tuned on Meteosat before use." },
   { source: "DLR expert contrail labels", what: "Meteosat scenes labelled by three contrail experts", use: "Tuning (51 scenes) and checking (89 scenes) the detectors", credit: "DLR, CC BY-NC 4.0", limits: "Not over India; the 89 check scenes have been used twice and are now closed." },
-  { source: "ECMWF open data (IFS)", what: "Daily global weather forecast, 0.25°", use: "Live outlook and contrail advisories (/advisory, /live)", credit: "Forecast: ECMWF open data, CC BY 4.0", limits: "No cloud fields on pressure levels, so physics only; experimental." },
-  { source: "The OpenSky Network (live)", what: "Live aircraft positions", use: "Airliners over India now (/live), every 5 minutes", credit: "Live aircraft: The OpenSky Network", limits: "Snapshot every 5 minutes; positions moved on by speed and heading in between." },
-  { source: "adsb.lol", what: "Live aircraft positions (community receivers)", use: "Airliners near the visitor (/live)", credit: "Live aircraft: adsb.lol, ODbL", limits: "Few receivers over India." },
+  { source: "ECMWF open data (IFS)", what: "Daily global weather forecast, 0.25°", use: "The daily contrail forecast behind /now, /flight, /report and /3d", credit: "Forecast: ECMWF open data, CC BY 4.0", limits: "No cloud fields on pressure levels, so physics only; experimental." },
+  { source: "The OpenSky Network (live)", what: "Live aircraft positions", use: "Airliners over India now, for /now, /flight and /3d", credit: "Live aircraft: The OpenSky Network", limits: "Snapshot every 5 minutes; positions moved on by speed and heading in between." },
+  { source: "adsb.lol", what: "Live aircraft positions (community receivers)", use: "Extra airliners near a chosen place (/flight, /spot)", credit: "Live aircraft: adsb.lol, ODbL", limits: "Few receivers over India." },
   { source: "Natural Earth", what: "Coastlines, borders (India point of view), cities; Natural Earth II shaded relief", use: "Base map; the Earth's day side in the Home film", credit: "Made with Natural Earth", limits: "Simplified for the web." },
   { source: "NASA Black Marble 2016", what: "Composite image of the Earth's lights at night (Suomi NPP VIIRS)", use: "The Earth's night side in the Home film", credit: "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA GSFC", limits: "A 2016 composite: it shows where the cities are, not the lights on the day replayed." },
   { source: "Yale Bright Star Catalogue", what: "9,096 stars with positions, brightness and temperature", use: "The star field behind every page", credit: "Hoffleit & Warren, Bright Star Catalogue, 5th revised ed. (1991)", limits: "Decoration only; fainter stars and the Milky Way's glow are drawn from a formula." },
@@ -332,7 +341,7 @@ export const literature = [
     url: "https://doi.org/10.1021/acs.est.9b05608",
     where: "Japan, 1 year",
     theirs: "2.2 % of flights cause 80 % of contrail warming",
-    ours: "0.48 % of cruise distance carries 80 % of warming (raw ERA5 physics; 0.54 % with the published correction)",
+    ours: "0.48 % of cruise distance carries 80 % of warming (raw ERA5 physics; 0.54 % with the pycontrails latitude correction)",
   },
   {
     topic: "Concentration",

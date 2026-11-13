@@ -111,7 +111,7 @@ test("map: STRATUM list and card, model switcher, flights, controls", async ({ p
 
 test("every page renders without errors", async ({ page }) => {
   const errors = collectErrors(page);
-  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report", "/replay", "/now"]) {
+  for (const path of ["/", "/how-it-works", "/progress", "/results", "/methods", "/team", "/about-data", "/contact", "/game", "/3d", "/airlines", "/sandbox", "/report", "/replay", "/now", "/innovation", "/business", "/next", "/glossary", "/references"]) {
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
@@ -127,7 +127,7 @@ test("every page renders without errors", async ({ page }) => {
 test("phone layout has no horizontal scroll", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  for (const path of ["/", "/map"]) {
+  for (const path of ["/", "/map", "/innovation", "/business", "/team"]) {
     await page.goto(path);
     await page.waitForTimeout(3_000);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

@@ -71,16 +71,12 @@ export function Routes() {
                 <span>{T("of the warming came from the top 1 % of flights")}</span>
               </div>
               <div>
-                <b>{pc(c.top_10pct_flights, 0)}</b>
-                <span>{T("from the top 10 %")}</span>
-              </div>
-              <div>
                 <b>{pc(t.flights_warming / t.flights, 0)}</b>
                 <span>{T("of flights made any warming contrail")}</span>
               </div>
               <div>
                 <b>{pc(nightShare(d.by_hour_ist, metric), 0)}</b>
-                <span>{`of the warming at night (18:00–06:00 IST), for ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance`}</span>
+                <span>{`of the warming at night (18:00–06:00 India time), for ${pc(nightShare(d.by_hour_ist, "share_km" as unknown as Metric), 0)} of the distance`}</span>
               </div>
             </div>
 

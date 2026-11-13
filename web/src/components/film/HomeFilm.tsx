@@ -128,7 +128,7 @@ export function HomeFilm({ skipTo }: { skipTo: string }) {
     {
       k: "Energy forcing, largest first",
       t: `${K} flights made 80 % of the day's contrail warming.`,
-      b: `That is ${KP} of the day's flights. Over all 12 study days, under 1 % of cruise distance carries 80 % of the warming (0.48 %). Move those few, and most of the problem goes.`,
+      b: `That is ${KP} of the day's flights. In our model runs over all 12 study days, 0.48 % of the cruise distance carried 80 % of the modelled warming. Move those few, and most of the problem goes.`,
     },
     {
       k: "Meteosat-9 · 36,000 km up · every 15 minutes",

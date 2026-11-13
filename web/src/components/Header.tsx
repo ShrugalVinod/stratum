@@ -15,17 +15,22 @@ const NAV = [
   ["/sandbox", "Make a contrail", "The physics, with sliders"],
   ["/report", "Report card", "Was yesterday's forecast right?"],
   ["/how-it-works", "How it works", "From a ping to a decision"],
-  ["/airlines", "For airlines", "The rules, where the warming comes from, and the cost"],
+  ["/glossary", "Glossary", "The science words, in plain English"],
   ["/results", "Results", "H1–H4 and what we found"],
+  ["/innovation", "What's new", "What only STRATUM does, and what exists"],
+  ["/next", "What's next", "Roadmap, dates and limits"],
+  ["/airlines", "For airlines", "The EU rule, the warming and the cost"],
+  ["/business", "Business plan", "Who pays, who uses it, what it costs"],
   ["/methods", "Methods", "Written down before results"],
-  ["/about-data", "Data & code", "Sources, licences, how to reproduce"],
-  ["/team", "Team", "Who we are, and how to reach us"],
+  ["/about-data", "Data & code", "Sources, licences, privacy, AI use"],
+  ["/references", "References", "Every source we rely on"],
+  ["/team", "Team & story", "Who we are, why India, how to reach us"],
 ] as const;
 // the menu's three columns (pages left out of the menu still open by link)
 const GROUPS: [string, number, number][] = [
   ["Things you can do", 0, 9],
   ["Things to learn", 9, 11],
-  ["Research and the rest", 11, 15],
+  ["Research, plans and us", 11, 20],
 ];
 // the few links that live in the bar itself on wide screens
 const QUICK = ["/map", "/now", "/3d", "/how-it-works", "/results"];

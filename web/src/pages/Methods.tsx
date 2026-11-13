@@ -267,7 +267,7 @@ export function Methods() {
           <span class="display d-l">
             <Split text={T("Download the research protocol (PDF)")} />
           </span>
-          <span class="mono-s">{"PDF · 19 pp ↓"}</span>
+          <span class="mono-s">{"PDF · 19 pp + cover note ↓"}</span>
         </span>
       </a>
     </div>

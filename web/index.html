@@ -13,12 +13,21 @@
     <meta property="og:title" content="STRATUM — Move the plane. Lose the cloud." />
     <meta property="og:description" content="A student research project on the aircraft contrails that warm the climate over India: physics predictions, satellite evidence, and advice to fly 2,000 ft higher or lower only where it helps." />
     <meta property="og:url" content="https://stratum.aerospaceonyx.workers.dev/" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://stratum.aerospaceonyx.workers.dev/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="STRATUM: Move the plane. Lose the cloud. Satellite-checked forecasts of the contrails that warm the planet, over India." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://stratum.aerospaceonyx.workers.dev/og-image.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
     <title>STRATUM — Move the plane. Lose the cloud.</title>
     <script>
       document.documentElement.classList.add("js");
+      try {
+        if (localStorage.getItem("stratum-motion") === "off") document.documentElement.classList.add("reduce-motion");
+      } catch (e) {}
     </script>
   </head>
   <body>

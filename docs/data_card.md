@@ -27,8 +27,9 @@ What we release, how it was made, and where it is weak (build prompt §8.3). Raw
   no match; otherwise missing (D-004).
 
 ## Coverage and biases
-- 12 days only; 2–4 days per season. ADS-B coverage of scheduled flights over India is being audited
-  (Nov 2026); remote and oceanic areas are likely under-covered.
+- 12 days only; 2–4 days per season. The coverage audit (finished 11 Nov 2026, D-007) found that free
+  trackers do not see enough Delhi–Mumbai flights end to end to replace the ADS-B Exchange days
+  (OpenSky 41 % on 10 Nov, rule 50 %; adsb.lol 0 %); remote and oceanic areas are likely under-covered.
 - **Observability:** the satellite sees contrails only through clear air and at viewing angles < 60°;
   monsoon days had 3–5 % of images observable and 1 observed contrail in 9,803 segments. Results speak
   to winter and spring.

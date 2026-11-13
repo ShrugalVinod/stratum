@@ -3,7 +3,24 @@
 //   [data-flap]  → split-flap: letters spin through the alphabet, then land (departures board)
 //   [data-count] → number counts up from 0 (keeps the element's own formatting)
 // Respects prefers-reduced-motion: everything is shown at once, nothing spins.
-export const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** The visitor's own switch (footer), kept in this browser; it overrides the system setting. */
+export function motionOff(): boolean {
+  try {
+    return localStorage.getItem("stratum-motion") === "off";
+  } catch {
+    return false;
+  }
+}
+export function setMotionOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem("stratum-motion", "off");
+    else localStorage.removeItem("stratum-motion");
+  } catch {
+    /* private window: the switch lasts for this page only */
+  }
+  document.documentElement.classList.toggle("reduce-motion", off);
+}
+export const reduced = () => motionOff() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·–";
 

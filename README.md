@@ -1,9 +1,9 @@
 # STRATUM
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23480202.svg)](https://doi.org/10.5281/zenodo.23480202)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23480201.svg)](https://doi.org/10.5281/zenodo.23480201)
 
 **Move the plane. Lose the cloud.** Satellite-checked prediction of persistent contrails over
-Indian airspace. Team STRATUM, Indus International School, Bangalore · Conrad Challenge
+Indian airspace. Team STRATUM, Indus International School, Bengaluru · Conrad Challenge
 2026–27 (Aerospace & Aviation) · Supervisor Dr. Varsha Pant.
 
 > STRATUM is a computational research project. No real flight has been changed, and air-traffic-control
@@ -16,11 +16,13 @@ detector, D-006 probability-weighted decisions). Results (H1–H4) are logged in
 **https://stratum.aerospaceonyx.workers.dev/results**. Progress: [`docs/progress.md`](docs/progress.md).
 
 **On the website:** the contrail map with satellite proof and "why this prediction?" for every card;
-`/live` (the airliners above you now and whether their air keeps a contrail); `/advisory`
-(NOTAM-style contrail notices from each morning's ECMWF forecast); `/3d` (the humid layers in
-three dimensions); `/game` (Beat STRATUM). Live and forecast data are refreshed by two GitHub
-Actions (`outlook.yml` daily, `live.yml` every 5 min) on the branches `outlook-data` and
-`live-data`; `web/worker/` serves them.
+`/now` (live level advice for the airliners over India now and the flights expected next);
+`/flight` (one trip's contrail footprint); `/report` (yesterday's forecast scored against the
+satellite, once a day); `/3d` (one real day in three dimensions); `/replay`, `/sandbox` and
+`/spot`; and for judges `/innovation`, `/next`, `/business`, `/glossary` and `/references`.
+Live and forecast data are refreshed by GitHub Actions (`outlook.yml` daily, `report.yml` daily,
+`live.yml` every 5 min, `schedule.yml` daily) on the branches `outlook-data`, `report-data`,
+`live-data` and `schedule-data`; `web/worker/` serves them.
 
 ---
 
@@ -117,7 +119,8 @@ of a locked hypothesis needs `--rerun-reason` and is logged next to the first.
 ## Cite
 
 Vinod S., Harsoda A., Kupnur I., Shah A. (2026). *STRATUM: how well can persistent contrails be
-predicted over India?* Version 1.0.0. Zenodo. https://doi.org/10.5281/zenodo.23480202
+predicted over India?* Zenodo. https://doi.org/10.5281/zenodo.23480201 (all versions; version 1.0.0:
+https://doi.org/10.5281/zenodo.23480202)
 
 All versions: https://doi.org/10.5281/zenodo.23480201. Derived data: `stratum-release-1.0.0.zip` on the
 [v1.0.0 release](https://github.com/ShrugalVinod/stratum/releases/tag/v1.0.0). See also [`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository").

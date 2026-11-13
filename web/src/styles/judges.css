@@ -1,0 +1,385 @@
+/* Pages and blocks made for judges: story, start path, result cards, comparison, roadmap,
+   business plan, glossary, references. Night palette only (tokens.css). */
+
+.j-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+}
+.j-card {
+  background: var(--glass);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 20px 22px;
+  backdrop-filter: blur(6px);
+}
+.j-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+.j-card p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.j-card .j-k {
+  display: block;
+  margin-bottom: 10px;
+}
+.j-card.j-no {
+  border-color: rgb(255 143 67 / 0.45);
+}
+.j-card.j-yes {
+  border-color: rgb(127 223 159 / 0.4);
+}
+.j-verdict {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.j-yes .j-verdict {
+  color: var(--green);
+}
+.j-no .j-verdict {
+  color: var(--orange-text);
+}
+
+.j-prose {
+  max-width: 72ch;
+}
+.j-prose p {
+  color: var(--ink-2);
+  line-height: 1.65;
+  margin: 0 0 1em;
+}
+.j-prose p:first-child {
+  color: var(--ink);
+  font-size: 1.12rem;
+}
+
+/* the judges' path: five numbered links in a row */
+.j-path {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  counter-reset: jp;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.j-path a {
+  counter-increment: jp;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 18px 20px;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--glass);
+  border-right: 1px solid var(--rule);
+  transition: background 0.25s var(--ease);
+}
+.j-path a:last-child {
+  border-right: 0;
+}
+.j-path a::before {
+  content: counter(jp, decimal-leading-zero) " →";
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--red-text);
+}
+.j-path a b {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+.j-path a span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.j-path a:hover,
+.j-path a:focus-visible {
+  background: rgb(242 56 76 / 0.12);
+}
+@media (max-width: 900px) {
+  .j-path {
+    grid-template-columns: 1fr;
+  }
+  .j-path a {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .j-path a:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* "what it can't do yet" */
+.j-limits {
+  border: 1px solid rgb(255 143 67 / 0.45);
+  border-radius: 4px;
+  padding: 20px 24px;
+  background: rgb(255 143 67 / 0.06);
+}
+.j-limits ul {
+  margin: 10px 0 0;
+  padding-left: 1.1em;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+/* values, mission */
+.j-mv {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 760px) {
+  .j-mv {
+    grid-template-columns: 1fr;
+  }
+}
+.j-mv .j-card p {
+  font-size: 1.08rem;
+  color: var(--ink);
+}
+
+/* roles in sentences */
+.j-roles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.j-roles li {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 1fr;
+  gap: 18px;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+}
+.j-roles li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.j-roles b {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+.j-roles span.mono-s {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.j-roles p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .j-roles li {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* team photo slot */
+.j-photo {
+  aspect-ratio: 16 / 9;
+  border: 1px dashed var(--edge);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--glass);
+  overflow: hidden;
+}
+.j-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* roadmap */
+.j-road {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--edge);
+}
+.j-road li {
+  position: relative;
+  padding: 0 0 26px 26px;
+}
+.j-road li::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--red);
+}
+.j-road li.done::before {
+  background: var(--green);
+  border-color: var(--green);
+}
+.j-road .mono-s {
+  color: var(--red-text);
+}
+.j-road li.done .mono-s {
+  color: var(--green);
+}
+.j-road h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 4px 0 6px;
+}
+.j-road p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.6;
+  max-width: 75ch;
+}
+
+/* market numbers */
+.j-nums {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+}
+.j-nums div {
+  border-top: 2px solid var(--red);
+  padding-top: 12px;
+}
+.j-nums b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+.j-nums span {
+  display: block;
+  color: var(--ink-2);
+  margin: 8px 0 6px;
+  line-height: 1.45;
+}
+
+/* glossary */
+.j-gloss {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) 1fr;
+  margin: 0;
+}
+.j-gloss dt,
+.j-gloss dd {
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule);
+}
+.j-gloss dt {
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding-right: 18px;
+}
+.j-gloss dd {
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .j-gloss {
+    grid-template-columns: 1fr;
+  }
+  .j-gloss dd {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* references */
+.j-refs {
+  margin: 0;
+  padding-left: 1.6em;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.j-refs li {
+  padding: 6px 0;
+}
+.j-refs a {
+  color: var(--cyan);
+  word-break: break-all;
+}
+
+.j-table td,
+.j-table th {
+  vertical-align: top;
+}
+.j-table .j-us {
+  background: rgb(242 56 76 / 0.08);
+}
+
+/* a page's "last updated" line */
+.j-updated {
+  color: var(--muted);
+}
+
+/* the video slot on Home */
+.j-video {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  border: 0;
+  border-radius: 4px;
+  background: var(--card);
+}
+
+/* hover definitions */
+abbr.j-def {
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+/* the visitor's own "reduce motion" switch (footer): the same as the system setting */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+html.reduce-motion .sky-traffic {
+  display: none;
+}
+.link.motion-switch {
+  border: 0;
+  margin: 0;
+  padding: 0 0 3px;
+  font-family: inherit;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.j-stack {
+  display: grid;
+  gap: 28px;
+}
+.j-table th.j-rowh {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: 0;
+  width: 38%;
+}
+.j-grid-5 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}

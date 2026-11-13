@@ -4,6 +4,7 @@ import { HomeFilm } from "../components/film/HomeFilm";
 import { Plane } from "../components/Plane";
 import { Split } from "../components/Split";
 import { facts, loop, phases, refs, site, statusUpdated, whyCards } from "../content/site";
+import { cantDo } from "../content/judges";
 import { T } from "../i18n";
 
 const STATUS = { done: "Done", current: "Active", upcoming: "Scheduled" } as const;
@@ -100,11 +101,98 @@ export function Home() {
         </div>
       </div>
 
+      {/* for judges: the path through the site, and the four results in one sentence each */}
+      <section class="section" aria-labelledby="start-title">
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red" id="start-title">
+              Start here
+            </p>
+            <span class="mono-s">five pages, about ten minutes</span>
+          </div>
+          <nav class="j-path rv" aria-label="Start here">
+            <a href="#why-title-sec">
+              <b>The problem</b>
+              <span>Why some contrails warm the planet, and why India is unchecked</span>
+            </a>
+            <a href="/how-it-works">
+              <b>What we built</b>
+              <span>Flight tracks, weather, physics, the satellite check and the advice</span>
+            </a>
+            <a href="/results">
+              <b>What we found</b>
+              <span>Four hypotheses, tested once each, including the two that failed</span>
+            </a>
+            <a href="/next">
+              <b>What's next</b>
+              <span>Roadmap with dates, and what STRATUM can't do yet</span>
+            </a>
+            <a href="/business">
+              <b>Business case</b>
+              <span>Who pays, who uses it, the price and the costs</span>
+            </a>
+          </nav>
+        </div>
+      </section>
+
+      <section class="section pt0" aria-labelledby="found-title">
+        <div class="wrap">
+          <div class="sec-head rv">
+            <p class="label red" id="found-title">
+              What we found
+            </p>
+            <a class="mono-s link" href="/results">
+              all four results →
+            </a>
+          </div>
+          <div class="j-grid rv stagger">
+            <article class="j-card j-no" style={{ "--i": 0 }}>
+              <span class="j-k">
+                <b class="mono">H1</b> <span class="j-verdict">· not supported</span>
+              </span>
+              <p>We expected the physics to miss contrails over India. It predicts about 6 times more lasting contrails than the satellite sees, mostly because thin ones are invisible from space.</p>
+            </article>
+            <article class="j-card j-yes" style={{ "--i": 1 }}>
+              <span class="j-k">
+                <b class="mono">H2</b> <span class="j-verdict">· supported, with a catch</span>
+              </span>
+              <p>Our model beat the pycontrails latitude correction, but so does a constant guess. Where it clearly helps is ranking which flights will make a visible contrail.</p>
+            </article>
+            <article class="j-card j-yes" style={{ "--i": 2 }}>
+              <span class="j-k">
+                <b class="mono">H3</b> <span class="j-verdict">· supported</span>
+              </span>
+              <p>In our model runs, 0.48 % of the distance flown carried 80 % of the contrail warming. Moving a few flights could avoid most of it.</p>
+            </article>
+            <article class="j-card j-no" style={{ "--i": 3 }}>
+              <span class="j-k">
+                <b class="mono">H4</b> <span class="j-verdict">· not supported</span>
+              </span>
+              <p>Night flights (18:00–06:00 local solar time) carried 84 % of the warming for 49 % of the distance, but our pre-set test's range dipped below zero, so it did not pass.</p>
+            </article>
+          </div>
+          <div class="j-limits rv" style={{ "margin-top": "18px" }}>
+            <p class="label">What STRATUM can't do yet</p>
+            <ul>
+              {cantDo.map((c) => (
+                <li>{c}</li>
+              ))}
+            </ul>
+          </div>
+          {site.videoUrl && (
+            <div class="rv" style={{ "margin-top": "28px" }}>
+              <p class="label red">Our Innovation Video</p>
+              <iframe class="j-video" src={site.videoUrl} title="STRATUM Innovation Video" loading="lazy" allow="encrypted-media; picture-in-picture" allowFullScreen />
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* §1 */}
       <section class="section" id="why-title-sec" aria-labelledby="why-title">
         <div class="wrap">
           <div class="sec-head rv">
-            <p class="label red">{T("§1 · The problem · The India gap · Our approach")}</p>
+            <p class="label red">{T("§1 · The problem · Few checks over India · Our approach")}</p>
             <span class="mono-s">{T("Ref.")} Lee et al. 2021¹</span>
           </div>
           <div class="why">
@@ -178,11 +266,19 @@ export function Home() {
                 <Split text={T("Departures")} />
               </h2>
               <p class="lede rv" style={{ "--d": 200 }}>
-                {T("Nine phases. The analysis plan was locked on 13 Oct 2026, before any result. All four hypotheses are now tested; the results are on the Methods page.")}
+                {T("Nine phases, all done. The analysis plan was locked on 13 Oct 2026, before any result, and all four hypotheses are tested. The flight-data coverage audit finished on 11 Nov 2026. Next: more flight days, expert review, and a first airline trial with no flights changed.")}
               </p>
-              <a class="link rv" style={{ "--d": 320 }} href="/methods">
-                {T("Methods and the lab diary")} →
-              </a>
+              <p class="rv" style={{ "--d": 320, display: "flex", gap: "18px", "flex-wrap": "wrap" }}>
+                <a class="link" href="/results">
+                  {T("Results")} →
+                </a>
+                <a class="link" href="/next">
+                  {T("What's next")} →
+                </a>
+                <a class="link" href="/progress">
+                  {T("The lab diary")} →
+                </a>
+              </p>
             </div>
             <div class="board rv rv-scale" role="table" aria-label={T("Project phases")}>
               <div class="b-row b-head" role="row">
@@ -283,7 +379,7 @@ export function Home() {
               <div class="open-links rv stagger" style={{ "--d": 300 }}>
                 <a class="row-link" href={site.paperPdf} target="_blank" rel="noopener">
                   <span class="label red">{T("Research protocol (PDF)")} ↓</span>
-                  <span class="mono-s muted">{T("Pre-registered 13 Oct 2026 · 19 pp")}</span>
+                  <span class="mono-s muted">{T("Pre-registered 13 Oct 2026 · 19 pp + cover note")}</span>
                 </a>
                 <a class="row-link" href="/methods">
                   <span class="label red">{T("Read the methods")} →</span>
@@ -300,7 +396,7 @@ export function Home() {
         <div class="wrap">
           <div class="sec-head rv">
             <p class="label red">{T("§6 · Try it")}</p>
-            <span class="mono-s">{T("Live data · forecast every morning")}</span>
+            <span class="mono-s">{T("Live data · a new forecast every day")}</span>
           </div>
           <h2 id="try-title" class="display d-m">
             <Split text={T("Look up, then look it up.")} />
@@ -314,7 +410,7 @@ export function Home() {
                 ["/flight", "Your flight", "Pick a trip and see its hidden footprint: the minutes it cruises through air where contrails last, its fuel CO₂ next to its contrail's warming, and the level that avoids it."],
                 ["/spot", "Spot a contrail", "Took a photo of a contrail? Find the airliner that drew it. Your photo stays on your phone."],
                 ["/sandbox", "Make a contrail", "Pick the level, the air's temperature and humidity and the engine, and watch whether a contrail forms and whether it lasts."],
-                ["/report", "Report card", "Every morning, yesterday's forecast is checked against the contrails the satellite saw, and the score is kept in public."],
+                ["/report", "Report card", "Once a day, yesterday's forecast is checked against the contrails the satellite saw, and the score is kept in public."],
                 ["/airlines", "For airlines", "The EU's contrail reporting rule from 2027, where India's contrail warming comes from, and what avoiding it would cost in rupees."],
               ] as const
             ).map(([href, t, b], i) => (

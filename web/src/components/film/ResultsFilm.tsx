@@ -28,7 +28,7 @@ export function ResultsFilm({ r, skipTo }: { r: R; skipTo: string }) {
     },
     {
       k: "H2 · primary endpoint",
-      t: `Skill ${f2(h2.estimate?.value)} against the published correction. With a catch.`,
+      t: `Skill ${f2(h2.estimate?.value)} against the pycontrails latitude correction. With a catch.`,
       b: `Supported. But B3 only says yes or no, and a constant guess of the average contrail rate does as well; against that constant the model scores ${f2(h2.vs_RATE?.value)}. Where it clearly wins is ranking.`,
     },
     {
@@ -231,7 +231,7 @@ function H3({ t, h, curves }: { t: number; h: R; curves?: Record<string, { dista
   const names: Record<string, string> = {
     "STRATUM-corrected (logged)": "corrected physics (logged)",
     "B1 (descriptive)": "raw ERA5 (B1)",
-    "B3 (descriptive)": "published correction (B3)",
+    "B3 (descriptive)": "pycontrails latitude correction (B3)",
   };
   const share = h.context?.B1?.share?.value as number;
   const mark = seg(t, 0.72, 0.9);

@@ -213,7 +213,7 @@ export function Flight() {
         lede="Every flight burns fuel. Some also leave a contrail that warms the planet more than that fuel's CO₂, but only where the air is cold and humid enough. Pick a trip, or an airliner flying now, and STRATUM checks the forecast along its whole cruise."
       />
       <div class="wrap">
-        {ol === null && <p class="muted mono">{T("The forecast is not published yet. It is built every morning at about 09:30 UTC.")}</p>}
+        {ol === null && <p class="muted mono">{T("The forecast is not published yet. A new one is built once a day.")}</p>}
         {ol && (
           <>
             <div class="seg-ctl fp-mode rv" role="tablist" aria-label={T("How to pick the flight")}>
@@ -227,7 +227,7 @@ export function Flight() {
 
             {stale && (
               <p class="mono-s live-err">
-                {`The latest forecast (run ${ol.info.run.slice(0, 10)}) has no hours left ahead; showing its own hours. A new one is built every morning.`}
+                {`The latest forecast (run ${ol.info.run.slice(0, 10)}) has no hours left ahead; showing its own hours. A new one is built once a day.`}
               </p>
             )}
             {mode === "plan" ? (
@@ -493,7 +493,12 @@ function SideView({ fp, from, to }: { fp: Footprint; from: string; to: string })
   const cw = (W - L - 8) / Math.max(1, fp.minutes);
   const y = (fl: number) => rows.findIndex((r) => r.fl === fl) * rowH + rowH / 2;
   return (
-    <svg viewBox={`0 0 ${W} ${H + 24}`} class="fp-svg" role="img" aria-label={T("Lasting-contrail air along the cruise at every flight level")}>
+    <svg
+      viewBox={`0 0 ${W} ${H + 24}`}
+      class="fp-svg"
+      role="img"
+      aria-label={`Lasting-contrail air along the cruise, ${fp.minutes} minutes, at ${rows.length} flight levels. At the planned FL${fp.planned.fl}: ${fp.planned.lasting} of ${fp.minutes} minutes.${fp.best ? ` At FL${fp.best.fl}: ${fp.best.lasting} minutes.` : ""}`}
+    >
       {rows.map((r, ri) => (
         <g>
           <text x={L - 8} y={ri * rowH + rowH * 0.68} text-anchor="end" class="ax">
@@ -501,7 +506,7 @@ function SideView({ fp, from, to }: { fp: Footprint; from: string; to: string })
           </text>
           {r.cells.map((v, i) => (
             <rect x={L + i * cw} y={ri * rowH + 1} width={cw + 0.4} height={rowH - 2} class={v == null ? "fp-none" : "fp-cell"} style={v == null ? undefined : { opacity: Math.min(1, v * 1.1) }}>
-              <title>{v == null ? `FL${r.fl}: ${T("no forecast")}` : `FL${r.fl}, minute ${i + 1}: lasting-contrail air ${Math.round(v * 100)} % of the hour`}</title>
+              <title aria-hidden="true">{v == null ? `FL${r.fl}: ${T("no forecast")}` : `FL${r.fl}, minute ${i + 1}: lasting-contrail air ${Math.round(v * 100)} % of the hour`}</title>
             </rect>
           ))}
         </g>

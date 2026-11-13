@@ -2,6 +2,41 @@
 
 Newest first. What was done, what's next, blockers.
 
+## 2026-11-13 — Website ready for the Conrad judges (checklist of 37 items)
+
+**Done**
+- New pages: `/innovation` (what's new, a sourced comparison with existing tools, IP and the DLR
+  CC BY-NC limit), `/next` (dated roadmap, why Meteosat-9 rather than INSAT-3D, what STRATUM can't
+  do yet), `/business` (customers with who pays / who uses, how we reach them, cited market size,
+  proposed price ₹50,000 per aircraft a year, running costs, funding need ≈ US$1,400 a year),
+  `/glossary`, `/references` (same list as the Innovation Brief). All copy in `web/src/content/judges.ts`.
+- Home: plain opening line, "Start here" path, the four results in one sentence each, the
+  can't-do-yet box, "Few checks over India" instead of "The India gap", H3 worded as a model
+  result, status updated with links to Results and What's next, video slot (`site.videoUrl`).
+- Team: our story, mission, vision and values, roles in sentences; team photo slot (`teamPhoto`).
+- H2 now names the pycontrails latitude correction (B3); H4 states its night definition.
+- /airlines: leads with the cautious estimate, caveats the 12-day scale-up, one night definition
+  (IST, with a note on H4's local solar time), "top 10 %" tile removed (also on /routes), a
+  shadow-trial call to action. /now: H1 caveat and the snapshot's age next to the numbers.
+  /report and /advisory: "once a day" instead of "every morning".
+- Data & code: plain AI-use statement matching this log, privacy (callsigns on live pages,
+  ICAO24 never shown or stored, hashed ids in research data), one rule for satellite images
+  (pictures with © EUMETSAT, never numerical data), all-versions DOI. Data table, README:
+  `/advisory`, `/live`, `/game` replaced by the pages in the menu; Bengaluru; all-versions DOI.
+- Protocol PDF: a cover note (Monte Carlo 20 → 100, the January dates, repository now public).
+- Progress entries explain 421 contrails vs 1,564 segments and 680,387 vs 334,211 segments;
+  coverage-audit result added (D-007); deviations D-006 and D-007 shown on Methods.
+- New night-theme logo (`public/logo.svg`, `logo.png`), favicon, app icon, link-preview image
+  (`og-image.png`, Open Graph + Twitter tags). Reduce-motion switch in the footer; the
+  /flight chart reads as one sentence to screen readers; two low-contrast text colours raised.
+- e2e: the five new pages render and fit a phone.
+
+**Next**
+- Team photo and individual photos (Team page); the Innovation Video URL (Home).
+- Team to confirm: the proposed price, the funding sources, the origin sentence of the story.
+- Ask the researchers who replied for permission before quoting them.
+- Freeze a judging version before submitting (`docs/judging_freeze.md`).
+
 ## 2026-10-29 — "Be the controller" and the narrated story
 
 **Done**

@@ -5,7 +5,7 @@ import { loadReportDay, loadReportIndex } from "../data/load";
 import { T } from "../i18n";
 import "../styles/map.css";
 
-/** /report — the daily report card: every morning the `report` Action checks yesterday's contrail
+/** /report — the daily report card: once a day the `report` Action checks yesterday's contrail
  *  outlook against the contrails Meteosat-9 saw (learned detector v3) and keeps the score in
  *  public. Scores: stratum/export/report_card.py. Descriptive; not a pre-registered result. */
 
@@ -55,10 +55,10 @@ export function Report() {
   return (
     <div class="page report">
       <PageHead
-        label="Report card · every morning"
-        note={idx ? `${idx.totals.days} days scored · last ${idx.updated}` : idx === null ? "Not published yet" : "Loading…"}
+        label="Report card · once a day"
+        note={idx ? `${idx.totals.days} days scored · last updated ${idx.updated}` : idx === null ? "Not published yet" : "Loading…"}
         lines={["Was yesterday's", "forecast right?"]}
-        lede="Every morning STRATUM checks yesterday's contrail forecast against the contrails the satellite actually saw, and keeps the score here, in public, good days and bad."
+        lede="Once a day STRATUM checks yesterday's contrail forecast against the contrails the satellite actually saw, and keeps the score here, in public, good days and bad. The check runs in the morning or early afternoon, India time, depending on when GitHub starts the job."
       />
       <div class="wrap">
         {idx === null && <p class="muted mono">{T("The first report card is written the morning after the daily check starts.")}</p>}

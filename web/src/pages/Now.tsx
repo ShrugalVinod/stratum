@@ -392,6 +392,13 @@ export function Now() {
           </div>
         </div>
 
+        <p class="small muted now-caveat">
+          {T("Physics only. Our test H1 found this physics predicts about six times more lasting contrails over India than Meteosat-9 sees, so read these counts as an upper estimate.")}{" "}
+          <a href="/results#h1">H1 →</a>
+          {live && !live.fb ? ` Aircraft positions: ${live.age == null ? "just now" : live.age <= 1 ? "under 2 minutes old" : `${live.age} minutes old`} (snapshot loaded ${new Date(live.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })} IST).` : ""}
+          {ol?.info.run ? ` Forecast run ${ol.info.run.slice(0, 10)}, ${ol.info.run.slice(11, 13)}:00 UTC.` : ""}
+        </p>
+
         <div class="map-wrap now-map">
           {(!NowMap || !ol) && <div class="map-loading mono-s">{T("Loading map…")}</div>}
           {NowMap && ol && (

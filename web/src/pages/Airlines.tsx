@@ -45,6 +45,7 @@ export function Airlines() {
   const share = who === "all" ? 1 : (airlines.find((a) => a.key === who)?.share ?? 0);
   const y = p ? year(p, { alertsPerDay: p.perDay * share, atfRsPerL: atf, eurPerT: eur, inrPerEur: fx }) : null;
   const rs = (v: number) => rupees(v);
+  const cautiousRsPerT = y && y.cautiousT > 0 ? y.fuelCostRs / y.cautiousT : Infinity;
 
   return (
     <div class="page airlines">
@@ -129,7 +130,7 @@ export function Airlines() {
             <div>
               <p class="label">{T("What STRATUM adds")}</p>
               <p>
-                {T("A satellite check of the forecast every day, a correction learned from Meteosat-9, a footprint for any flight, and altitude advice only where the cautious estimate says it helps.")}{" "}
+                {T("A daily check of the forecast against Meteosat-9, a model trained on the contrails Meteosat-9 saw that ranks which flights are likely to make one, a footprint for any flight, and altitude advice only where the cautious estimate says it helps.")}{" "}
                 <a href="/report">{T("Report card")} →</a> · <a href="/flight">{T("Your flight")} →</a>
               </p>
             </div>
@@ -181,21 +182,25 @@ export function Airlines() {
                   <span>{`extra fuel (${Math.round(y.fuelT).toLocaleString()} t a year)`}</span>
                 </div>
                 <div class="al-good">
-                  <b>{Math.round(y.avoidedT).toLocaleString()} t</b>
-                  <span>{`CO₂e of warming avoided (100 years, median; cautious: ${Math.round(y.cautiousT).toLocaleString()} t)`}</span>
+                  <b>{Math.round(y.cautiousT).toLocaleString()} t</b>
+                  <span>{`CO₂e of warming avoided, cautious estimate (100 years; median ${Math.round(y.avoidedT).toLocaleString()} t)`}</span>
                 </div>
                 <div class="al-good">
-                  <b>{rs(y.rsPerTonne)}</b>
-                  <span>{`per tonne avoided, against a carbon price of ${rupees(y.carbonRsPerT)} a tonne`}</span>
+                  <b>{rs(cautiousRsPerT)}</b>
+                  <span>{`of fuel per tonne avoided on the cautious estimate (median ${rs(y.rsPerTonne)}), against a carbon price of ${rupees(y.carbonRsPerT)} a tonne`}</span>
                 </div>
               </div>
 
               <p class="lede al-line rv">
                 {<>
-                    Avoiding contrails would cost about <b>{rs(y.rsPerTonne)}</b> of fuel per tonne of CO₂-equivalent warming avoided:{" "}
-                    <b>{y.carbonRsPerT > 0 ? Math.round(y.carbonRsPerT / y.rsPerTonne) : "—"}×</b> cheaper than the EU's carbon price. At that price the avoided warming
-                    is worth <b>{rs(y.valueRs)}</b> a year.
+                    Even on the cautious estimate, avoiding contrails would cost about <b>{rs(cautiousRsPerT)}</b> of fuel per tonne of CO₂-equivalent warming
+                    avoided: <b>{y.carbonRsPerT > 0 && cautiousRsPerT > 0 ? Math.round(y.carbonRsPerT / cautiousRsPerT) : "—"}×</b> cheaper than the EU's carbon price
+                    (median estimate: {rs(y.rsPerTonne)} a tonne). Contrails carry no carbon price today; the comparison shows how cheap this warming is to avoid.
                   </>}
+              </p>
+
+              <p class="now-warn mono-s">
+                {T("These yearly numbers scale up 12 sample days of flights (the 1st of each month) and only the 60 strongest stretches a day. Read them as an order of magnitude, not a forecast.")}
               </p>
 
               <p class="small muted">
@@ -227,16 +232,12 @@ export function Airlines() {
                 <span>{T("of the warming came from the top 1 % of flights")}</span>
               </div>
               <div>
-                <b>{pc(dash.concentration.top_10pct_flights, 0)}</b>
-                <span>{T("from the top 10 %")}</span>
-              </div>
-              <div>
                 <b>{pc(dash.totals.flights_warming / dash.totals.flights, 0)}</b>
                 <span>{T("of flights made any warming contrail")}</span>
               </div>
               <div>
                 <b>{pc(night(dash.by_hour_ist, "share_warm_w"), 0)}</b>
-                <span>{`of the warming at night (18:00–06:00 IST), for ${pc(night(dash.by_hour_ist, "share_km"), 0)} of the distance`}</span>
+                <span>{`of the warming at night (18:00–06:00 India time), for ${pc(night(dash.by_hour_ist, "share_km"), 0)} of the distance`}</span>
               </div>
             </div>
             <p class="rt-key mono-s rv">
@@ -253,11 +254,27 @@ export function Airlines() {
               </div>
             </div>
             <p class="small muted">
-              {T("STRATUM-weighted warming (second analysis D-006, descriptive). An airline's share mostly reflects where and when it flies, not how it flies.")}{" "}
+              {T("STRATUM-weighted warming (second analysis D-006, descriptive). An airline's share mostly reflects where and when it flies, not how it flies. Night here is 18:00–06:00 India time (IST); the H4 test on the Results page uses local solar time, which over India is within about an hour of IST.")}{" "}
               <a href="/routes">{T("By route, flight level, aircraft and month")} →</a>
             </p>
           </section>
         )}
+
+        <section class="section" aria-labelledby="pilot">
+          <div class="sec-head rv">
+            <p class="label red" id="pilot">
+              {T("§5 · Try it with us")}
+            </p>
+            <span class="mono-s">{T("a free shadow trial, no flights changed")}</span>
+          </div>
+          <div class="j-card rv">
+            <h3>{T("Fly to Europe? Let the satellite score our forecast for your flights.")}</h3>
+            <p>
+              {T("We are looking for one Indian airline for a free three-month shadow trial: STRATUM forecasts your flights every day and Meteosat-9 scores the forecast. Nothing changes in how you fly. Write to us at")}{" "}
+              <a href="mailto:aerospaceonyx@gmail.com?subject=STRATUM%20shadow%20trial">aerospaceonyx@gmail.com</a>. <a href="/business">{T("Our business plan")} →</a>
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );

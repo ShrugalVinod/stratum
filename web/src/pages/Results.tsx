@@ -197,7 +197,7 @@ export function Results() {
               </div>
               <p class="lede rv">
                 {T(
-                  "Re-labelling the twelve flight days with the new detectors cuts chance matches from a third to about an eighth, and the answers stay the same: physics still predicts far more contrails than the satellite sees (H1), and the model still beats the published correction (H2).",
+                  "Re-labelling the twelve flight days with the new detectors cuts chance matches from a third to about an eighth, and the answers stay the same: physics still predicts far more contrails than the satellite sees (H1), and the model still beats the pycontrails latitude correction (H2).",
                 )}
               </p>
               <div class="table-wrap rv rv-fade">
@@ -322,7 +322,7 @@ const LABEL: Record<string, string> = {
   B0: "B0 climatology",
   B1: "B1 raw ERA5",
   B2: "B2 RHi / 0.95",
-  B3: "B3 published correction",
+  B3: "B3 pycontrails latitude correction",
   B1_cocip: "CoCiP B1",
   RATE: "Constant rate",
   LOGIT: "Humidity only (logistic)",

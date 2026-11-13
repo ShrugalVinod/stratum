@@ -6,6 +6,7 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/layout.css";
 import "./styles/film.css";
+import "./styles/judges.css";
 import { render } from "preact";
 import { useEffect } from "preact/hooks";
 import {
@@ -79,6 +80,11 @@ const Airlines = lazy(reloadOnce(() => import("./pages/Airlines").then((m) => m.
 const Sandbox = lazy(reloadOnce(() => import("./pages/Sandbox").then((m) => m.Sandbox)));
 const Replay = lazy(reloadOnce(() => import("./pages/Replay").then((m) => m.Replay)));
 const Now = lazy(reloadOnce(() => import("./pages/Now").then((m) => m.Now)));
+const Innovation = lazy(reloadOnce(() => import("./pages/Innovation").then((m) => m.Innovation)));
+const Business = lazy(reloadOnce(() => import("./pages/Business").then((m) => m.Business)));
+const Next = lazy(reloadOnce(() => import("./pages/Next").then((m) => m.Next)));
+const Glossary = lazy(reloadOnce(() => import("./pages/Glossary").then((m) => m.Glossary)));
+const References = lazy(reloadOnce(() => import("./pages/References").then((m) => m.References)));
 const NotFound = lazy(
   reloadOnce(() => import("./pages/NotFound").then((m) => m.NotFound)),
 );
@@ -121,6 +127,11 @@ function Shell() {
             <Route path="/sandbox" component={Sandbox} />
             <Route path="/replay" component={Replay} />
             <Route path="/now" component={Now} />
+            <Route path="/innovation" component={Innovation} />
+            <Route path="/business" component={Business} />
+            <Route path="/next" component={Next} />
+            <Route path="/glossary" component={Glossary} />
+            <Route path="/references" component={References} />
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/progress" component={Progress} />
             <Route path="/results" component={Results} />

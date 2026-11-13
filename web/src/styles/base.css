@@ -952,7 +952,7 @@ main {
 .nav-n {
   grid-area: n;
   align-self: center;
-  color: var(--faint);
+  color: var(--muted);
 }
 .nav-t {
   grid-area: t;
@@ -1170,7 +1170,7 @@ main {
   font-style: normal;
   font-size: 9.5px;
   letter-spacing: 0.06em;
-  color: var(--faint);
+  color: var(--muted);
   white-space: nowrap;
 }
 .ds-tick::after,

@@ -1272,7 +1272,7 @@ function ProfileChart({ pr, planned, best }: { pr: Profile; planned: number; bes
         {best && <line x1={L} x2={W - R} y1={y(best)} y2={y(best)} class="lvl-best" />}
       </svg>
       <figcaption class="mono small">
-        <i class="k k-raw" /> ERA5 <i class="k k-b3" /> {T("published fix")} <i class="k k-st" /> STRATUM · {T("shaded")}: RHi ≥ 100 % · {T("solid")}: FL{planned}
+        <i class="k k-raw" /> ERA5 <i class="k k-b3" /> {T("pycontrails latitude fix")} <i class="k k-st" /> STRATUM · {T("shaded")}: RHi ≥ 100 % · {T("solid")}: FL{planned}
         {best ? ` · ${T("dashed")}: FL${best}` : ""}
       </figcaption>
     </figure>

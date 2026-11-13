@@ -76,7 +76,7 @@ export function Advisory() {
               : "Loading…"
         }
         lines={["Notice to", "contrail makers."]}
-        lede="Every morning STRATUM reads the new weather forecast and writes notices in the style pilots know: where the air at cruise level is cold and humid enough for contrails to last, at which levels, and which nearby levels are drier."
+        lede="Once a day STRATUM reads the new weather forecast and writes notices in the style pilots know: where the air at cruise level is cold and humid enough for contrails to last, at which levels, and which nearby levels are drier."
       />
       <div class="wrap">
         {ol === null && <p class="muted mono">{T("No advisories have been published yet. They are written daily at about 09:30 UTC.")}</p>}
