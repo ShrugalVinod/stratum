@@ -55,7 +55,7 @@ export function Booth() {
 
   return (
     <div class="booth-chip mono-s" role="status">
-      {paused ? T("Tour paused — it resumes after a minute without touching") : `${T("Tour")} ${i + 1}/${STEPS.length}: ${T(STEPS[i].label)}`}
+      {paused ? T("Tour paused. It resumes after a minute without touching") : `${T("Tour")} ${i + 1}/${STEPS.length}: ${T(STEPS[i].label)}`}
     </div>
   );
 }

@@ -11,7 +11,7 @@
 //    fuel is those stretches', not the whole flight's.
 //  * Odd flight levels (eastbound under the semicircular rule) are interpolated between the
 //    forecast's 2,000 ft levels, so an aircraft is judged at the level it actually flies.
-//  * An alert needs even the cautious estimate (25th percentile of the warming per minute) to
+//  * An alert needs even the low estimate (25th percentile of the warming per minute) to
 //    beat the extra fuel's CO₂; the central estimate is what the page adds up.
 
 import type { LiveAircraft, Manifest, ScheduledFlight } from "../data/contract";

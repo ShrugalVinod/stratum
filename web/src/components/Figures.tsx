@@ -11,7 +11,7 @@ const PLANE_PATHS = (
   </>
 );
 
-/** Fig. 1 — a contrail widening into cirrus inside the layer (t = 0 … +3 h). */
+/** Fig. 1. a contrail widening into cirrus inside the layer (t = 0 … +3 h). */
 export function SpreadFigure() {
   const xs = [70, 185, 300, 415, 530, 645];
   return (
@@ -34,12 +34,12 @@ export function SpreadFigure() {
         </g>
       </svg>
       <p class="mono-s fig1-label">ISSR · {T("~500 m thick")}</p>
-      <figcaption class="caption">{T("Fig. 1 — A trail widening into cirrus inside the layer. Illustration.")}</figcaption>
+      <figcaption class="caption">{T("Fig. 1. A trail widening into cirrus inside the layer. Illustration.")}</figcaption>
     </figure>
   );
 }
 
-/** Fig. 2 — side view. One aircraft crosses the layer at FL360 and leaves a persistent contrail,
+/** Fig. 2. side view. One aircraft crosses the layer at FL360 and leaves a persistent contrail,
  *  climbs 2,000 ft to FL380 and its trail vanishes within seconds. Loops while on screen. */
 export function SideView() {
   const ref = useRef<SVGSVGElement>(null);
@@ -155,7 +155,7 @@ export function SideView() {
           </g>
         </svg>
       </div>
-      <figcaption class="caption">{T("Fig. 2 — The layer is thin. A small change of level can take a plane out of it. Illustration.")}</figcaption>
+      <figcaption class="caption">{T("Fig. 2. The layer is thin. A small change of level can take a plane out of it. Illustration.")}</figcaption>
     </figure>
   );
 }

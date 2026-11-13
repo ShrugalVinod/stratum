@@ -57,13 +57,16 @@ export function AboutData() {
             <p class="label red">§3 · {T("Privacy")}</p>
             <p>
               {T(
-                "Only commercial airline flights are shown; business jets, private, government and military flights never appear. In the research data and on the map, each flight's identity is replaced by a salted hash. On the live pages (Live advice, Your flight, Spot a contrail, the 3D sky) we show what airliners broadcast publicly: the callsign (such as AXB159), the aircraft type and the route. Aircraft addresses (ICAO24) are never shown or stored. No login, no forms, no cookies, no analytics, no trackers. If you choose to use your location, it stays in your browser; our server only receives it rounded to half a degree (about 50 km) to fetch the aircraft nearby, and keeps nothing. Spot a contrail: your photo is never uploaded; its time and place are read on your device.",
+                "Only commercial airline flights are shown; business jets, private, government and military flights never appear. On the map and the live pages we show what airliners broadcast publicly: the callsign (such as AXB159), the aircraft type and the route. Inside our research data and downloads, each flight is identified only by a salted hash. Aircraft addresses (ICAO24) are never shown or stored. No login, no forms, no cookies, no analytics, no trackers. If you choose to use your location, it stays in your browser; our server only receives it rounded to half a degree (about 50 km) to fetch the aircraft nearby, and keeps nothing. Spot a contrail: your photo is never uploaded; its time and place are read on your device.",
               )}
             </p>
             <p>
               {T(
-                "Satellite images: we show Meteosat-9 pictures, always with the credit 'Meteosat-9 imagery © EUMETSAT', and we never publish the satellite's numerical data. That is what EUMETSAT allows for its imagery.",
-              )}
+                "Satellite images: we show Meteosat-9 pictures, always with the credit 'Meteosat-9 imagery © EUMETSAT', as EUMETSAT asks for published images. We do not redistribute the satellite's numerical data files; anyone can download them from EUMETSAT under its data policy.",
+              )}{" "}
+              <a href="https://www-cdn.eumetsat.int/files/2026-01/45173%20-%20Data_Policy.pdf" target="_blank" rel="noopener">
+                {T("EUMETSAT data policy")} ↗
+              </a>
             </p>
           </section>
           <section class="note rv" id="ai-use">

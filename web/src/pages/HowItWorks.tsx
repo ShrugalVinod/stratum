@@ -101,7 +101,7 @@ export function HowItWorks() {
           <SideView />
           <p class="field-note rv">
             {T(
-              "A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may leave one that vanishes in seconds. The hard part is knowing where those layers are — that is what STRATUM checks against satellites.",
+              "A flight inside a cold, ice-supersaturated layer can leave a contrail that lasts for hours. The same route 2,000 ft above it may leave one that vanishes in seconds. The hard part is knowing where those layers are. That is what STRATUM checks against satellites.",
             )}
           </p>
         </section>

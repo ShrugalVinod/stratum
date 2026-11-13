@@ -7,8 +7,8 @@ export const updated = "13 Nov 2026";
 
 // ---------------------------------------------------------------- story, mission, values
 export const story = [
-  "STRATUM started in October 2026, when four of us at Indus International School in Bengaluru entered the Conrad Challenge and picked a problem most people have never heard of: the white lines planes leave in the sky. A few of them spread into thin cloud that lasts for hours and traps heat.",
-  "We wrote our Lean Canvas and research plan on 12 October and locked our hypotheses the next day, before any result existed. On 18 October we photographed a long contrail over South India. That line is exactly what we are trying to predict: will it fade in seconds, or spread into cloud for hours?",
+  "STRATUM is four of us at Indus International School in Bengaluru. For the Conrad Challenge 2026–27 we picked a problem most people have never heard of: the white lines planes leave in the sky. A few of them spread into thin cloud that lasts for hours and traps heat.",
+  "Our Lean Canvas and research plan are dated 12 October 2026, and we locked our hypotheses the next day, before any result existed. On 18 October we photographed a long contrail over South India. That line is exactly what we are trying to predict: will it fade in seconds, or spread into cloud for hours?",
   "Why India? Almost all contrail research, and every avoidance trial we found, is over Europe, the North Atlantic and the United States. India is now the world's third-largest domestic aviation market, and we had not found a study that checks contrail forecasts over Indian skies against what a satellite sees.",
 ];
 
@@ -86,13 +86,13 @@ export const tools: Tool[] = [
     href: "https://doi.org/10.1038/s44172-024-00329-7",
   },
   {
-    name: "Google Research with Flightkeys",
-    what: "Contrail forecasts built into flight-planning software (Flightkeys, which American Airlines uses) and tested on transatlantic flights in 2025.",
-    where: "North Atlantic; a UK corridor trial; Asia-Pacific trials",
+    name: "Google Research with FlightKeys",
+    what: "Contrail forecasts offered through flight-planning software: Google names FlightKeys among its flight-planning partners and works with airlines such as American Airlines.",
+    where: "United States and the North Atlantic, including a trial in Shanwick airspace with the UK Government and NATS",
     satIndia: "No",
     open: "Commercial",
     vs: "Shows the route to market: flight-planning software. STRATUM would be the India-checked forecast such a system could use.",
-    src: "Google, Operation Blue Skies",
+    src: "Google, Operation Blue Skies, 18 Aug 2026",
     href: "https://blog.google/innovation-and-ai/models-and-research/google-research/blue-skies/",
   },
   {
@@ -220,7 +220,7 @@ export const customers: { who: string; why: string; pays: string; uses: string }
   },
   {
     who: "Flight-planning software companies",
-    why: "Dispatchers plan in this software, and contrail avoidance is already being built into it (Google with Flightkeys). An India-checked forecast is a feature they could add.",
+    why: "Dispatchers plan in this software, and Google already works with flight-planning software providers on contrails, FlightKeys among them. An India-checked forecast is a feature they could add.",
     pays: "The software company, as a data licence",
     uses: "Their airline customers' dispatchers",
   },
@@ -288,7 +288,7 @@ export const costsService: [string, string, string][] = [
   ["Hosting (Cloudflare Workers Paid)", "US$60 a year", "US$5 a month, 10 million requests included (Cloudflare)"],
   ["Compute (Google Colab Pro)", "about US$120 a year", "US$9.99 a month"],
   ["Flight data for daily, commercial use", "US$1,200 a year (our budget)", "Free sources are licensed for research only; we budget US$100 a month until we have a quote"],
-  ["Domain", "about ₹1,000 a year", "From our project synopsis"],
+  ["Domain", "about ₹1,000 a year", "Our budget for a .in or .com name"],
 ];
 export const costNote =
   "Running costs grow with the airspace covered, not the number of customers: the same daily run serves one airline or ten. Satellite images delayed by an hour or more are free from EUMETSAT; for a paid service we would need to check its licence for commercial use.";
@@ -301,7 +301,7 @@ export const funding = {
     "Compute on Google Colab Pro (about US$120)",
   ],
   sources: [
-    "Prize and grant money for student innovation, such as the Conrad Challenge and India's INSPIRE-MANAK award (₹10,000 per selected idea; nominations through the school, next round from July 2027).",
+    "Prize and grant money for student innovation, such as the Conrad Challenge and India's INSPIRE-MANAK award for school students in classes 6 to 12 (nominations go through the school; the 2026–27 round has closed, so we would apply in the next one).",
     "Our school, for the domain and printing.",
     "After a successful shadow trial: the first airline subscription.",
   ],
@@ -334,30 +334,34 @@ export const glossary: [string, string][] = [
 // ---------------------------------------------------------------- references (same list as the brief)
 export const references: { ref: string; href?: string }[] = [
   { ref: "Lee, D. S., et al. (2021). The contribution of global aviation to anthropogenic climate forcing for 2000 to 2018. Atmospheric Environment, 244, 117834.", href: "https://doi.org/10.1016/j.atmosenv.2020.117834" },
-  { ref: "Teoh, R., Engberg, Z., Schumann, U., Voigt, C., Shapiro, M., Rohs, S., & Stettler, M. E. J. (2024). Global aviation contrail climate effects from 2019 to 2021. Atmospheric Chemistry and Physics, 24, 6071–6093.", href: "https://doi.org/10.5194/acp-24-6071-2024" },
   { ref: "Teoh, R., Schumann, U., Majumdar, A., & Stettler, M. E. J. (2020). Mitigating the climate forcing of aircraft contrails by small-scale diversions and technology adoption. Environmental Science & Technology, 54(5), 2941–2950.", href: "https://doi.org/10.1021/acs.est.9b05608" },
-  { ref: "Sonabend-W, A., Elkin, C., Dean, T., et al. (2024). Feasibility test of per-flight contrail avoidance in commercial aviation. Communications Engineering, 3.", href: "https://doi.org/10.1038/s44172-024-00329-7" },
+  { ref: "Teoh, R., Schumann, U., Gryspeerdt, E., Shapiro, M., Molloy, J., Koudis, G., Voigt, C., & Stettler, M. E. J. (2022). Aviation contrail climate effects in the North Atlantic from 2016 to 2021. Atmospheric Chemistry and Physics, 22, 10919–10935.", href: "https://doi.org/10.5194/acp-22-10919-2022" },
+  { ref: "Teoh, R., Engberg, Z., Schumann, U., Voigt, C., Shapiro, M., Rohs, S., & Stettler, M. E. J. (2024). Global aviation contrail climate effects from 2019 to 2021. Atmospheric Chemistry and Physics, 24, 6071–6093.", href: "https://doi.org/10.5194/acp-24-6071-2024" },
+  { ref: "Stuber, N., & Forster, P. (2007). The impact of diurnal variations of air traffic on contrail radiative forcing. Atmospheric Chemistry and Physics, 7, 3153–3162.", href: "https://doi.org/10.5194/acp-7-3153-2007" },
+  { ref: "Martín Frías, A., Shapiro, M. L., Engberg, Z., Zopp, R., Soler, M., & Stettler, M. E. J. (2024). Feasibility of contrail avoidance in a commercial flight planning system: an operational analysis. Environmental Research: Infrastructure and Sustainability, 4, 015013.", href: "https://doi.org/10.1088/2634-4505/ad310c" },
+  { ref: "Sonabend-W, A., Elkin, C., Dean, T., et al. (2024). Feasibility test of per-flight contrail avoidance in commercial aviation. Communications Engineering, 3, 184.", href: "https://doi.org/10.1038/s44172-024-00329-7" },
   { ref: "Gierens, K., Matthes, S., & Rohs, S. (2020). How well can persistent contrails be predicted? Aerospace, 7(12), 169.", href: "https://doi.org/10.3390/aerospace7120169" },
-  { ref: "Wolf, K., Bellouin, N., Boucher, O., Rohs, S., & Li, Y. (2025). Correction of ERA5 temperature and relative humidity biases by bivariate quantile mapping for contrail formation analysis. Atmospheric Chemistry and Physics, 25, 157–181." },
-  { ref: "Stuber, N., Forster, P., Rädel, G., & Shine, K. (2006). The importance of the diurnal and annual cycle of air traffic for contrail radiative forcing. Nature, 441, 864–867.", href: "https://doi.org/10.1038/nature04877" },
-  { ref: "Driver, O. G. A., Stettler, M. E. J., & Gryspeerdt, E. (2025). Factors limiting contrail detection in satellite imagery. Atmospheric Measurement Techniques, 18, 1115–1134." },
+  { ref: "Wolf, K., Bellouin, N., Boucher, O., Rohs, S., & Li, Y. (2025). Correction of ERA5 temperature and relative humidity biases by bivariate quantile mapping for contrail formation analysis. Atmospheric Chemistry and Physics, 25, 157–181.", href: "https://doi.org/10.5194/acp-25-157-2025" },
+  { ref: "Driver, O. G. A., Stettler, M. E. J., & Gryspeerdt, E. (2025). Factors limiting contrail detection in satellite imagery. Atmospheric Measurement Techniques, 18, 1115–1134.", href: "https://doi.org/10.5194/amt-18-1115-2025" },
   { ref: "Hersbach, H., et al. (2020). The ERA5 global reanalysis. Quarterly Journal of the Royal Meteorological Society, 146, 1999–2049.", href: "https://doi.org/10.1002/qj.3803" },
   { ref: "Schumann, U. (2012). A contrail cirrus prediction model. Geoscientific Model Development, 5, 543–580.", href: "https://doi.org/10.5194/gmd-5-543-2012" },
-  { ref: "Schäfer, M., Strohmeier, M., Lenders, V., Martinovic, I., & Wilhelm, M. (2014). Bringing up OpenSky: A large-scale ADS-B sensor network for research. Proceedings of IPSN '14, 83–94." },
-  { ref: "Ng, J. Y.-H., et al. (2024). OpenContrails: benchmarking contrail detection on GOES-16 ABI. Google Research. CC BY 4.0." },
-  { ref: "DLR expert contrail labels on Meteosat SEVIRI scenes. CC BY-NC 4.0." },
+  { ref: "Schäfer, M., Strohmeier, M., Lenders, V., Martinovic, I., & Wilhelm, M. (2014). Bringing up OpenSky: a large-scale ADS-B sensor network for research. Proceedings of IPSN '14, 83–94.", href: "https://doi.org/10.1109/IPSN.2014.6846743" },
+  { ref: "Ng, J. Y.-H., et al. (2023). OpenContrails: benchmarking contrail detection on GOES-16 ABI. arXiv:2304.02122. Dataset licence CC BY 4.0.", href: "https://arxiv.org/abs/2304.02122" },
+  { ref: "Santos Gabriel, V., et al. (2026). DLR expert-labelled contrails on Meteosat SEVIRI scenes. Earth System Science Data, 18, 2397–2412. Dataset on Zenodo, CC BY-NC 4.0.", href: "https://doi.org/10.5281/zenodo.17669443" },
   { ref: "pycontrails: Python library for modelling aviation climate impacts (Breakthrough Energy). Open source.", href: "https://py.contrails.org/" },
   { ref: "OpenAP: open aircraft performance model.", href: "https://openap.dev/" },
   { ref: "EUMETSAT. Meteosat-9 (IODC) SEVIRI Level 1.5 images and cloud mask. Images © EUMETSAT.", href: "https://data.eumetsat.int/" },
+  { ref: "EUMETSAT. Data Policy.", href: "https://www-cdn.eumetsat.int/files/2026-01/45173%20-%20Data_Policy.pdf" },
   { ref: "ECMWF open data (IFS forecasts), CC BY 4.0.", href: "https://www.ecmwf.int/en/forecasts/datasets/open-data" },
   { ref: "European Commission. Reducing emissions from aviation.", href: "https://climate.ec.europa.eu/areas-action/transport-decarbonisation/reducing-emissions-aviation_en" },
   { ref: "Directive (EU) 2023/958 amending Directive 2003/87/EC as regards aviation's contribution to the Union's economy-wide emission reduction target.", href: "https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32023L0958" },
-  { ref: "AIR News (2025, 20 December). India emerges as world's third largest domestic aviation market.", href: "https://www.newsonair.gov.in/" },
-  { ref: "Airbus (2026, January). Indian commercial aircraft fleet to reach 2,250 by 2035.", href: "https://www.airbus.com/en/newsroom/press-releases/2026-01-indian-aircraft-fleet-to-reach-2250-by-2035-mro-market-to-hit-us95-billion" },
-  { ref: "Google (2026). Operation Blue Skies: reducing aviation climate impact with AI.", href: "https://blog.google/innovation-and-ai/models-and-research/google-research/blue-skies/" },
+  { ref: "AIR News (2025, 20 December). India emerges as world's third largest domestic aviation market.", href: "https://www.newsonair.gov.in/india-emerges-as-worlds-third-largest-domestic-aviation-market" },
+  { ref: "Airbus (2026, 29 January). Indian commercial aircraft fleet to reach 2,250 by 2035.", href: "https://www.airbus.com/en/newsroom/press-releases/2026-01-indian-aircraft-fleet-to-reach-2250-by-2035-mro-market-to-hit-us95-billion" },
+  { ref: "Google (2026, 18 August). Operation Blue Skies: reducing aviation climate impact with AI.", href: "https://blog.google/innovation-and-ai/models-and-research/google-research/blue-skies/" },
   { ref: "Cloudflare. Workers pricing.", href: "https://developers.cloudflare.com/workers/platform/pricing/" },
-  { ref: "Government of India. The Patents Act, 1970, Section 3(k).", href: "https://ipindia.gov.in/" },
-  { ref: "Department of Science and Technology. INSPIRE Awards – MANAK.", href: "https://www.inspireawards-dst.gov.in/" },
+  { ref: "The Patents Act, 1970 (India), Section 3(k), as reproduced by WIPO.", href: "https://wipo.int/ip-development/en/agenda/flexibilities/details.jsp?id=8825" },
+  { ref: "Department of Science and Technology, Government of India. INSPIRE Awards – MANAK.", href: "https://www.inspireawards-dst.gov.in/" },
   { ref: "Vinod S., Harsoda A., Kupnur I., Shah A. (2026). STRATUM: how well can persistent contrails be predicted over India? Zenodo (all versions).", href: "https://doi.org/10.5281/zenodo.23480201" },
-  { ref: "Anthropic (2026). Claude [large language model]. Used to write much of the code and the website, to draft the contrail lines on 100 India satellite scenes that the team reviewed, and to help edit our writing.", href: "https://claude.ai/" },
+  { ref: "Anthropic (2026). Claude Code [AI coding assistant], running Claude Opus 5.5 and Claude Fable 5.2. Used October–November 2026 to write much of the analysis code and the website, and to draft the contrail lines on 100 India satellite scenes that the team then reviewed.", href: "https://www.anthropic.com/claude-code" },
+  { ref: "Anthropic (2026). Claude Opus 5.5 and Claude Fable 5.2 [large language models]. Used October–November 2026 to help find and summarise papers and to help draft and edit the Innovation Brief and this website's text from the team's notes and results.", href: "https://claude.ai/" },
 ];

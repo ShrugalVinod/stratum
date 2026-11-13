@@ -103,8 +103,8 @@ const GALLERY: GalleryItem[] = [
   },
   {
     title: "Physics vs satellite",
-    caption: "1 Jan 2026, 18:30 IST — no match",
-    long: "Orange: contrails predicted by uncorrected physics (CoCiP, B1). Blue: lines the detector found. None of the predicted contrails lines up with a detected one — the reason STRATUM learns a correction from satellite evidence (1 Jan 2026, 13:00 UTC).",
+    caption: "1 Jan 2026, 18:30 IST: no match",
+    long: "Orange: contrails predicted by uncorrected physics (CoCiP, B1). Blue: lines the detector found. None of the predicted contrails lines up with a detected one. That is the reason STRATUM learns a correction from satellite evidence (1 Jan 2026, 13:00 UTC).",
     thumb: "/img/overlay_2026-01-01_1300.webp",
     alt: "Two-panel satellite image: left plain, right with orange predicted contrails and blue detected lines that do not coincide",
   },
@@ -499,7 +499,7 @@ export function MapPage() {
         <span class="mono-s warn">
           {build === "outlook"
             ? `${T("Forecast (experimental)")} · ${man?.model_version ?? ""}`
-            : T("Proof: real past days, checked against the satellite — no real flight was changed")}
+            : T("Proof: real past days, checked against the satellite; no real flight was changed")}
         </span>
         <span class="mono-s mp-badge">{T(v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1")}</span>
         <span class="mono-s mp-extra">
@@ -989,7 +989,7 @@ export function MapPage() {
           <figure onClick={(e) => e.stopPropagation()}>
             {lightbox.video ? <video src={lightbox.video} poster={lightbox.thumb} controls autoPlay loop playsInline /> : <img src={lightbox.full ?? lightbox.thumb} alt={T(lightbox.alt)} />}
             <figcaption>
-              <b>{T(lightbox.title)}</b> — {T(lightbox.long)} <span class="muted">© EUMETSAT 2026 · {T("illustration, not a result.")}</span>
+              <b>{T(lightbox.title)}</b>. {T(lightbox.long)} <span class="muted">© EUMETSAT 2026 · {T("illustration, not a result.")}</span>
             </figcaption>
             <button class="tool lb-close" onClick={() => setLightbox(null)} autoFocus>
               {T("Close")}

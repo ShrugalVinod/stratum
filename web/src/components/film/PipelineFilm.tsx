@@ -217,7 +217,7 @@ function Adsb({ t, d, land }: { t: number; d: D; land: Land | null }) {
           {CS} · A350-900 · FL{d.st.fl}
         </text>
         <text y="20" class="pf-lab">
-          {"cruise ≥ FL250 · 4–39°N, 66–100°E · commercial only"}
+          {"cruise ≥ FL250 · data box 4–39°N, 66–100°E · scored 6–37°N, 68–98°E · commercial only"}
         </text>
       </g>
       <g transform={`translate(${W - 16} ${H - 22})`} style={{ opacity: tickT }}>

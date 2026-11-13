@@ -596,7 +596,7 @@ export function Sky3D() {
     if (clock < mine.t0) return `${up ? "Climbing" : "Descending"} to FL${mine.alt} to clear the humid layer…`;
     if (clock <= mine.t1) return `At FL${mine.alt}, ${up ? "above" : "below"} the humid layer: no lasting contrail.`;
     if (clock <= mine.t1 + 5) return `Clear of it. Back to FL${mine.fl}.`;
-    return `Done: about ${tonnes(mine.p50)} t CO₂e of warming avoided (cautious ${tonnes(mine.low)} t), for ${Math.round(mine.fuelKg)} kg of extra fuel.`;
+    return `Done: about ${tonnes(mine.p50)} t CO₂e of warming avoided (low estimate, 25th percentile: ${tonnes(mine.low)} t), for ${Math.round(mine.fuelKg)} kg of extra fuel.`;
   })();
 
   // the satellite: how many of the day's confirmed contrails it has seen so far, and the ridden one
@@ -729,7 +729,7 @@ export function Sky3D() {
               <div class="s3-saved" aria-live="polite">
                 <p class="label">{T("If they had listened")}</p>
                 <b class="display">{tonnes(saved.p50)} t</b>
-                <span>{`CO₂e of contrail warming avoided so far (cautious ${tonnes(saved.low)} t)`}</span>
+                <span>{`CO₂e of contrail warming avoided so far (low estimate, 25th percentile: ${tonnes(saved.low)} t)`}</span>
                 <span class="mono-s">
                   {date === LIVE
                     ? `${saved.n} of ${alerts.length} planes advised now have moved · +${tonnes(saved.fuel)} t fuel · all advice now ${tonnes(dayTotal)} t`
@@ -988,7 +988,7 @@ function Postcard({ trip, me, again, plan }: { trip: MyTrip; me: MyFlight; again
               </p>
               <b class="s3-pc-big">{(a.avoided.p50 / 1000).toFixed(1)} t</b>
               <span>
-                {`CO₂e of contrail warming avoided (cautious ${(a.avoided.low / 1000).toFixed(1)} t), for ${Math.round(a.extraFuelKg)} kg of extra fuel: about the CO₂ of driving a petrol car ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} km.`}
+                {`CO₂e of contrail warming avoided (low estimate, 25th percentile: ${(a.avoided.low / 1000).toFixed(1)} t), for ${Math.round(a.extraFuelKg)} kg of extra fuel: about the CO₂ of driving a petrol car ${Math.round(a.avoided.p50 / CAR_KG_PER_KM).toLocaleString()} km.`}
               </span>
             </>
           ) : (

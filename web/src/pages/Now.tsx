@@ -388,11 +388,12 @@ export function Now() {
           </div>
           <div class="rp-good">
             <b>{rows.length ? t1(sum.p50) : "…"}</b>
-            <span>{`CO₂e of warming avoided if all are followed (cautious ${t1(sum.low)}), for ${kg(sum.fuel)} of fuel`}</span>
+            <span>{`CO₂e of warming avoided if all are followed (low estimate ${t1(sum.low)}), for ${kg(sum.fuel)} of fuel`}</span>
           </div>
         </div>
 
         <p class="small muted now-caveat">
+          {T("Low estimate here = the 25th percentile, a lighter rule than the 5th percentile our study calls cautious.")}{" "}
           {T("Physics only. Our test H1 found this physics predicts about six times more lasting contrails over India than Meteosat-9 sees, so read these counts as an upper estimate.")}{" "}
           <a href="/results#h1">H1 →</a>
           {live && !live.fb ? ` Aircraft positions: ${live.age == null ? "just now" : live.age <= 1 ? "under 2 minutes old" : `${live.age} minutes old`} (snapshot loaded ${new Date(live.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })} IST).` : ""}
@@ -553,7 +554,7 @@ export function Now() {
           </p>
           <p>
             {T(
-              "Advice: a level 2,000 or 4,000 ft away, within the aircraft's ceiling, held only over each stretch in lasting-contrail air (5 minutes either side; stretches less than 10 minutes apart are joined). Contrail warming per minute and fuel CO₂ per minute as on Your flight (CoCiP over India; OpenAP), 100-year CO₂e with efficacy 0.42. An alert needs even the cautious estimate (25th percentile) to beat the extra fuel's CO₂; warming avoided is net of that fuel. Air traffic control, other traffic and the climb itself are not modelled.",
+              "Advice: a level 2,000 or 4,000 ft away, within the aircraft's ceiling, held only over each stretch in lasting-contrail air (5 minutes either side; stretches less than 10 minutes apart are joined). Contrail warming per minute and fuel CO₂ per minute as on Your flight (CoCiP over India; OpenAP), 100-year CO₂e with efficacy 0.42. An alert needs even the low estimate (the 25th percentile, a lighter rule than the study's cautious 5th percentile) to beat the extra fuel's CO₂; warming avoided is net of that fuel. Air traffic control, other traffic and the climb itself are not modelled.",
             )}
           </p>
           <p>
@@ -664,7 +665,7 @@ function Detail({ row, t, up, near, onClose }: { row: Row | null; t: Tracked | n
                 Advice: {feet(a.alt! - a.fl)} to {flName(a.alt!)} for {a.spans.map((x) => spanText(row.path, x)).join(" and ")} UTC
               </b>
               {a.spans.length > 1 ? `, back to ${flName(a.fl)} in between and after.` : `, then back to ${flName(a.fl)}.`} {a.altLasting ? `${a.altLasting} lasting minutes would remain. ` : "No lasting contrail would remain. "}
-              Extra fuel {kg(a.extraFuelKg)}; contrail warming avoided about <b>{t1(a.avoided.p50)} CO₂e</b> (cautious {t1(a.avoided.low)}), already net of that fuel.
+              Extra fuel {kg(a.extraFuelKg)}; contrail warming avoided about <b>{t1(a.avoided.p50)} CO₂e</b> (low estimate {t1(a.avoided.low)}), already net of that fuel.
             </>}
         </p>
       ) : a?.nLasting ? (

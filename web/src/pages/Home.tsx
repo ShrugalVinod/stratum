@@ -162,13 +162,13 @@ export function Home() {
               <span class="j-k">
                 <b class="mono">H3</b> <span class="j-verdict">· supported</span>
               </span>
-              <p>In our model runs, 0.48 % of the distance flown carried 80 % of the contrail warming. Moving a few flights could avoid most of it.</p>
+              <p>In our model runs with raw physics, 0.48 % of the distance flown carried 80 % of the contrail warming. Moving a few flights could avoid most of it. (The logged test, with our too-dry corrected physics, gave 0.0044 %.)</p>
             </article>
             <article class="j-card j-no" style={{ "--i": 3 }}>
               <span class="j-k">
                 <b class="mono">H4</b> <span class="j-verdict">· not supported</span>
               </span>
-              <p>Night flights (18:00–06:00 local solar time) carried 84 % of the warming for 49 % of the distance, but our pre-set test's range dipped below zero, so it did not pass.</p>
+              <p>In the logged test, night flights (18:00–06:00 local solar time) carried 84 % of the warming for 49 % of the distance, but the test's range dipped below zero, so it did not pass. With standard physics the night share is 73–75 %.</p>
             </article>
           </div>
           <div class="j-limits rv" style={{ "margin-top": "18px" }}>
@@ -330,14 +330,14 @@ export function Home() {
                 />
                 <span class="sat-tl mono-s">{T("Seen from below")}</span>
               </div>
-              <figcaption class="caption">{T("Fig. 3 — A contrail over South India, photographed by the team on 18 Oct 2026.")}</figcaption>
+              <figcaption class="caption">{T("Fig. 3. A contrail over South India, photographed by the team on 18 Oct 2026.")}</figcaption>
             </figure>
             <div class="open-text">
               <h2 id="ground-title" class="display d-m">
                 <Split text={T("The line we are trying to predict.")} />
               </h2>
               <p class="rv" style={{ "--d": 200 }}>
-                {T("A contrail like this one spreads into cirrus and lasts for hours only when the air is supersaturated with ice — and that is exactly what weather models struggle to see. From 36,000 km up, Meteosat sees the same kind of line as a thin bright stroke (Fig. 4).")}
+                {T("A contrail like this one spreads into cirrus and lasts for hours only when the air is supersaturated with ice. That is exactly what weather models struggle to see. From 36,000 km up, Meteosat sees the same kind of line as a thin bright stroke (Fig. 4).")}
               </p>
             </div>
           </div>
@@ -356,7 +356,7 @@ export function Home() {
               <div class="sat-frame">
                 <img
                   src="/img/meteosat_arabian_sea_2026-01-15_0000.webp"
-                  alt="Meteosat-9 infrared image over the Arabian Sea at night: two long, thin, bright diagonal lines — contrails — on a smooth grey sea background."
+                  alt="Meteosat-9 infrared image over the Arabian Sea at night: two long, thin, bright diagonal lines (contrails) on a smooth grey sea background."
                   loading="lazy"
                   width="1008"
                   height="1008"
@@ -366,7 +366,7 @@ export function Home() {
                 <span class="sat-scan" aria-hidden="true" />
               </div>
               <figcaption class="caption">
-                {T("Fig. 4 — Two contrails over the Arabian Sea at night, found by the STRATUM detector.")} BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT 2026.
+                {T("Fig. 4. Two contrails over the Arabian Sea at night, found by the STRATUM detector.")} BTD 10.8 − 12.0 µm, Meteosat-9 © EUMETSAT 2026.
               </figcaption>
             </figure>
             <div class="open-text">
@@ -432,7 +432,7 @@ export function Home() {
 
       <a class="cta-band" href="/map">
         <span class="wrap cta-inner">
-          <span class="mono-s">{T("1 Jan 2026 · 1,909 flights · every hour · 8 flight levels")}</span>
+          <span class="mono-s">{T("1 Jan 2026 · 1,909 flights over India · every hour · 8 flight levels")}</span>
           <span class="display cta-big">
             {T("Open the contrail map")} <Arrow />
           </span>

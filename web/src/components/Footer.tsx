@@ -11,14 +11,14 @@ export function Footer() {
         <div class="footer-grid">
           <div>
             <p class="footer-tag rv rv-fade">{T(site.tagline)}</p>
-            <p class="footer-warn">{T("Computational research prototype — no real flight was changed.")}</p>
+            <p class="footer-warn">{T("Computational research prototype. No real flight was changed.")}</p>
           </div>
           <div>
             <p class="label">{T("Credits")}</p>
             <p class="footer-credits">
               Contains modified Copernicus Climate Change Service information 2026 · Meteosat-9 imagery © EUMETSAT 2026 · Flight data:
               ADS-B Exchange · Aircraft metadata and live aircraft: The OpenSky Network · Live aircraft: adsb.lol (ODbL) · Forecast: ECMWF open
-              data (CC BY 4.0) · Detector training: OpenContrails (Ng et al. 2024, CC BY 4.0) and DLR expert labels (CC BY-NC 4.0) · Made with
+              data (CC BY 4.0) · Detector training: OpenContrails (Ng et al. 2023, CC BY 4.0) and DLR expert labels (CC BY-NC 4.0) · Made with
               Natural Earth · Earth at night: NASA Black Marble 2016 (NASA Earth Observatory) · Stars: Yale Bright Star Catalogue
             </p>
             <nav class="footer-links" aria-label="Footer">
