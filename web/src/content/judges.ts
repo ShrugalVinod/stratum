@@ -354,6 +354,9 @@ export const references: { ref: string; href?: string }[] = [
   { ref: "Santos Gabriel, V., et al. (2026). DLR expert-labelled contrails on Meteosat SEVIRI scenes. Earth System Science Data, 18, 2397–2412. Dataset on Zenodo, CC BY-NC 4.0.", href: "https://doi.org/10.5281/zenodo.17669443" },
   { ref: "pycontrails: Python library for modelling aviation climate impacts (Breakthrough Energy). Open source.", href: "https://py.contrails.org/" },
   { ref: "OpenAP: open aircraft performance model.", href: "https://openap.dev/" },
+  { ref: "Ke, G., et al. (2017). LightGBM: a highly efficient gradient boosting decision tree. Advances in Neural Information Processing Systems 30. Software:", href: "https://lightgbm.readthedocs.io/" },
+  { ref: "ADS-B Exchange. Flight tracking data (free first-of-month sample days; derived flight lines shown with written permission of 16 Oct 2026).", href: "https://www.adsbexchange.com/" },
+  { ref: "The OpenSky Network. Aircraft database and live aircraft positions.", href: "https://opensky-network.org/" },
   { ref: "EUMETSAT. Meteosat-9 (IODC) SEVIRI Level 1.5 images and cloud mask. Images © EUMETSAT.", href: "https://data.eumetsat.int/" },
   { ref: "EUMETSAT. Data Policy.", href: "https://www-cdn.eumetsat.int/files/2026-01/45173%20-%20Data_Policy.pdf" },
   { ref: "ECMWF open data (IFS forecasts), CC BY 4.0.", href: "https://www.ecmwf.int/en/forecasts/datasets/open-data" },
@@ -369,6 +372,6 @@ export const references: { ref: string; href?: string }[] = [
   { ref: "The Patents Act, 1970 (India), Section 3(k), as reproduced by WIPO.", href: "https://wipo.int/ip-development/en/agenda/flexibilities/details.jsp?id=8825" },
   { ref: "Department of Science and Technology, Government of India. INSPIRE Awards – MANAK.", href: "https://www.inspireawards-dst.gov.in/" },
   { ref: "Vinod S., Harsoda A., Kupnur I., Shah A. (2026). STRATUM: how well can persistent contrails be predicted over India? Zenodo (all versions).", href: "https://doi.org/10.5281/zenodo.23480201" },
-  { ref: "Anthropic (2026). Claude Code [AI coding assistant], running Claude Opus 5.5 and Claude Fable 5.2. Used October–November 2026 to write much of the analysis code and the website, and to draft the contrail lines on 100 India satellite scenes that the team then reviewed.", href: "https://www.anthropic.com/claude-code" },
-  { ref: "Anthropic (2026). Claude Opus 5.5 and Claude Fable 5.2 [large language models]. Used October–November 2026 to help find and summarise papers and to help draft and edit the Innovation Brief and this website's text from the team's notes and results.", href: "https://claude.ai/" },
+  { ref: "Anthropic (2026). Claude Code [AI coding assistant], running Claude Opus 5.5 and Claude Fable 5.2. Used October–November 2026 to write much of the analysis code and the website, and to draft the contrail lines on 100 India satellite scenes that the team then reviewed. Accessed 13 October to 13 November 2026.", href: "https://www.anthropic.com/claude-code" },
+  { ref: "Anthropic (2026). Claude Opus 5.5 and Claude Fable 5.2 [large language models]. Used October–November 2026 to help find and summarise papers and to help draft and edit the Innovation Brief and this website's text from the team's notes and results. Accessed 13 October to 13 November 2026.", href: "https://claude.ai/" },
 ];
