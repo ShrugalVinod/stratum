@@ -135,7 +135,11 @@ export function Team() {
                   <b>{r.name}</b>
                   <span class="mono-s">{r.role}</span>
                 </div>
-                <p>{r.does}</p>
+                <p>
+                  {r.does}
+                  <br />
+                  <span class="muted">Skills and experience: {r.skills}</span>
+                </p>
               </li>
             ))}
             <li>

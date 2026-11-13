@@ -7,7 +7,7 @@ export const updated = "13 Nov 2026";
 
 // ---------------------------------------------------------------- story, mission, values
 export const story = [
-  "STRATUM is four of us at Indus International School in Bengaluru. For the Conrad Challenge 2026–27 we picked a problem most people have never heard of: the white lines planes leave in the sky. A few of them spread into thin cloud that lasts for hours and traps heat.",
+  "We are four Grade 9 students at Indus International School in Bengaluru. For the Conrad Challenge 2026–27 we picked a problem most people have never heard of: the white lines planes leave in the sky. A few of them spread into thin cloud that lasts for hours and traps heat.",
   "Our Lean Canvas and research plan are dated 12 October 2026, and we locked our hypotheses the next day, before any result existed. On 18 October we photographed a long contrail over South India. That line is exactly what we are trying to predict: will it fade in seconds, or spread into cloud for hours?",
   "Why India? Almost all contrail research, and every avoidance trial we found, is over Europe, the North Atlantic and the United States. India is now the world's third-largest domestic aviation market, and we had not found a study that checks contrail forecasts over Indian skies against what a satellite sees.",
 ];
@@ -24,26 +24,30 @@ export const values: [string, string][] = [
   ["Credit everything", "Every dataset, every source and every tool we used is named, including the AI assistant."],
 ];
 
-export const roles: { name: string; role: string; does: string }[] = [
+export const roles: { name: string; role: string; does: string; skills: string }[] = [
   {
     name: "Shrugal Vinod",
     role: "Team lead · modelling & software",
     does: "Shrugal leads the team, wrote the hypotheses and the analysis plan, runs every model on Google Colab, and builds the software and this website with an AI assistant.",
+    skills: "Python, machine learning (gradient-boosted trees and a neural-network contrail detector trained on Google Colab), and research design: writing hypotheses and tests down before the results.",
   },
   {
     name: "Aditya Harsoda",
     role: "Flight data · label review",
     does: "Aditya works on the flight data: where every plane was, minute by minute. Aditya also checked and corrected a third of our 100 India satellite scenes.",
+    skills: "Working with ADS-B flight-tracking data (how flights are rebuilt from position reports and cleaned), and reading Meteosat images to find contrails by eye.",
   },
   {
     name: "Ishaan Kupnur",
     role: "Satellite data · label review",
     does: "Ishaan works on the satellite side: the Meteosat-9 images we use to see real contrails. Ishaan also checked and corrected a third of the India scenes.",
+    skills: "Reading infrared satellite images: how contrails show up in the 10.8 and 12.0 µm channels, and how cloud and viewing angle hide them.",
   },
   {
     name: "Abeer Shah",
     role: "Product & communication · label review",
     does: "Abeer works on how STRATUM reaches people: the website's story, the video, market research and outreach. Abeer also checked and corrected a third of the India scenes.",
+    skills: "Writing and explaining science for non-scientists, market research on airlines and the EU contrail rule, and outreach.",
   },
 ];
 export const supervisorRole =
@@ -250,7 +254,7 @@ export const market: { n: string; what: string; src: string; href: string }[] = 
     n: "844",
     what: "commercial aircraft in India's fleet in 2025, up from 395 in 2014",
     src: "AIR News, 20 Dec 2025",
-    href: "https://www.newsonair.gov.in/",
+    href: "https://www.newsonair.gov.in/india-emerges-as-worlds-third-largest-domestic-aviation-market",
   },
   {
     n: "2,250",
@@ -262,7 +266,7 @@ export const market: { n: string; what: string; src: string; href: string }[] = 
     n: "3rd",
     what: "largest domestic aviation market in the world: India",
     src: "AIR News, 20 Dec 2025",
-    href: "https://www.newsonair.gov.in/",
+    href: "https://www.newsonair.gov.in/india-emerges-as-worlds-third-largest-domestic-aviation-market",
   },
 ];
 export const marketMath =
@@ -275,7 +279,7 @@ export const offer: [string, string, string][] = [
   ["First pilot", "A three-month shadow trial with one airline", "Free"],
 ];
 export const priceNote =
-  "Our proposed price is ₹50,000 per aircraft a year. We have not tested it with any airline yet. For comparison, in our runs one advised level change used about 79 kg of extra fuel (about ₹13,500 at Delhi jet-fuel prices in October 2026) and avoided about 6 t of CO₂-equivalent warming even on the cautious estimate.";
+  "Our proposed price is ₹50,000 per aircraft a year. We have not tested it with any airline yet. For comparison, in our runs one advised level change used about 79 kg of extra fuel (about 98 litres, so about ₹13,500 at ₹137 a litre, the Delhi jet-fuel price from 1 October 2026) and avoided about 6 t of CO₂-equivalent warming even on the cautious estimate.";
 
 export const costsNow: [string, string, string][] = [
   ["Website and live data (Cloudflare Workers, free plan)", "₹0", "Free plan: 100,000 requests a day"],
@@ -301,7 +305,7 @@ export const funding = {
     "Compute on Google Colab Pro (about US$120)",
   ],
   sources: [
-    "Prize and grant money for student innovation, such as the Conrad Challenge and India's INSPIRE-MANAK award for school students in classes 6 to 12 (nominations go through the school; the 2026–27 round has closed, so we would apply in the next one).",
+    "Prize and grant money for student innovation, such as the Conrad Challenge and India's INSPIRE-MANAK award for school students in classes 6 to 12 (nominations go through the school; the 2026–27 round has closed, so we would apply in the next round, in 2027).",
     "Our school, for the domain and printing.",
     "After a successful shadow trial: the first airline subscription.",
   ],
@@ -359,6 +363,9 @@ export const references: { ref: string; href?: string }[] = [
   { ref: "Airbus (2026, 29 January). Indian commercial aircraft fleet to reach 2,250 by 2035.", href: "https://www.airbus.com/en/newsroom/press-releases/2026-01-indian-aircraft-fleet-to-reach-2250-by-2035-mro-market-to-hit-us95-billion" },
   { ref: "Google (2026, 18 August). Operation Blue Skies: reducing aviation climate impact with AI.", href: "https://blog.google/innovation-and-ai/models-and-research/google-research/blue-skies/" },
   { ref: "Cloudflare. Workers pricing.", href: "https://developers.cloudflare.com/workers/platform/pricing/" },
+  { ref: "ICAO / DGCA (2025). CORSIA implementation in India (ICAO Asia-Pacific CORSIA seminar presentation).", href: "https://www.icao.int/sites/default/files/APAC/Meetings/2025/2025%20CORSIASAP/Presentations/PPT-FOR-ICAO-CORSIA-SEMINAR_India.pdf" },
+  { ref: "Business Standard (2026, 1 October). Commercial LPG price up ₹62.50, ATF rises ₹16/litre from October 1 (Delhi ATF ₹121 → ₹137 a litre).", href: "https://www.business-standard.com/amp/industry/news/commercial-lpg-atf-price-hike-october-1-windfall-tax-diesel-126100100466_1.html" },
+  { ref: "IndiGo (InterGlobe Aviation). Business Responsibility and Sustainability Report FY2025–26, filed 28 July 2026.", href: "https://nsearchives.nseindia.com/corporate/Indigo1_28072026133647_BRSR.pdf" },
   { ref: "The Patents Act, 1970 (India), Section 3(k), as reproduced by WIPO.", href: "https://wipo.int/ip-development/en/agenda/flexibilities/details.jsp?id=8825" },
   { ref: "Department of Science and Technology, Government of India. INSPIRE Awards – MANAK.", href: "https://www.inspireawards-dst.gov.in/" },
   { ref: "Vinod S., Harsoda A., Kupnur I., Shah A. (2026). STRATUM: how well can persistent contrails be predicted over India? Zenodo (all versions).", href: "https://doi.org/10.5281/zenodo.23480201" },

@@ -504,9 +504,7 @@ export function MapPage() {
         <span class="mono-s mp-badge">{T(v2 ? MODEL_BADGE[model] : "Physics-only prototype (v0) · uncorrected B1")}</span>
         <span class="mono-s mp-extra">
           {T("ADS-B coverage")}:{" "}
-          {man?.coverage.adsb_coverage_pct != null
-            ? `${man.coverage.adsb_coverage_pct.toFixed(0)} % of scheduled corridor flights`
-            : T("audit pending (Nov 2026)")}
+          {build === "outlook" ? T("live feed (OpenSky)") : T("audit done 11 Nov 2026; 12 sample days")}
         </span>
         <span class="mp-tools">
           {/* the two jobs of the map: the evidence (past days with satellite checks) and today's forecast.

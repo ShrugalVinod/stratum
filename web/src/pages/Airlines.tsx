@@ -12,7 +12,7 @@ import { ATF_KG_PER_L, type Decisions, perAlert, rupees, year } from "../lib/bus
  *  the D-006 decisions (lib/business.ts). */
 
 // defaults, editable on the page (checked 24 Oct 2026)
-const ATF_RS_PER_L = 137; // Delhi ATF from 1 Oct 2026 (oil companies' fortnightly revision)
+const ATF_RS_PER_L = 137; // Delhi ATF from 1 Oct 2026, ₹121 → ₹137 a litre (Business Standard, 1 Oct 2026)
 const EUR_PER_T = 85; // EU ETS allowance, mid-October 2026
 const INR_PER_EUR = 106.56; // reference rate of 19 Oct 2026
 
