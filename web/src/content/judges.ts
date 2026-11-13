@@ -280,7 +280,7 @@ export const priceNote =
 export const costsNow: [string, string, string][] = [
   ["Website and live data (Cloudflare Workers, free plan)", "₹0", "Free plan: 100,000 requests a day"],
   ["Daily jobs (GitHub Actions, public repository)", "₹0", "Free for public repositories"],
-  ["Model runs (Google Colab, free tier)", "₹0", "Free tier"],
+  ["Model runs and storage (Google Colab, Google Drive 2 TB)", "Our own accounts", "Run on our own Google accounts, not charged to the project"],
   ["Weather, satellite and flight-sample data", "₹0", "Free for research: ERA5, ECMWF open data, EUMETSAT, ADS-B Exchange sample days, OpenSky"],
   ["Domain", "₹0", "We use the free workers.dev address"],
 ];
