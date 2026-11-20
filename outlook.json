@@ -1,9 +1,9 @@
 {
- "run": "2026-11-19T00:00Z",
- "issued": "2026-11-19T18:24Z",
+ "run": "2026-11-20T00:00Z",
+ "issued": "2026-11-20T09:38Z",
  "days": [
-  "2026-11-19",
-  "2026-11-20"
+  "2026-11-20",
+  "2026-11-21"
  ],
  "credit": "Forecast: ECMWF open data (IFS, CC BY 4.0), processed by STRATUM",
  "threshold": 0.5,
@@ -11,546 +11,60 @@
  "advisories": [
   {
    "id": "C001/26",
-   "valid_from": "2026-11-19T00:00Z",
-   "valid_to": "2026-11-19T06:00Z",
-   "b": "2611190000",
-   "c": "2611190600",
+   "valid_from": "2026-11-20T00:00Z",
+   "valid_to": "2026-11-20T06:00Z",
+   "b": "2611200000",
+   "c": "2611200600",
    "fl_low": 400,
    "fl_high": 400,
    "bbox": [
     16.12,
-    79.88,
+    82.88,
     19.12,
-    88.88
+    91.88
    ],
    "centre": [
     17.62,
-    84.38
+    87.38
    ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.96,
+   "near": "Bhubaneswar",
+   "near_km": 340,
+   "mean_fraction": 0.93,
    "drier_fls": [
-    360,
-    380
+    340,
+    360
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL360 OR FL380. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08252E - 1908N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
    "id": "C002/26",
-   "valid_from": "2026-11-19T00:00Z",
-   "valid_to": "2026-11-19T06:00Z",
-   "b": "2611190000",
-   "c": "2611190600",
-   "fl_low": 400,
+   "valid_from": "2026-11-20T00:00Z",
+   "valid_to": "2026-11-20T06:00Z",
+   "b": "2611200000",
+   "c": "2611200600",
+   "fl_low": 380,
    "fl_high": 400,
    "bbox": [
     19.12,
-    82.88,
+    85.88,
     22.12,
-    91.88
+    94.88
    ],
    "centre": [
     20.62,
-    87.38
+    90.38
    ],
-   "near": "Bhubaneswar",
-   "near_km": 166,
-   "mean_fraction": 0.91,
+   "near": "Kolkata",
+   "near_km": 301,
+   "mean_fraction": 0.85,
    "drier_fls": [
     340,
     360
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1908N08252E - 2208N09152E (NEAR BHUBANESWAR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
    "id": "C003/26",
-   "valid_from": "2026-11-19T00:00Z",
-   "valid_to": "2026-11-19T06:00Z",
-   "b": "2611190000",
-   "c": "2611190600",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    22.12,
-    85.88,
-    25.12,
-    94.88
-   ],
-   "centre": [
-    23.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 236,
-   "mean_fraction": 0.88,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 2208N08552E - 2508N09452E (240 KM FROM KOLKATA). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C004/26",
-   "valid_from": "2026-11-19T00:00Z",
-   "valid_to": "2026-11-19T06:00Z",
-   "b": "2611190000",
-   "c": "2611190600",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    88.88,
-    19.12,
-    97.88
-   ],
-   "centre": [
-    17.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 671,
-   "mean_fraction": 0.82,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08852E - 1908N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C005/26",
-   "valid_from": "2026-11-19T00:00Z",
-   "valid_to": "2026-11-19T06:00Z",
-   "b": "2611190000",
-   "c": "2611190600",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    13.12,
-    79.88,
-    16.12,
-    88.88
-   ],
-   "centre": [
-    14.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 363,
-   "mean_fraction": 0.82,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N07952E - 1608N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C006/26",
-   "valid_from": "2026-11-19T06:00Z",
-   "valid_to": "2026-11-19T12:00Z",
-   "b": "2611190600",
-   "c": "2611191200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    88.88,
-    19.12,
-    97.88
-   ],
-   "centre": [
-    17.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 671,
-   "mean_fraction": 0.99,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08852E - 1908N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C007/26",
-   "valid_from": "2026-11-19T06:00Z",
-   "valid_to": "2026-11-19T12:00Z",
-   "b": "2611190600",
-   "c": "2611191200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
-   ],
-   "centre": [
-    17.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.93,
-   "drier_fls": [
-    360,
-    380
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL360 OR FL380. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C008/26",
-   "valid_from": "2026-11-19T06:00Z",
-   "valid_to": "2026-11-19T12:00Z",
-   "b": "2611190600",
-   "c": "2611191200",
-   "fl_low": 340,
-   "fl_high": 380,
-   "bbox": [
-    34.12,
-    67.88,
-    37.12,
-    76.88
-   ],
-   "centre": [
-    35.62,
-    72.38
-   ],
-   "near": "Srinagar",
-   "near_km": 278,
-   "mean_fraction": 0.89,
-   "drier_fls": [
-    280,
-    300
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL380 WI AREA 3408N06752E - 3708N07652E (280 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C009/26",
-   "valid_from": "2026-11-19T06:00Z",
-   "valid_to": "2026-11-19T12:00Z",
-   "b": "2611190600",
-   "c": "2611191200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    19.12,
-    82.88,
-    22.12,
-    91.88
-   ],
-   "centre": [
-    20.62,
-    87.38
-   ],
-   "near": "Bhubaneswar",
-   "near_km": 166,
-   "mean_fraction": 0.88,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1908N08252E - 2208N09152E (NEAR BHUBANESWAR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C010/26",
-   "valid_from": "2026-11-19T06:00Z",
-   "valid_to": "2026-11-19T12:00Z",
-   "b": "2611190600",
-   "c": "2611191200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    13.12,
-    79.88,
-    16.12,
-    88.88
-   ],
-   "centre": [
-    14.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 363,
-   "mean_fraction": 0.75,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N07952E - 1608N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C011/26",
-   "valid_from": "2026-11-19T12:00Z",
-   "valid_to": "2026-11-19T18:00Z",
-   "b": "2611191200",
-   "c": "2611191800",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    88.88,
-    19.12,
-    97.88
-   ],
-   "centre": [
-    17.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 671,
-   "mean_fraction": 0.97,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08852E - 1908N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C012/26",
-   "valid_from": "2026-11-19T12:00Z",
-   "valid_to": "2026-11-19T18:00Z",
-   "b": "2611191200",
-   "c": "2611191800",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
-   ],
-   "centre": [
-    17.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.95,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C013/26",
-   "valid_from": "2026-11-19T12:00Z",
-   "valid_to": "2026-11-19T18:00Z",
-   "b": "2611191200",
-   "c": "2611191800",
-   "fl_low": 340,
-   "fl_high": 380,
-   "bbox": [
-    34.12,
-    70.88,
-    37.12,
-    79.88
-   ],
-   "centre": [
-    35.62,
-    75.38
-   ],
-   "near": "Srinagar",
-   "near_km": 179,
-   "mean_fraction": 0.77,
-   "drier_fls": [
-    280,
-    300
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL380 WI AREA 3408N07052E - 3708N07952E (NEAR SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C014/26",
-   "valid_from": "2026-11-19T12:00Z",
-   "valid_to": "2026-11-19T18:00Z",
-   "b": "2611191200",
-   "c": "2611191800",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    19.12,
-    85.88,
-    22.12,
-    94.88
-   ],
-   "centre": [
-    20.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 301,
-   "mean_fraction": 0.71,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C015/26",
-   "valid_from": "2026-11-19T12:00Z",
-   "valid_to": "2026-11-19T18:00Z",
-   "b": "2611191200",
-   "c": "2611191800",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    13.12,
-    79.88,
-    16.12,
-    85.88
-   ],
-   "centre": [
-    14.62,
-    82.88
-   ],
-   "near": "Chennai",
-   "near_km": 329,
-   "mean_fraction": 0.97,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N07952E - 1608N08552E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C016/26",
-   "valid_from": "2026-11-19T18:00Z",
-   "valid_to": "2026-11-20T00:00Z",
-   "b": "2611191800",
-   "c": "2611200000",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
-   ],
-   "centre": [
-    17.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.95,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C017/26",
-   "valid_from": "2026-11-19T18:00Z",
-   "valid_to": "2026-11-20T00:00Z",
-   "b": "2611191800",
-   "c": "2611200000",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    88.88,
-    19.12,
-    97.88
-   ],
-   "centre": [
-    17.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 671,
-   "mean_fraction": 0.92,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08852E - 1908N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C018/26",
-   "valid_from": "2026-11-19T18:00Z",
-   "valid_to": "2026-11-20T00:00Z",
-   "b": "2611191800",
-   "c": "2611200000",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    19.12,
-    85.88,
-    22.12,
-    94.88
-   ],
-   "centre": [
-    20.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 301,
-   "mean_fraction": 0.74,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C019/26",
-   "valid_from": "2026-11-19T18:00Z",
-   "valid_to": "2026-11-20T00:00Z",
-   "b": "2611191800",
-   "c": "2611200000",
-   "fl_low": 340,
-   "fl_high": 380,
-   "bbox": [
-    34.12,
-    73.88,
-    37.12,
-    82.88
-   ],
-   "centre": [
-    35.62,
-    78.38
-   ],
-   "near": "Srinagar",
-   "near_km": 366,
-   "mean_fraction": 0.73,
-   "drier_fls": [
-    280,
-    300
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL380 WI AREA 3408N07352E - 3708N08252E (370 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C020/26",
-   "valid_from": "2026-11-19T18:00Z",
-   "valid_to": "2026-11-20T00:00Z",
-   "b": "2611191800",
-   "c": "2611200000",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    7.12,
-    82.88,
-    10.12,
-    91.88
-   ],
-   "centre": [
-    8.62,
-    87.38
-   ],
-   "near": "Port Blair",
-   "near_km": 676,
-   "mean_fraction": 0.69,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 0708N08252E - 1008N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C021/26",
    "valid_from": "2026-11-20T00:00Z",
    "valid_to": "2026-11-20T06:00Z",
    "b": "2611200000",
@@ -569,7 +83,7 @@
    ],
    "near": "Srinagar",
    "near_km": 278,
-   "mean_fraction": 0.82,
+   "mean_fraction": 0.84,
    "drier_fls": [
     280,
     300
@@ -577,34 +91,34 @@
    "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3408N06752E - 3708N07652E (280 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C022/26",
+   "id": "C004/26",
    "valid_from": "2026-11-20T00:00Z",
    "valid_to": "2026-11-20T06:00Z",
    "b": "2611200000",
    "c": "2611200600",
-   "fl_low": 400,
-   "fl_high": 400,
+   "fl_low": 340,
+   "fl_high": 380,
    "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
+    34.12,
+    76.88,
+    37.12,
+    85.88
    ],
    "centre": [
-    17.62,
-    84.38
+    35.62,
+    81.38
    ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.8,
+   "near": "Srinagar",
+   "near_km": 619,
+   "mean_fraction": 0.7,
    "drier_fls": [
-    340,
-    360
+    280,
+    300
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL380 WI AREA 3408N07652E - 3708N08552E (620 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C023/26",
+   "id": "C005/26",
    "valid_from": "2026-11-20T00:00Z",
    "valid_to": "2026-11-20T06:00Z",
    "b": "2611200000",
@@ -612,30 +126,111 @@
    "fl_low": 380,
    "fl_high": 400,
    "bbox": [
-    19.12,
-    85.88,
-    22.12,
-    94.88
+    13.12,
+    82.88,
+    16.12,
+    88.88
    ],
    "centre": [
-    20.62,
-    90.38
+    14.62,
+    85.88
    ],
-   "near": "Kolkata",
-   "near_km": 301,
-   "mean_fraction": 0.77,
+   "near": "Visakhapatnam",
+   "near_km": 445,
+   "mean_fraction": 0.68,
    "drier_fls": [
     340,
     360
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1308N08252E - 1608N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C024/26",
-   "valid_from": "2026-11-20T00:00Z",
-   "valid_to": "2026-11-20T06:00Z",
-   "b": "2611200000",
-   "c": "2611200600",
+   "id": "C006/26",
+   "valid_from": "2026-11-20T06:00Z",
+   "valid_to": "2026-11-20T12:00Z",
+   "b": "2611200600",
+   "c": "2611201200",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    16.12,
+    82.88,
+    19.12,
+    91.88
+   ],
+   "centre": [
+    17.62,
+    87.38
+   ],
+   "near": "Bhubaneswar",
+   "near_km": 340,
+   "mean_fraction": 0.81,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08252E - 1908N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C007/26",
+   "valid_from": "2026-11-20T06:00Z",
+   "valid_to": "2026-11-20T12:00Z",
+   "b": "2611200600",
+   "c": "2611201200",
+   "fl_low": 380,
+   "fl_high": 400,
+   "bbox": [
+    19.12,
+    88.88,
+    22.12,
+    97.88
+   ],
+   "centre": [
+    20.62,
+    93.38
+   ],
+   "near": "Kolkata",
+   "near_km": 565,
+   "mean_fraction": 0.79,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08852E - 2208N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C008/26",
+   "valid_from": "2026-11-20T06:00Z",
+   "valid_to": "2026-11-20T12:00Z",
+   "b": "2611200600",
+   "c": "2611201200",
+   "fl_low": 340,
+   "fl_high": 340,
+   "bbox": [
+    34.12,
+    76.88,
+    37.12,
+    85.88
+   ],
+   "centre": [
+    35.62,
+    81.38
+   ],
+   "near": "Srinagar",
+   "near_km": 619,
+   "mean_fraction": 0.66,
+   "drier_fls": [
+    300,
+    380
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340 WI AREA 3408N07652E - 3708N08552E (620 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL300 OR FL380. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C009/26",
+   "valid_from": "2026-11-20T06:00Z",
+   "valid_to": "2026-11-20T12:00Z",
+   "b": "2611200600",
+   "c": "2611201200",
    "fl_low": 400,
    "fl_high": 400,
    "bbox": [
@@ -650,7 +245,7 @@
    ],
    "near": "Visakhapatnam",
    "near_km": 363,
-   "mean_fraction": 0.74,
+   "mean_fraction": 0.66,
    "drier_fls": [
     340,
     360
@@ -658,362 +253,11 @@
    "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N07952E - 1608N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C025/26",
-   "valid_from": "2026-11-20T00:00Z",
-   "valid_to": "2026-11-20T06:00Z",
-   "b": "2611200000",
-   "c": "2611200600",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    88.88,
-    19.12,
-    97.88
-   ],
-   "centre": [
-    17.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 671,
-   "mean_fraction": 0.7,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08852E - 1908N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C026/26",
+   "id": "C010/26",
    "valid_from": "2026-11-20T06:00Z",
    "valid_to": "2026-11-20T12:00Z",
    "b": "2611200600",
    "c": "2611201200",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    19.12,
-    85.88,
-    22.12,
-    94.88
-   ],
-   "centre": [
-    20.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 301,
-   "mean_fraction": 0.87,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C027/26",
-   "valid_from": "2026-11-20T06:00Z",
-   "valid_to": "2026-11-20T12:00Z",
-   "b": "2611200600",
-   "c": "2611201200",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    7.12,
-    85.88,
-    10.12,
-    94.88
-   ],
-   "centre": [
-    8.62,
-    90.38
-   ],
-   "near": "Port Blair",
-   "near_km": 422,
-   "mean_fraction": 0.8,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 0708N08552E - 1008N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C028/26",
-   "valid_from": "2026-11-20T06:00Z",
-   "valid_to": "2026-11-20T12:00Z",
-   "b": "2611200600",
-   "c": "2611201200",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    22.12,
-    85.88,
-    25.12,
-    94.88
-   ],
-   "centre": [
-    23.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 236,
-   "mean_fraction": 0.75,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 2208N08552E - 2508N09452E (240 KM FROM KOLKATA). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C029/26",
-   "valid_from": "2026-11-20T06:00Z",
-   "valid_to": "2026-11-20T12:00Z",
-   "b": "2611200600",
-   "c": "2611201200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    10.12,
-    82.88,
-    13.12,
-    91.88
-   ],
-   "centre": [
-    11.62,
-    87.38
-   ],
-   "near": "Port Blair",
-   "near_km": 583,
-   "mean_fraction": 0.71,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08252E - 1308N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C030/26",
-   "valid_from": "2026-11-20T06:00Z",
-   "valid_to": "2026-11-20T12:00Z",
-   "b": "2611200600",
-   "c": "2611201200",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
-   ],
-   "centre": [
-    17.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.62,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C031/26",
-   "valid_from": "2026-11-20T12:00Z",
-   "valid_to": "2026-11-20T18:00Z",
-   "b": "2611201200",
-   "c": "2611201800",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    19.12,
-    85.88,
-    22.12,
-    94.88
-   ],
-   "centre": [
-    20.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 301,
-   "mean_fraction": 0.82,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08552E - 2208N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C032/26",
-   "valid_from": "2026-11-20T12:00Z",
-   "valid_to": "2026-11-20T18:00Z",
-   "b": "2611201200",
-   "c": "2611201800",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    22.12,
-    85.88,
-    25.12,
-    94.88
-   ],
-   "centre": [
-    23.62,
-    90.38
-   ],
-   "near": "Kolkata",
-   "near_km": 236,
-   "mean_fraction": 0.81,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 2208N08552E - 2508N09452E (240 KM FROM KOLKATA). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C033/26",
-   "valid_from": "2026-11-20T12:00Z",
-   "valid_to": "2026-11-20T18:00Z",
-   "b": "2611201200",
-   "c": "2611201800",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    7.12,
-    85.88,
-    10.12,
-    94.88
-   ],
-   "centre": [
-    8.62,
-    90.38
-   ],
-   "near": "Port Blair",
-   "near_km": 422,
-   "mean_fraction": 0.77,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 0708N08552E - 1008N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C034/26",
-   "valid_from": "2026-11-20T12:00Z",
-   "valid_to": "2026-11-20T18:00Z",
-   "b": "2611201200",
-   "c": "2611201800",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    16.12,
-    79.88,
-    19.12,
-    88.88
-   ],
-   "centre": [
-    17.62,
-    84.38
-   ],
-   "near": "Visakhapatnam",
-   "near_km": 123,
-   "mean_fraction": 0.62,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N07952E - 1908N08852E (NEAR VISAKHAPATNAM). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C035/26",
-   "valid_from": "2026-11-20T12:00Z",
-   "valid_to": "2026-11-20T18:00Z",
-   "b": "2611201200",
-   "c": "2611201800",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    10.12,
-    85.88,
-    13.12,
-    91.88
-   ],
-   "centre": [
-    11.62,
-    88.88
-   ],
-   "near": "Port Blair",
-   "near_km": 420,
-   "mean_fraction": 0.75,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1008N08552E - 1308N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C036/26",
-   "valid_from": "2026-11-20T18:00Z",
-   "valid_to": "2026-11-21T00:00Z",
-   "b": "2611201800",
-   "c": "2611210000",
-   "fl_low": 400,
-   "fl_high": 400,
-   "bbox": [
-    7.12,
-    88.88,
-    10.12,
-    97.88
-   ],
-   "centre": [
-    8.62,
-    93.38
-   ],
-   "near": "Port Blair",
-   "near_km": 341,
-   "mean_fraction": 0.89,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08852E - 1008N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C037/26",
-   "valid_from": "2026-11-20T18:00Z",
-   "valid_to": "2026-11-21T00:00Z",
-   "b": "2611201800",
-   "c": "2611210000",
-   "fl_low": 380,
-   "fl_high": 400,
-   "bbox": [
-    10.12,
-    85.88,
-    13.12,
-    94.88
-   ],
-   "centre": [
-    11.62,
-    90.38
-   ],
-   "near": "Port Blair",
-   "near_km": 257,
-   "mean_fraction": 0.63,
-   "drier_fls": [
-    340,
-    360
-   ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1008N08552E - 1308N09452E (260 KM FROM PORT BLAIR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
-  },
-  {
-   "id": "C038/26",
-   "valid_from": "2026-11-20T18:00Z",
-   "valid_to": "2026-11-21T00:00Z",
-   "b": "2611201800",
-   "c": "2611210000",
    "fl_low": 400,
    "fl_high": 400,
    "bbox": [
@@ -1028,7 +272,7 @@
    ],
    "near": "Bhubaneswar",
    "near_km": 37,
-   "mean_fraction": 0.82,
+   "mean_fraction": 0.72,
    "drier_fls": [
     340,
     360
@@ -1036,58 +280,814 @@
    "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1908N08252E - 2208N08852E (NEAR BHUBANESWAR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C039/26",
-   "valid_from": "2026-11-20T18:00Z",
-   "valid_to": "2026-11-21T00:00Z",
-   "b": "2611201800",
-   "c": "2611210000",
+   "id": "C011/26",
+   "valid_from": "2026-11-20T12:00Z",
+   "valid_to": "2026-11-20T18:00Z",
+   "b": "2611201200",
+   "c": "2611201800",
    "fl_low": 380,
    "fl_high": 400,
    "bbox": [
+    19.12,
+    88.88,
     22.12,
-    85.88,
-    25.12,
+    97.88
+   ],
+   "centre": [
+    20.62,
+    93.38
+   ],
+   "near": "Kolkata",
+   "near_km": 565,
+   "mean_fraction": 0.74,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1908N08852E - 2208N09752E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C012/26",
+   "valid_from": "2026-11-20T12:00Z",
+   "valid_to": "2026-11-20T18:00Z",
+   "b": "2611201200",
+   "c": "2611201800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    16.12,
+    82.88,
+    19.12,
     91.88
    ],
    "centre": [
-    23.62,
-    88.88
+    17.62,
+    87.38
    ],
-   "near": "Kolkata",
-   "near_km": 129,
+   "near": "Bhubaneswar",
+   "near_km": 340,
    "mean_fraction": 0.72,
    "drier_fls": [
     340,
     360
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 2208N08552E - 2508N09152E (NEAR KOLKATA). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08252E - 1908N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   },
   {
-   "id": "C040/26",
+   "id": "C013/26",
+   "valid_from": "2026-11-20T12:00Z",
+   "valid_to": "2026-11-20T18:00Z",
+   "b": "2611201200",
+   "c": "2611201800",
+   "fl_low": 360,
+   "fl_high": 360,
+   "bbox": [
+    31.12,
+    70.88,
+    34.12,
+    79.88
+   ],
+   "centre": [
+    32.62,
+    75.38
+   ],
+   "near": "Amritsar",
+   "near_km": 120,
+   "mean_fraction": 0.59,
+   "drier_fls": [
+    300,
+    320
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL360 WI AREA 3108N07052E - 3408N07952E (NEAR AMRITSAR). DRIER LEVELS NEARBY: FL300 OR FL320. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C014/26",
+   "valid_from": "2026-11-20T12:00Z",
+   "valid_to": "2026-11-20T18:00Z",
+   "b": "2611201200",
+   "c": "2611201800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    13.12,
+    82.88,
+    16.12,
+    88.88
+   ],
+   "centre": [
+    14.62,
+    85.88
+   ],
+   "near": "Visakhapatnam",
+   "near_km": 445,
+   "mean_fraction": 0.57,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N08252E - 1608N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C015/26",
+   "valid_from": "2026-11-20T12:00Z",
+   "valid_to": "2026-11-20T18:00Z",
+   "b": "2611201200",
+   "c": "2611201800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    5.88,
+    85.88,
+    7.12,
+    94.88
+   ],
+   "centre": [
+    6.5,
+    90.38
+   ],
+   "near": "Port Blair",
+   "near_km": 626,
+   "mean_fraction": 0.81,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0552N08552E - 0708N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C016/26",
    "valid_from": "2026-11-20T18:00Z",
    "valid_to": "2026-11-21T00:00Z",
    "b": "2611201800",
    "c": "2611210000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    85.88,
+    10.12,
+    94.88
+   ],
+   "centre": [
+    8.62,
+    90.38
+   ],
+   "near": "Port Blair",
+   "near_km": 422,
+   "mean_fraction": 0.9,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08552E - 1008N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C017/26",
+   "valid_from": "2026-11-20T18:00Z",
+   "valid_to": "2026-11-21T00:00Z",
+   "b": "2611201800",
+   "c": "2611210000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    16.12,
+    82.88,
+    19.12,
+    91.88
+   ],
+   "centre": [
+    17.62,
+    87.38
+   ],
+   "near": "Bhubaneswar",
+   "near_km": 340,
+   "mean_fraction": 0.65,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1608N08252E - 1908N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C018/26",
+   "valid_from": "2026-11-20T18:00Z",
+   "valid_to": "2026-11-21T00:00Z",
+   "b": "2611201800",
+   "c": "2611210000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    85.88,
+    13.12,
+    91.88
+   ],
+   "centre": [
+    11.62,
+    88.88
+   ],
+   "near": "Port Blair",
+   "near_km": 420,
+   "mean_fraction": 0.72,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08552E - 1308N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C019/26",
+   "valid_from": "2026-11-20T18:00Z",
+   "valid_to": "2026-11-21T00:00Z",
+   "b": "2611201800",
+   "c": "2611210000",
+   "fl_low": 360,
+   "fl_high": 360,
+   "bbox": [
+    28.12,
+    70.88,
+    31.12,
+    76.88
+   ],
+   "centre": [
+    29.62,
+    73.88
+   ],
+   "near": "Amritsar",
+   "near_km": 243,
+   "mean_fraction": 0.59,
+   "drier_fls": [
+    320,
+    340
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL360 WI AREA 2808N07052E - 3108N07652E (240 KM FROM AMRITSAR). DRIER LEVELS NEARBY: FL320 OR FL340. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C020/26",
+   "valid_from": "2026-11-20T18:00Z",
+   "valid_to": "2026-11-21T00:00Z",
+   "b": "2611201800",
+   "c": "2611210000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    5.88,
+    85.88,
+    7.12,
+    94.88
+   ],
+   "centre": [
+    6.5,
+    90.38
+   ],
+   "near": "Port Blair",
+   "near_km": 626,
+   "mean_fraction": 0.88,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0552N08552E - 0708N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C021/26",
+   "valid_from": "2026-11-21T00:00Z",
+   "valid_to": "2026-11-21T06:00Z",
+   "b": "2611210000",
+   "c": "2611210600",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    85.88,
+    10.12,
+    94.88
+   ],
+   "centre": [
+    8.62,
+    90.38
+   ],
+   "near": "Port Blair",
+   "near_km": 422,
+   "mean_fraction": 0.94,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08552E - 1008N09452E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C022/26",
+   "valid_from": "2026-11-21T00:00Z",
+   "valid_to": "2026-11-21T06:00Z",
+   "b": "2611210000",
+   "c": "2611210600",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    82.88,
+    13.12,
+    91.88
+   ],
+   "centre": [
+    11.62,
+    87.38
+   ],
+   "near": "Port Blair",
+   "near_km": 583,
+   "mean_fraction": 0.74,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08252E - 1308N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C023/26",
+   "valid_from": "2026-11-21T00:00Z",
+   "valid_to": "2026-11-21T06:00Z",
+   "b": "2611210000",
+   "c": "2611210600",
    "fl_low": 340,
    "fl_high": 360,
    "bbox": [
     34.12,
     79.88,
     37.12,
-    85.88
+    88.88
    ],
    "centre": [
     35.62,
-    82.88
+    84.38
    ],
    "near": "Srinagar",
-   "near_km": 750,
-   "mean_fraction": 0.65,
+   "near_km": 882,
+   "mean_fraction": 0.61,
    "drier_fls": [
     280,
     300
    ],
-   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL360 WI AREA 3408N07952E - 3708N08552E (750 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL340-FL360 WI AREA 3408N07952E - 3708N08852E (880 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL300. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C024/26",
+   "valid_from": "2026-11-21T00:00Z",
+   "valid_to": "2026-11-21T06:00Z",
+   "b": "2611210000",
+   "c": "2611210600",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    34.12,
+    70.88,
+    37.12,
+    76.88
+   ],
+   "centre": [
+    35.62,
+    73.88
+   ],
+   "near": "Srinagar",
+   "near_km": 191,
+   "mean_fraction": 0.86,
+   "drier_fls": [
+    280,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3408N07052E - 3708N07652E (NEAR SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C025/26",
+   "valid_from": "2026-11-21T00:00Z",
+   "valid_to": "2026-11-21T06:00Z",
+   "b": "2611210000",
+   "c": "2611210600",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    31.12,
+    67.88,
+    34.12,
+    73.88
+   ],
+   "centre": [
+    32.62,
+    70.88
+   ],
+   "near": "Amritsar",
+   "near_km": 390,
+   "mean_fraction": 0.64,
+   "drier_fls": [
+    280,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3108N06752E - 3408N07352E (390 KM FROM AMRITSAR). DRIER LEVELS NEARBY: FL280 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C026/26",
+   "valid_from": "2026-11-21T06:00Z",
+   "valid_to": "2026-11-21T12:00Z",
+   "b": "2611210600",
+   "c": "2611211200",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    34.12,
+    73.88,
+    37.12,
+    82.88
+   ],
+   "centre": [
+    35.62,
+    78.38
+   ],
+   "near": "Srinagar",
+   "near_km": 366,
+   "mean_fraction": 0.78,
+   "drier_fls": [
+    280,
+    400
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3408N07352E - 3708N08252E (370 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL400. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C027/26",
+   "valid_from": "2026-11-21T06:00Z",
+   "valid_to": "2026-11-21T12:00Z",
+   "b": "2611210600",
+   "c": "2611211200",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    82.88,
+    10.12,
+    91.88
+   ],
+   "centre": [
+    8.62,
+    87.38
+   ],
+   "near": "Port Blair",
+   "near_km": 676,
+   "mean_fraction": 0.78,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08252E - 1008N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C028/26",
+   "valid_from": "2026-11-21T06:00Z",
+   "valid_to": "2026-11-21T12:00Z",
+   "b": "2611210600",
+   "c": "2611211200",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    82.88,
+    13.12,
+    91.88
+   ],
+   "centre": [
+    11.62,
+    87.38
+   ],
+   "near": "Port Blair",
+   "near_km": 583,
+   "mean_fraction": 0.77,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08252E - 1308N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C029/26",
+   "valid_from": "2026-11-21T06:00Z",
+   "valid_to": "2026-11-21T12:00Z",
+   "b": "2611210600",
+   "c": "2611211200",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    31.12,
+    70.88,
+    34.12,
+    79.88
+   ],
+   "centre": [
+    32.62,
+    75.38
+   ],
+   "near": "Amritsar",
+   "near_km": 120,
+   "mean_fraction": 0.75,
+   "drier_fls": [
+    280,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3108N07052E - 3408N07952E (NEAR AMRITSAR). DRIER LEVELS NEARBY: FL280 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C030/26",
+   "valid_from": "2026-11-21T06:00Z",
+   "valid_to": "2026-11-21T12:00Z",
+   "b": "2611210600",
+   "c": "2611211200",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    13.12,
+    82.88,
+    16.12,
+    91.88
+   ],
+   "centre": [
+    14.62,
+    87.38
+   ],
+   "near": "Visakhapatnam",
+   "near_km": 562,
+   "mean_fraction": 0.67,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1308N08252E - 1608N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C031/26",
+   "valid_from": "2026-11-21T12:00Z",
+   "valid_to": "2026-11-21T18:00Z",
+   "b": "2611211200",
+   "c": "2611211800",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    34.12,
+    76.88,
+    37.12,
+    85.88
+   ],
+   "centre": [
+    35.62,
+    81.38
+   ],
+   "near": "Srinagar",
+   "near_km": 619,
+   "mean_fraction": 0.98,
+   "drier_fls": [
+    280,
+    400
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3408N07652E - 3708N08552E (620 KM FROM SRINAGAR). DRIER LEVELS NEARBY: FL280 OR FL400. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C032/26",
+   "valid_from": "2026-11-21T12:00Z",
+   "valid_to": "2026-11-21T18:00Z",
+   "b": "2611211200",
+   "c": "2611211800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    82.88,
+    10.12,
+    91.88
+   ],
+   "centre": [
+    8.62,
+    87.38
+   ],
+   "near": "Port Blair",
+   "near_km": 676,
+   "mean_fraction": 0.81,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08252E - 1008N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C033/26",
+   "valid_from": "2026-11-21T12:00Z",
+   "valid_to": "2026-11-21T18:00Z",
+   "b": "2611211200",
+   "c": "2611211800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    91.88,
+    10.12,
+    98.12
+   ],
+   "centre": [
+    8.62,
+    95.0
+   ],
+   "near": "Port Blair",
+   "near_km": 416,
+   "mean_fraction": 0.78,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N09152E - 1008N09808E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C034/26",
+   "valid_from": "2026-11-21T12:00Z",
+   "valid_to": "2026-11-21T18:00Z",
+   "b": "2611211200",
+   "c": "2611211800",
+   "fl_low": 380,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    82.88,
+    13.12,
+    88.88
+   ],
+   "centre": [
+    11.62,
+    85.88
+   ],
+   "near": "Chennai",
+   "near_km": 632,
+   "mean_fraction": 0.81,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1008N08252E - 1308N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C035/26",
+   "valid_from": "2026-11-21T12:00Z",
+   "valid_to": "2026-11-21T18:00Z",
+   "b": "2611211200",
+   "c": "2611211800",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    88.88,
+    13.12,
+    94.88
+   ],
+   "centre": [
+    11.62,
+    91.88
+   ],
+   "near": "Port Blair",
+   "near_km": 93,
+   "mean_fraction": 0.78,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08852E - 1308N09452E (NEAR PORT BLAIR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C036/26",
+   "valid_from": "2026-11-21T18:00Z",
+   "valid_to": "2026-11-22T00:00Z",
+   "b": "2611211800",
+   "c": "2611220000",
+   "fl_low": 320,
+   "fl_high": 340,
+   "bbox": [
+    34.12,
+    82.88,
+    37.12,
+    91.88
+   ],
+   "centre": [
+    35.62,
+    87.38
+   ],
+   "near": "Guwahati",
+   "near_km": 1126,
+   "mean_fraction": 0.98,
+   "drier_fls": [
+    280,
+    380
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL320-FL340 WI AREA 3408N08252E - 3708N09152E (1130 KM FROM GUWAHATI). DRIER LEVELS NEARBY: FL280 OR FL380. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C037/26",
+   "valid_from": "2026-11-21T18:00Z",
+   "valid_to": "2026-11-22T00:00Z",
+   "b": "2611211800",
+   "c": "2611220000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    82.88,
+    10.12,
+    91.88
+   ],
+   "centre": [
+    8.62,
+    87.38
+   ],
+   "near": "Port Blair",
+   "near_km": 676,
+   "mean_fraction": 0.86,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N08252E - 1008N09152E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C038/26",
+   "valid_from": "2026-11-21T18:00Z",
+   "valid_to": "2026-11-22T00:00Z",
+   "b": "2611211800",
+   "c": "2611220000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    88.88,
+    13.12,
+    97.88
+   ],
+   "centre": [
+    11.62,
+    93.38
+   ],
+   "near": "Port Blair",
+   "near_km": 70,
+   "mean_fraction": 0.72,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 1008N08852E - 1308N09752E (NEAR PORT BLAIR). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C039/26",
+   "valid_from": "2026-11-21T18:00Z",
+   "valid_to": "2026-11-22T00:00Z",
+   "b": "2611211800",
+   "c": "2611220000",
+   "fl_low": 400,
+   "fl_high": 400,
+   "bbox": [
+    7.12,
+    91.88,
+    10.12,
+    98.12
+   ],
+   "centre": [
+    8.62,
+    95.0
+   ],
+   "near": "Port Blair",
+   "near_km": 416,
+   "mean_fraction": 0.97,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL400 WI AREA 0708N09152E - 1008N09808E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
+  },
+  {
+   "id": "C040/26",
+   "valid_from": "2026-11-21T18:00Z",
+   "valid_to": "2026-11-22T00:00Z",
+   "b": "2611211800",
+   "c": "2611220000",
+   "fl_low": 380,
+   "fl_high": 400,
+   "bbox": [
+    10.12,
+    82.88,
+    13.12,
+    88.88
+   ],
+   "centre": [
+    11.62,
+    85.88
+   ],
+   "near": "Chennai",
+   "near_km": 632,
+   "mean_fraction": 0.8,
+   "drier_fls": [
+    340,
+    360
+   ],
+   "text": "ICE-SUPERSATURATED LAYER: PERSISTENT CONTRAILS LIKELY FL380-FL400 WI AREA 1008N08252E - 1308N08852E (OVER THE BAY OF BENGAL). DRIER LEVELS NEARBY: FL340 OR FL360. EXPERIMENTAL, NOT FOR OPERATIONAL USE."
   }
  ]
 }
